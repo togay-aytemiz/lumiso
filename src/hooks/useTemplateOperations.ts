@@ -47,29 +47,61 @@ const getErrorMessage = (error: unknown) => {
   return null;
 };
 
+const extractPreheaderFromMetadata = (metadata: unknown): string => {
+  if (!metadata || typeof metadata !== "object") return "";
+  if ("preheader" in metadata) {
+    const value = (metadata as { preheader?: unknown }).preheader;
+    if (typeof value === "string") {
+      return value;
+    }
+  }
+  return "";
+};
+
+const extractPreheaderFromHtml = (html?: string | null): string => {
+  if (!html) return "";
+  const match = html.match(/<em>([^<]{0,200})<\/em>/i);
+  return match?.[1]?.trim() ?? "";
+};
+
+const getEmailPreheader = (emailView?: DatabaseTemplate["template_channel_views"][number]): string => {
+  if (!emailView) return "";
+  const fromMetadata = extractPreheaderFromMetadata(emailView.metadata);
+  if (fromMetadata) return fromMetadata;
+  return extractPreheaderFromHtml(emailView.html_content);
+};
+
 // Transform database template to our unified interface
 const transformDatabaseTemplate = (dbTemplate: DatabaseTemplate): Template => {
+  const emailView = dbTemplate.template_channel_views?.find((view) => view.channel === "email");
+  const preheader = getEmailPreheader(emailView);
+
   return {
     id: dbTemplate.id,
     name: dbTemplate.name,
     category: dbTemplate.category,
     master_content: dbTemplate.master_content,
-  master_subject: dbTemplate.master_subject || undefined,
-  placeholders: Array.isArray(dbTemplate.placeholders) ? dbTemplate.placeholders as string[] : [],
-  is_active: dbTemplate.is_active,
-  status: dbTemplate.is_active ? "published" : "draft",
-  created_at: dbTemplate.created_at,
-  updated_at: dbTemplate.updated_at,
-  user_id: dbTemplate.user_id,
+    master_subject: dbTemplate.master_subject || undefined,
+    preheader: preheader || undefined,
+    placeholders: Array.isArray(dbTemplate.placeholders) ? (dbTemplate.placeholders as string[]) : [],
+    is_active: dbTemplate.is_active,
+    status: dbTemplate.is_active ? "published" : "draft",
+    created_at: dbTemplate.created_at,
+    updated_at: dbTemplate.updated_at,
+    user_id: dbTemplate.user_id,
     organization_id: dbTemplate.organization_id,
-    channels: dbTemplate.template_channel_views?.reduce<Record<string, { subject: string | null; content: string | null; html_content: string | null }>>((acc, view) => {
-      acc[view.channel] = {
-        subject: view.subject,
-        content: view.content,
-        html_content: view.html_content
-      };
-      return acc;
-    }, {} as Record<string, { subject: string | null; content: string | null; html_content: string | null }>) || {}
+    channels:
+      dbTemplate.template_channel_views?.reduce<
+        Record<string, { subject: string | null; content: string | null; html_content: string | null; metadata?: Record<string, unknown> | null }>
+      >((acc, view) => {
+        acc[view.channel] = {
+          subject: view.subject,
+          content: view.content,
+          html_content: view.html_content,
+          metadata: view.metadata ?? null
+        };
+        return acc;
+      }, {} as Record<string, { subject: string | null; content: string | null; html_content: string | null; metadata?: Record<string, unknown> | null }>) || {}
   };
 };
 
@@ -115,11 +147,11 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
         .select(`
           *,
           template_channel_views(
-            channel, subject, content, html_content
+            channel, subject, content, html_content, metadata
           )
         `)
         .eq('organization_id', activeOrganizationId)
-        .order('is_active', { ascending: false })
+        .order('is_active', { ascending: true })
         .order('updated_at', { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -202,6 +234,7 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
         .from('message_templates')
         .select('blocks')
         .eq('id', template.id)
+        .eq('organization_id', activeOrganizationId)
         .single();
 
       if (fetchError) {
@@ -229,13 +262,19 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
 
       // Create channel views if the original template has them
       if (template.channels && Object.keys(template.channels).length > 0) {
-        const channelInserts = Object.entries(template.channels).map(([channel, channelData]: [string, { subject?: string | null; content?: string | null; html_content?: string | null }]) => ({
-          template_id: data.id,
-          channel,
-          subject: channelData?.subject || null,
-          content: channelData?.content || null,
-          html_content: channelData?.html_content || null
-        }));
+        const channelInserts = Object.entries(template.channels).map(
+          ([channel, channelData]: [
+            string,
+            { subject?: string | null; content?: string | null; html_content?: string | null; metadata?: Record<string, unknown> | null }
+          ]) => ({
+            template_id: data.id,
+            channel,
+            subject: channelData?.subject || null,
+            content: channelData?.content || null,
+            html_content: channelData?.html_content || null,
+            metadata: channelData?.metadata ?? null
+          })
+        );
 
         if (channelInserts.length > 0) {
           const { error: channelError } = await supabase

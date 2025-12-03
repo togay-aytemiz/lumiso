@@ -2551,7 +2551,10 @@
   "templateBuilder": {
     "status": {
       "saving": "Kaydediliyor...",
-      "allChangesSaved": "Tüm değişiklikler kaydedildi"
+      "unsavedChanges": "Kaydedilmemiş değişiklikler",
+      "notSavedYet": "Henüz kaydedilmedi",
+      "allChangesSaved": "Tüm değişiklikler kaydedildi",
+      "publishDisabledTooltip": "Yayınlamak için önce düzenlemeye başlayın"
     },
     "loading": "Şablon yükleniyor...",
     "untitledTemplate": "Başlıksız Şablon",
@@ -2974,9 +2977,19 @@
     },
     "variablePicker": {
       "trigger": "Değişken Ekle",
+      "tooltip": "Değişken ekle",
       "search": "Değişken ara...",
       "empty": "Değişken bulunamadı.",
       "loading": "Değişkenler yükleniyor..."
+    },
+    "emojiPicker": {
+      "tooltip": "Emoji ekle"
+    },
+    "inlineActions": {
+      "emoji": "Emoji Ekle",
+      "variable": "Değişken Ekle",
+      "save": "Kaydet",
+      "cancel": "Vazgeç"
     },
     "nameDialog": {
       "titleSave": "Şablonu Kaydet",

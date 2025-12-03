@@ -8,6 +8,7 @@ export interface Template {
   category: string;
   master_content: string;
   master_subject?: string;
+  preheader?: string;
   placeholders?: string[];
   is_active: boolean;
   status?: 'draft' | 'published';
@@ -20,12 +21,15 @@ export interface Template {
       subject?: string;
       content?: string;
       html_content?: string;
+      metadata?: Record<string, unknown> | null;
     };
     sms?: {
       content?: string;
+      metadata?: Record<string, unknown> | null;
     };
     whatsapp?: {
       content?: string;
+      metadata?: Record<string, unknown> | null;
     };
   };
 }
@@ -34,7 +38,6 @@ export interface Template {
 export interface TemplateBuilderData extends Omit<Template, 'channels'> {
   description?: string;
   subject?: string;
-  preheader?: string;
   blocks?: TemplateBlock[]; // For UI editing only, not stored in DB
   status: 'draft' | 'published';
   published_at?: string | null;
@@ -49,6 +52,7 @@ export interface DatabaseTemplate {
   category: string;
   master_content: string;
   master_subject: string | null;
+  preheader?: string | null;
   placeholders: Json | null;
   is_active: boolean;
   created_at: string;
@@ -60,6 +64,7 @@ export interface DatabaseTemplate {
     subject?: string;
     content?: string;
     html_content?: string;
+    metadata?: Record<string, unknown> | null;
   }>;
 }
 
@@ -71,4 +76,5 @@ export interface TemplateChannelView {
   subject?: string;
   content?: string;
   html_content?: string;
+  metadata?: Record<string, unknown> | null;
 }

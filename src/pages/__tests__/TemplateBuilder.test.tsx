@@ -120,11 +120,14 @@ const baseTemplate = {
   category: "general",
 };
 
+let useSearchParamsSpy: jest.SpyInstance;
+let navigateMock: jest.Mock;
+
 describe("TemplateBuilder page", () => {
   beforeEach(() => {
-    const navigateMock = jest.fn();
+    navigateMock = jest.fn();
     jest.spyOn(ReactRouterDom, "useNavigate").mockReturnValue(navigateMock);
-    jest
+    useSearchParamsSpy = jest
       .spyOn(ReactRouterDom, "useSearchParams")
       .mockReturnValue([new URLSearchParams("id=template-1"), jest.fn()]);
 
@@ -209,6 +212,32 @@ describe("TemplateBuilder page", () => {
     });
 
     jest.useRealTimers();
+  });
+
+  it("shows unsaved state for a brand new template and hides restart", async () => {
+    useSearchParamsSpy.mockReturnValue([new URLSearchParams(""), jest.fn()]);
+
+    mockUseTemplateBuilder.mockReturnValue({
+      template: null,
+      loading: false,
+      saving: false,
+      lastSaved: null,
+      isDirty: false,
+      dirtyVersion: 0,
+      saveTemplate: jest.fn(),
+      publishTemplate: jest.fn(),
+      updateTemplate: jest.fn(),
+      resetDirtyState: jest.fn(),
+      clearDraft: jest.fn(),
+    });
+
+    await renderTemplateBuilder();
+
+    expect(screen.getByText("templateBuilder.status.notSavedYet")).toBeInTheDocument();
+    expect(screen.queryByText("templateBuilder.buttons.restart")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "templateBuilder.buttons.publish" })
+    ).toBeDisabled();
   });
 
   it("updates template blocks when the editor reports changes", async () => {

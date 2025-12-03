@@ -145,6 +145,7 @@ describe("useTemplateBuilder", () => {
             subject: "Greetings",
             content: "Hello there",
             html_content: "<p>hello</p>",
+            metadata: { preheader: "Short line" },
           },
         ],
       },
@@ -162,6 +163,7 @@ describe("useTemplateBuilder", () => {
     expect(result.current.template).not.toBeNull();
     expect(result.current.template?.blocks).toEqual(mockBlocks);
     expect(result.current.isDirty).toBe(false);
+    expect(result.current.template?.preheader).toBe("Short line");
     expect(htmlToBlocksMock).toHaveBeenCalledWith("<p>hello</p>");
   });
 
@@ -244,6 +246,7 @@ describe("useTemplateBuilder", () => {
         expect.objectContaining({
           channel: "email",
           html_content: "<p>Generated {name}</p>",
+          metadata: null,
         }),
         expect.objectContaining({
           channel: "sms",

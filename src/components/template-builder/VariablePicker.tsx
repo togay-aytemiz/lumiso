@@ -43,6 +43,13 @@ export function VariablePicker({ onVariableSelect, trigger, onOpenChange }: Vari
     project: t("templateBuilder.variables.categories.project"),
     custom: t("templateBuilder.variables.categories.custom"),
   };
+  const tooltipLabel = t("templateBuilder.variablePicker.tooltip", { defaultValue: "Insert variable" });
+  const TriggerNode = trigger || (
+    <Button variant="outline" size="sm" aria-label={tooltipLabel}>
+      <Plus className="h-3 w-3" />
+      {t("templateBuilder.variablePicker.trigger")}
+    </Button>
+  );
 
   return (
     <Popover
@@ -52,14 +59,7 @@ export function VariablePicker({ onVariableSelect, trigger, onOpenChange }: Vari
         onOpenChange?.(next);
       }}
     >
-      <PopoverTrigger asChild>
-        {trigger || (
-          <Button variant="outline" size="sm">
-            <Plus className="h-3 w-3" />
-            {t("templateBuilder.variablePicker.trigger")}
-          </Button>
-        )}
-      </PopoverTrigger>
+      <PopoverTrigger asChild>{TriggerNode}</PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
         <Command>
           <CommandInput placeholder={t("templateBuilder.variablePicker.search") ?? undefined} />

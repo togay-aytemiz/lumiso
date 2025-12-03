@@ -55,11 +55,36 @@ const extractPlaceholders = (content: string): string[] => {
   return Array.from(placeholders);
 };
 
+const extractPreheaderFromMetadata = (metadata: unknown): string => {
+  if (!metadata || typeof metadata !== "object") return "";
+  if ("preheader" in metadata) {
+    const value = (metadata as { preheader?: unknown }).preheader;
+    if (typeof value === "string") {
+      return value;
+    }
+  }
+  return "";
+};
+
+const extractPreheaderFromHtml = (html?: string | null): string => {
+  if (!html) return "";
+  const match = html.match(/<em>([^<]{0,200})<\/em>/i);
+  return match?.[1]?.trim() ?? "";
+};
+
+const getEmailPreheader = (channel?: TemplateChannelView): string => {
+  if (!channel) return "";
+  const fromMetadata = extractPreheaderFromMetadata(channel.metadata);
+  if (fromMetadata) return fromMetadata;
+  return extractPreheaderFromHtml(channel.html_content);
+};
+
 // Transform database template to builder data
 const transformToBuilderData = (
   dbTemplate: DatabaseTemplate & { blocks?: unknown }
 ): TemplateBuilderData => {
   const emailChannel = dbTemplate.template_channel_views?.find(v => v.channel === 'email');
+  const preheader = getEmailPreheader(emailChannel as TemplateChannelView | undefined);
   
   // Load blocks from database or try to parse from HTML content
   let blocks: TemplateBlock[] = [];
@@ -92,6 +117,7 @@ const transformToBuilderData = (
     category: dbTemplate.category,
     master_content: dbTemplate.master_content,
     master_subject: dbTemplate.master_subject || undefined,
+    preheader,
     placeholders: Array.isArray(dbTemplate.placeholders) ? dbTemplate.placeholders : [],
     is_active: dbTemplate.is_active,
     created_at: dbTemplate.created_at,
@@ -101,18 +127,19 @@ const transformToBuilderData = (
     // UI-specific fields
     description: dbTemplate.master_content?.substring(0, 200) || undefined,
     subject: emailChannel?.subject || dbTemplate.master_subject || '',
-    preheader: '', // Will be extracted from blocks if needed
+    preheader,
     blocks: blocks,
     status: dbTemplate.is_active ? 'published' : 'draft',
     published_at: dbTemplate.is_active ? dbTemplate.updated_at : null,
     last_saved_at: dbTemplate.updated_at,
     channels:
       dbTemplate.template_channel_views?.reduce<TemplateChannels>((acc, view) => {
-        const { channel, subject, content, html_content } = view as TemplateChannelView;
+        const { channel, subject, content, html_content, metadata } = view as TemplateChannelView;
         acc[channel] = {
           subject: subject ?? undefined,
           content: content ?? undefined,
-          html_content: html_content ?? undefined
+          html_content: html_content ?? undefined,
+          metadata: metadata ?? null
         };
         return acc;
       }, {} as TemplateChannels) || {}
@@ -201,7 +228,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
         .select(`
           *,
           template_channel_views(
-            channel, subject, content, html_content
+            channel, subject, content, html_content, metadata
           )
         `)
         .eq("id", templateId)
@@ -217,6 +244,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
 
       setTemplate(transformedTemplate);
       setIsDirty(false);
+      setLastSaved(new Date(transformedTemplate.updated_at));
       restoredDraftDirtyRef.current = false;
       dirtyVersionRef.current = 0;
       latestSavedVersionRef.current = 0;
@@ -287,6 +315,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       const allContent = [
         generatedMasterContent || mergedData.master_content || '',
         mergedData.subject || '',
+        mergedData.preheader || '',
         mergedData.channels?.email?.content || '',
         mergedData.channels?.sms?.content || '',
         mergedData.channels?.whatsapp?.content || ''
@@ -352,7 +381,10 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
         channel: 'email',
         subject: mergedData.subject || mergedData.master_subject || mergedData.name || t("templateBuilder.email.subject", { defaultValue: "Subject" }),
         content: generatedMasterContent || mergedData.master_content || '',
-        html_content: generatedHtmlContent || null
+        html_content: generatedHtmlContent || null,
+        metadata: mergedData.preheader
+          ? { preheader: mergedData.preheader }
+          : mergedData.channels?.email?.metadata ?? null
       });
       
       // Add other channels if they exist
@@ -368,7 +400,8 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
               channel,
               subject: channelData.subject || null,
               content: channelData.content || null,
-              html_content: channelData.html_content || null
+              html_content: channelData.html_content || null,
+              metadata: channelData.metadata ?? null
             });
           }
         });
@@ -395,7 +428,18 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
         status: result.is_active ? 'published' : 'draft',
         published_at: result.is_active ? result.updated_at : null,
         last_saved_at: result.updated_at,
-        channels: mergedData.channels || {}
+        channels: (() => {
+          const baseChannels = mergedData.channels || {};
+          return {
+            ...baseChannels,
+            email: {
+              ...(baseChannels.email || {}),
+              metadata: mergedData.preheader
+                ? { preheader: mergedData.preheader }
+                : baseChannels.email?.metadata ?? null
+            }
+          };
+        })()
       };
 
       setTemplate((current) => {
@@ -602,10 +646,15 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
 
   // Load template on mount
   useEffect(() => {
-    if (templateId && activeOrganizationId) {
+    const shouldLoad =
+      templateId &&
+      activeOrganizationId &&
+      (!template || template.id !== templateId);
+
+    if (shouldLoad) {
       loadTemplate();
     }
-  }, [templateId, activeOrganizationId, loadTemplate]);
+  }, [templateId, activeOrganizationId, template, loadTemplate]);
 
   return {
     template,

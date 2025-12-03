@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Smile } from "lucide-react";
 import { emojis } from "@/lib/templateUtils";
+import { useTranslation } from "react-i18next";
 
 interface EmojiPickerProps {
   onEmojiSelect: (emoji: string) => void;
@@ -12,11 +13,19 @@ interface EmojiPickerProps {
 
 export function EmojiPicker({ onEmojiSelect, trigger, onOpenChange }: EmojiPickerProps) {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation("pages");
+  const tooltipLabel = t("templateBuilder.emojiPicker.tooltip", { defaultValue: "Insert emoji" });
 
   const handleEmojiClick = (emoji: string) => {
     onEmojiSelect(emoji);
     setOpen(false);
   };
+
+  const TriggerNode = trigger || (
+    <Button variant="outline" size="sm" className="h-8 px-2" aria-label={tooltipLabel}>
+      <Smile className="h-3 w-3" />
+    </Button>
+  );
 
   return (
     <Popover
@@ -26,13 +35,7 @@ export function EmojiPicker({ onEmojiSelect, trigger, onOpenChange }: EmojiPicke
         onOpenChange?.(next);
       }}
     >
-      <PopoverTrigger asChild>
-        {trigger || (
-          <Button variant="outline" size="sm" className="h-8 px-2">
-            <Smile className="h-3 w-3" />
-          </Button>
-        )}
-      </PopoverTrigger>
+      <PopoverTrigger asChild>{TriggerNode}</PopoverTrigger>
       <PopoverContent className="w-64 p-2" side="bottom" align="end">
         <div className="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">
           {emojis.map((emoji, index) => (

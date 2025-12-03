@@ -92,6 +92,9 @@ export function InlinePreheaderEditor({
   const clearInteraction = () => {
     interactionRef.current = false;
   };
+  const variableLabel = t("templateBuilder.inlineActions.variable", { defaultValue: "Değişken Ekle" });
+  const saveLabel = t("templateBuilder.inlineActions.save", { defaultValue: "Kaydet" });
+  const cancelLabel = t("templateBuilder.inlineActions.cancel", { defaultValue: "Vazgeç" });
 
   return (
     <div className="flex items-center gap-1">
@@ -121,33 +124,36 @@ export function InlinePreheaderEditor({
         }}
         trigger={
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
-            className="h-8 px-2 text-xs"
+            className="h-8 px-3 gap-2 bg-muted text-foreground border border-border hover:bg-muted/80"
             onMouseDown={markInteraction}
           >
-            {"{…}"}
+            <span className="text-xs font-mono">{"{…}"}</span>
+            <span className="text-xs">{variableLabel}</span>
           </Button>
         }
       />
       <div className="flex items-center gap-1">
         <Button
           size="sm"
-          variant="ghost"
+          variant="secondary"
           onClick={handleSave}
           disabled={isSaving}
-          className="h-6 w-6 p-0 bg-muted hover:bg-muted/80 border border-border rounded-md shadow-sm"
+          className="h-8 px-3 gap-2 bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-100/80"
         >
-          <Check className="h-3 w-3 text-green-600" />
+          <Check className="h-3 w-3" />
+          <span className="text-xs">{saveLabel}</span>
         </Button>
         <Button
           size="sm"
-          variant="ghost"
+          variant="secondary"
           onClick={onCancel}
           disabled={isSaving}
-          className="h-6 w-6 p-0 bg-muted hover:bg-muted/80 border border-border rounded-md shadow-sm"
+          className="h-8 px-3 gap-2 bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
         >
-          <X className="h-3 w-3 text-red-600" />
+          <X className="h-3 w-3" />
+          <span className="text-xs">{cancelLabel}</span>
         </Button>
       </div>
     </div>

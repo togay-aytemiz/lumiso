@@ -26,19 +26,38 @@ const clipboardWriteMock = jest.fn();
 const uploadMock = jest.fn();
 const removeMock = jest.fn();
 
+const translationMap: Record<string, string> = {
+  "toast.success": "Success",
+  "toast.error": "toast.error",
+  "templateBuilder.blockEditor.imageUpload.toast.successDescription": "Uploaded successfully",
+  "templateBuilder.blockEditor.imageUpload.toast.authRequired": "You must be logged in to upload images",
+  "templateBuilder.blockEditor.imageUpload.toast.invalidFile": "Please select an image file",
+  "templateBuilder.blockEditor.imageUpload.toast.maxSize": "Image must be smaller than 5MB",
+  "templateBuilder.blockEditor.imageUpload.toast.limitTitle": "Upload Limit Reached",
+  "templateBuilder.blockEditor.imageUpload.toast.limitDescription": "No quota remaining",
+  "templateBuilder.blockEditor.imageUpload.toast.errorDescription": "Failed to upload image",
+  "templateBuilder.imageManager.actions.deleteAria": "Delete image",
+  "templateBuilder.emojiPicker.tooltip": "Insert emoji",
+  "templateBuilder.variablePicker.tooltip": "Insert variable",
+};
+
 jest.mock("react-i18next", () => ({
   useTranslation: jest.fn(() => ({
     t: (key: string, vars?: Record<string, unknown>) =>
-      vars && "name" in vars ? `${key}:${vars.name}` : key,
+      vars && "name" in vars ? `${key}:${vars.name}` : translationMap[key] ?? key,
   })),
   withTranslation: () => <P extends Record<string, unknown>>(Component: ComponentType<P>) =>
-    (props: P) => <Component t={(key: string) => key} {...props} />,
+    (props: P) => <Component t={(key: string) => translationMap[key] ?? key} {...props} />,
 }));
 
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useMessagesTranslation: jest.fn(() => ({
     t: (key: string, vars?: Record<string, unknown>) =>
-      vars && "name" in vars ? `${key}:${vars.name}` : key,
+      vars && "name" in vars ? `${key}:${vars.name}` : translationMap[key] ?? key,
+  })),
+  useCommonTranslation: jest.fn(() => ({
+    t: (key: string, vars?: Record<string, unknown>) =>
+      vars && "name" in vars ? `${key}:${vars.name}` : translationMap[key] ?? key,
   })),
 }));
 
@@ -96,6 +115,18 @@ beforeEach(() => {
   uploadMock.mockReset();
   removeMock.mockReset();
 
+  const createTableMock = () => {
+    const order = jest.fn().mockResolvedValue({ data: [], error: null });
+    const eq = jest.fn(() => ({ order, eq }));
+    const select = jest.fn(() => ({ eq, order }));
+    const del = jest.fn(() => ({ eq }));
+    const update = jest.fn(() => ({ eq }));
+    const insert = jest.fn(() => ({ select, order }));
+    return { select, eq, order, delete: del, update, insert };
+  };
+
+  mockedSupabase.from.mockImplementation(() => createTableMock());
+
   mockedUseToast.mockReturnValue({ toast: toastMock });
   mockedUseAuth.mockReturnValue({ user: { id: "user-1" } });
   mockedUseOrganization.mockReturnValue({
@@ -140,15 +171,22 @@ describe("ImageUpload", () => {
   }) => {
     const { selectMock } = mockUsageResponse(usage);
     const insertMock = jest.fn().mockResolvedValue({ error: null });
+    const orderMock = jest.fn().mockResolvedValue({ data: [], error: null });
+    const eqMock = jest.fn(() => ({ order: orderMock }));
+    const selectAssetsMock = jest.fn(() => ({ eq: eqMock, order: orderMock }));
 
     mockedSupabase.from.mockImplementation((table: string) => {
       if (table === "template_image_usage") {
         return { select: selectMock };
       }
       if (table === "template_assets") {
-        return { insert: insertMock };
+        return { insert: insertMock, select: selectAssetsMock };
       }
-      return {};
+      return {
+        select: selectAssetsMock,
+        eq: eqMock,
+        order: orderMock,
+      };
     });
 
     return { insertMock };
@@ -352,7 +390,7 @@ describe("ImageLibrarySheet", () => {
   }) => {
     const orderMock = jest
       .fn()
-      .mockResolvedValueOnce({
+      .mockResolvedValue({
         data: overrides?.selectError ? null : assets,
         error: overrides?.selectError ?? null,
       });
@@ -430,7 +468,7 @@ describe("ImageLibrarySheet", () => {
     );
     await waitFor(() =>
       expect(toastMock).toHaveBeenCalledWith(
-        expect.objectContaining({ title: "toast.success" })
+        expect.objectContaining({ title: "Success" })
       )
     );
   });
@@ -513,9 +551,7 @@ describe("ImageLibrarySheet", () => {
       expect(screen.getByText("hero.png")).toBeInTheDocument()
     );
 
-    const deleteButton = screen.getByRole("button", {
-      name: "templateBuilder.imageManager.actions.deleteAria",
-    });
+    const deleteButton = screen.getByRole("button", { name: "Delete image" });
 
     fireEvent.click(deleteButton);
     fireEvent.click(screen.getByRole("button", { name: "buttons.delete" }));
@@ -560,7 +596,7 @@ describe("ImageLibrarySheet", () => {
     );
 
     const deleteButton = screen.getByRole("button", {
-      name: "templateBuilder.imageManager.actions.deleteAria",
+      name: "Delete image",
     });
 
     fireEvent.click(deleteButton);

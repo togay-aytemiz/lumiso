@@ -2551,7 +2551,10 @@
   "templateBuilder": {
     "status": {
       "saving": "Saving...",
-      "allChangesSaved": "All changes saved"
+      "unsavedChanges": "Unsaved changes",
+      "notSavedYet": "Not saved yet",
+      "allChangesSaved": "All changes saved",
+      "publishDisabledTooltip": "Start editing to enable Publish"
     },
     "loading": "Loading template...",
     "untitledTemplate": "Untitled Template",
@@ -2608,7 +2611,7 @@
       "emailPreview": "Email Preview",
       "subject": "Subject:",
       "previewText": "Preview:",
-      "defaultSubject": "\ud83d\udcf8 Your photography session is confirmed!",
+      "defaultSubject": "Your photography session is confirmed!",
       "helloCustomer": "Hello {{name}}!",
       "excitedMessage": "We're excited to capture your special moments",
       "lookingForward": "Looking forward to your session!",
@@ -2974,9 +2977,19 @@
     },
     "variablePicker": {
       "trigger": "Insert Variable",
+      "tooltip": "Insert variable",
       "search": "Search variables...",
       "empty": "No variables found.",
       "loading": "Loading variables..."
+    },
+    "emojiPicker": {
+      "tooltip": "Insert emoji"
+    },
+    "inlineActions": {
+      "emoji": "Add emoji",
+      "variable": "Insert variable",
+      "save": "Save",
+      "cancel": "Cancel"
     },
     "nameDialog": {
       "titleSave": "Save Template",

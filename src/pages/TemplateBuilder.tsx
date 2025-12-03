@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Eye, Edit } from 'lucide-react';
+import { ArrowLeft, Eye, Edit, MonitorSmartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,7 @@ import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErr
 import { useTranslation } from "react-i18next";
 import { TemplateVariablesProvider } from "@/contexts/TemplateVariablesContext";
 import { VariableTokenText } from "@/components/template-builder/VariableTokenText";
+import { Tooltip, TooltipContent, TooltipContentDark, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Optimized TemplateBuilder component
 const OptimizedTemplateBuilderContent = React.memo(() => {
@@ -39,6 +40,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     template,
     loading,
     saving,
+    lastSaved,
     isDirty,
     dirtyVersion,
     saveTemplate,
@@ -61,7 +63,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const [pendingAction, setPendingAction] = useState<'save' | 'publish' | null>(null);
   const [existingTemplateNames, setExistingTemplateNames] = useState<string[]>([]);
   const subjectPlaceholder = useMemo(
-    () => t("templateBuilder.preview.defaultSubject", { defaultValue: "📸 Your photography session is confirmed!" }),
+    () => t("templateBuilder.preview.defaultSubject", { defaultValue: "Your photography session is confirmed" }),
     [t]
   );
   const preheaderPlaceholder = useMemo(
@@ -69,6 +71,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     [t]
   );
   const [showRestartGuard, setShowRestartGuard] = useState(false);
+  const [publishTooltipOpen, setPublishTooltipOpen] = useState(false);
 
   // Template data from backend or defaults
   const templateName = template?.name || untitledName;
@@ -252,7 +255,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
       if (savingRef.current) return;
       if (dirtyVersionRef.current <= lastAutoSavedVersionRef.current) return;
       void handleAutoSave();
-    }, 800);
+    }, 400);
 
     return () => {
       if (autoSaveTimerRef.current) {
@@ -332,6 +335,10 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
 
   const handleBlocksChange = useCallback((newBlocks: TemplateBlock[]) => {
     updateTemplate({ blocks: newBlocks });
+    // Kick off an auto-save immediately after block edits to avoid stale "unsaved" state
+    setTimeout(() => {
+      void handleAutoSave();
+    }, 0);
   }, [updateTemplate]);
 
   // Handle name dialog confirmation
@@ -407,6 +414,34 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     });
     return map;
   }, [templateVariables]);
+  const hasSavedVersion = useMemo(
+    () => Boolean((template?.id || '').trim()) || Boolean(lastSaved),
+    [template?.id, lastSaved]
+  );
+  const hasUnsavedChanges = isDirty;
+  const hasContentToRestart = useMemo(
+    () =>
+      hasUnsavedChanges ||
+      Boolean(
+        (template?.id || '').trim() ||
+          subject ||
+          preheader ||
+          blocks.length > 0
+      ),
+    [hasUnsavedChanges, template?.id, subject, preheader, blocks.length]
+  );
+  const statusLabel = useMemo(() => {
+    if (saving) {
+      return t("templateBuilder.status.saving", { defaultValue: "Saving..." });
+    }
+    if (hasUnsavedChanges) {
+      return t("templateBuilder.status.unsavedChanges", { defaultValue: "Unsaved changes" });
+    }
+    if (!hasSavedVersion) {
+      return t("templateBuilder.status.notSavedYet", { defaultValue: "Not saved yet" });
+    }
+    return t("templateBuilder.status.allChangesSaved", { defaultValue: "All changes saved" });
+  }, [saving, hasUnsavedChanges, hasSavedVersion, t]);
 
   if (loading) {
     return (
@@ -419,7 +454,10 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   }
 
   const backLabel = tCommon("buttons.back", { defaultValue: "Back" });
-  const isSavingOrPending = saving || isDirty;
+  const publishDisabled = saving || (!template?.id && !templateId && !isDirty);
+  const publishTooltip = t("templateBuilder.status.publishDisabledTooltip", {
+    defaultValue: "Start editing to enable Publish"
+  });
 
   return (
     <TemplateVariablesProvider value={templateVariablesState}>
@@ -464,9 +502,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                     {isDraft ? t("templateBuilder.badges.draft") : t("templateBuilder.badges.published")}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
-                    {isSavingOrPending
-                      ? t("templateBuilder.status.saving", { defaultValue: "Saving..." })
-                      : t("templateBuilder.status.allChangesSaved", { defaultValue: "All changes saved" })}
+                    {statusLabel}
                   </span>
                 </div>
               )}
@@ -474,19 +510,51 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRestartDraft}
-              disabled={saving}
-              className="hidden sm:inline-flex"
-            >
-              {t("templateBuilder.buttons.restart")}
-            </Button>
-            <Button onClick={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())} disabled={saving}>
-              <Eye className="h-4 w-4" />
-              {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.done", { defaultValue: "Done" })}
-            </Button>
+            {hasContentToRestart && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRestartDraft}
+                disabled={saving}
+                className="hidden sm:inline-flex"
+              >
+                {t("templateBuilder.buttons.restart")}
+              </Button>
+            )}
+            {publishDisabled ? (
+              <TooltipProvider delayDuration={0}>
+                <Tooltip
+                  open={publishTooltipOpen}
+                  onOpenChange={setPublishTooltipOpen}
+                  disableHoverableContent
+                >
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        onClick={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())}
+                        disabled
+                      >
+                        <Eye className="h-4 w-4" />
+                        {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.done", { defaultValue: "Done" })}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContentDark side="bottom" align="center">
+                    <span className="max-w-[240px] text-sm text-slate-50">
+                      {publishTooltip}
+                    </span>
+                  </TooltipContentDark>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <Button
+                onClick={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())}
+                disabled={publishDisabled}
+              >
+                <Eye className="h-4 w-4" />
+                {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.done", { defaultValue: "Done" })}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -665,6 +733,44 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
 OptimizedTemplateBuilderContent.displayName = 'OptimizedTemplateBuilderContent';
 
 export default function TemplateBuilder() {
+  const { t } = useTranslation("pages");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const checkIsMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkIsMobile();
+
+    window.addEventListener("resize", checkIsMobile);
+    return () => window.removeEventListener("resize", checkIsMobile);
+  }, []);
+
+  if (isMobile) {
+    return (
+      <TemplateErrorBoundary>
+        <div className="flex min-h-[70vh] items-center justify-center px-6 py-10">
+          <div className="max-w-md space-y-4 rounded-2xl border border-slate-200 bg-white/95 p-8 text-center shadow-sm">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <MonitorSmartphone className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              {t("templateBuilder.mobileNotSupported.title", {
+                defaultValue: "Masaüstünde devam edin",
+              })}
+            </h2>
+            <p className="text-sm text-slate-600">
+              {t("templateBuilder.mobileNotSupported.description", {
+                defaultValue:
+                  "Şablon oluşturucu şu an mobilde desteklenmiyor. Masaüstünden açarak düzenlemeye devam edebilirsiniz.",
+              })}
+            </p>
+          </div>
+        </div>
+      </TemplateErrorBoundary>
+    );
+  }
+
   return (
     <TemplateErrorBoundary>
       <OptimizedTemplateBuilderContent />

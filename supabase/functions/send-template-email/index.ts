@@ -283,6 +283,8 @@ interface SendEmailRequest {
   blocks?: TemplateBlock[];
   mockData?: Record<string, string>;
   isTest?: boolean;
+  organization_id?: string;
+  organization_settings?: OrganizationSettings;
   authIntent?: AuthEmailIntent;
   email?: string;
   locale?: string;
@@ -442,7 +444,9 @@ export function generateHTMLContent(
   subject: string,
   preheader?: string,
   organizationSettings?: OrganizationSettings | null,
-  isPreview: boolean = false
+  isPreview: boolean = false,
+  isTest: boolean = false,
+  orgSettingsSource?: string
 ): string {
   const brandColor = organizationSettings?.primary_brand_color || '#1EB29F';
   const safeBrandColor = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(brandColor) ? brandColor : '#1EB29F';
@@ -684,14 +688,19 @@ export function generateHTMLContent(
         padding: 16px 0;
       }
       .social-links a { 
-        color: ${safeBrandColor};
-        text-decoration: underline;
-        margin: 0 12px;
-        text-transform: capitalize;
+        display: inline-block;
+        padding: 8px 14px;
+        margin: 0 8px 8px 8px;
+        background-color: #f3f4f6;
+        color: #111827;
+        border-radius: 9999px;
+        text-decoration: none;
         font-weight: 500;
+        font-size: 14px;
       }
       .social-links a:hover {
-        color: ${safeBrandColor};
+        color: #111827;
+        background-color: #e5e7eb;
       }
       
       /* Bullet list styles */
@@ -862,10 +871,21 @@ export function generateHTMLContent(
             .join("")
             .slice(0, 3) || " ";
 
+          const alignmentAttr = alignment === 'left' || alignment === 'right' ? alignment : 'center';
+          const logoElement = logoUrl
+            ? `<img src="${logoUrl}" alt="${businessName} Logo" style="max-width: 160px; max-height: 80px; object-fit: contain; display: inline-block;">`
+            : `<div style="display: inline-block; width: 72px; height: 72px; border-radius: 16px; background: linear-gradient(135deg, ${safeBrandColor}, ${safeBrandColor}); color: #fff; font-weight: 800; letter-spacing: 0.5px; font-size: 18px; line-height: 72px; text-align: center;">${initials}</div>`;
+
           const logoHtml = data.showLogo
-            ? logoUrl
-              ? `<div style="margin-bottom: 12px; display: flex; justify-content: ${alignment};"><img src="${logoUrl}" alt="${businessName} Logo" style="max-width: 160px; max-height: 80px; object-fit: contain; display: block;"></div>`
-              : `<div class="header-logo" style="display:flex; justify-content:${alignment};"><span style="display:inline-flex; align-items:center; justify-content:center; width:72px; height:72px; border-radius:16px; background: linear-gradient(135deg, ${safeBrandColor}, ${safeBrandColor}); color: #fff; font-weight: 800; letter-spacing: 0.5px; font-size: 18px;">${initials}</span></div>`
+            ? `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 12px 0;">
+                <tr>
+                  <td align="${alignmentAttr}" style="padding: 0; text-align: ${textAlign};">
+                    ${logoElement}
+                  </td>
+                </tr>
+              </table>
+            `
             : '';
 
           htmlContent += `
@@ -1022,6 +1042,7 @@ export function generateHTMLContent(
 
             if (socialChannelsArray.length > 0) {
               htmlContent += `<div class="social-links">`;
+              const pillStyle = 'display:inline-block; padding:8px 14px; margin:0 8px 8px 8px; background-color:#f3f4f6; color:#111827; border-radius:9999px; text-decoration:none; font-weight:500; font-size:14px;';
               socialChannelsArray.forEach(([key, channel]) => {
                 if (!channel?.url) {
                   return;
@@ -1031,7 +1052,7 @@ export function generateHTMLContent(
                   channel.customPlatformName ||
                   channel.name ||
                   key;
-                htmlContent += `<a href="${channel.url}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+                htmlContent += `<a href="${channel.url}" target="_blank" rel="noopener noreferrer" style="${pillStyle}">${label}</a>`;
               });
               htmlContent += `</div>`;
             }
@@ -1101,6 +1122,17 @@ export function generateHTMLContent(
       </div>
       <div style="text-align: center; padding: 20px; font-size: 12px; color: #9ca3af;">
         <p style="margin: 0;">This email was sent by Lumiso. <a href="mailto:hello@updates.lumiso.app?subject=unsubscribe" style="color: #9ca3af;">Unsubscribe</a></p>
+        ${
+          isTest
+            ? `<div style="margin-top:8px; font-size:11px; color:#94a3b8;">
+                <div>Org id: ${organization_id || 'n/a'}</div>
+                <div>Source: ${orgSettingsSource || 'n/a'}</div>
+                <div>Brand color: ${safeBrandColor}</div>
+                <div>Logo url: ${organizationSettings?.logo_url ? 'yes' : 'no'}</div>
+                <div>Social count: ${organizationSettings?.socialChannels ? Object.keys(organizationSettings.socialChannels).length : 0}</div>
+              </div>`
+            : ''
+        }
       </div>
     </body>
     </html>
@@ -1220,7 +1252,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
     
     // Handle template builder requests
-    const { to, subject, preheader, blocks, mockData, isTest, metadata } = requestData;
+    const { to, subject, preheader, blocks, mockData, isTest, metadata, organization_id, organization_settings } = requestData;
 
     console.log('Template builder - Sending email to:', to);
     console.log('Subject:', subject);
@@ -1252,32 +1284,48 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Get organization settings for dynamic footer
     let organizationSettings: OrganizationSettings | null = null;
+    let organizationSettingsSource: 'provided' | 'fetched' | 'fallback' = 'fallback';
+    const fetchOrgSettings = async (orgId: string) => {
+      const { data: orgSettingsData } = await supabaseClient
+        .from('organization_settings')
+        .select('photography_business_name, primary_brand_color, logo_url, phone, email, social_channels')
+        .eq('organization_id', orgId)
+        .maybeSingle();
+      return mapOrganizationSettings(orgSettingsData as OrganizationSettingsRow | null);
+    };
+
     try {
-      // Get user from auth header
-      const authHeader = req.headers.get('authorization');
-      if (authHeader) {
-        const token = authHeader.replace('Bearer ', '');
-        const { data: { user } } = await supabaseClient.auth.getUser(token);
-        
-        if (user) {
-          // Get organization settings
-          const { data: userSettingsData } = await supabaseClient
-            .from('user_settings')
-            .select('active_organization_id')
-            .eq('user_id', user.id)
-            .single();
-          const userSettings = userSettingsData as UserSettingsRow | null;
+      if (organization_id) {
+        console.log('TemplateBuilder: fetching org settings via org_id', organization_id);
+        organizationSettings = await fetchOrgSettings(organization_id);
+        organizationSettingsSource = 'fetched';
+      }
+
+      if (!organizationSettings && organization_settings) {
+        organizationSettings = organization_settings;
+        organizationSettingsSource = 'provided';
+      }
+
+      if (!organizationSettings) {
+        // Fallback: derive org from user settings
+        const authHeader = req.headers.get('authorization');
+        if (authHeader) {
+          const token = authHeader.replace('Bearer ', '');
+          const { data: { user } } = await supabaseClient.auth.getUser(token);
           
-          if (userSettings?.active_organization_id) {
-          const { data: orgSettingsData } = await supabaseClient
-            .from('organization_settings')
-            .select('photography_business_name, primary_brand_color, logo_url, phone, email, social_channels')
-            .eq('organization_id', userSettings.active_organization_id)
-            .single();
-
-            const orgSettings = orgSettingsData as OrganizationSettingsRow | null;
-
-            organizationSettings = mapOrganizationSettings(orgSettings);
+          if (user) {
+            const { data: userSettingsData } = await supabaseClient
+              .from('user_settings')
+              .select('active_organization_id')
+              .eq('user_id', user.id)
+              .maybeSingle();
+            const userSettings = userSettingsData as UserSettingsRow | null;
+            
+            if (userSettings?.active_organization_id) {
+              console.log('TemplateBuilder: fetching org settings via active org', userSettings.active_organization_id);
+              organizationSettings = await fetchOrgSettings(userSettings.active_organization_id);
+              organizationSettingsSource = 'fetched';
+            }
           }
         }
       }
@@ -1290,7 +1338,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const safeMockData = mockData ?? {};
 
-    const htmlContent = generateHTMLContent(blocks, safeMockData, finalSubject, preheader, organizationSettings, false);
+    const htmlContent = generateHTMLContent(blocks, safeMockData, finalSubject, preheader, organizationSettings, false, isTest === true, organizationSettingsSource);
     const textContent = generatePlainText(blocks, safeMockData);
 
     // Get business name for sender and use business email as reply-to
@@ -1476,7 +1524,8 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       emailSubject, 
       undefined, // no preheader
       organizationSettings,
-      false // not preview mode
+      false, // not preview mode
+      false
     );
     
     // Create plain text version using the same function
@@ -1696,6 +1745,7 @@ async function handleAuthEmail(requestData: SendEmailRequest): Promise<Response>
       resolvedCopy.subject,
       resolvedCopy.preheader,
       null,
+      false,
       false
     );
     const textContent = generatePlainText(blocks, mockData);

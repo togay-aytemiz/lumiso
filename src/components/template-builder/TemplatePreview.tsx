@@ -7,6 +7,8 @@ import { WhatsAppPreview } from "./previews/WhatsAppPreview";
 import { SMSPreview } from "./previews/SMSPreview";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -48,6 +50,8 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [isLoading, setIsLoading] = useState(false);
   const { user, session } = useAuth();
+  const { activeOrganizationId } = useOrganization();
+  const { settings: organizationSettings, loading: orgSettingsLoading } = useOrganizationSettings();
   const { t } = useTranslation('pages');
 
   const defaultMockData = {
@@ -132,7 +136,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
   };
 
   const sendTestEmail = async () => {
-    if (!user?.email || !session?.access_token) {
+    if (!user?.email || !session?.access_token || !activeOrganizationId || orgSettingsLoading) {
       toast({
         title: t('templateBuilder.preview.toast.errorTitle'),
         description: t('templateBuilder.preview.toast.noUserEmail'),
@@ -160,7 +164,9 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
           preheader: preheader,
           blocks: visibleBlocks,
           mockData: mockData,
-          isTest: true
+          isTest: true,
+          organization_id: activeOrganizationId,
+          organization_settings: organizationSettings ?? undefined,
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -168,6 +174,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
       });
 
       if (error) {
+        console.error('send-template-email invoke failed', { error, data });
         throw error;
       }
 

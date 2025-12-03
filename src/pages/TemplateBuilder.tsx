@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Eye, Edit, MonitorSmartphone, Send } from 'lucide-react';
+import { ArrowLeft, Eye, Edit, MonitorSmartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -22,8 +22,6 @@ import { useTranslation } from "react-i18next";
 import { TemplateVariablesProvider } from "@/contexts/TemplateVariablesContext";
 import { VariableTokenText } from "@/components/template-builder/VariableTokenText";
 import { Tooltip, TooltipContent, TooltipContentDark, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/hooks/use-toast";
 
 // Optimized TemplateBuilder component
 const OptimizedTemplateBuilderContent = React.memo(() => {
@@ -31,7 +29,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const { t: tCommon } = useTranslation("common");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
   const templateId = searchParams.get('id');
   const untitledName = useMemo(
     () => t("templateBuilder.untitledTemplate", { defaultValue: "Untitled Template" }),
@@ -73,14 +70,12 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     [t]
   );
   const [publishTooltipOpen, setPublishTooltipOpen] = useState(false);
-  const [isSendingTest, setIsSendingTest] = useState(false);
 
   // Template data from backend or defaults
   const templateName = template?.name || untitledName;
   const subject = template?.subject || '';
   const preheader = template?.preheader || '';
   const blocks = useMemo(() => template?.blocks ?? [], [template?.blocks]);
-  const visibleBlocks = useMemo(() => blocks.filter((block) => block.visible), [blocks]);
   const isDraft = template?.status === 'draft' || !template;
   const dirtyVersionRef = useRef(dirtyVersion);
   const lastAutoSavedVersionRef = useRef(0);
@@ -290,23 +285,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     };
   }, [dirtyVersion, isDirty, saving, handleAutoSave]);
 
-  const getErrorMessage = (error: unknown): string | undefined => {
-    if (error instanceof Error) {
-      return error.message;
-    }
-
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "message" in error &&
-      typeof (error as { message?: unknown }).message === "string"
-    ) {
-      return (error as { message: string }).message;
-    }
-
-    return undefined;
-  };
-
   const handleNavigateBack = useCallback(async () => {
     if (isDirty && dirtyVersion > lastAutoSavedVersionRef.current) {
       await handleAutoSave();
@@ -350,59 +328,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const handlePreheaderSave = async (newPreheader: string) => {
     updateTemplate({ preheader: newPreheader });
     setIsEditingPreheader(false);
-  };
-
-  const handleSendTestEmail = async () => {
-    if (!user?.email) {
-      toast({
-        title: t('templateBuilder.preview.toast.errorTitle'),
-        description: t('templateBuilder.preview.toast.noUserEmail'),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (visibleBlocks.length === 0) {
-      toast({
-        title: t('templateBuilder.preview.toast.errorTitle'),
-        description: t('templateBuilder.preview.toast.noBlocks'),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSendingTest(true);
-
-    try {
-      const { error } = await supabase.functions.invoke('send-template-email', {
-        body: {
-          to: user.email,
-          subject: subject || 'Test Email from Template Builder',
-          preheader,
-          blocks: visibleBlocks,
-          mockData: previewMockData,
-          isTest: true,
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: t('templateBuilder.preview.toast.successTitle'),
-        description: t('templateBuilder.preview.toast.testEmailSent', { email: user.email }),
-      });
-    } catch (error: unknown) {
-      console.error('Error sending test email:', error);
-      toast({
-        title: t('templateBuilder.preview.toast.errorTitle'),
-        description: getErrorMessage(error) ?? t('templateBuilder.preview.toast.sendFailed'),
-        variant: "destructive",
-      });
-    } finally {
-      setIsSendingTest(false);
-    }
   };
 
   const handleNameEdit = () => {
@@ -586,18 +511,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
           </div>
 
           <div className="flex items-center gap-2">
-            {activeChannel === "email" && (
-              <Button 
-                size="sm" 
-                variant="secondary"
-                className="bg-muted text-foreground border border-border hover:bg-muted/80"
-                onClick={handleSendTestEmail}
-                disabled={isSendingTest || visibleBlocks.length === 0}
-              >
-                <Send className="h-4 w-4" />
-                {isSendingTest ? t('templateBuilder.preview.sending') : t('templateBuilder.preview.testSend')}
-              </Button>
-            )}
             {publishDisabled ? (
               <TooltipProvider delayDuration={0}>
                 <Tooltip
@@ -646,40 +559,42 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
           <div className="mt-3 pt-3 border-t space-y-3">
             {/* Subject Line - Side by Side */}
             <div className="space-y-1">
-              {isEditingSubject ? (
-                <InlineSubjectEditor
-                  value={subject}
-                  onSave={handleSubjectSave}
-                  onCancel={() => setIsEditingSubject(false)}
-                  placeholder={subjectPlaceholder}
-                />
-              ) : (
-                <div className="flex items-center gap-3 pl-1">
-                  <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
-                    {t("templateBuilder.email.subject")}
-                  </Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsEditingSubject(true)}
-                    className="flex h-auto w-full flex-1 items-center justify-between gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
-                  >
-                    <span className={`text-sm flex-1 ${!subject ? 'text-muted-foreground' : 'text-foreground'}`}>
-                      {subject ? (
-                        <VariableTokenText
-                          text={subject}
-                          placeholder={t("templateBuilder.email.addSubject")}
-                          variableLabels={variableLabels}
-                        />
-                      ) : (
-                        t("templateBuilder.email.addSubject")
-                      )}
-                    </span>
-                    <Edit className="h-3 w-3 opacity-70 group-hover:opacity-100" />
-                  </Button>
+              <div className="flex items-center gap-3 pl-1">
+                <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
+                  {t("templateBuilder.email.subject")}
+                </Label>
+                <div className="flex-1 min-w-0">
+                  {isEditingSubject ? (
+                    <InlineSubjectEditor
+                      value={subject}
+                      onSave={handleSubjectSave}
+                      onCancel={() => setIsEditingSubject(false)}
+                      placeholder={subjectPlaceholder}
+                    />
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingSubject(true)}
+                      className="flex h-auto w-full flex-1 items-center justify-between gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
+                    >
+                      <span className={`text-sm flex-1 ${!subject ? 'text-muted-foreground' : 'text-foreground'}`}>
+                        {subject ? (
+                          <VariableTokenText
+                            text={subject}
+                            placeholder={t("templateBuilder.email.addSubject")}
+                            variableLabels={variableLabels}
+                          />
+                        ) : (
+                          t("templateBuilder.email.addSubject")
+                        )}
+                      </span>
+                      <Edit className="h-3 w-3 opacity-70 group-hover:opacity-100" />
+                    </Button>
+                  )}
                 </div>
-              )}
+              </div>
               
               {/* Character count and spam warnings for subject */}
               {!isEditingSubject && subject && (subjectCharCount > 60 || spamWords.length > 0) && (
@@ -716,40 +631,42 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
 
             {/* Preheader - Side by Side */}
             <div>
-              {isEditingPreheader ? (
-                <InlinePreheaderEditor
-                  value={preheader}
-                  onSave={handlePreheaderSave}
-                  onCancel={() => setIsEditingPreheader(false)}
-                  placeholder={preheaderPlaceholder}
-                />
-              ) : (
-                <div className="flex items-center gap-3 pl-1">
-                  <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
-                    {t("templateBuilder.email.preheader")}
-                  </Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsEditingPreheader(true)}
-                    className="flex h-auto w-full flex-1 items-center justify-between gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
-                  >
-                    <span className={`text-sm flex-1 ${!preheader ? 'text-muted-foreground' : 'text-foreground'}`}>
-                      {preheader ? (
-                        <VariableTokenText
-                          text={preheader}
-                          placeholder={t("templateBuilder.email.addPreheader")}
-                          variableLabels={variableLabels}
-                        />
-                      ) : (
-                        t("templateBuilder.email.addPreheader")
-                      )}
-                    </span>
-                    <Edit className="h-3 w-3 opacity-70 group-hover:opacity-100" />
-                  </Button>
+              <div className="flex items-center gap-3 pl-1">
+                <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
+                  {t("templateBuilder.email.preheader")}
+                </Label>
+                <div className="flex-1 min-w-0">
+                  {isEditingPreheader ? (
+                    <InlinePreheaderEditor
+                      value={preheader}
+                      onSave={handlePreheaderSave}
+                      onCancel={() => setIsEditingPreheader(false)}
+                      placeholder={preheaderPlaceholder}
+                    />
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingPreheader(true)}
+                      className="flex h-auto w-full flex-1 items-center justify-between gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
+                    >
+                      <span className={`text-sm flex-1 ${!preheader ? 'text-muted-foreground' : 'text-foreground'}`}>
+                        {preheader ? (
+                          <VariableTokenText
+                            text={preheader}
+                            placeholder={t("templateBuilder.email.addPreheader")}
+                            variableLabels={variableLabels}
+                          />
+                        ) : (
+                          t("templateBuilder.email.addPreheader")
+                        )}
+                      </span>
+                      <Edit className="h-3 w-3 opacity-70 group-hover:opacity-100" />
+                    </Button>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         )}

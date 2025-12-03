@@ -1249,7 +1249,7 @@
       "collected": "Tahsil edilen",
       "collected_helper": "Kaydedilen tüm ödemeler",
       "remaining": "Kalan tutar",
-      "remaining_helper": "Toplam tutar eksi tahsilat",
+      "remaining_helper": "Proje toplamından tahsil edilenler çıkarıldığında kalan bakiye",
       "vat": "Tahmini KDV",
       "vat_helper": "Hizmet KDV ayarlarına göre",
       "vat_breakdown_title": "KDV dağılımı",

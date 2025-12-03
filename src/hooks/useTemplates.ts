@@ -109,12 +109,14 @@ export function useTemplates() {
       return matchesSessionCategory || matchesAllowedCategory || matchesName;
     });
     
-    // If no session-specific templates found, show all general templates as fallback
-    const result = sessionFiltered.length > 0 ? sessionFiltered : templates;
+    // Always include all templates: session-relevant ones first, then everything else
+    const nonSessionTemplates = templates.filter(template => !sessionFiltered.includes(template));
+    const result = [...sessionFiltered, ...nonSessionTemplates];
     
     // Debug logging to help troubleshoot template loading
     console.log('All templates:', templates);
     console.log('Session-filtered templates:', sessionFiltered);
+    console.log('Non-session templates:', nonSessionTemplates);
     console.log('Final result templates:', result);
     
     return result;

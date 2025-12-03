@@ -47,6 +47,7 @@ interface Session {
   lead_id: string;
   session_date: string | null;
   session_time: string | null;
+  session_name?: string | null;
   notes: string | null;
   status: string;
   created_at: string;
@@ -125,6 +126,7 @@ type SessionRow = {
   lead_id: string;
   session_date: string | null;
   session_time: string | null;
+  session_name?: string | null;
   notes: string | null;
   status: string;
   created_at: string;
@@ -318,12 +320,14 @@ const AllSessions = () => {
       const sessionsWithInfo: Session[] = filteredSessions.map((sessionRow) => {
         const project = firstOrNull(sessionRow.projects);
         const projectStatus = project ? firstOrNull(project.project_status) : null;
+        const normalizedSessionName = (sessionRow.session_name ?? '').trim();
 
         return {
           id: sessionRow.id,
           lead_id: sessionRow.lead_id,
           session_date: sessionRow.session_date,
           session_time: sessionRow.session_time,
+          session_name: normalizedSessionName || sessionRow.leads?.name || '',
           notes: sessionRow.notes,
           status: sessionRow.status,
           created_at: sessionRow.created_at,
@@ -610,6 +614,11 @@ const AllSessions = () => {
 
     const compare = (a: SessionWithComputed, b: SessionWithComputed) => {
       switch (sortColumn) {
+        case 'session_name': {
+          const aName = (a.session_name || '').toLowerCase();
+          const bName = (b.session_name || '').toLowerCase();
+          return aName.localeCompare(bName);
+        }
         case 'lead_name': {
           const aName = (a.lead_name || '').toLowerCase();
           const bName = (b.lead_name || '').toLowerCase();
@@ -874,7 +883,21 @@ const AllSessions = () => {
 
   const columns = useMemo<AdvancedTableColumn<SessionWithComputed>[]>(
     () => [
-      // 1) Kişi adı (Client Name)
+      // 1) Session name
+      {
+        id: 'session_name',
+        label: t('sessions.table.sessionName'),
+        sortable: true,
+        accessorKey: 'session_name',
+        minWidth: '200px',
+        render: (session) =>
+          session.session_name && session.session_name.trim().length > 0 ? (
+            <span className="font-medium">{session.session_name}</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+      },
+      // 2) Kişi adı (Client Name)
       {
         id: 'lead_name',
         label: t('sessions.table.clientName'),
@@ -883,7 +906,7 @@ const AllSessions = () => {
         minWidth: '180px',
         cellClassName: 'whitespace-nowrap font-medium',
       },
-      // 2) Tarih (Date)
+      // 3) Tarih (Date)
       {
         id: 'session_date',
         label: t('sessions.table.date'),
@@ -935,7 +958,7 @@ const AllSessions = () => {
           return <span className="whitespace-nowrap">{formatLongDate(session.session_date)}</span>;
         },
       },
-      // 3) Saat (Time)
+      // 4) Saat (Time)
       {
         id: 'session_time',
         label: t('sessions.table.time'),
@@ -943,7 +966,7 @@ const AllSessions = () => {
         minWidth: '120px',
         render: (session) => <span className="whitespace-nowrap">{formatTime(session.session_time)}</span>,
       },
-      // 4) Session Status
+      // 5) Session Status
       {
         id: 'status',
         label: t('sessions.table.status'),
@@ -971,7 +994,7 @@ const AllSessions = () => {
           );
         },
       },
-      // 5) Proje (Project)
+      // 6) Proje (Project)
       {
         id: 'project',
         label: t('sessions.table.project'),
@@ -989,7 +1012,7 @@ const AllSessions = () => {
             <span className="text-muted-foreground">—</span>
           ),
       },
-      // 6) Notes
+      // 7) Notes
       {
         id: 'notes',
         label: t('sessions.table.notes'),
@@ -1098,6 +1121,7 @@ const AllSessions = () => {
       const rows = filteredAndSortedSessions.map((session) => {
         const statusLabel = session.statusDisplayName || session.status || '';
         return {
+          [t('sessions.table.sessionName')]: session.session_name ?? '',
           [t('sessions.table.clientName')]: session.lead_name ?? '',
           [t('sessions.table.date')]: session.session_date
             ? formatLongDate(session.session_date)

@@ -138,10 +138,14 @@ export const sessionPlanningReducer = (
       }
 
       const nextLabel = action.payload.label;
+      const normalizedCurrentName = state.sessionName?.trim().toLowerCase() ?? "";
+      const leadFallback = state.lead.name ? `${state.lead.name} Session` : "";
+      const projectFallback = state.project.name ? `${state.project.name} Session` : "";
       const shouldUpdateName =
-        !state.sessionName ||
-        !state.sessionName.trim() ||
-        state.sessionName === state.sessionTypeLabel;
+        !normalizedCurrentName ||
+        normalizedCurrentName === (state.sessionTypeLabel ?? "").trim().toLowerCase() ||
+        (!!leadFallback && normalizedCurrentName === leadFallback.trim().toLowerCase()) ||
+        (!!projectFallback && normalizedCurrentName === projectFallback.trim().toLowerCase());
 
       return {
         ...state,

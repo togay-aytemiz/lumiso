@@ -690,6 +690,16 @@ const SessionPlanningWizardSheetInner = ({
     state.notifications
   ]);
 
+  const safeOpenChange = useCallback(
+    (nextOpen: boolean, force = false) => {
+      if (!force && !nextOpen && (isCompleting || completionSummary)) {
+        return;
+      }
+      onOpenChange(nextOpen);
+    },
+    [completionSummary, isCompleting, onOpenChange]
+  );
+
   const handleClose = () => {
     if (state.meta.isDirty) {
       setShowGuardDialog(true);
@@ -710,7 +720,7 @@ const SessionPlanningWizardSheetInner = ({
     clearDraft();
     reset(entryContext);
     setCompletionSummary(null);
-    onOpenChange(false);
+    safeOpenChange(false, true);
   };
 
   const handleDiscardDraft = () => {
@@ -721,7 +731,7 @@ const SessionPlanningWizardSheetInner = ({
     });
     clearDraft();
     reset(entryContext);
-    onOpenChange(false);
+    safeOpenChange(false, true);
   };
 
   const handleSuccessClose = () => {
@@ -733,7 +743,7 @@ const SessionPlanningWizardSheetInner = ({
     }
     setCompletionSummary(null);
     reset(entryContext);
-    onOpenChange(false);
+    safeOpenChange(false, true);
   };
 
   const handleScheduleAnother = () => {
@@ -1149,7 +1159,7 @@ const SessionPlanningWizardSheetInner = ({
       <AppSheetModal
         title={t("wizard.title")}
         isOpen={isOpen}
-        onOpenChange={onOpenChange}
+        onOpenChange={safeOpenChange}
         size="xl"
         mobileHeightClass="max-h-[95vh]"
         mobileMinHeightClass="min-h-[95vh]"

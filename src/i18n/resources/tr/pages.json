@@ -1637,6 +1637,7 @@
       }
     },
     "table": {
+      "sessionName": "Seans Adı",
       "project": "Proje",
       "clientName": "Kişi Adı",
       "date": "Tarih",

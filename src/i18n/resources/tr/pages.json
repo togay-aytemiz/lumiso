@@ -2590,6 +2590,10 @@
       "duplicateError": "Şablon kopyalanamadı. Lütfen tekrar deneyin.",
       "loadError": "Şablon yüklenemedi. Lütfen yenileyip tekrar deneyin."
     },
+    "emptyState": {
+      "title": "Şablon Oluşturucu",
+      "description": "Başlamak için aşağıdan bir blok seçin."
+    },
     "editor": {
       "title": "Şablon Oluşturucu",
       "description": "E posta şablonunuzu oluşturmak için blokları sürükleyip bırakın",

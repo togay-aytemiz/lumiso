@@ -8,11 +8,11 @@
       "recovery": "Reset your password \ud83d\udd10",
       "recoveryRequest": "Reset your password \ud83d\udd10"
     },
-      "copy": {
-        "signIn": "Sign in with your credentials to pick up exactly where your team left off.",
-        "signUp": "Create your Lumiso account to unlock collaborative workflows and beautiful client experiences.",
-        "verify": "We emailed you a confirmation link. Verify it to activate your workspace.",
-        "recovery": "Create a new password to get back into your account.",
+    "copy": {
+      "signIn": "Sign in with your credentials to pick up exactly where your team left off.",
+      "signUp": "Create your Lumiso account to unlock collaborative workflows and beautiful client experiences.",
+      "verify": "We emailed you a confirmation link. Verify it to activate your workspace.",
+      "recovery": "Create a new password to get back into your account.",
       "recoveryRequest": "Enter your email address and we'll send you a reset link."
     },
     "verification": {
@@ -879,46 +879,46 @@
           "teamMembers": "Team members",
           "cards": {
             "leads": {
-            "title": "Leads",
-            "total": "Total created",
-            "active": "Active lifecycle",
-            "completed": "Completed",
-            "cancelled": "Cancelled"
-          },
+              "title": "Leads",
+              "total": "Total created",
+              "active": "Active lifecycle",
+              "completed": "Completed",
+              "cancelled": "Cancelled"
+            },
             "projects": {
-            "title": "Projects",
-            "total": "Total created",
-            "active": "Active lifecycle",
-            "completed": "Completed",
-            "cancelled": "Cancelled"
-          },
+              "title": "Projects",
+              "total": "Total created",
+              "active": "Active lifecycle",
+              "completed": "Completed",
+              "cancelled": "Cancelled"
+            },
             "sessions": {
-            "title": "Sessions",
-            "total": "Total scheduled",
-            "active": "Active lifecycle",
-            "completed": "Completed",
-            "cancelled": "Cancelled"
-          },
+              "title": "Sessions",
+              "total": "Total scheduled",
+              "active": "Active lifecycle",
+              "completed": "Completed",
+              "cancelled": "Cancelled"
+            },
             "payments": {
-            "title": "Payments",
-            "billed": "Total invoiced",
-            "collected": "Total collected",
-            "pending": "Pending payments",
-            "refunded": "Refunded"
-          },
+              "title": "Payments",
+              "billed": "Total invoiced",
+              "collected": "Total collected",
+              "pending": "Pending payments",
+              "refunded": "Refunded"
+            },
             "automations": {
-            "title": "Templates & workflows",
-            "templates": "Templates",
-            "workflows": "Workflows"
-          },
+              "title": "Templates & workflows",
+              "templates": "Templates",
+              "workflows": "Workflows"
+            },
             "catalog": {
-            "title": "Catalog coverage",
-            "packages": "Packages",
-            "services": "Services",
-            "sessionTypes": "Session types"
+              "title": "Catalog coverage",
+              "packages": "Packages",
+              "services": "Services",
+              "sessionTypes": "Session types"
+            }
           }
-        }
-      },
+        },
         "account": {
           "title": "Account context",
           "subtitle": "Ownership, contact, and notes",
@@ -930,9 +930,9 @@
           "businessPhone": "Business phone",
           "social": "Social channels",
           "emptySocial": "No social links yet.",
-        "timezone": "Timezone",
-        "notes": "Notes",
-        "emptyNotes": "No notes yet."
+          "timezone": "Timezone",
+          "notes": "Notes",
+          "emptyNotes": "No notes yet."
         },
         "suspension": {
           "activeBadge": "Suspended",
@@ -941,13 +941,13 @@
         "actions": {
           "title": "Admin actions",
           "subtitle": "Manual interventions for this customer",
-        "manageTrial": "Manage trial",
-        "grantPremium": "Grant premium",
-        "addComplimentary": "Add complimentary",
-        "suspendAccount": "Suspend account",
-        "removeSuspension": "Remove suspension",
-        "contactUser": "Contact user",
-        "membershipModals": {
+          "manageTrial": "Manage trial",
+          "grantPremium": "Grant premium",
+          "addComplimentary": "Add complimentary",
+          "suspendAccount": "Suspend account",
+          "removeSuspension": "Remove suspension",
+          "contactUser": "Contact user",
+          "membershipModals": {
             "cancel": "Cancel",
             "saving": "Saving...",
             "saved": "Membership data refreshed",
@@ -1768,28 +1768,28 @@
         "description": "Choose your preferred language for the interface",
         "current": "Current Language"
       },
-        "tutorial": {
-          "businessInfo": {
-            "title": "Business Information & Branding",
-            "description": "Intake already filled these fields—use this page to refine public details, add social channel links, and give the pre-configured regional settings a quick look.",
-            "setBusinessName": "Review or adjust your studio name",
-            "uploadLogo": "Upload your business logo",
-            "chooseBrandColors": "Choose your brand colors",
-            "help": "Business info, social channels, and regional settings appear on every client touchpoint—give them a quick look."
-          },
-          "addBusinessName": {
-            "title": "Verify your business identity",
-            "description": "We already saved your studio name—use this step to confirm it, drop in social links, and glance at the timezone/date settings we prepared.",
-            "required": "Enter or confirm your business name to enable Next (pre-filled from intake).",
-            "appearsOn": "Feeds Social Channels plus every invoice, contract, and email.",
-            "canChange": "Branding, social links, and regional settings stay editable anytime."
-          },
-          "setupComplete": {
-            "title": "🎉 Business Setup Complete!",
-            "description": "Great work! Your business information is ready, and you're clear to continue the guided setup."
-          }
+      "tutorial": {
+        "businessInfo": {
+          "title": "Business Information & Branding",
+          "description": "Intake already filled these fields—use this page to refine public details, add social channel links, and give the pre-configured regional settings a quick look.",
+          "setBusinessName": "Review or adjust your studio name",
+          "uploadLogo": "Upload your business logo",
+          "chooseBrandColors": "Choose your brand colors",
+          "help": "Business info, social channels, and regional settings appear on every client touchpoint—give them a quick look."
+        },
+        "addBusinessName": {
+          "title": "Verify your business identity",
+          "description": "We already saved your studio name—use this step to confirm it, drop in social links, and glance at the timezone/date settings we prepared.",
+          "required": "Enter or confirm your business name to enable Next (pre-filled from intake).",
+          "appearsOn": "Feeds Social Channels plus every invoice, contract, and email.",
+          "canChange": "Branding, social links, and regional settings stay editable anytime."
+        },
+        "setupComplete": {
+          "title": "🎉 Business Setup Complete!",
+          "description": "Great work! Your business information is ready, and you're clear to continue the guided setup."
         }
-      },
+      }
+    },
     "profile": {
       "title": "Profile",
       "description": "Personal details and working hours",
@@ -2589,6 +2589,10 @@
       "deleteError": "We couldn't delete the template. Please try again.",
       "duplicateError": "We couldn't duplicate the template. Please try again.",
       "loadError": "We couldn't load the template. Please refresh and try again."
+    },
+    "emptyState": {
+      "title": "Template Builder",
+      "description": "Select a block below to get started."
     },
     "editor": {
       "title": "Template Builder",

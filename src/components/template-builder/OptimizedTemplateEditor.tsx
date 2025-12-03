@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { TemplateBlock, BlockData, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
 import { BlockEditor } from "./BlockEditor";
 import { AddBlockSheet } from "./AddBlockSheet";
+import { EmptyStateBlockSelector } from "./EmptyStateBlockSelector";
 import { useTranslation } from 'react-i18next';
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
@@ -37,14 +38,14 @@ function getBlockTitleKey(type: TemplateBlock["type"]): string {
 }
 
 // Memoized block component to prevent unnecessary re-renders
-const MemoizedBlockCard = React.memo(({ 
-  block, 
-  index, 
-  isActive, 
-  onActivate, 
-  onToggleVisibility, 
-  onUpdate, 
-  onRemove, 
+const MemoizedBlockCard = React.memo(({
+  block,
+  index,
+  isActive,
+  onActivate,
+  onToggleVisibility,
+  onUpdate,
+  onRemove,
   onMove,
   canMoveUp,
   canMoveDown,
@@ -63,7 +64,7 @@ const MemoizedBlockCard = React.memo(({
   totalBlocks: number;
 }) => {
   const { t } = useTranslation('pages');
-  
+
   const handleHeaderToggle = useCallback(() => {
     onActivate(block.id);
   }, [block.id, onActivate]);
@@ -133,7 +134,7 @@ const MemoizedBlockCard = React.memo(({
               >
                 <div className="flex w-full items-center justify-between gap-2">
                   <CardTitle className={cn("text-sm flex items-center gap-2", !isActive && "gap-1.5")}>
-                    <div 
+                    <div
                       {...provided.dragHandleProps}
                       className="cursor-grab active:cursor-grabbing"
                     >
@@ -211,14 +212,15 @@ const MemoizedBlockCard = React.memo(({
 
 MemoizedBlockCard.displayName = 'MemoizedBlockCard';
 
-export const OptimizedTemplateEditor = React.memo(({ 
-  blocks, 
+export const OptimizedTemplateEditor = React.memo(({
+  blocks,
   onBlocksChange
 }: OptimizedTemplateEditorProps) => {
   const { t } = useTranslation('pages');
   const { settings: organizationSettings } = useOrganizationSettings();
   const [activeBlock, setActiveBlock] = useState<string | null>(null);
   const [showAddBlock, setShowAddBlock] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const handleActivateBlock = useCallback((blockId: string) => {
     setActiveBlock((current) => current === blockId ? null : blockId);
   }, []);
@@ -231,7 +233,15 @@ export const OptimizedTemplateEditor = React.memo(({
       visible: true,
       order: blocks.length,
     };
-    
+
+    // Trigger transition animation when adding first block
+    if (blocks.length === 0) {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 300);
+    }
+
     const newBlocks = [...blocks, newBlock];
     onBlocksChange(newBlocks);
     setActiveBlock(newBlock.id);
@@ -239,14 +249,14 @@ export const OptimizedTemplateEditor = React.memo(({
   }, [blocks, onBlocksChange, t, organizationSettings]);
 
   const updateBlock = useCallback((blockId: string, data: BlockData) => {
-    const newBlocks = blocks.map(block => 
+    const newBlocks = blocks.map(block =>
       block.id === blockId ? { ...block, data } : block
     );
     onBlocksChange(newBlocks);
   }, [blocks, onBlocksChange]);
 
   const toggleBlockVisibility = useCallback((blockId: string) => {
-    const newBlocks = blocks.map(block => 
+    const newBlocks = blocks.map(block =>
       block.id === blockId ? { ...block, visible: !block.visible } : block
     );
     onBlocksChange(newBlocks);
@@ -263,18 +273,18 @@ export const OptimizedTemplateEditor = React.memo(({
   const moveBlock = useCallback((blockId: string, direction: "up" | "down") => {
     const blockIndex = blocks.findIndex(b => b.id === blockId);
     if (blockIndex === -1) return;
-    
+
     const newIndex = direction === "up" ? blockIndex - 1 : blockIndex + 1;
     if (newIndex < 0 || newIndex >= blocks.length) return;
-    
+
     const newBlocks = [...blocks];
     [newBlocks[blockIndex], newBlocks[newIndex]] = [newBlocks[newIndex], newBlocks[blockIndex]];
-    
+
     // Update order values
     newBlocks.forEach((block, index) => {
       block.order = index;
     });
-    
+
     onBlocksChange(newBlocks);
   }, [blocks, onBlocksChange]);
 
@@ -324,40 +334,60 @@ export const OptimizedTemplateEditor = React.memo(({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="border-b px-6 py-4">
-        <div>
-          <h2 className="font-semibold">{t('templateBuilder.editor.title')}</h2>
-          <p className="text-sm text-muted-foreground">{t('templateBuilder.editor.description')}</p>
+      {/* Header - only show when blocks exist */}
+      {blocks.length > 0 && (
+        <div className="border-b px-6 py-4">
+          <div>
+            <h2 className="font-semibold">{t('templateBuilder.editor.title')}</h2>
+            <p className="text-sm text-muted-foreground">{t('templateBuilder.editor.description')}</p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Blocks List */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="template-blocks">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="space-y-4"
-              >
-                {memoizedBlocks}
-                {provided.placeholder}
-              </div>
+        {blocks.length === 0 ? (
+          <div
+            className={cn(
+              "transition-all duration-300 ease-out",
+              isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
             )}
-          </Droppable>
-        </DragDropContext>
+          >
+            <EmptyStateBlockSelector onAddBlock={addBlock} />
+          </div>
+        ) : (
+          <div
+            className={cn(
+              "transition-all duration-300 ease-out",
+              isTransitioning ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
+            )}
+          >
+            <DragDropContext onDragEnd={onDragEnd}>
+              <Droppable droppableId="template-blocks">
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="space-y-4"
+                  >
+                    {memoizedBlocks}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
 
-        {/* Add Block Button */}
-        <Button
-          variant="outline"
-          className="w-full h-12 border-dashed"
-          onClick={handleShowAddBlock}
-        >
-          <Plus className="h-4 w-4" />
-          {t('templateBuilder.editor.addBlock')}
-        </Button>
+            {/* Add Block Button */}
+            <Button
+              variant="outline"
+              className="w-full h-12 border-dashed"
+              onClick={handleShowAddBlock}
+            >
+              <Plus className="h-4 w-4" />
+              {t('templateBuilder.editor.addBlock')}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Add Block Sheet */}

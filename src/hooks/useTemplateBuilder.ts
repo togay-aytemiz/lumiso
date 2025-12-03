@@ -215,6 +215,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
   const restoredCleanDraftRef = useRef(false);
   const dirtyVersionRef = useRef(0);
   const latestSavedVersionRef = useRef(0);
+  const persistDraftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const untitledTemplateLabel = t("templateBuilder.untitledTemplate", {
     defaultValue: "Untitled Template"
   });
@@ -660,8 +661,23 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
   }, [templateId, activeOrganizationId, loadTemplate]);
 
   useEffect(() => {
-    if (!template) return;
-    persistDraftToStorage(templateId, template, isDirty);
+    if (!template || typeof window === "undefined") return;
+
+    if (persistDraftTimerRef.current) {
+      clearTimeout(persistDraftTimerRef.current);
+    }
+
+    // Debounce localStorage writes to avoid blocking keystrokes while typing
+    persistDraftTimerRef.current = window.setTimeout(() => {
+      persistDraftToStorage(templateId, template, isDirty);
+    }, 400);
+
+    return () => {
+      if (persistDraftTimerRef.current) {
+        clearTimeout(persistDraftTimerRef.current);
+        persistDraftTimerRef.current = null;
+      }
+    };
   }, [template, isDirty, templateId]);
 
   // Load template on mount

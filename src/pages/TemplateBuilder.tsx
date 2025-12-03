@@ -456,9 +456,11 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
 
   const backLabel = tCommon("buttons.back", { defaultValue: "Back" });
   const publishDisabled = saving || (!template?.id && !templateId && !isDirty);
-  const publishTooltip = t("templateBuilder.status.publishDisabledTooltip", {
-    defaultValue: "Start editing to enable Publish"
-  });
+  const publishTooltip = saving
+    ? t("templateBuilder.status.saving", { defaultValue: "Saving..." })
+    : t("templateBuilder.status.publishDisabledTooltip", {
+        defaultValue: "Start editing to enable Publish"
+      });
 
   return (
     <TemplateVariablesProvider value={templateVariablesState}>

@@ -248,6 +248,13 @@ export function SampleDataModal({
       onClick: handlePrimaryAction,
       variant: "surface",
       disabled: isLoading || (isChoosingSkip && !selectedOption),
+      tooltip:
+        isChoosingSkip && !selectedOption
+          ? {
+              content: t("onboarding.sample_data.select_option_tooltip"),
+              variant: "dark",
+            }
+          : undefined,
     },
   ];
 

@@ -2,6 +2,8 @@ import { ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { LongPressButton } from "@/components/ui/long-press-button";
+import { Tooltip, TooltipContent, TooltipContentDark, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export interface OnboardingAction {
   label: string;
@@ -15,6 +17,10 @@ export interface OnboardingAction {
     holdingLabel?: string;
     completeLabel?: string;
   };
+  tooltip?: {
+    content: ReactNode;
+    variant?: "dark" | "light";
+  };
 }
 
 interface BaseOnboardingModalProps {
@@ -26,6 +32,7 @@ interface BaseOnboardingModalProps {
   headerSlot?: ReactNode;
   children?: ReactNode;
   actions: OnboardingAction[];
+  contentClassName?: string;
 }
 
 export function BaseOnboardingModal({ 
@@ -36,7 +43,8 @@ export function BaseOnboardingModal({
   eyebrow,
   headerSlot,
   children, 
-  actions 
+  actions,
+  contentClassName
 }: BaseOnboardingModalProps) {
   const hasSingleAction = actions.length === 1;
   const actionLayout = actions.length > 1 ? "grid-cols-2" : "grid-cols-1";
@@ -50,7 +58,7 @@ export function BaseOnboardingModal({
         onEscapeKeyDown={(e) => { e.preventDefault(); }} 
         onPointerDownOutside={(e) => { e.preventDefault(); }}
       >
-        <div className="flex flex-col gap-6 p-6 sm:p-8">
+        <div className={cn("flex flex-col p-6 sm:p-8", contentClassName ?? "gap-6")}>
           <DialogHeader className="space-y-2 text-left">
             {eyebrow && (
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -79,29 +87,52 @@ export function BaseOnboardingModal({
           <div className={hasSingleAction ? "flex justify-end pt-2" : `grid gap-3 pt-2 ${actionLayout}`}>
             {actions.map((action, index) => {
               const buttonClassName = [baseButtonClass, action.className].filter(Boolean).join(" ");
-              return action.longPress ? (
+              const variant = action.variant || (index === actions.length - 1 ? "default" : "outline");
+              const button = action.longPress ? (
                 <LongPressButton
-                  key={index}
                   onConfirm={action.onClick}
                   label={action.label}
                   duration={action.longPress.duration}
                   holdingLabel={action.longPress.holdingLabel}
                   completeLabel={action.longPress.completeLabel}
-                  variant={action.variant || (index === actions.length - 1 ? "default" : "outline")}
+                  variant={variant}
                   disabled={action.disabled}
                   className={buttonClassName}
                 />
               ) : (
                 <Button
-                  key={index}
                   onClick={action.onClick}
-                  variant={action.variant || (index === actions.length - 1 ? "default" : "outline")}
+                  variant={variant}
                   disabled={action.disabled}
                   className={buttonClassName}
                 >
                   {action.icon && <span className="mr-2">{action.icon}</span>}
                   {action.label}
                 </Button>
+              );
+
+              if (action.tooltip) {
+                const ContentComponent = action.tooltip.variant === "dark" ? TooltipContentDark : TooltipContent;
+                return (
+                  <TooltipProvider key={index}>
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex w-full" tabIndex={action.disabled ? 0 : -1}>
+                          {button}
+                        </span>
+                      </TooltipTrigger>
+                      <ContentComponent side="top">
+                        {action.tooltip.content}
+                      </ContentComponent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              }
+
+              return (
+                <span key={index} className="inline-flex w-full">
+                  {button}
+                </span>
               );
             })}
           </div>

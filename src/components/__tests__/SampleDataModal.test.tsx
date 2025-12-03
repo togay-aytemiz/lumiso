@@ -131,10 +131,20 @@ describe("SampleDataModal", () => {
     mockSupabaseRpc.mockResolvedValue({ data: null, error: null });
   });
 
-  it("renders sample/clean options when open", () => {
+  it("renders sample/clean options when open", async () => {
+    const user = userEvent.setup();
     render(<SampleDataModal open onClose={onClose} />);
 
     expect(baseModalRender).toHaveBeenCalled();
+    const optionsPanel = screen.getByTestId("skip-options");
+    expect(optionsPanel).toHaveAttribute("aria-hidden", "true");
+
+    const skipButton = screen.getByRole("button", {
+      name: "onboarding.modal.skip_sample_data",
+    });
+    await user.click(skipButton);
+
+    expect(optionsPanel).toHaveAttribute("aria-hidden", "false");
     expect(
       screen.getByText("onboarding.sample_data.options.sample.title")
     ).toBeInTheDocument();
@@ -146,6 +156,14 @@ describe("SampleDataModal", () => {
   it("skips onboarding with sample data and shows success feedback", async () => {
     const user = userEvent.setup();
     render(<SampleDataModal open onClose={onClose} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "onboarding.modal.skip_sample_data" })
+    );
+
+    await user.click(
+      screen.getByText("onboarding.sample_data.options.sample.title")
+    );
 
     const skipButton = screen.getByRole("button", {
       name: "onboarding.sample_data.start_with_sample_data",
@@ -180,10 +198,13 @@ describe("SampleDataModal", () => {
     const user = userEvent.setup();
     render(<SampleDataModal open onClose={onClose} />);
 
-    const cleanOption = screen.getByText(
-      "onboarding.sample_data.options.clean.title"
+    await user.click(
+      screen.getByRole("button", { name: "onboarding.modal.skip_sample_data" })
     );
-    await user.click(cleanOption);
+
+    await user.click(
+      screen.getByText("onboarding.sample_data.options.clean.title")
+    );
 
     const startButton = screen.getByRole("button", {
       name: "onboarding.sample_data.start_clean",
@@ -219,6 +240,14 @@ describe("SampleDataModal", () => {
     skipOnboarding.mockRejectedValueOnce(error);
 
     render(<SampleDataModal open onClose={onClose} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "onboarding.modal.skip_sample_data" })
+    );
+
+    await user.click(
+      screen.getByText("onboarding.sample_data.options.sample.title")
+    );
 
     const skipButton = screen.getByRole("button", {
       name: "onboarding.sample_data.start_with_sample_data",

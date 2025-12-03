@@ -2511,6 +2511,12 @@
   "templates": {
     "title": "Mesaj Şablonları",
     "subtitle": "Yeniden kullanılabilir e posta şablonları tasarlayın ve yönetin",
+    "video": {
+      "title": "Şablonlar nasıl çalışır?",
+      "description": "Mesajlarınızı tasarlayıp yeniden kullanmanın kısa özetini izleyin.",
+      "remindLater": "Daha sonra hatırlat",
+      "dontShow": "İzledim, bir daha gösterme"
+    },
     "search": "Şablonları ara...",
     "buttons": {
       "newTemplate": "Yeni Şablon",
@@ -3107,9 +3113,16 @@
     },
     "sample_data": {
       "title": "Kurulumu atlamadan önce",
-      "description": "Rehberli adımları kapatmadan önce çalışma alanını nasıl görmek istediğini seç.",
+      "description": "Rehberli kurulumu sürdürebilir ya da eğitimi sonlandırıp kendi hızında devam edebilirsin.",
+      "choice_title": "Nasıl devam etmek istersin?",
+      "choice_description": "Eğitimi kapatmak için örnek verilerle keşfetmeyi ya da temiz başlamayı seç.",
+      "path_continue_description": "Rehberli kontrol listesini tamamlayarak ayarlarını adım adım oturt.",
+      "path_skip_description": "Eğitimi sonlandırıp örnek verilerle keşfetmeyi ya da temiz alanla başlamayı seç.",
+      "selection_hint": "Eğitimi kapatacaksan aşağıdan nasıl ilerleyeceğini seç.",
       "whats_included": "Örnek verilerde neler var:",
       "continue_guided_setup": "Rehberli kuruluma devam et",
+      "return_to_setup": "Kuruluma geri dön",
+      "select_option_tooltip": "Nasıl başlayacağını seçmek için bir seçenek işaretle.",
       "start_with_sample_data": "Örnek verilerle keşfet",
       "start_clean": "Temiz çalışma alanıyla başla",
       "recommended": "Önerilen",

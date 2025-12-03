@@ -2511,6 +2511,12 @@
   "templates": {
     "title": "Message Templates",
     "subtitle": "Design and manage reusable email templates",
+    "video": {
+      "title": "See how Templates works",
+      "description": "Watch a quick overview to design and reuse your messages.",
+      "remindLater": "Remind me later",
+      "dontShow": "I watched, don't show again"
+    },
     "search": "Search templates...",
     "buttons": {
       "newTemplate": "New Template",
@@ -3107,9 +3113,16 @@
     },
     "sample_data": {
       "title": "Before you skip the checklist",
-      "description": "Choose how you’d like your workspace to look before leaving the guided steps.",
+      "description": "Stay in guided setup or end the tutorial and move forward your way.",
+      "choice_title": "How would you like to continue?",
+      "choice_description": "Pick sample data or start clean, then we’ll exit the tutorial.",
+      "path_continue_description": "Finish the guided checklist to lock in your settings with our prompts.",
+      "path_skip_description": "End the tutorial now and pick between sample data or a clean slate.",
+      "selection_hint": "If you choose to exit, pick how you want to explore.",
       "whats_included": "Sample data includes:",
       "continue_guided_setup": "Continue guided setup",
+      "return_to_setup": "Return to guided setup",
+      "select_option_tooltip": "Select an option to choose how you want to start.",
       "start_with_sample_data": "Explore with sample data",
       "start_clean": "Start with a clean workspace",
       "recommended": "Recommended",

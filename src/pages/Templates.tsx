@@ -16,15 +16,28 @@ import { useTemplateOperations } from "@/hooks/useTemplateOperations";
 import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErrorBoundary";
 import { Template } from "@/types/template";
 import { useTranslation } from "react-i18next";
+import { PageVideoModal } from "@/components/PageVideoModal";
+import { usePageVideoPrompt } from "@/hooks/usePageVideoPrompt";
 import GlobalSearch from "@/components/GlobalSearch";
 import { VariableTokenText } from "@/components/template-builder/VariableTokenText";
 import { useTemplateVariables } from "@/hooks/useTemplateVariables";
 import { clearTemplateDraftLocalStorage } from "@/hooks/useTemplateBuilder";
 
+const TEMPLATES_VIDEO_ID =
+  (typeof import.meta !== "undefined" &&
+    (import.meta as { env?: Record<string, string> }).env?.VITE_TEMPLATES_VIDEO_ID) ||
+  "PDJvy9OFcVU";
+
 // Optimized Templates component with memoization and error handling
 const OptimizedTemplatesContent = React.memo(() => {
   const { t, i18n } = useTranslation("pages");
   const navigate = useNavigate();
+  const {
+    isOpen: isTemplatesVideoOpen,
+    close: closeTemplatesVideo,
+    markCompleted: markTemplatesVideoWatched,
+    snooze: snoozeTemplatesVideo
+  } = usePageVideoPrompt({ pageKey: "templates", snoozeDays: 1 });
   const dateLocale = i18n.language === 'tr' ? tr : enUS;
   const {
     loading,
@@ -385,6 +398,22 @@ const OptimizedTemplatesContent = React.memo(() => {
         onConfirm={confirmDeleteTemplate}
         templateName={deleteDialog.template?.name || ''}
         loading={deleting}
+      />
+
+      <PageVideoModal
+        open={isTemplatesVideoOpen}
+        onClose={closeTemplatesVideo}
+        videoId={TEMPLATES_VIDEO_ID}
+        title={t("templates.video.title", { defaultValue: "See how Templates works" })}
+        description={t("templates.video.description", {
+          defaultValue: "Watch a quick overview to design and reuse your messages."
+        })}
+        labels={{
+          remindMeLater: t("templates.video.remindLater", { defaultValue: "Remind me later" }),
+          dontShowAgain: t("templates.video.dontShow", { defaultValue: "I watched, don't show again" })
+        }}
+        onSnooze={snoozeTemplatesVideo}
+        onDontShowAgain={markTemplatesVideoWatched}
       />
     </div>
   );

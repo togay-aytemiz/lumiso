@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import GlobalSearch from "@/components/GlobalSearch";
 import { VariableTokenText } from "@/components/template-builder/VariableTokenText";
 import { useTemplateVariables } from "@/hooks/useTemplateVariables";
+import { clearTemplateDraftLocalStorage } from "@/hooks/useTemplateBuilder";
 
 // Optimized Templates component with memoization and error handling
 const OptimizedTemplatesContent = React.memo(() => {
@@ -194,13 +195,16 @@ const OptimizedTemplatesContent = React.memo(() => {
         sortable: true,
         hideable: true,
         minWidth: "120px",
-        render: (template) => (
-          <Badge variant={template.is_active ? "default" : "secondary"}>
-            {template.is_active
-              ? t("templates.status.published")
-              : t("templates.status.draft")}
-          </Badge>
-        ),
+        render: (template) => {
+          const status = template.status ?? (template.is_active ? "published" : "draft");
+          return (
+            <Badge variant={status === "published" ? "default" : "secondary"}>
+              {status === "published"
+                ? t("templates.status.published")
+                : t("templates.status.draft")}
+            </Badge>
+          );
+        },
       },
       {
         id: "updated_at",
@@ -268,7 +272,13 @@ const OptimizedTemplatesContent = React.memo(() => {
 
   const headerActions = useMemo(
     () => (
-      <Button onClick={() => navigate('/template-builder')} className="flex items-center gap-2 whitespace-nowrap">
+      <Button
+        onClick={() => {
+          clearTemplateDraftLocalStorage();
+          navigate('/template-builder');
+        }}
+        className="flex items-center gap-2 whitespace-nowrap"
+      >
         <Plus className="h-4 w-4" />
         {t("templates.buttons.newTemplate")}
       </Button>

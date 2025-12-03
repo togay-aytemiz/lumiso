@@ -10,6 +10,7 @@ export interface Template {
   master_subject?: string;
   placeholders?: string[];
   is_active: boolean;
+  status?: 'draft' | 'published';
   created_at: string;
   updated_at: string;
   user_id: string;

@@ -239,24 +239,27 @@ describe("DeleteTemplateDialog", () => {
       />
     );
 
-    const alert = screen.getByRole("alert");
+    const alerts = screen.getAllByRole("alert");
+    expect(alerts[0]).toHaveTextContent("messages:templateDeleteDialog.workflowWarning");
+    expect(alerts[1]).toHaveTextContent("messages:templateDeleteDialog.deleteWarning");
+
     const templateName = screen.getByText(
       (content, element) =>
         element?.tagName === "STRONG" && content.includes("Client Update")
     );
     expect(templateName).toBeInTheDocument();
-    expect(templateName.parentElement?.textContent).toContain("permanently deleted");
+    expect(templateName.parentElement?.textContent).toContain("messages:templateDeleteDialog.deleteWarning");
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Cancel/,
+        name: "messages:templateDeleteDialog.cancel",
       })
     );
     expect(handleClose).toHaveBeenCalled();
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Delete Template/,
+        name: "messages:templateDeleteDialog.delete",
       })
     );
     expect(handleConfirm).toHaveBeenCalled();

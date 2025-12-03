@@ -2549,6 +2549,10 @@
     }
   },
   "templateBuilder": {
+    "status": {
+      "saving": "Kaydediliyor...",
+      "allChangesSaved": "Tüm değişiklikler kaydedildi"
+    },
     "loading": "Şablon yükleniyor...",
     "untitledTemplate": "Başlıksız Şablon",
     "badges": {
@@ -2572,10 +2576,13 @@
       "publishedDescription": "Şablon başarıyla yayınlandı",
       "deletedTitle": "Silindi",
       "deletedDescription": "Şablon başarıyla silindi",
+      "duplicatedTitle": "Kopyalandı",
+      "duplicatedDescription": "\"{name}\" başarıyla kopyalandı.",
       "errorTitle": "Hata",
       "saveError": "Şablon kaydedilemedi. Lütfen tekrar deneyin.",
       "publishError": "Şablon yayınlanamadı. Lütfen tekrar deneyin.",
       "deleteError": "Şablon silinemedi. Lütfen tekrar deneyin.",
+      "duplicateError": "Şablon kopyalanamadı. Lütfen tekrar deneyin.",
       "loadError": "Şablon yüklenemedi. Lütfen yenileyip tekrar deneyin."
     },
     "editor": {

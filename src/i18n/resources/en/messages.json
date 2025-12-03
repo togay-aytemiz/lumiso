@@ -45,6 +45,24 @@
     "deleteProject": "Are you sure you want to delete this project?",
     "deleteProjectWarning": "This will permanently delete the project and all associated data including sessions, activities, todos, and payments. This action cannot be undone."
   },
+  "templateDeleteDialog": {
+    "title": "Delete Template",
+    "workflowWarning": "Workflows using this template will be stopped. Please review your workflows after deletion.",
+    "deleteWarning": "will be permanently deleted and cannot be recovered.",
+    "willRemove": "This will remove:",
+    "removeDesign": "The template design and content",
+    "removeBlocks": "All associated blocks and styling",
+    "removeSubject": "Subject and preheader text",
+    "cancel": "Cancel",
+    "delete": "Delete Template",
+    "deleting": "Deleting..."
+  },
+  "templateBuilder": {
+    "status": {
+      "saving": "Saving...",
+      "allChangesSaved": "All changes saved"
+    }
+  },
   "toast": {
     "statusSetTo": "Status set to \"{status}\""
   },

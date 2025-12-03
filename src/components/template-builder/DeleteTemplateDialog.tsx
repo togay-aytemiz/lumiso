@@ -27,7 +27,7 @@ export function DeleteTemplateDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
             <Trash2 className="h-5 w-5" />
-            Delete Template
+            {tMessages('templateDeleteDialog.title')}
           </DialogTitle>
           <DialogDescription>
             {tMessages('confirm.deleteTemplate')} {tMessages('confirm.cannotUndo')}
@@ -35,19 +35,26 @@ export function DeleteTemplateDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          <Alert className="border-amber-200 bg-amber-50 text-amber-900 [&>svg]:text-amber-600">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              {tMessages('templateDeleteDialog.workflowWarning')}
+            </AlertDescription>
+          </Alert>
+
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              <strong>"{templateName}"</strong> will be permanently deleted and cannot be recovered.
+              <strong className="font-semibold">"{templateName}"</strong> {tMessages('templateDeleteDialog.deleteWarning')}
             </AlertDescription>
           </Alert>
 
           <div className="text-sm text-muted-foreground">
-            This will remove:
+            {tMessages('templateDeleteDialog.willRemove')}
             <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>The template design and content</li>
-              <li>All associated blocks and styling</li>
-              <li>Subject and preheader text</li>
+              <li>{tMessages('templateDeleteDialog.removeDesign')}</li>
+              <li>{tMessages('templateDeleteDialog.removeBlocks')}</li>
+              <li>{tMessages('templateDeleteDialog.removeSubject')}</li>
             </ul>
           </div>
         </div>
@@ -59,7 +66,7 @@ export function DeleteTemplateDialog({
             disabled={loading}
           >
             <X className="h-4 w-4 mr-2" />
-            Cancel
+            {tMessages('templateDeleteDialog.cancel')}
           </Button>
           <Button 
             variant="destructive"
@@ -70,12 +77,12 @@ export function DeleteTemplateDialog({
             {loading ? (
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                Deleting...
+                {tMessages('templateDeleteDialog.deleting')}
               </div>
             ) : (
               <>
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete Template
+                {tMessages('templateDeleteDialog.delete')}
               </>
             )}
           </Button>

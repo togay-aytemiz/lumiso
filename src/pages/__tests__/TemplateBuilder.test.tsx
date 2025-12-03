@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
+import { act, fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import * as ReactRouterDom from "react-router-dom";
 import TemplateBuilder from "../TemplateBuilder";
 import { mockSupabaseClient } from "@/utils/testUtils";
@@ -50,7 +50,7 @@ jest.mock("@/components/template-builder/TemplateErrorBoundary", () => ({
 jest.mock("@/components/ui/button", () => ({
   __esModule: true,
   Button: React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
-    ({ children, ...props }, ref) => (
+    ({ children, colorScheme, ...props }, ref) => (
       <button ref={ref} {...props}>
         {children}
       </button>
@@ -85,6 +85,7 @@ jest.mock("@/hooks/useTemplateBuilder");
 jest.mock("@/hooks/useTemplateVariables", () => ({
   useTemplateVariables: jest.fn(() => ({
     getVariableValue: jest.fn(),
+    variables: [],
   })),
 }));
 
@@ -139,6 +140,7 @@ describe("TemplateBuilder page", () => {
   afterEach(() => {
     jest.clearAllMocks();
     jest.restoreAllMocks();
+    jest.useRealTimers();
   });
 
   const renderTemplateBuilder = async () => {
@@ -154,10 +156,12 @@ describe("TemplateBuilder page", () => {
       saving: false,
       lastSaved: null,
       isDirty: false,
+      dirtyVersion: 0,
       saveTemplate: jest.fn(),
       publishTemplate: jest.fn(),
       updateTemplate: jest.fn(),
       resetDirtyState: jest.fn(),
+      clearDraft: jest.fn(),
     });
 
     await renderTemplateBuilder();
@@ -165,7 +169,8 @@ describe("TemplateBuilder page", () => {
     expect(screen.getByText("templateBuilder.loading")).toBeInTheDocument();
   });
 
-  it("saves the current template when the save button is clicked", async () => {
+  it("auto-saves dirty templates without manual action", async () => {
+    jest.useFakeTimers({ legacyFakeTimers: true });
     const saveTemplate = jest.fn().mockResolvedValue(baseTemplate);
     const updateTemplate = jest.fn();
 
@@ -175,25 +180,35 @@ describe("TemplateBuilder page", () => {
       saving: false,
       lastSaved: null,
       isDirty: true,
+      dirtyVersion: 1,
       saveTemplate,
       publishTemplate: jest.fn(),
       updateTemplate,
       resetDirtyState: jest.fn(),
+      clearDraft: jest.fn(),
     });
 
     await renderTemplateBuilder();
 
-    fireEvent.click(screen.getByText("templateBuilder.buttons.saveDraft"));
+    await act(async () => {
+      jest.advanceTimersByTime(900);
+    });
 
     await waitFor(() => {
-      expect(saveTemplate).toHaveBeenCalledWith({
-        ...baseTemplate,
-        name: "Welcome",
-        subject: "Hello",
-        preheader: "Preheader",
-        blocks: [],
-      });
+      expect(saveTemplate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Welcome",
+          subject: "Hello",
+          preheader: "Preheader",
+          blocks: [],
+          status: "draft",
+          category: "general",
+        }),
+        false
+      );
     });
+
+    jest.useRealTimers();
   });
 
   it("updates template blocks when the editor reports changes", async () => {
@@ -205,10 +220,12 @@ describe("TemplateBuilder page", () => {
       saving: false,
       lastSaved: null,
       isDirty: true,
+      dirtyVersion: 1,
       saveTemplate: jest.fn(),
       publishTemplate: jest.fn(),
       updateTemplate,
       resetDirtyState: jest.fn(),
+      clearDraft: jest.fn(),
     });
 
     await renderTemplateBuilder();

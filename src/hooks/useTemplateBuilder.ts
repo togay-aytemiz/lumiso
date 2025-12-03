@@ -13,6 +13,7 @@ interface UseTemplateBuilderReturn {
   loading: boolean;
   saving: boolean;
   lastSaved: Date | null;
+  dirtyVersion: number;
   isDirty: boolean;
   saveTemplate: (templateData: Partial<TemplateBuilderData>, showToast?: boolean) => Promise<TemplateBuilderData | null>;
   publishTemplate: (templateData?: Partial<TemplateBuilderData>) => Promise<TemplateBuilderData | null>;
@@ -165,18 +166,27 @@ const persistDraftToStorage = (
   }
 };
 
+export const clearTemplateDraftLocalStorage = (templateId?: string) => {
+  if (typeof window === "undefined") return;
+
+  localStorage.removeItem(getDraftStorageKey(templateId));
+};
+
 export function useTemplateBuilder(templateId?: string): UseTemplateBuilderReturn {
   const [template, setTemplate] = useState<TemplateBuilderData | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [dirtyVersion, setDirtyVersion] = useState(0);
   
   const { activeOrganizationId } = useOrganization();
   const { user } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation("pages");
   const restoredDraftDirtyRef = useRef(false);
+  const dirtyVersionRef = useRef(0);
+  const latestSavedVersionRef = useRef(0);
   const untitledTemplateLabel = t("templateBuilder.untitledTemplate", {
     defaultValue: "Untitled Template"
   });
@@ -208,6 +218,9 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       setTemplate(transformedTemplate);
       setIsDirty(false);
       restoredDraftDirtyRef.current = false;
+      dirtyVersionRef.current = 0;
+      latestSavedVersionRef.current = 0;
+      setDirtyVersion(0);
     } catch (error: unknown) {
       console.error("Error loading template:", error);
       toast({
@@ -252,6 +265,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
     showToast = true
   ): Promise<TemplateBuilderData | null> => {
     if (!activeOrganizationId || !user?.id) return null;
+    const saveVersion = dirtyVersionRef.current;
 
     try {
       setSaving(true);
@@ -384,10 +398,35 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
         channels: mergedData.channels || {}
       };
 
-      setTemplate(savedTemplate);
+      setTemplate((current) => {
+        if (!current) {
+          return savedTemplate;
+        }
+
+        const hasNewerChanges = dirtyVersionRef.current !== saveVersion;
+        if (hasNewerChanges) {
+          return {
+            ...savedTemplate,
+            name: current.name ?? savedTemplate.name,
+            subject: current.subject ?? savedTemplate.subject,
+            preheader: current.preheader ?? savedTemplate.preheader,
+            blocks: current.blocks ?? savedTemplate.blocks,
+            status: current.status ?? savedTemplate.status,
+            category: current.category ?? savedTemplate.category,
+            channels: current.channels ?? savedTemplate.channels,
+          };
+        }
+
+        return savedTemplate;
+      });
+
       setLastSaved(new Date());
-      setIsDirty(false);
-      restoredDraftDirtyRef.current = false;
+      latestSavedVersionRef.current = saveVersion;
+      const hasUnsaved = dirtyVersionRef.current > latestSavedVersionRef.current;
+      setIsDirty(hasUnsaved);
+      if (!hasUnsaved) {
+        restoredDraftDirtyRef.current = false;
+      }
 
       if (showToast) {
         toast({
@@ -500,6 +539,9 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
   }, [templateId, activeOrganizationId, toast, t]);
 
   const updateTemplate = useCallback((updates: Partial<TemplateBuilderData>) => {
+    dirtyVersionRef.current += 1;
+    setDirtyVersion(dirtyVersionRef.current);
+
     if (!template) {
       // Create a basic template with updates
       const newTemplate: TemplateBuilderData = {
@@ -542,6 +584,9 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
     restoredDraftDirtyRef.current = false;
     setIsDirty(false);
     setLastSaved(null);
+    dirtyVersionRef.current = 0;
+    latestSavedVersionRef.current = 0;
+    setDirtyVersion(0);
 
     if (templateId && activeOrganizationId) {
       await loadTemplate();
@@ -567,6 +612,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
     loading,
     saving,
     lastSaved,
+    dirtyVersion,
     isDirty,
     saveTemplate,
     publishTemplate,

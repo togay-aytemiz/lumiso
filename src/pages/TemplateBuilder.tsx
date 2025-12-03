@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Save, Eye, Edit } from 'lucide-react';
+import { ArrowLeft, Eye, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -39,8 +39,8 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     template,
     loading,
     saving,
-    lastSaved,
     isDirty,
+    dirtyVersion,
     saveTemplate,
     publishTemplate,
     updateTemplate,
@@ -76,6 +76,17 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const preheader = template?.preheader || '';
   const blocks = useMemo(() => template?.blocks ?? [], [template?.blocks]);
   const isDraft = template?.status === 'draft' || !template;
+  const dirtyVersionRef = useRef(dirtyVersion);
+  const lastAutoSavedVersionRef = useRef(0);
+  const savingRef = useRef(saving);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    dirtyVersionRef.current = dirtyVersion;
+  }, [dirtyVersion]);
+  useEffect(() => {
+    savingRef.current = saving;
+  }, [saving]);
 
   // Fetch existing template names for validation
   useEffect(() => {
@@ -128,7 +139,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const {
     showGuard,
     message: guardMessage,
-    handleNavigationAttempt,
     handleDiscardChanges,
     handleStayOnPage,
     handleSaveAndExit
@@ -165,30 +175,99 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
       });
       
       if (newTemplate) {
+        lastAutoSavedVersionRef.current = dirtyVersionRef.current;
         // Update URL to include template ID
         navigate(`/template-builder?id=${newTemplate.id}`, { replace: true });
       }
     } else {
       // Update existing template
-      await saveTemplate({
+      const saved = await saveTemplate({
         ...template,
         name: nameToUse,
         subject,
         preheader,
         blocks,
       });
+
+      if (saved) {
+        lastAutoSavedVersionRef.current = dirtyVersionRef.current;
+      }
     }
   }, [template, saveTemplate, templateName, subject, preheader, blocks, navigate]);
 
-  const handleNavigateBack = useCallback(() => {
-    if (isDirty) {
-      if (!handleNavigationAttempt('/templates')) {
-        return; // Navigation blocked by guard
+  const handleAutoSave = useCallback(async () => {
+    if (savingRef.current) return;
+
+    const versionToSave = dirtyVersionRef.current;
+    if (versionToSave <= lastAutoSavedVersionRef.current) return;
+
+    const saved = await saveTemplate(
+      {
+        name: templateName,
+        subject,
+        preheader,
+        blocks,
+        status: isDraft ? 'draft' : 'published',
+        category: template?.category || 'general',
+      },
+      false
+    );
+
+    if (saved) {
+      lastAutoSavedVersionRef.current = versionToSave;
+      if (!templateId) {
+        navigate(`/template-builder?id=${saved.id}`, { replace: true });
       }
     }
-    navigate('/templates');
-  }, [isDirty, handleNavigationAttempt, navigate]);
+  }, [
+    saveTemplate,
+    templateName,
+    subject,
+    preheader,
+    blocks,
+    isDraft,
+    template?.category,
+    templateId,
+    navigate,
+  ]);
 
+  useEffect(() => {
+    if (saving) {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+      return;
+    }
+
+    if (!isDirty || dirtyVersion <= lastAutoSavedVersionRef.current) {
+      return;
+    }
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = window.setTimeout(() => {
+      if (savingRef.current) return;
+      if (dirtyVersionRef.current <= lastAutoSavedVersionRef.current) return;
+      void handleAutoSave();
+    }, 800);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+    };
+  }, [dirtyVersion, isDirty, saving, handleAutoSave]);
+
+  const handleNavigateBack = useCallback(async () => {
+    if (isDirty && dirtyVersion > lastAutoSavedVersionRef.current) {
+      await handleAutoSave();
+    }
+    navigate('/templates');
+  }, [isDirty, dirtyVersion, handleAutoSave, navigate]);
 
   const handlePublishTemplate = useCallback(async (customName?: string) => {
     const nameToUse = customName || templateName;
@@ -210,8 +289,11 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     });
 
     // Update URL if it's a new template
-    if (publishedTemplate && !templateId) {
-      navigate(`/template-builder?id=${publishedTemplate.id}`, { replace: true });
+    if (publishedTemplate) {
+      lastAutoSavedVersionRef.current = dirtyVersionRef.current;
+      if (!templateId) {
+        navigate(`/template-builder?id=${publishedTemplate.id}`, { replace: true });
+      }
     }
   }, [templateName, subject, preheader, blocks, template?.category, publishTemplate, templateId, navigate]);
 
@@ -337,6 +419,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   }
 
   const backLabel = tCommon("buttons.back", { defaultValue: "Back" });
+  const isSavingOrPending = saving || isDirty;
 
   return (
     <TemplateVariablesProvider value={templateVariablesState}>
@@ -377,26 +460,20 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                   >
                     <Edit className="h-3 w-3" />
                   </Button>
+                  <Badge variant={isDraft ? "secondary" : "default"}>
+                    {isDraft ? t("templateBuilder.badges.draft") : t("templateBuilder.badges.published")}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {isSavingOrPending
+                      ? t("templateBuilder.status.saving", { defaultValue: "Saving..." })
+                      : t("templateBuilder.status.allChangesSaved", { defaultValue: "All changes saved" })}
+                  </span>
                 </div>
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-3 pr-2">
-              <Badge variant={isDraft ? "secondary" : "default"}>
-                {isDraft ? t("templateBuilder.badges.draft") : t("templateBuilder.badges.published")}
-              </Badge>
-              {isDirty ? (
-                <span className="text-xs text-amber-600 font-medium">
-                  {t("templateBuilder.badges.unsavedChanges")}
-                </span>
-              ) : lastSaved ? (
-                <span className="text-xs text-muted-foreground">
-                  {t("templateBuilder.saved", { time: lastSaved.toLocaleTimeString() })}
-                </span>
-              ) : null}
-            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -406,13 +483,9 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
             >
               {t("templateBuilder.buttons.restart")}
             </Button>
-            <Button variant="outline" onClick={() => handleSaveTemplate()} disabled={saving}>
-              <Save className="h-4 w-4" />
-              {saving ? t("templateBuilder.buttons.saving") : t("templateBuilder.buttons.saveDraft")}
-            </Button>
-            <Button onClick={() => handlePublishTemplate()} disabled={saving}>
+            <Button onClick={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())} disabled={saving}>
               <Eye className="h-4 w-4" />
-              {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.published")}
+              {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.done", { defaultValue: "Done" })}
             </Button>
           </div>
         </div>

@@ -2549,6 +2549,10 @@
     }
   },
   "templateBuilder": {
+    "status": {
+      "saving": "Saving...",
+      "allChangesSaved": "All changes saved"
+    },
     "loading": "Loading template...",
     "untitledTemplate": "Untitled Template",
     "badges": {
@@ -2572,10 +2576,13 @@
       "publishedDescription": "Template published successfully",
       "deletedTitle": "Deleted",
       "deletedDescription": "Template deleted successfully",
+      "duplicatedTitle": "Duplicated",
+      "duplicatedDescription": "\"{name}\" has been duplicated successfully.",
       "errorTitle": "Error",
       "saveError": "We couldn't save the template. Please try again.",
       "publishError": "We couldn't publish the template. Please try again.",
       "deleteError": "We couldn't delete the template. Please try again.",
+      "duplicateError": "We couldn't duplicate the template. Please try again.",
       "loadError": "We couldn't load the template. Please refresh and try again."
     },
     "editor": {

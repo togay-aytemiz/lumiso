@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Template, DatabaseTemplate, TemplateBuilderData } from "@/types/template";
+import { Template, DatabaseTemplate } from "@/types/template";
+import { useTranslation } from "react-i18next";
 
 interface UseTemplateOperationsReturn {
   templates: Template[];
@@ -34,6 +35,18 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object" && "message" in error) {
+    const maybeMessage = (error as { message?: unknown }).message;
+    if (typeof maybeMessage === "string") {
+      return maybeMessage;
+    }
+  }
+  return null;
+};
+
 // Transform database template to our unified interface
 const transformDatabaseTemplate = (dbTemplate: DatabaseTemplate): Template => {
   return {
@@ -41,12 +54,13 @@ const transformDatabaseTemplate = (dbTemplate: DatabaseTemplate): Template => {
     name: dbTemplate.name,
     category: dbTemplate.category,
     master_content: dbTemplate.master_content,
-    master_subject: dbTemplate.master_subject || undefined,
-    placeholders: Array.isArray(dbTemplate.placeholders) ? dbTemplate.placeholders as string[] : [],
-    is_active: dbTemplate.is_active,
-    created_at: dbTemplate.created_at,
-    updated_at: dbTemplate.updated_at,
-    user_id: dbTemplate.user_id,
+  master_subject: dbTemplate.master_subject || undefined,
+  placeholders: Array.isArray(dbTemplate.placeholders) ? dbTemplate.placeholders as string[] : [],
+  is_active: dbTemplate.is_active,
+  status: dbTemplate.is_active ? "published" : "draft",
+  created_at: dbTemplate.created_at,
+  updated_at: dbTemplate.updated_at,
+  user_id: dbTemplate.user_id,
     organization_id: dbTemplate.organization_id,
     channels: dbTemplate.template_channel_views?.reduce<Record<string, { subject: string | null; content: string | null; html_content: string | null }>>((acc, view) => {
       acc[view.channel] = {
@@ -80,6 +94,7 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
   const { activeOrganizationId } = useOrganization();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation("pages");
 
   // Debounce search term to avoid excessive filtering
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -104,25 +119,30 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
           )
         `)
         .eq('organization_id', activeOrganizationId)
-        .eq('is_active', true)
+        .order('is_active', { ascending: false })
         .order('updated_at', { ascending: false });
 
       if (fetchError) throw fetchError;
-      
+
       const transformedTemplates = (data || []).map(transformDatabaseTemplate);
       setTemplates(transformedTemplates);
     } catch (err) {
       console.error('Error fetching templates:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch templates');
+      const errorMessage =
+        getErrorMessage(err) ??
+        t("templateBuilder.toast.loadError", {
+          defaultValue: "We couldn't load the template. Please refresh and try again."
+        });
+      setError(errorMessage);
       toast({
-        title: "Error loading templates",
-        description: err instanceof Error ? err.message : 'Failed to fetch templates',
+        title: t("templateBuilder.toast.errorTitle", { defaultValue: "Error" }),
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  }, [activeOrganizationId, toast]);
+  }, [activeOrganizationId, toast, t]);
 
   const deleteTemplate = useCallback(async (templateId: string): Promise<boolean> => {
     if (!activeOrganizationId) return false;
@@ -152,21 +172,26 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
       setTemplates(prev => prev.filter(t => t.id !== templateId));
       
       toast({
-        title: "Template deleted",
-        description: "Template has been successfully deleted."
+        title: t("templateBuilder.toast.deletedTitle", { defaultValue: "Deleted" }),
+        description: t("templateBuilder.toast.deletedDescription", { defaultValue: "Template deleted successfully" })
       });
       
       return true;
     } catch (err) {
       console.error('Error deleting template:', err);
+      const errorMessage =
+        getErrorMessage(err) ??
+        t("templateBuilder.toast.deleteError", {
+          defaultValue: "We couldn't delete the template. Please try again."
+        });
       toast({
-        title: "Error deleting template",
-        description: err.message || 'Failed to delete template',
+        title: t("templateBuilder.toast.errorTitle", { defaultValue: "Error" }),
+        description: errorMessage,
         variant: "destructive"
       });
       return false;
     }
-  }, [activeOrganizationId, toast]);
+  }, [activeOrganizationId, toast, t]);
 
   const duplicateTemplate = useCallback(async (template: Template): Promise<boolean> => {
     if (!activeOrganizationId || !user?.id) return false;
@@ -227,27 +252,36 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
       const newTemplate: Template = {
         ...data,
         placeholders: Array.isArray(data.placeholders) ? data.placeholders as string[] : [],
+        status: 'draft',
         channels: template.channels || {}
       };
 
       setTemplates(prev => [newTemplate, ...prev]);
       
       toast({
-        title: "Template duplicated",
-        description: `"${template.name}" has been duplicated successfully.`
+        title: t("templateBuilder.toast.duplicatedTitle", { defaultValue: "Duplicated" }),
+        description: t("templateBuilder.toast.duplicatedDescription", {
+          name: template.name,
+          defaultValue: `"${template.name}" has been duplicated successfully.`
+        })
       });
       
       return true;
     } catch (err) {
       console.error('Error duplicating template:', err);
+      const errorMessage =
+        getErrorMessage(err) ??
+        t("templateBuilder.toast.duplicateError", {
+          defaultValue: "We couldn't duplicate the template. Please try again."
+        });
       toast({
-        title: "Error duplicating template",
-        description: err.message || 'Failed to duplicate template',
+        title: t("templateBuilder.toast.errorTitle", { defaultValue: "Error" }),
+        description: errorMessage,
         variant: "destructive"
       });
       return false;
     }
-  }, [activeOrganizationId, user?.id, toast]);
+  }, [activeOrganizationId, user?.id, toast, t]);
 
   // Memoized filtered templates
   const filteredTemplates = useMemo(() => {

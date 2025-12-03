@@ -45,6 +45,24 @@
     "deleteProject": "Bu projeyi silmek istediğinizden emin misiniz?",
     "deleteProjectWarning": "Bu, projeyi ve seanslar, aktiviteler, yapılacaklar ve ödemeler dahil tüm ilişkili verileri kalıcı olarak silecektir. Bu işlem geri alınamaz."
   },
+  "templateDeleteDialog": {
+    "title": "Şablonu Sil",
+    "workflowWarning": "Bu şablonu kullanan iş akışları durdurulacak. Lütfen silme işleminden sonra iş akışlarını kontrol edin.",
+    "deleteWarning": "kalıcı olarak silinecek ve kurtarılamaz.",
+    "willRemove": "Şunlar kaldırılacak:",
+    "removeDesign": "Şablon tasarımı ve içeriği",
+    "removeBlocks": "İlişkili tüm bloklar ve stiller",
+    "removeSubject": "Konu ve önbaşlık metni",
+    "cancel": "İptal",
+    "delete": "Şablonu Sil",
+    "deleting": "Siliniyor..."
+  },
+  "templateBuilder": {
+    "status": {
+      "saving": "Kaydediliyor...",
+      "allChangesSaved": "Tüm değişiklikler kaydedildi"
+    }
+  },
   "toast": {
     "statusSetTo": "Durum \"{status}\" olarak ayarlandı"
   },

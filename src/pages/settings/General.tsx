@@ -14,7 +14,7 @@ import { Building, Upload, Settings } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
-import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { SocialChannel, useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { SocialChannelsSection } from "@/components/settings/SocialChannelsSection";
@@ -111,6 +111,13 @@ export default function General() {
   
   const browserTimezone = useMemo(() => detectBrowserTimezone(), []);
   const browserHourFormat = useMemo(() => detectBrowserHourFormat(), []);
+  const socialChannelsSetting = useMemo<Record<string, SocialChannel>>(
+    () =>
+      settings?.socialChannels ??
+      (settings?.social_channels as Record<string, SocialChannel> | undefined) ??
+      {},
+    [settings?.socialChannels, settings?.social_channels]
+  );
 
   // Branding section state
   const brandingSection = useSettingsCategorySection({
@@ -159,6 +166,19 @@ export default function General() {
       if (!result.success) {
         throw new Error("Failed to save regional settings");
       }
+    }
+  });
+
+  const socialChannelsSection = useSettingsCategorySection<Record<string, SocialChannel>>({
+    sectionId: "social-channels",
+    sectionName: t('forms:social_channels.title'),
+    initialValues: socialChannelsSetting,
+    onSave: async (values) => {
+      const result = await updateSettings({ social_channels: values });
+      if (!result.success) {
+        throw new Error("Failed to save social channels");
+      }
+      return result.data?.social_channels ?? result.data?.socialChannels ?? values;
     }
   });
 
@@ -216,6 +236,7 @@ export default function General() {
   // Update form values when settings load
   const setBrandingValues = brandingSection.setValues;
   const setRegionalValues = regionalSection.setValues;
+  const setSocialChannelsValues = socialChannelsSection.setValues;
 
   const companyNameSetting = settings?.photography_business_name ?? "";
   const businessEmailSetting = settings?.email ?? "";
@@ -240,6 +261,7 @@ export default function General() {
       timeFormat: timeFormatSetting,
       timezone: timezoneSetting,
     });
+    setSocialChannelsValues(socialChannelsSetting);
   }, [
     settings,
     companyNameSetting,
@@ -251,6 +273,8 @@ export default function General() {
     timezoneSetting,
     setBrandingValues,
     setRegionalValues,
+    setSocialChannelsValues,
+    socialChannelsSetting,
   ]);
 
   // Remove the old hardcoded tutorial steps - using dynamic ones above
@@ -445,9 +469,9 @@ export default function General() {
             bodyClassName="p-6"
           >
             <SocialChannelsSection
-              socialChannels={settings.social_channels || {}}
-              onUpdate={(channels) => updateSettings({ social_channels: channels })}
-              isDirty={false}
+              socialChannels={socialChannelsSection.values}
+              onUpdate={socialChannelsSection.setValues}
+              isDirty={socialChannelsSection.isDirty}
               variant="embedded"
             />
           </SettingsCollectionSection>

@@ -30,6 +30,7 @@ export interface ColumnsBlockData {
 
 export interface SocialLinksBlockData {
   channelVisibility?: Record<string, boolean>;
+  channelNames?: Record<string, string>;
 }
 
 export interface HeaderBlockData {

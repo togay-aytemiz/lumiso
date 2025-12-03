@@ -271,6 +271,7 @@ function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
     case "social-links":
       return {
         channelVisibility: {},
+        channelNames: {},
       };
     case "header":
       return {

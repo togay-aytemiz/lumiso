@@ -2833,6 +2833,7 @@
       },
       "socialLinks": {
         "instructions": "E-postalarda gösterilecek sosyal kanalları yapılandırın:",
+        "renameHint": "URL'yi değiştirmeden e-postalarda görünecek bağlantı adlarını yeniden adlandırın.",
         "emptyDescription": "Henüz sosyal kanal yapılandırılmadı. Sosyal medya bağlantılarınızı eklemek için Ayarlar > Genel > Sosyal Kanallar bölümüne gidin."
       },
       "header": {

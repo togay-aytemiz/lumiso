@@ -448,6 +448,7 @@ function getDefaultBlockData(
     case "social-links":
       return {
         channelVisibility: {},
+        channelNames: {},
       };
     case "header":
       return {

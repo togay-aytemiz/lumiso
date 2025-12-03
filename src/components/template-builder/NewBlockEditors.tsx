@@ -111,6 +111,16 @@ export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBl
     onUpdate({ ...data, channelVisibility: newVisibility });
   };
 
+  const updateChannelName = (channelKey: string, name: string) => {
+    const nextNames = { ...(data.channelNames || {}) };
+    if (!name.trim()) {
+      delete nextNames[channelKey];
+    } else {
+      nextNames[channelKey] = name;
+    }
+    onUpdate({ ...data, channelNames: nextNames });
+  };
+
   const socialChannelsArray = settings?.socialChannels 
     ? Object.entries(settings.socialChannels)
         .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
@@ -150,19 +160,30 @@ export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBl
           <div className="text-sm text-muted-foreground">
             {t("templateBuilder.blockEditor.socialLinks.instructions")}
           </div>
+          <div className="text-xs text-muted-foreground">
+            {t("templateBuilder.blockEditor.socialLinks.renameHint", { defaultValue: "Rename how each link appears in emails without changing the URL." })}
+          </div>
           <div className="space-y-3">
-            {socialChannelsArray.map(([key, channel]) => (
-              <div key={key} className="flex items-center justify-between p-3 bg-muted/50 rounded">
-                <div className="flex-1">
-                  <div className="font-medium">{channel.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{channel.url}</div>
+            {socialChannelsArray.map(([key, channel]) => {
+              const displayName = data.channelNames?.[key] ?? channel.name;
+              return (
+                <div key={key} className="flex items-center justify-between gap-4 p-3 bg-muted/50 rounded">
+                  <div className="flex-1 space-y-1">
+                    <Input
+                      value={displayName}
+                      onChange={(e) => updateChannelName(key, e.target.value)}
+                      placeholder={channel.name}
+                      className="h-9 text-sm"
+                    />
+                    <div className="text-xs text-muted-foreground truncate">{channel.url}</div>
+                  </div>
+                  <Switch
+                    checked={isChannelVisible(key)}
+                    onCheckedChange={(checked) => toggleChannelVisibility(key, checked)}
+                  />
                 </div>
-                <Switch
-                  checked={isChannelVisible(key)}
-                  onCheckedChange={(checked) => toggleChannelVisibility(key, checked)}
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : (

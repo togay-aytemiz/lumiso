@@ -486,6 +486,7 @@ function SocialLinksBlockPreview({
       <div className="flex justify-center gap-4">
         {socialChannelsArray.map(([key, channel]) => {
           const socialChannel = channel as SocialChannel;
+          const displayName = data.channelNames?.[key]?.trim() || socialChannel.name;
           return (
             <a
               key={key}
@@ -493,7 +494,7 @@ function SocialLinksBlockPreview({
               className="inline-block p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors text-sm"
               style={{ color: '#333' }}
             >
-              {socialChannel.name}
+              {displayName}
             </a>
           );
         })}

@@ -47,7 +47,7 @@ interface TemplatePreviewProps {
 export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailSubject, preheader, previewData, showSendTestButton = true }: TemplatePreviewProps) {
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { t } = useTranslation('pages');
 
   const defaultMockData = {
@@ -132,7 +132,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
   };
 
   const sendTestEmail = async () => {
-    if (!user?.email) {
+    if (!user?.email || !session?.access_token) {
       toast({
         title: t('templateBuilder.preview.toast.errorTitle'),
         description: t('templateBuilder.preview.toast.noUserEmail'),
@@ -154,15 +154,18 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
     
     try {
       const { data, error } = await supabase.functions.invoke('send-template-email', {
-          body: {
-            to: user.email,
-            subject: emailSubject || 'Test Email from Template Builder',
-            preheader: preheader,
-            blocks: visibleBlocks,
-            mockData: mockData,
-            isTest: true
-          }
-        });
+        body: {
+          to: user.email,
+          subject: emailSubject || 'Test Email from Template Builder',
+          preheader: preheader,
+          blocks: visibleBlocks,
+          mockData: mockData,
+          isTest: true
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
       if (error) {
         throw error;

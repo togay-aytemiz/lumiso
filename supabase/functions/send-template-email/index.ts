@@ -21,16 +21,18 @@ const corsHeaders = {
 };
 
 type AlignmentOption = "left" | "center" | "right";
+type ExtendedAlignmentOption = AlignmentOption | "justify";
 type FontSizeOption = "h1" | "h2" | "h3" | "p";
 type CtaVariant = "primary" | "secondary" | "text";
 
 interface TextBlockFormatting {
-  alignment?: AlignmentOption;
+  alignment?: ExtendedAlignmentOption;
   fontFamily?: string;
   bold?: boolean;
   italic?: boolean;
   bullets?: boolean;
   fontSize?: FontSizeOption;
+  color?: string;
 }
 
 interface TextBlockData {
@@ -43,6 +45,8 @@ interface HeaderBlockData {
   tagline?: string;
   backgroundColor?: string;
   showLogo?: boolean;
+  logoAlignment?: AlignmentOption;
+  taglineColor?: string;
 }
 
 interface CtaBlockData {
@@ -88,6 +92,7 @@ interface DividerBlockData {
 
 interface SocialLinksBlockData {
   channelVisibility?: Record<string, boolean>;
+  channelNames?: Record<string, string>;
 }
 
 interface FooterBlockData {
@@ -147,6 +152,8 @@ interface SocialChannel {
   name: string;
   url?: string | null;
   order?: number | null;
+  customPlatformName?: string | null;
+  enabled?: boolean | null;
 }
 
 interface OrganizationSettings {
@@ -438,6 +445,7 @@ export function generateHTMLContent(
   isPreview: boolean = false
 ): string {
   const brandColor = organizationSettings?.primary_brand_color || '#1EB29F';
+  const safeBrandColor = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(brandColor) ? brandColor : '#1EB29F';
   const baseStyles = `
     <style>
       /* Email client reset styles */
@@ -530,11 +538,11 @@ export function generateHTMLContent(
         transition: all 0.2s ease;
       }
       .cta-primary { 
-        background-color: #2563eb !important; 
+        background-color: ${safeBrandColor} !important; 
         color: #ffffff !important; 
       }
       .cta-primary:hover { 
-        background-color: #1d4ed8 !important; 
+        background-color: ${safeBrandColor} !important; 
         color: #ffffff !important;
       }
       .cta-secondary { 
@@ -547,13 +555,13 @@ export function generateHTMLContent(
       }
       .cta-text { 
         background: none;
-        color: #2563eb; 
+        color: ${safeBrandColor}; 
         text-decoration: underline;
         padding: 0;
         font-weight: 500;
       }
       .cta-text:hover { 
-        color: #1d4ed8;
+        color: ${safeBrandColor};
       }
       
       /* Session details box matching preview */
@@ -676,14 +684,14 @@ export function generateHTMLContent(
         padding: 16px 0;
       }
       .social-links a { 
-        color: #2563eb;
+        color: ${safeBrandColor};
         text-decoration: underline;
         margin: 0 12px;
         text-transform: capitalize;
         font-weight: 500;
       }
       .social-links a:hover {
-        color: #1d4ed8;
+        color: ${safeBrandColor};
       }
       
       /* Bullet list styles */
@@ -775,6 +783,7 @@ export function generateHTMLContent(
           const boldStyle = formatting.bold ? 'font-weight: bold;' : '';
           const italicStyle = formatting.italic ? 'font-style: italic;' : '';
           const bullets = formatting.bullets;
+          const textColor = formatting.color || '#111827';
 
           let fontSize = '16px';
           let fontWeight = 'normal';
@@ -814,6 +823,7 @@ export function generateHTMLContent(
             font-weight: ${fontWeight};
             line-height: ${lineHeight};
             margin-bottom: ${marginBottom};
+            color: ${textColor};
             ${boldStyle}
             ${italicStyle}
           `;
@@ -838,14 +848,31 @@ export function generateHTMLContent(
 
         case 'header': {
           const { data } = block;
-          const headerTitle = replacePlaceholders(data.title ?? '', mockData);
+          const headerTitle = data.title ? replacePlaceholders(data.title, mockData) : '';
           const tagline = data.tagline ? replacePlaceholders(data.tagline, mockData) : '';
           const bgColor = data.backgroundColor ?? '#ffffff';
+          const businessName = organizationSettings?.photography_business_name || 'Your Business';
+          const logoUrl = organizationSettings?.logo_url || null;
+          const alignment = data.logoAlignment || 'center';
+          const textAlign = alignment;
+          const initials = businessName
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((segment) => segment.charAt(0).toUpperCase())
+            .join("")
+            .slice(0, 3) || " ";
+
+          const logoHtml = data.showLogo
+            ? logoUrl
+              ? `<div style="margin-bottom: 12px; display: flex; justify-content: ${alignment};"><img src="${logoUrl}" alt="${businessName} Logo" style="max-width: 160px; max-height: 80px; object-fit: contain; display: block;"></div>`
+              : `<div class="header-logo" style="display:flex; justify-content:${alignment};"><span style="display:inline-flex; align-items:center; justify-content:center; width:72px; height:72px; border-radius:16px; background: linear-gradient(135deg, ${safeBrandColor}, ${safeBrandColor}); color: #fff; font-weight: 800; letter-spacing: 0.5px; font-size: 18px;">${initials}</span></div>`
+            : '';
 
           htmlContent += `
-            <div class="email-header-block" style="background-color: ${bgColor};">
-              ${data.showLogo ? `<div class="header-logo">🏢</div>` : ''}
-              ${tagline ? `<p class="header-tagline">${tagline}</p>` : ''}
+            <div class="email-header-block" style="background-color: ${bgColor}; text-align: ${textAlign};">
+              ${logoHtml}
+              ${headerTitle ? `<h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #111827;">${headerTitle}</h2>` : ''}
+              ${tagline ? `<p class="header-tagline" style="margin: 0; color: ${data.taglineColor || '#000000'};">${tagline}</p>` : ''}
             </div>
           `;
           break;
@@ -858,9 +885,21 @@ export function generateHTMLContent(
           const buttonUrl = replacePlaceholders(linkTarget, mockData);
           const variant = data.variant ?? 'primary';
 
+          const buttonInlineStyle = (() => {
+            switch (variant) {
+              case 'text':
+                return `background: none; color: ${safeBrandColor}; text-decoration: underline; padding: 0; font-weight: 500;`;
+              case 'secondary':
+                return 'background-color: #e5e7eb; color: #374151;';
+              case 'primary':
+              default:
+                return `background-color: ${safeBrandColor}; color: #ffffff;`;
+            }
+          })();
+
           htmlContent += `
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${buttonUrl}" class="cta-button cta-${variant}">${buttonText}</a>
+              <a href="${buttonUrl}" class="cta-button cta-${variant}" style="${buttonInlineStyle}">${buttonText}</a>
             </div>
           `;
           break;
@@ -977,17 +1016,22 @@ export function generateHTMLContent(
               .filter(([key, channel]) => {
                 const hasUrl = typeof channel?.url === 'string' && channel.url.trim().length > 0;
                 const isVisible = channelVisibility[key] !== false;
-                return hasUrl && isVisible;
+                const isEnabled = channel?.enabled !== false;
+                return hasUrl && isVisible && isEnabled;
               });
-            
+
             if (socialChannelsArray.length > 0) {
               htmlContent += `<div class="social-links">`;
               socialChannelsArray.forEach(([key, channel]) => {
                 if (!channel?.url) {
                   return;
                 }
-                const label = channel.name || key;
-                htmlContent += `<a href="${channel.url}">${label}</a>`;
+                const label =
+                  block.data.channelNames?.[key]?.trim() ||
+                  channel.customPlatformName ||
+                  channel.name ||
+                  key;
+                htmlContent += `<a href="${channel.url}" target="_blank" rel="noopener noreferrer">${label}</a>`;
               });
               htmlContent += `</div>`;
             }

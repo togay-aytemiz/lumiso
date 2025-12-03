@@ -2833,6 +2833,7 @@
       },
       "socialLinks": {
         "instructions": "Configure which social channels to display in emails:",
+        "renameHint": "Rename how each link appears in emails without changing the URL.",
         "emptyDescription": "No social channels configured. Go to Settings > General > Social Channels to add your social media links."
       },
       "header": {

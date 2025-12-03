@@ -380,7 +380,7 @@ export const OptimizedTemplateEditor = React.memo(({
             {/* Add Block Button */}
             <Button
               variant="outline"
-              className="w-full h-12 border-dashed"
+              className="w-full h-12 border-dashed mt-4"
               onClick={handleShowAddBlock}
             >
               <Plus className="h-4 w-4" />

@@ -1922,7 +1922,8 @@
       },
       "trialEndedCta": {
         "description": "Lumiso'yu kullanmaktan keyif aldığınızı umuyoruz. Devam etmek isterseniz konuşalım.",
-        "button": "Sizi arayalım"
+        "button": "Sizi arayalım",
+        "signOut": "Lumiso'dan çıkış yap"
       },
       "graceBanner": {
         "title": "Sonraki 48 saat boyunca iş akışları gönderilmeye devam edecek.",

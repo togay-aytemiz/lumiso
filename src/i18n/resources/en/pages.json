@@ -1922,7 +1922,8 @@
       },
       "trialEndedCta": {
         "description": "We hope you enjoyed using Lumiso. If you want to continue, let's talk.",
-        "button": "Let's call you"
+        "button": "Let's call you",
+        "signOut": "Sign out of Lumiso"
       },
       "graceBanner": {
         "title": "We’ll keep sending client workflows for 48 hours.",

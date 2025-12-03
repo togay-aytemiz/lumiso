@@ -53,7 +53,7 @@ const normalizeTrialTargetDate = (value: Date) => {
 export default function BillingSubscription() {
   const { t, i18n } = useTranslation("pages");
   const { toast } = useToast();
-  const { userRoles, user } = useAuth();
+  const { userRoles, user, signOut } = useAuth();
   const { profile, updateProfile } = useProfile();
   const { activeOrganization, loading: organizationLoading, refreshOrganization } = useOrganization();
   const trialStatus = useOrganizationTrialStatus();
@@ -164,6 +164,7 @@ export default function BillingSubscription() {
   const isSuspended = membershipStatus === "suspended";
   const showTrialEndedCta = !isSuspended && (membershipStatus === "locked" || membershipStatus === "expired");
   const showGraceBanner = !isSuspended && (isLocked || isExpired);
+  const showLockedSignOut = showTrialEndedCta && isLocked;
   const graceRemainingHours = useMemo(() => {
     if (!showGraceBanner) return null;
     const candidates: Date[] = [];
@@ -551,6 +552,10 @@ export default function BillingSubscription() {
     handleCallRequestModalToggle,
   ]);
 
+  const handleLockedSignOut = useCallback(async () => {
+    await signOut();
+  }, [signOut]);
+
   return (
     <SettingsPageWrapper>
       {isLoadingState ? (
@@ -586,19 +591,30 @@ export default function BillingSubscription() {
                 </div>
               ) : null}
               {showTrialEndedCta ? (
-                <div className="mt-4 flex flex-col gap-3 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm font-medium text-indigo-900">
-                    {t("settings.billingSubscription.trialEndedCta.description")}
-                  </p>
-                  <Button
-                    type="button"
-                    className="bg-indigo-600 text-white hover:bg-indigo-500 focus-visible:ring-indigo-500"
-                    size="sm"
-                    onClick={() => handleCallRequestModalToggle(true)}
-                  >
-                    {t("settings.billingSubscription.trialEndedCta.button")}
-                  </Button>
+                <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm font-medium text-indigo-900">
+                      {t("settings.billingSubscription.trialEndedCta.description")}
+                    </p>
+                    <Button
+                      type="button"
+                      className="bg-indigo-600 text-white hover:bg-indigo-500 focus-visible:ring-indigo-500"
+                      size="sm"
+                      onClick={() => handleCallRequestModalToggle(true)}
+                    >
+                      {t("settings.billingSubscription.trialEndedCta.button")}
+                    </Button>
+                  </div>
                 </div>
+              ) : null}
+              {showLockedSignOut ? (
+                <button
+                  type="button"
+                  onClick={handleLockedSignOut}
+                  className="mt-2 text-xs font-medium text-slate-600 underline underline-offset-4 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                >
+                  {t("settings.billingSubscription.trialEndedCta.signOut")}
+                </button>
               ) : null}
               {isSuspended && (
                 <div className="mt-5 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">

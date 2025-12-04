@@ -711,12 +711,6 @@ export function ProfileIntakeGate({
     if (currentStep === 3) {
       return (
         <section className="space-y-3">
-          <div>
-            <p className="text-xs text-muted-foreground">
-              {t("pages:profileIntake.projectTypes.helper")}
-            </p>
-          </div>
-
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
             {PROJECT_TYPE_OPTIONS.map((option) => renderOption(option))}
           </div>
@@ -788,7 +782,7 @@ export function ProfileIntakeGate({
           <div className="flex w-full flex-row gap-2 sm:w-auto sm:items-center sm:gap-3">
             {currentStep > 1 && (
               <Button
-                variant="outline"
+                variant="surface"
                 onClick={handleBack}
                 disabled={submitting}
                 className="flex-1 sm:flex-none sm:min-w-[120px]"
@@ -797,9 +791,10 @@ export function ProfileIntakeGate({
               </Button>
             )}
             <Button
+              variant="surface"
               onClick={handleNext}
               disabled={submitting}
-              className="flex-1 sm:flex-none sm:min-w-[160px]"
+              className="btn-surface-accent flex-1 sm:flex-none sm:min-w-[160px]"
             >
               {submitting && isLastStep ? (
                 <>

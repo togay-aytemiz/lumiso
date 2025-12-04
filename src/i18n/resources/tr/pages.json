@@ -90,7 +90,7 @@
       },
       "projects": {
         "title": "En sık yaptığın işleri seç",
-        "description": "Varsayılan proje türlerini ve ayarlarını buna göre şekillendiriyoruz."
+        "description": "Varsayılan proje türlerini ve ayarlarını buna göre şekillendiriyoruz. İstediğin kadar seç; ilk tercihin yeni projelerde varsayılan olur."
       }
     },
     "displayName": {
@@ -120,7 +120,6 @@
     },
     "projectTypes": {
       "label": "En sık çektiğin projeler hangileri?",
-      "helper": "İstediğin kadar seç; ilk tercihin yeni projelerde varsayılan olur.",
       "managementHint": "Yeni tür eklemek istersen Ayarlar → Projeler ve Seanslar bölümünden her zaman düzenleyebilirsin."
     },
     "options": {

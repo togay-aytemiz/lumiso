@@ -22,6 +22,15 @@ import { useTranslation } from "react-i18next";
 import { TemplateVariablesProvider } from "@/contexts/TemplateVariablesContext";
 import { VariableTokenText } from "@/components/template-builder/VariableTokenText";
 import { Tooltip, TooltipContent, TooltipContentDark, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 // Optimized TemplateBuilder component
 const OptimizedTemplateBuilderContent = React.memo(() => {
@@ -70,6 +79,12 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     [t]
   );
   const [publishTooltipOpen, setPublishTooltipOpen] = useState(false);
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
+  const helpChannelUrl = "https://www.youtube.com/channel/UCH1JW6uO_ZIG8TsgtpFTjhA";
+  const templatesVideoId =
+    (typeof import.meta !== "undefined" &&
+      (import.meta as { env?: Record<string, string> }).env?.VITE_TEMPLATES_VIDEO_ID) ||
+    "PDJvy9OFcVU";
 
   // Template data from backend or defaults
   const templateName = template?.name || untitledName;
@@ -320,6 +335,24 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     }
   }, [templateName, subject, preheader, blocks, template?.category, publishTemplate, templateId, navigate]);
 
+  const handleOpenHelp = useCallback(() => {
+    setHelpModalOpen(true);
+  }, []);
+
+  const handleCloseHelp = useCallback(() => {
+    setHelpModalOpen(false);
+  }, []);
+
+  const handleOpenChannel = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.open(helpChannelUrl, "_blank", "noopener,noreferrer");
+  }, [helpChannelUrl]);
+
+  const helpModalTitle = t("templates.video.title", { defaultValue: "2 dakikalık hızlı tur" });
+  const helpModalDescription = t("templates.video.description", {
+    defaultValue: "Şablonları hızlıca tasarlayıp kullanmayı öğrenin.",
+  });
+
   const handleSubjectSave = async (newSubject: string) => {
     updateTemplate({ subject: newSubject });
     setIsEditingSubject(false);
@@ -333,6 +366,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const handleNameEdit = () => {
     setEditingName(templateName);
     setIsEditingName(true);
+    setTimeout(() => setIsEditingSubject(false), 0);
   };
 
   const handleNameBlur = () => {
@@ -508,52 +542,109 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                     {statusLabel}
                   </span>
                 </div>
-              )}
-            </div>
-          </div>
+          )}
+        </div>
+      </div>
 
-          <div className="flex items-center gap-2">
-            {publishDisabled ? (
-              <TooltipProvider delayDuration={0}>
-                <Tooltip
-                  open={publishTooltipOpen}
-                  onOpenChange={setPublishTooltipOpen}
-                  disableHoverableContent
-                >
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button
-                        onClick={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())}
-                        disabled
-                        variant="surface"
-                        size="sm"
-                        className="btn-surface-accent"
-                      >
-                        <Eye className="h-4 w-4" />
-                        {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.done", { defaultValue: "Done" })}
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContentDark side="bottom" align="center">
-                    <span className="max-w-[240px] text-sm text-slate-50">
-                      {publishTooltip}
-                    </span>
-                  </TooltipContentDark>
-                </Tooltip>
-              </TooltipProvider>
-            ) : (
+      <Dialog open={helpModalOpen} onOpenChange={setHelpModalOpen}>
+        <DialogContent className="w-[min(640px,calc(100%-1.5rem))] max-w-3xl lg:w-[min(96vw,1120px)] lg:max-w-5xl p-0 gap-0 overflow-hidden rounded-xl sm:rounded-2xl border border-border/60">
+          <div className="flex flex-col gap-0">
+            <DialogHeader className="space-y-2 px-5 pt-5 pb-4 sm:px-8 sm:pt-8 sm:pb-4 text-left">
+              <DialogTitle className="text-2xl font-semibold leading-tight text-left">
+                {helpModalTitle}
+              </DialogTitle>
+              <DialogDescription className="text-base leading-relaxed text-muted-foreground text-left">
+                {helpModalDescription}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="px-5 sm:px-8 pb-5 sm:pb-8">
+              <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/30 shadow-sm">
+                <div className="aspect-video w-full bg-black">
+                  <iframe
+                    title={helpModalTitle}
+                    className="h-full w-full"
+                    src={`https://www.youtube.com/embed/${templatesVideoId}?rel=0&modestbranding=1&playsinline=1`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="px-5 py-4 sm:px-8 sm:py-6 flex-col sm:flex-row sm:justify-end sm:space-x-3 gap-3">
               <Button
-                onClick={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())}
-                disabled={publishDisabled}
+                type="button"
                 variant="surface"
-                size="sm"
-                className="btn-surface-accent"
+                className="btn-surface-accent w-full sm:w-auto sm:min-w-[180px]"
+                onClick={handleOpenChannel}
               >
-                <Eye className="h-4 w-4" />
-                {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.done", { defaultValue: "Done" })}
+                {t("buttons.viewMoreVideos", { defaultValue: "Diğer videolar" })}
               </Button>
-            )}
+              <Button
+                type="button"
+                variant="surface"
+                onClick={handleCloseHelp}
+                className="w-full sm:w-auto sm:min-w-[140px]"
+              >
+                {tCommon("buttons.close")}
+              </Button>
+            </DialogFooter>
           </div>
+        </DialogContent>
+      </Dialog>
+
+        <div className="flex items-center gap-2">
+          {publishDisabled ? (
+            <TooltipProvider delayDuration={0}>
+              <Tooltip
+                open={publishTooltipOpen}
+                onOpenChange={setPublishTooltipOpen}
+                disableHoverableContent
+              >
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      onClick={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())}
+                      disabled
+                      variant="surface"
+                      size="sm"
+                      className="btn-surface-accent"
+                    >
+                      <Eye className="h-4 w-4" />
+                      {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.done", { defaultValue: "Done" })}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContentDark side="bottom" align="center">
+                  <span className="max-w-[240px] text-sm text-slate-50">
+                    {publishTooltip}
+                  </span>
+                </TooltipContentDark>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <Button
+              onClick={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())}
+              disabled={publishDisabled}
+              variant="surface"
+              size="sm"
+              className="btn-surface-accent"
+            >
+              <Eye className="h-4 w-4" />
+              {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.done", { defaultValue: "Done" })}
+            </Button>
+          )}
+          <Button
+            onClick={handleOpenHelp}
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-full border border-slate-200/80 bg-[#edf1f7] text-slate-700 shadow-none p-0 hover:bg-[#e4e9f2] hover:text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0"
+            aria-label={t("buttons.help", { defaultValue: "Yardım" })}
+          >
+            <HelpCircle className="h-4 w-4" />
+          </Button>
+        </div>
         </div>
 
         {/* Compact Email Settings */}

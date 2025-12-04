@@ -179,7 +179,7 @@ export function PageHeader({
                   type="button"
                   size="icon"
                   variant="ghost"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-gradient-to-r from-slate-50 via-slate-100 to-white text-slate-600 shadow-none p-0 hover:bg-slate-100 hover:text-slate-800 focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:h-5 [&_svg]:w-5"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-[#edf1f7] text-slate-700 shadow-none p-0 hover:bg-[#e4e9f2] hover:text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:h-5 [&_svg]:w-5"
                   aria-label={t("buttons.help", { defaultValue: "Yardım" })}
                   onClick={handleHelpClick}
                 >

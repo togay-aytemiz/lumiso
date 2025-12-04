@@ -90,7 +90,7 @@
       },
       "projects": {
         "title": "Pick the work you shoot most",
-        "description": "We use this to scaffold default project types and tune your defaults."
+        "description": "We use this to scaffold default project types and tune your defaults—pick every service you offer; your first pick becomes the default for new projects."
       }
     },
     "displayName": {
@@ -105,7 +105,6 @@
     },
     "projectTypes": {
       "label": "Which projects do you shoot most?",
-      "helper": "Pick every service you offer\u2014your first pick becomes the default for new projects.",
       "managementHint": "Need another category? Head to Settings \u2192 Projects & Sessions anytime to edit or add more."
     },
     "options": {

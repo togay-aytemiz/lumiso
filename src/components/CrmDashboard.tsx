@@ -4,11 +4,13 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
+import { PageVideoModal } from "@/components/PageVideoModal";
 import { ADD_ACTION_EVENTS } from "@/constants/addActionEvents";
 import GlobalSearch from "@/components/GlobalSearch";
 import { getWeekRange, isNetworkError } from "@/lib/utils";
 import { useDashboardTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
+import { usePageVideoPrompt } from "@/hooks/usePageVideoPrompt";
 import type { Database } from "@/integrations/supabase/types";
 import DashboardDailyFocus, { type SessionWithLead } from "@/components/DashboardDailyFocus";
 import NewSessionDialog from "@/components/NewSessionDialog";
@@ -80,6 +82,12 @@ const paymentSchemaEnhancementsEnabled =
     import.meta.env.VITE_ENABLE_PAYMENT_SCHEMA_ENHANCEMENTS === "true") ||
   false;
 
+const DASHBOARD_VIDEO_ID =
+  (typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_DASHBOARD_VIDEO_ID) ||
+  "rMuFRkxW6so";
+
 const CrmDashboard = () => {
   const [leads, setLeads] = useState<LeadWithStatusRow[]>([]);
   const [upcomingSessions, setUpcomingSessions] = useState<SessionWithLead[]>([]);
@@ -108,6 +116,12 @@ const CrmDashboard = () => {
   const navigate = useNavigate();
   const { t } = useDashboardTranslation();
   const organizationId = activeOrganization?.id;
+  const {
+    isOpen: isDashboardVideoOpen,
+    close: closeDashboardVideo,
+    markCompleted: markDashboardVideoWatched,
+    snooze: snoozeDashboardVideo,
+  } = usePageVideoPrompt({ pageKey: "dashboard", snoozeDays: 1 });
 
   useEffect(() => {
     const handleAddLead = (event: Event) => {
@@ -567,7 +581,15 @@ const CrmDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800 overflow-x-hidden">
-      <PageHeader title={t('page.title')}>
+      <PageHeader
+        title={t('page.title')}
+        helpTitle={t('page.quickTourTitle', { defaultValue: "Lumiso'da hızlı tur" })}
+        helpDescription={t('page.quickTourDescription', {
+          defaultValue: "Gösterge tablosunu nasıl kullanacağınızı hızlıca öğrenin.",
+        })}
+        helpVideoId={DASHBOARD_VIDEO_ID}
+        helpVideoTitle={t('page.quickTourTitle', { defaultValue: "Lumiso'da hızlı tur" })}
+      >
         <PageHeaderSearch>
           <GlobalSearch variant="header" />
         </PageHeaderSearch>
@@ -609,6 +631,22 @@ const CrmDashboard = () => {
         onSessionScheduled={() => fetchData()}
         openEvent={ADD_ACTION_EVENTS.session}
         showDefaultTrigger={false}
+      />
+
+      <PageVideoModal
+        open={isDashboardVideoOpen}
+        onClose={closeDashboardVideo}
+        videoId={DASHBOARD_VIDEO_ID}
+        title={t('page.quickTourTitle', { defaultValue: "Lumiso'da hızlı tur" })}
+        description={t('page.quickTourDescription', {
+          defaultValue: "Gösterge tablosunu nasıl kullanacağınızı hızlıca öğrenin.",
+        })}
+        labels={{
+          remindMeLater: t('page.videoRemindMeLater', { defaultValue: "Daha sonra hatırlat" }),
+          dontShowAgain: t('page.videoDontShow', { defaultValue: "İzledim, tekrar gösterme" }),
+        }}
+        onSnooze={snoozeDashboardVideo}
+        onDontShowAgain={markDashboardVideoWatched}
       />
     </div>
   );

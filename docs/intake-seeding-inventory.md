@@ -70,8 +70,9 @@ This note captures **everything that `process_intake_seed` currently writes** af
 | cancelled | Cancelled | İptal | `#DC2626` | cancelled. |
 
 ### Services (`default_service_templates`)
-- Function: `ensure_default_services_for_org(owner_uuid, org_id)` (`20260222114500_locale_seed_templates.sql`).
+- Function: `ensure_default_services_for_org(owner_uuid, org_id)` (latest override in `20261207103000_sample_service_prefix.sql`).
 - Injects both coverage and deliverable catalog rows, tagged `is_sample = true`. Prices shown are selling prices (costs also stored).
+- Inserted names are prefixed with the locale-specific sample tag (`[Örnek]` / `[Sample Data]`) to mirror the seeded lead/project labels.
 - Categories reuse the default service form buckets (Lead Photographer, Assistant Photographer, Albums, Drone Operator) so seeding never creates new custom categories.
 
 | Slug | EN Name | TR Name | Category | Type | Price | Default Unit |

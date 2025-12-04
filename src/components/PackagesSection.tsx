@@ -18,7 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsCollectionSection } from "@/components/settings/SettingsSectionVariants";
@@ -46,6 +46,8 @@ interface Package {
   include_addons_in_price?: boolean | null;
   line_items: unknown;
   pricing_metadata?: Record<string, unknown> | null;
+  template_slug?: string | null;
+  is_sample?: boolean | null;
 }
 
 type LineItemLookup = {
@@ -212,6 +214,15 @@ const computeDepositAmountFromMetadata = (
   }
 
   return roundCurrency((targetAmount * metadata.depositValue) / 100);
+};
+
+const isSeededPackage = (pkg: Package) => {
+  const slug =
+    typeof pkg.template_slug === "string" && pkg.template_slug.trim().length
+      ? pkg.template_slug.trim()
+      : "";
+
+  return Boolean(slug || pkg.is_sample);
 };
 
 const PackagesSection = () => {
@@ -411,6 +422,7 @@ const PackagesSection = () => {
   };
 
   const openEditPackage = (pkg: Package) => {
+    if (isSeededPackage(pkg)) return;
     setEditingPackageId(pkg.id);
     handleWizardOpenChange(true);
   };
@@ -593,6 +605,7 @@ const PackagesSection = () => {
                 const defaultAddOns = Array.isArray(pkg.default_add_ons)
                   ? pkg.default_add_ons
                   : [];
+                const isSeeded = isSeededPackage(pkg);
                 const addOnBadges = defaultAddOns
                   .map((rawServiceId, index) => {
                     const fallbackLabel =
@@ -674,6 +687,20 @@ const PackagesSection = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-5 pt-4 text-sm">
+                      {isSeeded && (
+                        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+                          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                          <div className="space-y-1">
+                            <p className="text-xs font-semibold uppercase tracking-wide">
+                              {t("packages.sample_package_label")}
+                            </p>
+                            <p className="text-sm leading-snug">
+                              {t("packages.sample_package_locked")}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-4">
                           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -760,6 +787,12 @@ const PackagesSection = () => {
                           <IconActionButton
                             onClick={() => openEditPackage(pkg)}
                             aria-label={`Edit package ${pkg.name}`}
+                            disabled={isSeeded}
+                            title={
+                              isSeeded
+                                ? t("packages.sample_package_locked")
+                                : undefined
+                            }
                           >
                             <Edit className="h-4 w-4" />
                           </IconActionButton>

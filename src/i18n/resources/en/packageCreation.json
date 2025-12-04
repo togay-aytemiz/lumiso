@@ -105,6 +105,11 @@
       "navigationLabel.hint": "Select add-ons & quantities",
       "title": "Services & inclusions",
       "description": "Pick the services bundled into this package and adjust their quantities.",
+      "catalogNotice": {
+        "title": "Services come from Settings → Services",
+        "description": "This list pulls from your Services catalog in Settings. Add new services or adjust details there, then include them here.",
+        "action": "Open Services in Settings"
+      },
       "picker": {
         "label": "Add services from your catalog",
         "empty": "You don’t have any services yet.",

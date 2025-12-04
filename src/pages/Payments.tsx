@@ -62,6 +62,7 @@ import { PaymentsTableSection } from "@/pages/payments/components/PaymentsTableS
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { usePageVideoPrompt } from "@/hooks/usePageVideoPrompt";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 const PAYMENTS_VIDEO_ID =
   (typeof import.meta !== "undefined" &&
@@ -71,6 +72,7 @@ const PAYMENTS_VIDEO_ID =
 const Payments = () => {
   const { t } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
+  const { activeOrganizationId } = useOrganization();
   const {
     isOpen: isPaymentsVideoOpen,
     close: closePaymentsVideo,
@@ -240,6 +242,7 @@ const Payments = () => {
     amountMaxFilter: filtersState.amountMax,
     searchTerm: filtersState.search,
     activeDateRange,
+    organizationId: activeOrganizationId,
     onError: handleDataError,
     scheduledAmountMinFilter: scheduledAmountMin,
     scheduledAmountMaxFilter: scheduledAmountMax,

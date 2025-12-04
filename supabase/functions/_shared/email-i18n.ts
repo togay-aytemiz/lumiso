@@ -225,7 +225,7 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
       },
     },
     welcome: {
-      subject: 'Welcome to Lumiso, {{name}}!',
+      subject: '🎉 Welcome to Lumiso, {{name}}!',
       preheader: 'A quick start guide for {{businessName}} with three fast wins.',
       heroTitle: 'Welcome to Lumiso',
       heroSubtitle: 'We set up {{businessName}} using the details you shared.',
@@ -269,7 +269,7 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
         },
       },
       ctaPrimary: 'Open dashboard',
-      ctaSecondary: 'Go to getting started',
+      ctaSecondary: 'Go to video library',
       closing:
         'We’re thrilled to have you. If you need anything, just reply to this email and our team will help.',
       signature: 'The Lumiso Team',
@@ -488,7 +488,7 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
       },
     },
     welcome: {
-      subject: "Lumiso'ya hoş geldin, {{name}}!",
+      subject: "🎉 Lumiso'ya hoş geldin, {{name}}!",
       preheader: "{{businessName}} için üç hızlı adımlık başlangıç rehberi.",
       heroTitle: "Lumiso'ya hoş geldin",
       heroSubtitle: "{{businessName}} hesabını paylaştığın bilgilerle hazırladık.",
@@ -531,7 +531,7 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
         },
       },
       ctaPrimary: "Paneli aç",
-      ctaSecondary: "Başlangıç rehberine git",
+      ctaSecondary: "Video kütüphanesine git",
       closing:
         "Aramıza katıldığın için çok mutluyuz. Herhangi bir sorunda bu e-postayı yanıtlaman yeterli, ekibimiz destek olur.",
       signature: "Lumiso Ekibi",

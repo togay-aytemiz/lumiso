@@ -147,9 +147,10 @@ export function generateWelcomeEmail(
     label: t('welcome.ctaPrimary'),
     href: baseUrl,
   };
+  const videoLibraryUrl = 'https://www.youtube.com/channel/UCH1JW6uO_ZIG8TsgtpFTjhA/';
   const secondaryCta = {
     label: t('welcome.ctaSecondary'),
-    href: `${baseUrl}/getting-started`,
+    href: videoLibraryUrl,
   };
 
   const content = `

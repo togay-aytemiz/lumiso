@@ -181,6 +181,7 @@ export function ProjectActivitySection({
     return {
       content: editingReminder.content,
       reminderDateTime: buildReminderDateTimeValue(editingReminder),
+      reminderTime: editingReminder.reminder_time,
     };
   }, [editingReminder]);
 

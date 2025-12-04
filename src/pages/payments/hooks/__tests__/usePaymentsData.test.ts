@@ -89,6 +89,7 @@ describe("usePaymentsData", () => {
     amountMaxFilter: null,
     searchTerm: "",
     activeDateRange: null,
+    organizationId: "org-123",
   };
 
   let queues: QueueMap;

@@ -218,7 +218,7 @@
         "steps": [
           {
             "action": "Ayarlar → Hizmetler sekmesine gidin ve \"Hizmetler\" kartında Ekip/Teslimatlar sekmelerini kontrol edin.",
-            "expected_result": "Ekip sekmesinde \"Baş Fotoğrafçı\" (lead_photographer, 6000 TL/gün) ve \"Asistan Fotoğrafçı\" (assistant_photographer, 3500 TL/gün) satırları; Teslimatlar sekmesinde \"Prestij Albüm\" (signature_album, 3000 TL) ve \"Drone Çekimi\" (drone_addon, 1800 TL/saat) görünür."
+            "expected_result": "Ekip sekmesinde \"[Örnek] Baş Fotoğrafçı\" (lead_photographer, 6000 TL/gün) ve \"[Örnek] Asistan Fotoğrafçı\" (assistant_photographer, 3500 TL/gün) satırları; Teslimatlar sekmesinde \"[Örnek] Prestij Albüm\" (signature_album, 3000 TL) ve \"[Örnek] Drone Çekimi\" (drone_addon, 1800 TL/saat) görünür."
           },
           {
             "action": "Aynı sayfada \"Seans Türleri\" kartına bakın.",
@@ -226,7 +226,7 @@
           },
           {
             "action": "\"Paketler\" kartını açın ve ilk iki satırı inceleyin.",
-            "expected_result": "\"Düğün Hikayesi\" paketi (wedding_story, 15.000 TL) Baş Fotoğrafçı + Asistan Fotoğrafçı ile Prestij Albüm + Drone Çekimi add-onlarını içerir; \"Mini Lifestyle\" paketi (mini_lifestyle, 4.500 TL) Baş Fotoğrafçı + Prestij Albüm kombinasyonunu gösterir ve ikisi de aktif görünür."
+            "expected_result": "\"Düğün Hikayesi\" paketi (wedding_story, 15.000 TL) [Örnek] Baş Fotoğrafçı + [Örnek] Asistan Fotoğrafçı ile [Örnek] Prestij Albüm + [Örnek] Drone Çekimi add-onlarını içerir; \"Mini Lifestyle\" paketi (mini_lifestyle, 4.500 TL) [Örnek] Baş Fotoğrafçı + [Örnek] Prestij Albüm kombinasyonunu gösterir ve ikisi de aktif görünür."
           }
         ],
         "expected_result": "Hizmet kataloğu, seans türleri ve paketler inventory tablosundaki slug/ad/ücret bilgileriyle birebir eşleşir."
@@ -306,7 +306,7 @@
           },
           {
             "action": "İlk satırı açıp Projeler kartını inceleyin.",
-            "expected_result": "Projeler kartında intake'te seçilen türlere göre en fazla dört proje görünür; örnek olarak \"Boğaz Düğünü\" wedding_story paketini, \"Aile Lifestyle Çekimi\" mini_lifestyle paketini kullanır. Her proje `[Sample Data]` notu taşır ve pakete bağlı Baş/Asistan Fotoğrafçı + Prestij Albüm/Drone kalemleri inventory'deki içeriklerle eşleşir."
+            "expected_result": "Projeler kartında intake'te seçilen türlere göre en fazla dört proje görünür; örnek olarak \"Boğaz Düğünü\" wedding_story paketini, \"Aile Lifestyle Çekimi\" mini_lifestyle paketini kullanır. Her proje `[Sample Data]` notu taşır ve pakete bağlı [Örnek] Baş/Asistan Fotoğrafçı + [Örnek] Prestij Albüm/Drone kalemleri inventory'deki içeriklerle eşleşir."
           },
           {
             "action": "Seanslar sekmesini kontrol edin.",

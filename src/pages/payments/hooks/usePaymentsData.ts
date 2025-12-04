@@ -6,7 +6,6 @@ import {
   STATUS_FILTER_OPTIONS,
   TYPE_FILTER_OPTIONS,
 } from "../constants";
-import { getUserOrganizationId } from "@/lib/organizationUtils";
 import type {
   Payment,
   PaymentStatusFilter,
@@ -65,6 +64,8 @@ interface UsePaymentsDataOptions {
   onError: (error: Error) => void;
   scheduledAmountMinFilter?: number | null;
   scheduledAmountMaxFilter?: number | null;
+  organizationId?: string | null;
+  includeAllOrganizations?: boolean;
 }
 
 interface UsePaymentsDataResult {
@@ -218,6 +219,8 @@ export function usePaymentsData({
   onError,
   scheduledAmountMinFilter = null,
   scheduledAmountMaxFilter = null,
+  organizationId,
+  includeAllOrganizations = false,
 }: UsePaymentsDataOptions): UsePaymentsDataResult {
   const [paginatedPayments, setPaginatedPayments] = useState<Payment[]>([]);
   const [metricsPayments, setMetricsPayments] = useState<Payment[]>([]);
@@ -227,6 +230,17 @@ export function usePaymentsData({
   const [tableLoading, setTableLoading] = useState(false);
   const initialLoadRef = useRef(true);
   const lastFetchedPageRef = useRef(0);
+  const shouldScopeToOrg = !includeAllOrganizations;
+
+  const applyOrgScope = useCallback(
+    <T extends { eq: (column: string, value: string) => T }>(builder: T): T => {
+      if (shouldScopeToOrg && organizationId) {
+        return builder.eq("organization_id", organizationId);
+      }
+      return builder;
+    },
+    [organizationId, shouldScopeToOrg]
+  );
 
   const archivedStatusIdRef = useRef<string | null>(null);
   const logTimestampSupportedRef = useRef<boolean | null>(
@@ -240,12 +254,11 @@ export function usePaymentsData({
 
   useEffect(() => {
     (async () => {
+      if (!shouldScopeToOrg || !organizationId) {
+        archivedStatusIdRef.current = null;
+        return;
+      }
       try {
-        const organizationId = await getUserOrganizationId();
-        if (!organizationId) {
-          archivedStatusIdRef.current = null;
-          return;
-        }
         const { data, error } = await supabase
           .from("project_statuses")
           .select("id")
@@ -259,7 +272,7 @@ export function usePaymentsData({
         archivedStatusIdRef.current = null;
       }
     })();
-  }, []);
+  }, [organizationId, shouldScopeToOrg]);
 
   const ensureLogTimestampSupport = useCallback(async () => {
     if (!paymentSchemaEnhancementsEnabled) {
@@ -325,20 +338,20 @@ export function usePaymentsData({
       };
 
       if (globalSearchTerm.length) {
-        const { data: projectNameMatches, error: projectNameError } = await supabase
-          .from("projects")
-          .select(PROJECT_SELECT_FIELDS)
-          .ilike("name", `%${globalSearchTerm}%`);
+        const projectNameQuery = applyOrgScope(
+          supabase.from("projects").select(PROJECT_SELECT_FIELDS)
+        ).ilike("name", `%${globalSearchTerm}%`);
+        const { data: projectNameMatches, error: projectNameError } = await projectNameQuery;
 
         if (projectNameError) throw projectNameError;
 
         upsertProjects(projectNameMatches);
         projectNameMatches?.forEach((project) => searchProjectIds.add(project.id));
 
-        const { data: searchLeadMatches, error: searchLeadsError } = await supabase
-          .from("leads")
-          .select("id, name")
-          .ilike("name", `%${globalSearchTerm}%`);
+        const searchLeadQuery = applyOrgScope(
+          supabase.from("leads").select("id, name")
+        ).ilike("name", `%${globalSearchTerm}%`);
+        const { data: searchLeadMatches, error: searchLeadsError } = await searchLeadQuery;
 
         if (searchLeadsError) throw searchLeadsError;
 
@@ -346,10 +359,10 @@ export function usePaymentsData({
         searchLeadMatches?.forEach((lead) => leadDetailsMap.set(lead.id, lead));
 
         if (searchLeadIds.length) {
-          const { data: projectsForLeads, error: projectsForLeadsError } = await supabase
-            .from("projects")
-            .select(PROJECT_SELECT_FIELDS)
-            .in("lead_id", searchLeadIds);
+          const projectsForLeadsQuery = applyOrgScope(
+            supabase.from("projects").select(PROJECT_SELECT_FIELDS)
+          ).in("lead_id", searchLeadIds);
+          const { data: projectsForLeads, error: projectsForLeadsError } = await projectsForLeadsQuery;
 
           if (projectsForLeadsError) throw projectsForLeadsError;
 
@@ -375,7 +388,7 @@ export function usePaymentsData({
         assignProjectLead,
       };
     },
-    []
+    [applyOrgScope]
   );
 
   const hydratePayments = useCallback(
@@ -400,10 +413,10 @@ export function usePaymentsData({
       const missingProjectIds = projectIds.filter((id) => !projectDetailsMap.has(id));
 
       if (missingProjectIds.length) {
-        const { data: projectsData, error: projectsError } = await supabase
-          .from("projects")
-          .select(PROJECT_SELECT_FIELDS)
-          .in("id", missingProjectIds);
+        const projectsQuery = applyOrgScope(
+          supabase.from("projects").select(PROJECT_SELECT_FIELDS)
+        ).in("id", missingProjectIds);
+        const { data: projectsData, error: projectsError } = await projectsQuery;
 
         if (projectsError) throw projectsError;
 
@@ -413,10 +426,10 @@ export function usePaymentsData({
       const missingLeadList = Array.from(pendingLeadIds).filter((id) => !leadDetailsMap.has(id));
 
       if (missingLeadList.length) {
-        const { data: leadsData, error: leadsError } = await supabase
-          .from("leads")
-          .select("id, name")
-          .in("id", missingLeadList);
+        const leadsQuery = applyOrgScope(
+          supabase.from("leads").select("id, name")
+        ).in("id", missingLeadList);
+        const { data: leadsData, error: leadsError } = await leadsQuery;
 
         if (leadsError) throw leadsError;
 
@@ -432,12 +445,11 @@ export function usePaymentsData({
           projects: payment.project_id ? projectDetailsMap.get(payment.project_id) ?? null : null,
         }));
     },
-    []
+    [applyOrgScope]
   );
 
   const fetchPaymentsData = useCallback(
     async (options?: FetchPaymentsDataOptions) => {
-      const supportsLogTimestamp = await ensureLogTimestampSupport();
       const {
         range,
         includeMetrics = false,
@@ -445,6 +457,15 @@ export function usePaymentsData({
         includeScheduled = false,
         activeDateRangeOverride,
       } = options ?? {};
+      if (shouldScopeToOrg && !organizationId) {
+        return {
+          payments: [],
+          count: 0,
+          metricsData: includeMetrics ? [] : null,
+          scheduledPayments: includeScheduled ? [] : null,
+        };
+      }
+      const supportsLogTimestamp = await ensureLogTimestampSupport();
       const effectiveDateRange =
         activeDateRangeOverride === undefined ? activeDateRange : activeDateRangeOverride;
       const rawSearch = searchTerm.trim();
@@ -484,9 +505,9 @@ export function usePaymentsData({
           : null;
 
       const runFetch = async (useLogTimestamp: boolean) => {
-        let tableQuery = supabase
-          .from("payments")
-          .select("*", { count: includeCount ? "exact" : undefined });
+        let tableQuery = applyOrgScope(
+          supabase.from("payments").select("*", { count: includeCount ? "exact" : undefined })
+        );
 
         if (effectiveDateRange) {
           const startISO = effectiveDateRange.start.toISOString();
@@ -586,7 +607,9 @@ export function usePaymentsData({
             metricFields.splice(5, 0, LOG_TIMESTAMP_FIELD);
           }
 
-          let metricsQuery = supabase.from("payments").select(metricFields.join(", "));
+          let metricsQuery = applyOrgScope(
+            supabase.from("payments").select(metricFields.join(", "))
+          );
 
           if (effectiveDateRange) {
             const startISO = effectiveDateRange.start.toISOString();
@@ -644,10 +667,10 @@ export function usePaymentsData({
               (id) => !context.projectDetailsMap.has(id) && !context.archivedProjectIds.has(id)
             );
             if (missingForMetrics.length) {
-              const { data: metricsProjects, error: metricsProjectsError } = await supabase
-                .from("projects")
-                .select(PROJECT_SELECT_FIELDS)
-                .in("id", missingForMetrics);
+              const metricsProjectsQuery = applyOrgScope(
+                supabase.from("projects").select(PROJECT_SELECT_FIELDS)
+              ).in("id", missingForMetrics);
+              const { data: metricsProjects, error: metricsProjectsError } = await metricsProjectsQuery;
 
               if (metricsProjectsError) throw metricsProjectsError;
 
@@ -661,9 +684,9 @@ export function usePaymentsData({
         }
 
         if (includeScheduled) {
-          let scheduledQuery = supabase
-            .from("payments")
-            .select("*")
+          let scheduledQuery = applyOrgScope(
+            supabase.from("payments").select("*")
+          )
             .eq("entry_kind", "scheduled")
             .gt("scheduled_remaining_amount", 0);
 
@@ -730,8 +753,12 @@ export function usePaymentsData({
       activeDateRange,
       amountMaxFilter,
       amountMinFilter,
+      applyOrgScope,
       createSearchContext,
       hydratePayments,
+      includeAllOrganizations,
+      organizationId,
+      shouldScopeToOrg,
       searchTerm,
       sortDirection,
       sortField,

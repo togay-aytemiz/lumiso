@@ -1,6 +1,6 @@
 [
   {
-    "name": "Lead Photographer",
+    "name": "[Sample Data] Lead Photographer",
     "description": "Full-day coverage by senior photographer.",
     "category": "Lead Photographer",
     "cost_price": 2000,
@@ -12,7 +12,7 @@
     "extra": false
   },
   {
-    "name": "Assistant Photographer",
+    "name": "[Sample Data] Assistant Photographer",
     "description": "Second shooter for key moments.",
     "category": "Assistant Photographer",
     "cost_price": 1200,
@@ -24,7 +24,7 @@
     "extra": false
   },
   {
-    "name": "Signature Album",
+    "name": "[Sample Data] Signature Album",
     "description": "30x30 leather album with 30 spreads.",
     "category": "Albums",
     "cost_price": 1500,
@@ -36,7 +36,7 @@
     "extra": false
   },
   {
-    "name": "Drone Coverage",
+    "name": "[Sample Data] Drone Coverage",
     "description": "Aerial footage during the session.",
     "category": "Drone Operator",
     "cost_price": 800,

@@ -47,7 +47,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Users, Package as PackageIcon, Layers } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Users, Package as PackageIcon, Layers, AlertTriangle } from "lucide-react";
 import {
   ServiceVatOverridesSection,
   type ServiceVatOverridesItem,
@@ -1297,13 +1298,36 @@ export const ServicesStep = () => {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
+      <div className="space-y-3">
         <h2 className="text-xl font-semibold tracking-tight text-slate-900">
           {t("steps.services.title")}
         </h2>
         <p className="text-sm text-muted-foreground">
           {t("steps.services.description")}
         </p>
+        <Alert className="border-amber-200/80 bg-amber-50 text-amber-900">
+          <div className="flex gap-3">
+            <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />
+            <div className="space-y-1">
+              <AlertTitle className="text-sm font-semibold text-amber-900">
+                {t("steps.services.catalogNotice.title")}
+              </AlertTitle>
+              <AlertDescription className="text-sm text-amber-900/90">
+                <span className="block">
+                  {t("steps.services.catalogNotice.description")}
+                </span>
+                <a
+                  href="/settings/services#services"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex items-center gap-1 font-semibold text-amber-800 underline underline-offset-4 hover:text-amber-900"
+                >
+                  {t("steps.services.catalogNotice.action")}
+                </a>
+              </AlertDescription>
+            </div>
+          </div>
+        </Alert>
       </div>
 
       <ServiceInventorySelector

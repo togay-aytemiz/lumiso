@@ -105,6 +105,11 @@
       "navigationLabel.hint": "Eklentiler ve adetler",
       "title": "Hizmetler ve dahil edilenler",
       "description": "Pakete dahil olacak hizmetleri seç ve adetlerini ayarla.",
+      "catalogNotice": {
+        "title": "Hizmetler Ayarlar → Hizmetler’den gelir",
+        "description": "Buradaki liste Ayarlar → Hizmetler bölümündeki katalogdan çekilir. Yeni hizmet eklemek veya bilgilerini güncellemek için Ayarlar’a gidebilirsin.",
+        "action": "Ayarlar → Hizmetler’i aç"
+      },
       "picker": {
         "label": "Katalogundan hizmet ekle",
         "empty": "Henüz tanımlanmış hizmetin yok.",

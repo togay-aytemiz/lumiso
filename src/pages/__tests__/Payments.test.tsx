@@ -16,6 +16,7 @@ import type { usePaymentsFilters as usePaymentsFiltersFn } from "@/pages/payment
 import type { usePaymentsData as usePaymentsDataFn } from "@/pages/payments/hooks/usePaymentsData";
 import type { usePaymentsTableColumns as usePaymentsTableColumnsFn } from "@/pages/payments/hooks/usePaymentsTableColumns";
 import type { useThrottledRefetchOnFocus as useThrottledRefetchOnFocusFn } from "@/hooks/useThrottledRefetchOnFocus";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 type PaymentsDateControlsProps = ComponentProps<typeof PaymentsDateControlsComponent>;
 type PaymentsTrendChartProps = ComponentProps<typeof PaymentsTrendChartComponent>;
@@ -77,6 +78,10 @@ const mockWriteFileXLSX = jest.fn<void, unknown[]>();
 const mockJsonToSheet = jest.fn<Record<string, unknown>, [unknown]>(() => ({ sheet: true }));
 const mockBookNew = jest.fn<Record<string, unknown>, []>(() => ({ workbook: true }));
 const mockBookAppendSheet = jest.fn<void, [unknown, unknown, string]>();
+
+jest.mock("@/contexts/OrganizationContext", () => ({
+  useOrganization: jest.fn(),
+}));
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -171,6 +176,14 @@ jest.mock("xlsx/xlsx.mjs", () => ({
 describe("Payments page", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    (useOrganization as jest.MockedFunction<typeof useOrganization>).mockReturnValue({
+      activeOrganizationId: "org-123",
+      activeOrganization: null,
+      loading: false,
+      refreshOrganization: jest.fn(),
+      setActiveOrganization: jest.fn(),
+    });
 
     mockUsePaymentsFilters.mockReturnValue({
       state: { status: [], type: [], amountMin: null, amountMax: null, search: "" },

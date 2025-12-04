@@ -8,6 +8,8 @@ import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 export interface ReminderEditorValues {
   content: string;
   reminderDateTime: string;
+  reminderDate?: string | null;
+  reminderTime?: string | null;
 }
 
 export interface ReminderEditorSheetProps {
@@ -19,11 +21,36 @@ export interface ReminderEditorSheetProps {
   submitting?: boolean;
 }
 
+const sanitizeTime = (input?: string | null) => {
+  if (!input) return undefined;
+  const [hoursRaw, minutesRaw = "00"] = input.split(":");
+  if (!hoursRaw) return undefined;
+  const hours = hoursRaw.padStart(2, "0").slice(0, 2);
+  const minutes = minutesRaw.padStart(2, "0").slice(0, 2);
+  return `${hours}:${minutes}`;
+};
+
 const buildInitialDateTime = (values?: Partial<ReminderEditorValues>) => {
   if (!values) return "";
-  if (values.reminderDateTime) return values.reminderDateTime;
-  if (values.reminderDateTime === "") return "";
-  return "";
+
+  const trimmed = values.reminderDateTime?.trim();
+  const [dateFromValue = "", rawTimePart] = (trimmed ?? "").split("T");
+  const fallbackDate = values.reminderDate ?? "";
+  const datePart = dateFromValue || fallbackDate;
+
+  if (!datePart) return "";
+
+  const timeFromValue = sanitizeTime(rawTimePart);
+  const fallbackTime = sanitizeTime(values.reminderTime);
+
+  const resolvedTime = timeFromValue ?? fallbackTime;
+
+  if (resolvedTime) {
+    return `${datePart}T${resolvedTime}`;
+  }
+
+  // Date-only; DateTimePicker will apply its defaultTime
+  return datePart;
 };
 
 export const ReminderEditorSheet = ({
@@ -71,8 +98,26 @@ export const ReminderEditorSheet = ({
     await onSubmit({
       content: content.trim(),
       reminderDateTime,
+      reminderDate: initialValues?.reminderDate,
+      reminderTime: initialValues?.reminderTime,
     });
   };
+
+  const defaultTime = useMemo(() => {
+    if (!initialValues) return undefined;
+    return (
+      sanitizeTime(initialValues.reminderTime) ??
+      sanitizeTime(initialValues.reminderDateTime?.split("T")[1])
+    );
+  }, [initialValues]);
+
+  const pickerValue = useMemo(() => {
+    if (!reminderDateTime) return "";
+    const [, timePart] = reminderDateTime.split("T");
+    if (timePart) return reminderDateTime;
+    const fallback = defaultTime ?? "09:00";
+    return `${reminderDateTime}T${fallback}`;
+  }, [defaultTime, reminderDateTime]);
 
   return (
     <AppSheetModal
@@ -108,13 +153,14 @@ export const ReminderEditorSheet = ({
             {t("reminders.reminderDateLabel")}
           </Label>
           <DateTimePicker
-            value={reminderDateTime}
+            value={pickerValue}
             onChange={setReminderDateTime}
             placeholder={t("dateTimePicker.placeholder")}
             timeLabel={t("dateTimePicker.time")}
             todayLabel={t("dateTimePicker.today")}
             clearLabel={t("dateTimePicker.clear")}
             doneLabel={t("dateTimePicker.done")}
+            defaultTime={defaultTime}
           />
         </div>
       </div>
@@ -123,4 +169,3 @@ export const ReminderEditorSheet = ({
 };
 
 ReminderEditorSheet.displayName = "ReminderEditorSheet";
-

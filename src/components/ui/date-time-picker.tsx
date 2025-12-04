@@ -26,6 +26,7 @@ interface DateTimePickerProps {
   doneLabel?: string;
   mode?: "datetime" | "date";
   popoverModal?: boolean;
+  defaultTime?: string; // HH:mm used when no time is provided
 }
 
 type CalendarValue = Date | Date[] | null;
@@ -41,15 +42,35 @@ function toIsoLocal(date: Date, hours: number, minutes: number, mode: "datetime"
   return `${datePart}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function parseIsoLocal(value?: string, mode: "datetime" | "date" = "datetime") {
-  if (!value) return { date: undefined as Date | undefined, hours: 9, minutes: 0 };
+function parseIsoLocal(
+  value?: string,
+  mode: "datetime" | "date" = "datetime",
+  defaultTime: string = "09:00"
+) {
+  const [fallbackHoursRaw, fallbackMinutesRaw] = defaultTime.split(":").map(Number);
+  const fallbackHours = Number.isFinite(fallbackHoursRaw) ? fallbackHoursRaw : 9;
+  const fallbackMinutes = Number.isFinite(fallbackMinutesRaw) ? fallbackMinutesRaw : 0;
+
+  if (!value) {
+    return {
+      date: undefined as Date | undefined,
+      hours: fallbackHours,
+      minutes: fallbackMinutes,
+    };
+  }
   const [datePart, timePart] = value.split("T");
   const [y, m, d] = datePart.split("-").map(Number);
-  const [hh, mm] = (timePart || "09:00").split(":").map(Number);
+  const [hh, mm] = (timePart || defaultTime).split(":").map(Number);
+  const safeHours =
+    mode === "datetime" && Number.isFinite(hh) ? hh : fallbackHours;
+  const safeMinutes =
+    mode === "datetime" && Number.isFinite(mm) ? mm : fallbackMinutes;
   return {
-    date: new Date(y, (m || 1) - 1, d || 1),
-    hours: mode === "datetime" ? hh || 9 : 9,
-    minutes: mode === "datetime" ? mm || 0 : 0,
+    date: Number.isFinite(y) && Number.isFinite(m) && Number.isFinite(d)
+      ? new Date(y, (m || 1) - 1, d || 1)
+      : undefined,
+    hours: safeHours,
+    minutes: safeMinutes,
   };
 }
 
@@ -75,10 +96,11 @@ export function DateTimePicker({
   doneLabel = "Done",
   mode = "datetime",
   popoverModal = false,
+  defaultTime = "09:00",
 }: DateTimePickerProps) {
   const { date: initialDate, hours: initialHours, minutes: initialMinutes } = useMemo(
-    () => parseIsoLocal(value, mode),
-    [value, mode]
+    () => parseIsoLocal(value, mode, defaultTime),
+    [value, mode, defaultTime]
   );
 
   const [open, setOpen] = useState(false);
@@ -90,11 +112,11 @@ export function DateTimePicker({
   const minuteSelectId = `${pickerId}-minute`;
 
   useEffect(() => {
-    const parsed = parseIsoLocal(value, mode);
+    const parsed = parseIsoLocal(value, mode, defaultTime);
     setSelectedDate(parsed.date);
     setHours(parsed.hours);
     setMinutes(parsed.minutes);
-  }, [value, mode]);
+  }, [value, mode, defaultTime]);
 
   const browserLocale = getUserLocale();
   const hourOptions = Array.from({ length: 24 }, (_, i) => i);

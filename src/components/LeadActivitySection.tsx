@@ -205,7 +205,9 @@ export function LeadActivitySection({
     if (!editingReminder) return undefined;
     return {
       content: editingReminder.content,
+      reminderDate: editingReminder.reminder_date,
       reminderDateTime: buildReminderDateTimeValue(editingReminder),
+      reminderTime: editingReminder.reminder_time,
     };
   }, [editingReminder]);
 

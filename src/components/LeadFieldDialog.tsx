@@ -420,7 +420,6 @@ export function LeadFieldDialog({
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        disabled={isSystemField}
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal">

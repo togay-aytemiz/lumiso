@@ -95,15 +95,14 @@
     },
     "displayName": {
       "label": "Tercih ettiğin görünen ad",
-      "placeholder": "örn. Tayte Demir veya Lumiso Studios'tan Tayte Demir",
+      "placeholder": "örn. Uzay Temiz",
       "helper": "E-postalarda, bildirimlerde ve ekip menülerinde gösterilir.",
       "placeholderVariants": [
         "örn. Demir Öztürk",
         "örn. Elif Yılmaz",
         "örn. Seda Çoşkun",
-        "örn. Uzay Temiz",
         "örn. Kemal & Murat",
-        "örn. Nagehan Soyer Umut"
+        "örn. Çiğdem Soyer Umut"
       ]
     },
     "businessName": {
@@ -141,9 +140,9 @@
       }
     },
     "footers": {
-      "name": "Adını istediğin zaman Ayarlar → Profil sekmesinden güncelleyebilirsin.",
-      "business": "İşletme bilgilerini Ayarlar → Genel sekmesinden düzenleyebilirsin.",
-      "projects": "Varsayılan proje türlerini Ayarlar → Projeler ve Seanslar sekmesinden düzenleyebilirsin."
+      "name": "Adını uygulama içerisinden istediğin zaman güncelleyebilirsin.",
+      "business": "İşletme bilgilerini istediğin zaman düzenleyebilirsin.",
+      "projects": "Varsayılan proje türlerini istedğin zaman düzenleyebilirsin."
     },
     "footer": "Adını istediğin zaman Ayarlar → Profil sekmesinden güncelleyebilirsin.",
     "actions": {

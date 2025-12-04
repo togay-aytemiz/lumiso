@@ -111,31 +111,45 @@ const useTypewriterPlaceholder = (variants: string[]) => {
   useEffect(() => {
     if (variants.length <= 1) return;
     const current = variants[index % variants.length] ?? "";
-    const typeSpeed = isDeleting ? 28 : 48;
-    const holdDuration = 1200;
-    const restartDelay = 220;
+    const typeSpeed = 70;
+    const deleteSpeed = 50;
+    const holdDuration = 1700;
+    const restartDelay = 420;
+    const startDelay = 260;
+    const isCurrentComplete = !isDeleting && text === current;
+    const isResetting = isDeleting && text === "";
+    const isStarting = !isDeleting && text === "";
 
     const updateText = () => {
-      if (!isDeleting && text === current) {
+      if (isCurrentComplete) {
         setIsDeleting(true);
         return;
       }
 
-      if (isDeleting && text === "") {
+      if (isResetting) {
         setIsDeleting(false);
         setIndex((prev) => (prev + 1) % variants.length);
         return;
       }
 
+      const target = variants[index % variants.length] ?? "";
       const next = isDeleting
-        ? current.slice(0, Math.max(text.length - 1, 0))
-        : current.slice(0, text.length + 1);
+        ? target.slice(0, Math.max(text.length - 1, 0))
+        : target.slice(0, text.length + 1);
       setText(next);
     };
 
     const timeout = window.setTimeout(
       updateText,
-      !isDeleting && text === current ? holdDuration : text === "" && isDeleting ? restartDelay : typeSpeed
+      isCurrentComplete
+        ? holdDuration
+        : isResetting
+          ? restartDelay
+          : isStarting
+            ? startDelay
+            : isDeleting
+              ? deleteSpeed
+              : typeSpeed
     );
 
     return () => window.clearTimeout(timeout);
@@ -685,7 +699,7 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
     <Dialog open>
       <DialogContent
         hideClose
-        className="w-full max-w-[calc(100vw-2rem)] max-h-[calc(100vh-1.5rem)] overflow-y-auto sm:max-w-3xl sm:max-h-none sm:overflow-visible rounded-2xl border bg-background p-6 shadow-2xl"
+        className="w-full max-w-[calc(100vw-2rem)] max-h-[calc(100vh-1.5rem)] overflow-y-auto sm:max-w-3xl sm:max-h-none sm:overflow-visible rounded-2xl border bg-background p-5 sm:p-6 shadow-2xl"
         onPointerDownOutside={preventDialogDismiss}
         onInteractOutside={preventDialogDismiss}
         onEscapeKeyDown={preventDialogDismiss}
@@ -700,7 +714,7 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
           {t("pages:profileIntake.badge")}
         </div>
 
-        <div className="mt-4 space-y-4">
+        <div className="mt-3 space-y-3 sm:mt-4 sm:space-y-4">
           <div>
             <h3 className="text-xl font-semibold text-foreground">
               {currentStepMeta.title}
@@ -722,7 +736,7 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
           </div>
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-3 flex flex-col gap-2 sm:gap-3 sm:mt-4 sm:border-t sm:border-border/60 sm:pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p
             className={cn(
               "text-sm text-muted-foreground",

@@ -148,12 +148,16 @@ describe("HelpModal", () => {
 
     render(<HelpModal isOpen onOpenChange={onOpenChange} />);
 
+    expect(screen.getByTestId("dialog-root")).toHaveAttribute("data-open", "true");
     expect(screen.getByTestId("dialog-content").dataset.class).toContain(
-      "w-[calc(100vw-2rem)]"
+      "max-w-[calc(100vw-1.5rem)]"
     );
-    expect(screen.getByTestId("dialog-header").dataset.class).toBe("px-2");
+    expect(screen.getByTestId("dialog-content").dataset.class).toContain("rounded-2xl");
+    expect(screen.getByTestId("dialog-header").dataset.class).toContain("text-center");
 
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    const closeButton = screen.getByRole("button", { name: "Close" });
+    expect(closeButton).toHaveClass("w-full");
+    fireEvent.click(closeButton);
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

@@ -5,8 +5,8 @@ import { FileQuestion, Mail, MessageCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "react-i18next";
 import { HelpOptionCard } from "@/components/support/HelpOptionCard";
-import { cn } from "@/lib/utils";
 import { FeatureFAQSheet } from "@/components/support/FeatureFAQSheet";
+import { cn } from "@/lib/utils";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -36,40 +36,63 @@ export function HelpModal({ isOpen, onOpenChange }: HelpModalProps) {
     },
   ] as const;
 
+  const handleOptionSelect = (action: () => void) => {
+    action();
+    onOpenChange(false);
+  };
+
+  const renderHelpOptions = (cardClassName?: string) => (
+    <div className="space-y-3">
+      {helpItems.map(({ key, icon, action }) => (
+        <HelpOptionCard
+          key={key}
+          icon={icon}
+          title={t(`help.options.${key}.title`)}
+          description={t(`help.options.${key}.description`)}
+          onSelect={() => handleOptionSelect(action)}
+          className={cardClassName}
+        />
+      ))}
+    </div>
+  );
+
+  const closeButton = (
+    <Button
+      variant="surface"
+      onClick={() => onOpenChange(false)}
+      className={cn("btn-surface-accent", isMobile ? "w-full" : undefined)}
+    >
+      {t("help.close")}
+    </Button>
+  );
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent
           className={cn(
             "sm:max-w-lg p-6",
-            isMobile && "w-[calc(100vw-2rem)] h-[calc(100vh-2rem)] max-w-none max-h-none m-4"
+            isMobile &&
+              "w-full max-w-[calc(100vw-1.5rem)] max-h-[calc(100vh-1.5rem)] overflow-hidden rounded-2xl p-5"
           )}
+          hideClose={isMobile}
         >
-          <DialogHeader className={isMobile ? "px-2" : ""}>
+          <DialogHeader className={isMobile ? "space-y-1 text-center" : undefined}>
             <DialogTitle>{t("help.title")}</DialogTitle>
             <DialogDescription>{t("help.description")}</DialogDescription>
           </DialogHeader>
 
-          <div className={cn("space-y-3 py-4", isMobile ? "px-2 flex-1" : "")}>
-            {helpItems.map(({ key, icon, action }) => (
-              <HelpOptionCard
-                key={key}
-                icon={icon}
-                title={t(`help.options.${key}.title`)}
-                description={t(`help.options.${key}.description`)}
-                onSelect={() => {
-                  action();
-                  onOpenChange(false);
-                }}
-                className={isMobile ? "min-h-[72px]" : ""}
-              />
-            ))}
+          <div
+            className={cn(
+              "space-y-3 py-4",
+              isMobile && "max-h-[60vh] overflow-y-auto pr-1"
+            )}
+          >
+            {renderHelpOptions(isMobile ? "min-h-[72px]" : undefined)}
           </div>
 
-          <div className={cn("flex justify-end", isMobile ? "px-2 pb-2" : "")}>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              {t("help.close")}
-            </Button>
+          <div className={cn("flex", isMobile ? "flex-col gap-2 pt-1" : "justify-end")}>
+            {closeButton}
           </div>
         </DialogContent>
       </Dialog>

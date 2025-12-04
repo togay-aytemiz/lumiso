@@ -51,6 +51,9 @@ export function AddAction({ className }: AddActionProps) {
     left: number;
     strategy: "absolute" | "fixed";
   }>({ top: 0, right: 16, left: 16, strategy: "absolute" });
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 640
+  );
 
   const actionLabels = useMemo(
     () => ({
@@ -61,6 +64,18 @@ export function AddAction({ className }: AddActionProps) {
     }),
     [t, tCommon]
   );
+
+  const mobileActionLabels = useMemo(
+    () => ({
+      lead: "Kişi",
+      project: "Proje",
+      session: "Seans",
+      addNew: "Ekle",
+    }),
+    []
+  );
+
+  const labels = isMobile ? mobileActionLabels : actionLabels;
 
   const routeConfigs = useMemo<AddActionRouteConfig[]>(() => {
     const addNewRoutes = [
@@ -75,36 +90,36 @@ export function AddAction({ className }: AddActionProps) {
     return [
       {
         matcher: (pathname) => matchesRoute(pathname, "/leads"),
-        label: actionLabels.lead,
+        label: labels.lead,
         primaryAction: "lead",
       },
       {
         matcher: (pathname) => matchesRoute(pathname, "/projects"),
-        label: actionLabels.project,
+        label: labels.project,
         primaryAction: "project",
       },
       {
         matcher: (pathname) => matchesRoute(pathname, "/calendar"),
-        label: actionLabels.session,
+        label: labels.session,
         primaryAction: "session",
       },
       {
         matcher: (pathname) => matchesRoute(pathname, "/sessions"),
-        label: actionLabels.session,
+        label: labels.session,
         primaryAction: "session",
       },
       {
         matcher: (pathname) => matchesRoute(pathname, "/reminders"),
-        label: actionLabels.session,
+        label: labels.session,
         primaryAction: "session",
       },
       {
         matcher: (pathname) => addNewRoutes.some((route) => matchesRoute(pathname, route)),
-        label: actionLabels.addNew,
+        label: labels.addNew,
         primaryAction: null,
       },
     ];
-  }, [actionLabels]);
+  }, [labels]);
 
   const currentConfig = useMemo<AddActionRouteConfig>(() => {
     const match = routeConfigs.find((config) => config.matcher(location.pathname));
@@ -115,10 +130,10 @@ export function AddAction({ className }: AddActionProps) {
 
     return {
       matcher: () => true,
-      label: actionLabels.addNew,
+      label: labels.addNew,
       primaryAction: null,
     };
-  }, [routeConfigs, location.pathname, actionLabels.addNew]);
+  }, [routeConfigs, location.pathname, labels.addNew]);
 
   const primaryLabel = currentConfig.label ?? tCommon("buttons.new");
   const recommendedType = currentConfig.primaryAction;
@@ -209,19 +224,19 @@ export function AddAction({ className }: AddActionProps) {
   }> = [
     {
       type: "lead",
-      label: actionLabels.lead,
+      label: labels.lead,
       description: addActionDescriptions.lead,
       icon: <UserPlus className="h-6 w-6" aria-hidden="true" />,
     },
     {
       type: "project",
-      label: actionLabels.project,
+      label: labels.project,
       description: addActionDescriptions.project,
       icon: <FolderPlus className="h-6 w-6" aria-hidden="true" />,
     },
     {
       type: "session",
-      label: actionLabels.session,
+      label: labels.session,
       description: addActionDescriptions.session,
       icon: <CalendarClock className="h-6 w-6" aria-hidden="true" />,
     },
@@ -308,6 +323,18 @@ export function AddAction({ className }: AddActionProps) {
   }, [closeMenu, location.pathname]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 639px)");
+    const handleChange = (event: MediaQueryListEvent) => {
+      setIsMobile(event.matches);
+    };
+
+    setIsMobile(mq.matches);
+    mq.addEventListener("change", handleChange);
+    return () => mq.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
     if (!menuOpen && menuVisible) {
       const timeout = window.setTimeout(() => {
         setMenuVisible(false);
@@ -349,13 +376,16 @@ export function AddAction({ className }: AddActionProps) {
         <Button
           type="button"
           variant="ghost"
-          className="group/button relative z-10 h-11 rounded-l-full rounded-r-none px-4 text-sm font-semibold tracking-tight text-slate-900 transition-all duration-200 hover:bg-slate-900/5 hover:text-slate-950 focus-visible:ring-0 focus-visible:ring-offset-0 sm:h-12 sm:px-5"
+          className={cn(
+            "group/button relative z-10 rounded-l-full rounded-r-none px-3 text-sm font-semibold tracking-tight text-slate-900 transition-all duration-200 hover:bg-slate-900/5 hover:text-slate-950 focus-visible:ring-0 focus-visible:ring-offset-0 sm:h-12 sm:px-5 sm:text-base",
+            isMobile ? "h-10" : "h-12"
+          )}
           onClick={handlePrimaryButtonClick}
           aria-label={primaryLabel ?? tCommon("buttons.new")}
           aria-haspopup={primaryButtonControlsMenu ? "menu" : undefined}
           aria-expanded={primaryButtonControlsMenu ? menuOpen : undefined}
         >
-          <Plus className="h-4 w-4 text-slate-600 transition-transform duration-200 group-hover/button:scale-110 group-hover/button:text-slate-800 group-focus-visible/button:scale-110 group-focus-visible/button:text-slate-800" />
+          <Plus className="h-5 w-5 text-slate-600 transition-transform duration-200 group-hover/button:scale-110 group-hover/button:text-slate-800 group-focus-visible/button:scale-110 group-focus-visible/button:text-slate-800" />
           <span
             className="inline whitespace-nowrap text-sm text-slate-600 transition-colors duration-200 group-hover/button:text-slate-800 group-focus-visible/button:text-slate-800 sm:text-base"
             data-add-action-label
@@ -370,7 +400,10 @@ export function AddAction({ className }: AddActionProps) {
         </Button>
         <Button
           type="button"
-          className="group/button relative z-10 h-11 w-11 rounded-l-none rounded-r-full px-0 text-slate-700 transition-all duration-200 hover:bg-slate-900/5 hover:text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 sm:h-12 sm:w-12"
+          className={cn(
+            "group/button relative z-10 rounded-l-none rounded-r-full px-0 text-slate-700 transition-all duration-200 hover:bg-slate-900/5 hover:text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 sm:h-12 sm:w-12",
+            isMobile ? "h-10 w-10" : "h-12 w-12"
+          )}
           variant="ghost"
           aria-label={tCommon("buttons.moreOptions")}
           aria-haspopup="menu"

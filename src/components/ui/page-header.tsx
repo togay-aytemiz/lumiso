@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { AddAction } from "@/components/AddAction";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, HelpCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface PageHeaderProps {
@@ -20,7 +20,7 @@ export function PageHeader({
   subtitle: _subtitle,
   children,
   className,
-  sticky = false
+  sticky = false,
 }: PageHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,7 +32,8 @@ export function PageHeader({
       React.isValidElement(child) &&
       (child.type === PageHeaderSearch ||
         (typeof child.type === "function" &&
-          (child.type as { displayName?: string }).displayName === "PageHeaderSearch"))
+          (child.type as { displayName?: string }).displayName ===
+            "PageHeaderSearch"))
   ) as React.ReactElement<PageHeaderSearchProps> | undefined;
 
   const otherChildren = childrenArray.filter((child) => child !== searchChild);
@@ -67,17 +68,31 @@ export function PageHeader({
               </h1>
             </div>
             {(showMobileSearch || showMobileAddAction) && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {showMobileSearch && (
                   <Button
                     type="button"
                     size="icon"
                     variant="ghost"
+                    data-touch-target="compact"
+                    className="h-10 w-10 p-0 rounded-none border-0 bg-transparent shadow-none hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5"
+                    aria-label={t("buttons.help", { defaultValue: "Yardım" })}
+                    onClick={() => {}}
+                  >
+                    <HelpCircle className="text-muted-foreground" />
+                  </Button>
+                )}
+                {showMobileSearch && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    data-touch-target="compact"
                     onClick={handleMobileSearchClick}
-                    className="h-11 w-11 aspect-square rounded-full border border-border/70 bg-white/80 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                    className="h-10 w-10 p-0 rounded-none border-0 bg-transparent shadow-none hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5"
                     aria-label={t("buttons.search")}
                   >
-                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <Search className="text-muted-foreground" />
                   </Button>
                 )}
                 {showMobileAddAction && <AddAction />}
@@ -148,7 +163,10 @@ interface PageHeaderActionsProps {
   className?: string;
 }
 
-export function PageHeaderActions({ children, className }: PageHeaderActionsProps) {
+export function PageHeaderActions({
+  children,
+  className,
+}: PageHeaderActionsProps) {
   return (
     <div
       className={cn(

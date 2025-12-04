@@ -36,6 +36,10 @@
         "notReceived": "E-posta gelmedi mi?",
         "resend": "Doğrulama e-postasını yeniden gönder",
         "goToSignin": "Giriş sayfasına götür"
+      },
+      "spamWarning": {
+        "title": "Spam/Gereksiz klasörünü kontrol et",
+        "description": "Doğrulama e-postasını spam'e düşürebilir. Yeniden göndermeden önce Spam/Junk ya da Gmail'de 'Gereksiz' klasörüne bakmayı unutma."
       }
     },
     "featurePreview": {

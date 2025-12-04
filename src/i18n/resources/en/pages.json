@@ -36,6 +36,10 @@
         "notReceived": "Didn't get the email?",
         "resend": "Resend verification email",
         "goToSignin": "Take me to sign in"
+      },
+      "spamWarning": {
+        "title": "Check spam or junk folders",
+        "description": "Providers sometimes misplace verification emails. Look in Spam/Junk (Gmail TR may show 'Gereksiz') before resending."
       }
     },
     "featurePreview": {

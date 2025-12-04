@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Eye,
   EyeOff,
   ChevronLeft,
   ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -1264,13 +1266,30 @@ const Auth = () => {
                         </Button>
                       </div>
 
-                      <div className="mt-4 space-y-0.5 text-sm text-slate-600">
+                      <div className="mt-4 space-y-3 text-sm text-slate-600">
                         <span className="block leading-tight">
                           {tPages(
                             "auth.verification.actions.notReceived",
                             "E-posta gelmedi mi?"
                           )}
                         </span>
+                        <Alert className="border-amber-200 bg-amber-50 text-amber-900 shadow-sm">
+                          <AlertTriangle className="h-4 w-4 text-amber-500" />
+                          <div className="space-y-1">
+                            <AlertTitle className="text-sm font-semibold text-amber-900">
+                              {tPages(
+                                "auth.verification.spamWarning.title",
+                                "Check spam or junk folders"
+                              )}
+                            </AlertTitle>
+                            <AlertDescription className="text-sm text-amber-900/90">
+                              {tPages(
+                                "auth.verification.spamWarning.description",
+                                "Providers sometimes misplace verification emails. Look in Spam/Junk (Gmail TR may show “Gereksiz”) before resending."
+                              )}
+                            </AlertDescription>
+                          </div>
+                        </Alert>
                         <Button
                           type="button"
                           variant="link"

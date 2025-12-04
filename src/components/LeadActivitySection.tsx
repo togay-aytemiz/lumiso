@@ -111,13 +111,19 @@ const mapAuditLogRow = (row: AuditLogRow): AuditLogEntry => ({
   created_at: row.created_at,
 });
 
+const getReminderDateOnly = (value?: string | null) => {
+  if (!value) return "";
+  return value.split("T")[0] ?? value;
+};
+
 const buildReminderDateTimeValue = (
   reminder?: ReminderTimelineCardActivity | null
 ) => {
-  if (!reminder?.reminder_date) return "";
-  return reminder.reminder_time
-    ? `${reminder.reminder_date}T${reminder.reminder_time}`
-    : "";
+  const datePart = getReminderDateOnly(reminder?.reminder_date);
+  if (!datePart) return "";
+  return reminder?.reminder_time
+    ? `${datePart}T${reminder.reminder_time}`
+    : datePart;
 };
 
 const parseReminderDateTime = (value: string) => {
@@ -203,9 +209,10 @@ export function LeadActivitySection({
     ReminderEditorValues | undefined
   >(() => {
     if (!editingReminder) return undefined;
+    const reminderDate = getReminderDateOnly(editingReminder.reminder_date);
     return {
       content: editingReminder.content,
-      reminderDate: editingReminder.reminder_date,
+      reminderDate,
       reminderDateTime: buildReminderDateTimeValue(editingReminder),
       reminderTime: editingReminder.reminder_time,
     };

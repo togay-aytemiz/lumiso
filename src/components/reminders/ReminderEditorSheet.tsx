@@ -30,13 +30,18 @@ const sanitizeTime = (input?: string | null) => {
   return `${hours}:${minutes}`;
 };
 
+const getDateOnly = (input?: string | null) => {
+  if (!input) return "";
+  return input.split("T")[0] ?? input;
+};
+
 const buildInitialDateTime = (values?: Partial<ReminderEditorValues>) => {
   if (!values) return "";
 
   const trimmed = values.reminderDateTime?.trim();
   const [dateFromValue = "", rawTimePart] = (trimmed ?? "").split("T");
-  const fallbackDate = values.reminderDate ?? "";
-  const datePart = dateFromValue || fallbackDate;
+  const fallbackDate = getDateOnly(values.reminderDate);
+  const datePart = getDateOnly(dateFromValue || fallbackDate);
 
   if (!datePart) return "";
 

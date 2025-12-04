@@ -250,7 +250,7 @@ export function useOrganizationTaxProfile() {
         (settings.photography_business_name as string | null) ??
         DEFAULT_ORGANIZATION_TAX_PROFILE.companyName;
       const derivedVatExempt =
-        rawProfile?.vatExempt ?? normalizedEntity === "freelance";
+        normalizedEntity === "freelance" ? true : Boolean(rawProfile?.vatExempt);
       return {
         ...DEFAULT_ORGANIZATION_TAX_PROFILE,
         ...(rawProfile ?? {}),

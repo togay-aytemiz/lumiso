@@ -60,7 +60,7 @@ const normalizeSettings = (
     settings.photography_business_name ??
     DEFAULT_ORGANIZATION_TAX_PROFILE.companyName;
   const derivedVatExempt =
-    rawProfile?.vatExempt ?? normalizedEntity === "freelance";
+    normalizedEntity === "freelance" ? true : Boolean(rawProfile?.vatExempt);
   const taxProfile: OrganizationTaxProfile = {
     ...DEFAULT_ORGANIZATION_TAX_PROFILE,
     ...(rawProfile ?? {}),
@@ -188,13 +188,20 @@ export const useOrganizationSettings = () => {
         if (result.error) throw result.error;
 
         const updated = result.data as CachedOrganizationSettings;
+        const normalized = normalizeSettings(updated);
         setOrganizationSettingsCache(activeOrganizationId, updated);
         queryClient.setQueryData(
           ["organization_settings", activeOrganizationId],
           updated
         );
+        if (normalized?.taxProfile) {
+          queryClient.setQueryData(
+            ["organization_tax_profile", activeOrganizationId],
+            normalized.taxProfile
+          );
+        }
 
-        return { success: true, data: normalizeSettings(updated) };
+        return { success: true, data: normalized };
       } catch (error: unknown) {
         console.error("Error updating organization settings:", error);
         const message =
@@ -229,6 +236,13 @@ export const useOrganizationSettings = () => {
       ["organization_settings", activeOrganizationId],
       latest
     );
+    const normalized = normalizeSettings(latest);
+    if (normalized?.taxProfile) {
+      queryClient.setQueryData(
+        ["organization_tax_profile", activeOrganizationId],
+        normalized.taxProfile
+      );
+    }
   }, [activeOrganizationId, queryClient]);
 
   const uploadLogo = useCallback(

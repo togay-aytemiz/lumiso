@@ -48,11 +48,16 @@ const STEP_FOOTER_KEY_MAP: Record<number, string> = {
 };
 
 const isDevEnvironment = () => {
-  if (typeof process !== "undefined" && process.env?.NODE_ENV !== "production") {
+  if (
+    typeof process !== "undefined" &&
+    process.env?.NODE_ENV !== "production"
+  ) {
     return true;
   }
   try {
-    const meta = (0, eval)("import.meta") as { env?: { DEV?: boolean } } | undefined;
+    const meta = (0, eval)("import.meta") as
+      | { env?: { DEV?: boolean } }
+      | undefined;
     return Boolean(meta?.env?.DEV);
   } catch {
     return false;
@@ -144,12 +149,12 @@ const useTypewriterPlaceholder = (variants: string[]) => {
       isCurrentComplete
         ? holdDuration
         : isResetting
-          ? restartDelay
-          : isStarting
-            ? startDelay
-            : isDeleting
-              ? deleteSpeed
-              : typeSpeed
+        ? restartDelay
+        : isStarting
+        ? startDelay
+        : isDeleting
+        ? deleteSpeed
+        : typeSpeed
     );
 
     return () => window.clearTimeout(timeout);
@@ -158,7 +163,9 @@ const useTypewriterPlaceholder = (variants: string[]) => {
   return text;
 };
 
-export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps) {
+export function ProfileIntakeGate({
+  onVisibilityChange,
+}: ProfileIntakeGateProps) {
   const { profile, loading: profileLoading, updateProfile } = useProfile();
   const {
     settings,
@@ -166,20 +173,25 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
     updateSettings,
     refreshSettings,
   } = useOrganizationSettings();
-  const { activeOrganizationId, loading: organizationLoading } = useOrganization();
+  const { activeOrganizationId, loading: organizationLoading } =
+    useOrganization();
   const { user } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
   const { t, i18n } = useTranslation(["pages", "common"]);
 
   const buildPlaceholders = (key: "displayName" | "businessName") => {
-    const base = t(`pages:profileIntake.${key}.placeholder`, { defaultValue: "" });
+    const base = t(`pages:profileIntake.${key}.placeholder`, {
+      defaultValue: "",
+    });
     const variants = t(`pages:profileIntake.${key}.placeholderVariants`, {
       returnObjects: true,
       defaultValue: [],
     }) as unknown;
     const list = Array.isArray(variants)
-      ? variants.filter((item): item is string => typeof item === "string" && item.trim())
+      ? variants.filter(
+          (item): item is string => typeof item === "string" && item.trim()
+        )
       : [];
     const unique: string[] = [];
     const addUnique = (value?: string) => {
@@ -202,8 +214,12 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
     () => buildPlaceholders("businessName"),
     [t, i18n.language]
   );
-  const animatedDisplayPlaceholder = useTypewriterPlaceholder(displayNamePlaceholders);
-  const animatedBusinessPlaceholder = useTypewriterPlaceholder(businessNamePlaceholders);
+  const animatedDisplayPlaceholder = useTypewriterPlaceholder(
+    displayNamePlaceholders
+  );
+  const animatedBusinessPlaceholder = useTypewriterPlaceholder(
+    businessNamePlaceholders
+  );
 
   const [displayName, setDisplayName] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -215,7 +231,8 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [hasEditedProjectTypes, setHasEditedProjectTypes] = useState(false);
-  const defaultProjectType = canonicalizeProjectTypeSlug(projectTypes[0]) ?? projectTypes[0];
+  const defaultProjectType =
+    canonicalizeProjectTypeSlug(projectTypes[0]) ?? projectTypes[0];
 
   const debugOverride = useMemo(() => {
     if (typeof window === "undefined") return false;
@@ -226,16 +243,21 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
 
   const needsDisplayName = !profile?.full_name?.trim();
   const needsBusinessName = !settings?.photography_business_name?.trim();
-  const needsProjectTypes = (settings?.preferred_project_types?.length ?? 0) === 0;
+  const needsProjectTypes =
+    (settings?.preferred_project_types?.length ?? 0) === 0;
   const hasCompletedIntakeOnce = Boolean(settings?.profile_intake_completed_at);
 
   const intakeComplete =
     hasCompletedIntakeOnce ||
     (!needsDisplayName && !needsBusinessName && !needsProjectTypes);
 
-  const hasResolvedOrganization = Boolean(activeOrganizationId) && !organizationLoading;
-  const readyForInitialData = hasResolvedOrganization && !profileLoading && !settingsLoading;
-  const [initialDataLoaded, setInitialDataLoaded] = useState(() => readyForInitialData);
+  const hasResolvedOrganization =
+    Boolean(activeOrganizationId) && !organizationLoading;
+  const readyForInitialData =
+    hasResolvedOrganization && !profileLoading && !settingsLoading;
+  const [initialDataLoaded, setInitialDataLoaded] = useState(
+    () => readyForInitialData
+  );
 
   useEffect(() => {
     if (!initialDataLoaded && readyForInitialData) {
@@ -243,7 +265,9 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
     }
   }, [initialDataLoaded, readyForInitialData]);
 
-  const lastOrganizationIdRef = useRef<string | null>(activeOrganizationId ?? null);
+  const lastOrganizationIdRef = useRef<string | null>(
+    activeOrganizationId ?? null
+  );
 
   useEffect(() => {
     const previousOrgId = lastOrganizationIdRef.current;
@@ -261,9 +285,7 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
   }, [activeOrganizationId]);
 
   const shouldShow =
-    initialDataLoaded &&
-    !manualComplete &&
-    (debugOverride || !intakeComplete);
+    initialDataLoaded && !manualComplete && (debugOverride || !intakeComplete);
 
   const isIntakeBlocking = initialDataLoaded ? shouldShow : true;
 
@@ -334,7 +356,9 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
         ?.map((type) => {
           const canonical = canonicalizeProjectTypeSlug(type);
           if (!canonical) return null;
-          const match = PROJECT_TYPE_OPTIONS.find((option) => option.id === canonical);
+          const match = PROJECT_TYPE_OPTIONS.find(
+            (option) => option.id === canonical
+          );
           return match?.id ?? null;
         })
         .filter((type): type is ProjectTypeId => Boolean(type)) ?? [];
@@ -409,7 +433,10 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
   const validateStep = (stepToValidate: number) => {
     if (stepToValidate === 1) {
       if (!displayName.trim()) {
-        setFieldError("displayName", t("pages:profileIntake.errors.displayName"));
+        setFieldError(
+          "displayName",
+          t("pages:profileIntake.errors.displayName")
+        );
         return false;
       }
       return true;
@@ -417,7 +444,10 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
 
     if (stepToValidate === 2) {
       if (!businessName.trim()) {
-        setFieldError("businessName", t("pages:profileIntake.errors.businessName"));
+        setFieldError(
+          "businessName",
+          t("pages:profileIntake.errors.businessName")
+        );
         return false;
       }
       return true;
@@ -426,7 +456,10 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
     if (stepToValidate === 3) {
       let valid = true;
       if (projectTypes.length === 0) {
-        setFieldError("projectTypes", t("pages:profileIntake.errors.projectTypes"));
+        setFieldError(
+          "projectTypes",
+          t("pages:profileIntake.errors.projectTypes")
+        );
         valid = false;
       }
       return valid;
@@ -504,7 +537,8 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
         const { data: sessionData } = await supabase.auth.getSession();
         const accessToken = sessionData.session?.access_token;
         const functionsBase =
-          import.meta.env.VITE_SUPABASE_URL || "https://rifdykpdubrowzbylffe.supabase.co";
+          import.meta.env.VITE_SUPABASE_URL ||
+          "https://rifdykpdubrowzbylffe.supabase.co";
 
         if (accessToken) {
           // Fire-and-forget with keepalive so it survives tab close
@@ -596,7 +630,9 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
         <span
           className={cn(
             "sm:hidden transition-all duration-200",
-            isSelected ? "scale-100 text-primary" : "scale-95 text-muted-foreground"
+            isSelected
+              ? "scale-100 text-primary"
+              : "scale-95 text-muted-foreground"
           )}
         >
           {isSelected ? (
@@ -608,7 +644,9 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
         <span
           className={cn(
             "hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-background transition-all duration-200 sm:flex",
-            isSelected ? "border-primary bg-primary/20 scale-100 shadow-sm" : "border-transparent scale-95"
+            isSelected
+              ? "border-primary bg-primary/20 scale-100 shadow-sm"
+              : "border-transparent scale-95"
           )}
         >
           {isSelected ? (
@@ -707,14 +745,16 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{t("pages:profileIntake.title")}</DialogTitle>
-          <DialogDescription>{t("pages:profileIntake.subtitle")}</DialogDescription>
+          <DialogDescription>
+            {t("pages:profileIntake.subtitle")}
+          </DialogDescription>
         </DialogHeader>
-        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-primary text-xs font-semibold">
+        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-primary text-sm font-semibold">
           <Sparkles className="h-4 w-4" />
           {t("pages:profileIntake.badge")}
         </div>
 
-        <div className="mt-3 space-y-3 sm:mt-4 sm:space-y-4">
+        <div className="space-y-2 sm:mt-3 sm:space-y-2">
           <div>
             <h3 className="text-xl font-semibold text-foreground">
               {currentStepMeta.title}

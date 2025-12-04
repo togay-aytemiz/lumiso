@@ -41,6 +41,7 @@ export function PageHeader({
   const hasChildren = childrenArray.length > 0;
   const showMobileSearch = Boolean(searchChild);
   const showMobileAddAction = showMobileSearch && includeAddAction;
+  const showDesktopHelp = Boolean(searchChild);
 
   const handleMobileSearchClick = useCallback(() => {
     navigate("/search", {
@@ -49,6 +50,8 @@ export function PageHeader({
       },
     });
   }, [location.hash, location.pathname, location.search, navigate]);
+
+  const handleHelpClick = useCallback(() => {}, []);
 
   return (
     <div
@@ -77,7 +80,7 @@ export function PageHeader({
                     data-touch-target="compact"
                     className="h-10 w-10 p-0 rounded-none border-0 bg-transparent shadow-none hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5"
                     aria-label={t("buttons.help", { defaultValue: "Yardım" })}
-                    onClick={() => {}}
+                    onClick={handleHelpClick}
                   >
                     <HelpCircle className="text-muted-foreground" />
                   </Button>
@@ -122,7 +125,19 @@ export function PageHeader({
             {hasChildren ? children : null}
           </div>
 
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-3">
+            {showDesktopHelp ? (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/70 bg-muted text-muted-foreground shadow-none p-0 hover:bg-muted/80 hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:h-5 [&_svg]:w-5"
+                aria-label={t("buttons.help", { defaultValue: "Yardım" })}
+                onClick={handleHelpClick}
+              >
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+            ) : null}
             <UserMenu variant="header" />
           </div>
         </div>

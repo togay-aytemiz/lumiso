@@ -400,7 +400,15 @@ export default function Calendar() {
     return (
       <CalendarErrorWrapper error={error} retry={refreshCalendar}>
         <>
-          <PageHeader title={t("calendar.title")}>
+          <PageHeader
+            title={t("calendar.title")}
+            helpTitle={t("calendar.video.title", { defaultValue: "2 dakikalık hızlı tur" })}
+            helpDescription={t("calendar.video.description", {
+              defaultValue: "Takvimi nasıl kullanacağınızı kısaca görün."
+            })}
+            helpVideoId={CALENDAR_VIDEO_ID}
+            helpVideoTitle={t("calendar.video.title", { defaultValue: "See how Calendar works" })}
+          >
             <PageHeaderSearch>
               <GlobalSearch variant="header" />
             </PageHeaderSearch>
@@ -445,7 +453,15 @@ export default function Calendar() {
   return (
     <CalendarErrorWrapper error={error} retry={refreshCalendar}>
       <div className="flex flex-col">
-        <PageHeader title={t("calendar.title")}>
+        <PageHeader
+          title={t("calendar.title")}
+          helpTitle={t("calendar.video.title", { defaultValue: "2 dakikalık hızlı tur" })}
+          helpDescription={t("calendar.video.description", {
+            defaultValue: "Takvimi nasıl kullanacağınızı kısaca görün."
+          })}
+          helpVideoId={CALENDAR_VIDEO_ID}
+          helpVideoTitle={t("calendar.video.title", { defaultValue: "See how Calendar works" })}
+        >
           <PageHeaderSearch>
             <GlobalSearch variant="header" />
           </PageHeaderSearch>

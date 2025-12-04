@@ -1214,7 +1214,15 @@ const AllSessions = () => {
         openEvent={ADD_ACTION_EVENTS.session}
         showDefaultTrigger={false}
       />
-      <PageHeader title={t('sessions.title')}>
+      <PageHeader
+        title={t('sessions.title')}
+        helpTitle={t('sessions.video.title', { defaultValue: '2 dakikalık hızlı tur' })}
+        helpDescription={t('sessions.video.description', {
+          defaultValue: 'Oturum listenizden en iyi şekilde yararlanmak için kısa bir tur izleyin.'
+        })}
+        helpVideoId={SESSIONS_VIDEO_ID}
+        helpVideoTitle={t('sessions.video.title', { defaultValue: 'See how Sessions works' })}
+      >
         <PageHeaderSearch>
           <GlobalSearch variant="header" />
         </PageHeaderSearch>

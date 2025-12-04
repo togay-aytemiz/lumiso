@@ -127,7 +127,7 @@ describe("BaseOnboardingModal", () => {
         holdingLabel: "Holding…",
         completeLabel: "Done",
         disabled: false,
-        className: "h-11 w-full sm:w-auto sm:min-w-[200px]",
+        className: "h-11 w-full sm:w-auto sm:min-w-[200px] whitespace-normal text-center leading-snug",
       })
     );
 

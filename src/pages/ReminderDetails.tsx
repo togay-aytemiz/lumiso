@@ -979,7 +979,15 @@ const ReminderDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title={t("reminders.title")}>
+      <PageHeader
+        title={t("reminders.title")}
+        helpTitle={t("reminders.video.title", { defaultValue: "2 dakikalık hızlı tur" })}
+        helpDescription={t("reminders.video.description", {
+          defaultValue: "Hatırlatıcıları en iyi nasıl kullanacağınızı kısaca görün."
+        })}
+        helpVideoId={REMINDERS_VIDEO_ID}
+        helpVideoTitle={t("reminders.video.title", { defaultValue: "See how Reminders works" })}
+      >
         <PageHeaderSearch>
           <GlobalSearch variant="header" />
         </PageHeaderSearch>

@@ -363,7 +363,15 @@ const OptimizedTemplatesContent = React.memo(() => {
 
   return (
     <div className="min-h-screen">
-      <PageHeader title={t("templates.title")}>
+      <PageHeader
+        title={t("templates.title")}
+        helpTitle={t("templates.video.title", { defaultValue: "2 dakikalık hızlı tur" })}
+        helpDescription={t("templates.video.description", {
+          defaultValue: "Şablonları hızlıca tasarlayıp kullanmayı öğrenin."
+        })}
+        helpVideoId={TEMPLATES_VIDEO_ID}
+        helpVideoTitle={t("templates.video.title", { defaultValue: "See how Templates works" })}
+      >
         <PageHeaderSearch>
           <GlobalSearch variant="header" />
         </PageHeaderSearch>

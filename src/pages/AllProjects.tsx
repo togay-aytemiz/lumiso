@@ -1305,7 +1305,13 @@ const AllProjects = () => {
       <div className="flex flex-col h-screen overflow-x-hidden">
         {/* Header */}
         <div className="flex-shrink-0">
-          <PageHeader title={tForms('projects.pageTitle')}>
+          <PageHeader
+            title={tForms('projects.pageTitle')}
+            helpTitle={tForms('projects.welcomeTutorialTitle')}
+            helpDescription={tForms('projects.welcomeTutorialDescription')}
+            helpVideoId={projectIntroVideoId}
+            helpVideoTitle={t('projects.tutorial.welcome.video.title')}
+          >
             <PageHeaderSearch>
               <GlobalSearch variant="header" />
             </PageHeaderSearch>

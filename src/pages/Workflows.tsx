@@ -339,7 +339,15 @@ export default function Workflows() {
   if (loading) {
     return (
       <div className="min-h-screen overflow-x-hidden">
-        <PageHeader title={t("workflows.title")}>
+        <PageHeader
+          title={t("workflows.title")}
+          helpTitle={t("workflows.video.title", { defaultValue: "2 dakikalık hızlı tur" })}
+          helpDescription={t("workflows.video.description", {
+            defaultValue: "Süreçlerinizi otomatikleştirmek için kısa bir tur izleyin."
+          })}
+          helpVideoId={WORKFLOWS_VIDEO_ID}
+          helpVideoTitle={t("workflows.video.title", { defaultValue: "See how Workflows works" })}
+        >
           <PageHeaderSearch>
             <GlobalSearch variant="header" />
           </PageHeaderSearch>
@@ -351,7 +359,15 @@ export default function Workflows() {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <PageHeader title={t("workflows.title")}>
+      <PageHeader
+        title={t("workflows.title")}
+        helpTitle={t("workflows.video.title", { defaultValue: "2 dakikalık hızlı tur" })}
+        helpDescription={t("workflows.video.description", {
+          defaultValue: "Süreçlerinizi otomatikleştirmek için kısa bir tur izleyin."
+        })}
+        helpVideoId={WORKFLOWS_VIDEO_ID}
+        helpVideoTitle={t("workflows.video.title", { defaultValue: "See how Workflows works" })}
+      >
         <PageHeaderSearch>
           <GlobalSearch variant="header" />
         </PageHeaderSearch>

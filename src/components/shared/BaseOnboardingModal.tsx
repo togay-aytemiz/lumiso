@@ -47,13 +47,18 @@ export function BaseOnboardingModal({
   contentClassName
 }: BaseOnboardingModalProps) {
   const hasSingleAction = actions.length === 1;
-  const actionLayout = actions.length > 1 ? "grid-cols-2" : "grid-cols-1";
-  const baseButtonClass = hasSingleAction ? "h-11 w-full sm:w-auto sm:min-w-[200px]" : "w-full h-11";
+  const actionLayout = actions.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1";
+  const baseButtonClass = hasSingleAction
+    ? "h-11 w-full sm:w-auto sm:min-w-[200px]"
+    : "w-full h-11";
+  const actionContainerClass = hasSingleAction
+    ? "flex flex-col sm:flex-row sm:justify-end gap-3 pt-2"
+    : `grid gap-3 pt-2 ${actionLayout}`;
 
   return (
     <Dialog open={open} onOpenChange={() => { /* ignore external close */ }}>
       <DialogContent 
-        className="w-[min(560px,calc(100%-2rem))] sm:max-w-[560px] max-h-[90vh] overflow-y-auto md:max-h-none h-auto rounded-xl md:rounded-2xl p-0 gap-0 shadow-xl border border-border/60" 
+        className="w-[min(560px,calc(100%-2rem))] sm:max-w-[560px] lg:w-[min(96vw,1120px)] lg:max-w-5xl max-h-[90vh] overflow-y-auto md:max-h-none h-auto rounded-xl md:rounded-2xl p-0 gap-0 shadow-xl border border-border/60" 
         hideClose 
         onEscapeKeyDown={(e) => { e.preventDefault(); }} 
         onPointerDownOutside={(e) => { e.preventDefault(); }}
@@ -84,9 +89,15 @@ export function BaseOnboardingModal({
             </div>
           )}
 
-          <div className={hasSingleAction ? "flex justify-end pt-2" : `grid gap-3 pt-2 ${actionLayout}`}>
+          <div className={actionContainerClass}>
             {actions.map((action, index) => {
-              const buttonClassName = [baseButtonClass, action.className].filter(Boolean).join(" ");
+              const buttonClassName = [
+                baseButtonClass,
+                "whitespace-normal text-center leading-snug",
+                action.className
+              ]
+                .filter(Boolean)
+                .join(" ");
               const variant = action.variant || (index === actions.length - 1 ? "default" : "outline");
               const button = action.longPress ? (
                 <LongPressButton

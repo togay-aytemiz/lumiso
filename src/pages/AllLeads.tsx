@@ -1017,7 +1017,13 @@ const AllLeadsNew = () => {
 
   return (
     <div className="min-h-screen">
-      <PageHeader title={t('leads.title')}>
+      <PageHeader
+        title={t('leads.title')}
+        helpTitle={t('leads.tutorial.welcome.title')}
+        helpDescription={t('leads.tutorial.welcome.description')}
+        helpVideoId={leadIntroVideoId}
+        helpVideoTitle={t('leads.tutorial.welcome.video.title')}
+      >
         <PageHeaderSearch>
           <GlobalSearch variant="header" />
         </PageHeaderSearch>

@@ -20,6 +20,8 @@ import { computePaymentSummaryMetrics } from "@/lib/payments/metrics";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useConnectivity } from "@/contexts/useConnectivity";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type LeadWithStatusRow = LeadRow & {
@@ -113,15 +115,21 @@ const CrmDashboard = () => {
   const { profile } = useProfile();
   const { activeOrganization } = useOrganization();
   const { reportNetworkError, reportRecovery } = useConnectivity();
+  const { settings, loading: settingsLoading } = useOrganizationSettings();
+  const { stage: onboardingStage, loading: onboardingLoading } = useOnboarding();
   const navigate = useNavigate();
   const { t } = useDashboardTranslation();
   const organizationId = activeOrganization?.id;
+  const hasCompletedIntake = Boolean(settings?.profile_intake_completed_at);
+  const hasFinishedOnboarding = onboardingStage === "completed" || onboardingStage === "skipped";
+  const shouldEnableDashboardVideo =
+    !settingsLoading && !onboardingLoading && hasCompletedIntake && hasFinishedOnboarding;
   const {
     isOpen: isDashboardVideoOpen,
     close: closeDashboardVideo,
     markCompleted: markDashboardVideoWatched,
     snooze: snoozeDashboardVideo,
-  } = usePageVideoPrompt({ pageKey: "dashboard", snoozeDays: 1 });
+  } = usePageVideoPrompt({ pageKey: "dashboard", snoozeDays: 1, enabled: shouldEnableDashboardVideo });
 
   useEffect(() => {
     const handleAddLead = (event: Event) => {

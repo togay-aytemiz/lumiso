@@ -97,6 +97,53 @@ type ProfileIntakeGateProps = {
   onVisibilityChange?: (isVisible: boolean) => void;
 };
 
+const useTypewriterPlaceholder = (variants: string[]) => {
+  const [index, setIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [text, setText] = useState(() => variants[0] ?? "");
+
+  useEffect(() => {
+    setIndex(0);
+    setIsDeleting(false);
+    setText(variants[0] ?? "");
+  }, [variants]);
+
+  useEffect(() => {
+    if (variants.length <= 1) return;
+    const current = variants[index % variants.length] ?? "";
+    const typeSpeed = isDeleting ? 28 : 48;
+    const holdDuration = 1200;
+    const restartDelay = 220;
+
+    const updateText = () => {
+      if (!isDeleting && text === current) {
+        setIsDeleting(true);
+        return;
+      }
+
+      if (isDeleting && text === "") {
+        setIsDeleting(false);
+        setIndex((prev) => (prev + 1) % variants.length);
+        return;
+      }
+
+      const next = isDeleting
+        ? current.slice(0, Math.max(text.length - 1, 0))
+        : current.slice(0, text.length + 1);
+      setText(next);
+    };
+
+    const timeout = window.setTimeout(
+      updateText,
+      !isDeleting && text === current ? holdDuration : text === "" && isDeleting ? restartDelay : typeSpeed
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [index, isDeleting, text, variants]);
+
+  return text;
+};
+
 export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps) {
   const { profile, loading: profileLoading, updateProfile } = useProfile();
   const {
@@ -110,6 +157,39 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
   const location = useLocation();
   const { toast } = useToast();
   const { t, i18n } = useTranslation(["pages", "common"]);
+
+  const buildPlaceholders = (key: "displayName" | "businessName") => {
+    const base = t(`pages:profileIntake.${key}.placeholder`, { defaultValue: "" });
+    const variants = t(`pages:profileIntake.${key}.placeholderVariants`, {
+      returnObjects: true,
+      defaultValue: [],
+    }) as unknown;
+    const list = Array.isArray(variants)
+      ? variants.filter((item): item is string => typeof item === "string" && item.trim())
+      : [];
+    const unique: string[] = [];
+    const addUnique = (value?: string) => {
+      if (!value) return;
+      if (!unique.includes(value)) {
+        unique.push(value);
+      }
+    };
+    addUnique(base);
+    list.forEach((entry) => addUnique(entry.trim()));
+    return unique.length > 0 ? unique : [base].filter(Boolean);
+  };
+
+  const displayNamePlaceholders = useMemo(
+    () => buildPlaceholders("displayName"),
+    // Recompute on language change so variants stay localized
+    [t, i18n.language]
+  );
+  const businessNamePlaceholders = useMemo(
+    () => buildPlaceholders("businessName"),
+    [t, i18n.language]
+  );
+  const animatedDisplayPlaceholder = useTypewriterPlaceholder(displayNamePlaceholders);
+  const animatedBusinessPlaceholder = useTypewriterPlaceholder(businessNamePlaceholders);
 
   const [displayName, setDisplayName] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -547,7 +627,7 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
                 setFieldError("displayName", undefined);
               }
             }}
-            placeholder={t("pages:profileIntake.displayName.placeholder")}
+            placeholder={animatedDisplayPlaceholder}
           />
           {errors.displayName && (
             <p className="text-xs text-destructive">{errors.displayName}</p>
@@ -567,7 +647,7 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
                 setFieldError("businessName", undefined);
               }
             }}
-            placeholder={t("pages:profileIntake.businessName.placeholder")}
+            placeholder={animatedBusinessPlaceholder}
           />
           {errors.businessName && (
             <p className="text-xs text-destructive">{errors.businessName}</p>
@@ -605,7 +685,7 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
     <Dialog open>
       <DialogContent
         hideClose
-        className="w-full max-w-[calc(100vw-2rem)] sm:max-w-3xl rounded-2xl border bg-background p-6 shadow-2xl"
+        className="w-full max-w-[calc(100vw-2rem)] max-h-[calc(100vh-1.5rem)] overflow-y-auto sm:max-w-3xl sm:max-h-none sm:overflow-visible rounded-2xl border bg-background p-6 shadow-2xl"
         onPointerDownOutside={preventDialogDismiss}
         onInteractOutside={preventDialogDismiss}
         onEscapeKeyDown={preventDialogDismiss}
@@ -643,14 +723,21 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
         </div>
 
         <div className="mt-4 flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">{t(currentFooterKey)}</p>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <p
+            className={cn(
+              "text-sm text-muted-foreground",
+              currentStep === 3 ? "hidden sm:block" : undefined
+            )}
+          >
+            {t(currentFooterKey)}
+          </p>
+          <div className="flex w-full flex-row gap-2 sm:w-auto sm:items-center sm:gap-3">
             {currentStep > 1 && (
               <Button
                 variant="outline"
                 onClick={handleBack}
                 disabled={submitting}
-                className="sm:min-w-[120px]"
+                className="flex-1 sm:flex-none sm:min-w-[120px]"
               >
                 {t("pages:profileIntake.actions.back")}
               </Button>
@@ -658,7 +745,7 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
             <Button
               onClick={handleNext}
               disabled={submitting}
-              className="sm:min-w-[160px]"
+              className="flex-1 sm:flex-none sm:min-w-[160px]"
             >
               {submitting && isLastStep ? (
                 <>

@@ -13,6 +13,7 @@ export type PageVideosMap = Record<string, PageVideoState>;
 interface UsePageVideoPromptOptions {
   pageKey: string;
   snoozeDays?: number;
+  enabled?: boolean;
 }
 
 const SESSION_SNOOZE_KEY = (pageKey: string) =>
@@ -20,7 +21,7 @@ const SESSION_SNOOZE_KEY = (pageKey: string) =>
 const LOCAL_COMPLETED_KEY = (pageKey: string) =>
   `videoPrompt:${pageKey}:completedLocal`;
 
-export function usePageVideoPrompt({ pageKey, snoozeDays = 7 }: UsePageVideoPromptOptions) {
+export function usePageVideoPrompt({ pageKey, snoozeDays = 7, enabled = true }: UsePageVideoPromptOptions) {
   const { data: preferences, isLoading, updatePreferences } = useUserPreferences();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -30,6 +31,7 @@ export function usePageVideoPrompt({ pageKey, snoozeDays = 7 }: UsePageVideoProm
   }, [preferences, pageKey]);
 
   const shouldShow = useMemo(() => {
+    if (!enabled) return false;
     const sessionSnoozed =
       typeof window !== "undefined" &&
       window.sessionStorage.getItem(SESSION_SNOOZE_KEY(pageKey)) === "true";
@@ -53,13 +55,19 @@ export function usePageVideoPrompt({ pageKey, snoozeDays = 7 }: UsePageVideoProm
     }
 
     return false;
-  }, [preferences, isLoading, pageVideoState, snoozeDays, pageKey]);
+  }, [preferences, isLoading, pageVideoState, snoozeDays, pageKey, enabled]);
 
   useEffect(() => {
     if (shouldShow) {
       setIsOpen(true);
     }
   }, [shouldShow]);
+
+  useEffect(() => {
+    if (!enabled) {
+      setIsOpen(false);
+    }
+  }, [enabled]);
 
   const close = useCallback(() => {
     setIsOpen(false);

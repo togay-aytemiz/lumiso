@@ -95,18 +95,34 @@
     },
     "displayName": {
       "label": "Tercih ettiğin görünen ad",
-      "placeholder": "örn. Tayte veya Lumiso Studios'tan Tayte",
-      "helper": "E-postalarda, bildirimlerde ve ekip menülerinde gösterilir."
+      "placeholder": "örn. Tayte Demir veya Lumiso Studios'tan Tayte Demir",
+      "helper": "E-postalarda, bildirimlerde ve ekip menülerinde gösterilir.",
+      "placeholderVariants": [
+        "örn. Demir Öztürk",
+        "örn. Elif Yılmaz",
+        "örn. Seda Çoşkun",
+        "örn. Uzay Temiz",
+        "örn. Kemal & Murat",
+        "örn. Nagehan Soyer Umut"
+      ]
     },
     "businessName": {
       "label": "İşletme adı",
       "placeholder": "örn. Lumiso Studios",
-      "helper": "Faturalarda, e-postalarda ve yakında gelecek müşteri portallarında görünecek."
+      "helper": "Faturalarda, e-postalarda ve yakında gelecek müşteri portallarında görünecek.",
+      "placeholderVariants": [
+        "örn. Demir Studios",
+        "örn. Yılmaz Fotoğrafçılık",
+        "örn. Seda Photo",
+        "örn. Temiz Görsel",
+        "örn. Kemal & Murat Fotoğrafçılık",
+        "örn. Umut Stüdyosu"
+      ]
     },
     "projectTypes": {
       "label": "En sık çektiğin projeler hangileri?",
       "helper": "İstediğin kadar seç; ilk tercihin yeni projelerde varsayılan olur.",
-      "managementHint": "Yeni tür eklemek istersen Ayarlar \u2192 Projeler ve Seanslar bölümünden her zaman düzenleyebilirsin."
+      "managementHint": "Yeni tür eklemek istersen Ayarlar → Projeler ve Seanslar bölümünden her zaman düzenleyebilirsin."
     },
     "options": {
       "projectTypes": {

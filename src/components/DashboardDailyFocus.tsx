@@ -496,9 +496,23 @@ const DashboardDailyFocus = ({
     return Number.isNaN(parsed) ? null : parsed;
   };
 
-  const isPaidPayment = (payment: PaymentSummaryRow) => {
+  const getNetPaymentAmount = (payment: PaymentSummaryRow) => {
+    const entryKind = payment.entry_kind ?? "recorded";
+    if (entryKind !== "recorded") {
+      return 0;
+    }
+
+    const amount = Number(payment.amount ?? 0);
+    if (!Number.isFinite(amount) || amount === 0) {
+      return 0;
+    }
+
+    if (amount < 0) {
+      return amount;
+    }
+
     const normalizedStatus = (payment.status || "").toLowerCase();
-    return normalizedStatus === "paid" && Number(payment.amount ?? 0) > 0;
+    return normalizedStatus === "paid" ? amount : 0;
   };
 
   const isTimestampWithin = (timestamp: number | null, start: Date, end: Date) => {
@@ -667,23 +681,20 @@ const DashboardDailyFocus = ({
       now: current
     } = dateBoundaries;
 
-    const sumInRange = (start: Date, end: Date) =>
+    const netInRange = (start: Date, end: Date) =>
       paymentStats.reduce((sum, payment) => {
-        if (!isPaidPayment(payment)) {
-          return sum;
-        }
         const timestamp = getPaymentTimestamp(payment);
         if (!isTimestampWithin(timestamp, start, end)) {
           return sum;
         }
-        return sum + Number(payment.amount ?? 0);
+        return sum + getNetPaymentAmount(payment);
       }, 0);
 
     return {
-      paidThisMonth: sumInRange(startOfMonth, current),
-      paidPreviousMonth: sumInRange(startOfPrevMonth, endOfPrevMonth),
-      paidYtd: sumInRange(startOfYear, current),
-      paidLastYear: sumInRange(startOfLastYear, endOfLastYear)
+      netThisMonth: netInRange(startOfMonth, current),
+      netPreviousMonth: netInRange(startOfPrevMonth, endOfPrevMonth),
+      netYtd: netInRange(startOfYear, current),
+      netLastYear: netInRange(startOfLastYear, endOfLastYear)
     };
   }, [paymentStats, dateBoundaries]);
 
@@ -702,11 +713,11 @@ const DashboardDailyFocus = ({
       : sessionMetrics.createdYtd - sessionMetrics.createdLastYear;
 
   const revenueValue =
-    revenueTimeframe === "mtd" ? revenueMetrics.paidThisMonth : revenueMetrics.paidYtd;
+    revenueTimeframe === "mtd" ? revenueMetrics.netThisMonth : revenueMetrics.netYtd;
   const revenueComparison =
     revenueTimeframe === "mtd"
-      ? revenueMetrics.paidThisMonth - revenueMetrics.paidPreviousMonth
-      : revenueMetrics.paidYtd - revenueMetrics.paidLastYear;
+      ? revenueMetrics.netThisMonth - revenueMetrics.netPreviousMonth
+      : revenueMetrics.netYtd - revenueMetrics.netLastYear;
 
   const toInitial = useCallback((value: string, fallback: string) => {
     const initial = value.trim().charAt(0).toUpperCase();

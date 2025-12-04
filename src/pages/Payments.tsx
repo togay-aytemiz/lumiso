@@ -26,6 +26,7 @@ import type { DateRange } from "react-day-picker";
 import { formatDate, getDateFnsLocale } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
+import { PageVideoModal } from "@/components/PageVideoModal";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
 import { EmptyState } from "@/components/EmptyState";
 import type { ChartConfig } from "@/components/ui/chart";
@@ -60,10 +61,22 @@ import { PaymentsMetricsSummary } from "@/pages/payments/components/PaymentsMetr
 import { PaymentsTableSection } from "@/pages/payments/components/PaymentsTableSection";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { usePageVideoPrompt } from "@/hooks/usePageVideoPrompt";
+
+const PAYMENTS_VIDEO_ID =
+  (typeof import.meta !== "undefined" &&
+    (import.meta as { env?: Record<string, string> }).env?.VITE_PAYMENTS_VIDEO_ID) ||
+  "MoZbdO39530";
 
 const Payments = () => {
   const { t } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
+  const {
+    isOpen: isPaymentsVideoOpen,
+    close: closePaymentsVideo,
+    markCompleted: markPaymentsVideoWatched,
+    snooze: snoozePaymentsVideo,
+  } = usePageVideoPrompt({ pageKey: "payments", snoozeDays: 1 });
   const [page, setPage] = useState(1);
   const pageSize = PAGE_SIZE;
   const [exporting, setExporting] = useState(false);
@@ -1260,7 +1273,15 @@ const Payments = () => {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <PageHeader title={t("payments.title")}>
+      <PageHeader
+        title={t("payments.title")}
+        helpTitle={t("payments.video.title", { defaultValue: "2 dakikalık hızlı tur" })}
+        helpDescription={t("payments.video.description", {
+          defaultValue: "Ödemeleri ve tahsilatları nasıl takip edeceğinizi kısa bir turla öğrenin.",
+        })}
+        helpVideoId={PAYMENTS_VIDEO_ID}
+        helpVideoTitle={t("payments.video.title", { defaultValue: "Ödemeler hızlı turu" })}
+      >
         <PageHeaderSearch>
           <GlobalSearch variant="header" />
         </PageHeaderSearch>
@@ -1336,6 +1357,22 @@ const Payments = () => {
         leadName={selectedProject?.leads?.name ?? ""}
         mode="sheet"
         onViewFullDetails={handleViewFullDetails}
+      />
+
+      <PageVideoModal
+        open={isPaymentsVideoOpen}
+        onClose={closePaymentsVideo}
+        videoId={PAYMENTS_VIDEO_ID}
+        title={t("payments.video.title", { defaultValue: "Ödemeler hızlı turu" })}
+        description={t("payments.video.description", {
+          defaultValue: "Ödemeleri ve tahsilatları nasıl takip edeceğinizi kısa bir turla öğrenin.",
+        })}
+        labels={{
+          remindMeLater: t("payments.video.remindLater", { defaultValue: "Daha sonra hatırlat" }),
+          dontShowAgain: t("payments.video.dontShow", { defaultValue: "İzledim, tekrar gösterme" }),
+        }}
+        onSnooze={snoozePaymentsVideo}
+        onDontShowAgain={markPaymentsVideoWatched}
       />
           </>
         )}

@@ -22,9 +22,17 @@ interface DeadSimpleSessionBannerProps {
   session: DeadSimpleSession;
   onClick: (sessionId: string) => void;
   onConnectProject?: (sessionId: string) => void;
+  onViewDetails?: (sessionId: string) => void;
+  viewDetailsLabel?: string;
 }
 
-const DeadSimpleSessionBanner = ({ session, onClick, onConnectProject }: DeadSimpleSessionBannerProps) => {
+const DeadSimpleSessionBanner = ({
+  session,
+  onClick,
+  onConnectProject,
+  onViewDetails,
+  viewDetailsLabel,
+}: DeadSimpleSessionBannerProps) => {
   const { settings: orgSettings } = useOrganizationSettings();
   const userLocale = getUserLocale();
   const { t } = useFormsTranslation();
@@ -85,6 +93,9 @@ const DeadSimpleSessionBanner = ({ session, onClick, onConnectProject }: DeadSim
   const isOverdue = isOverdueSession(session.session_date, session.status);
   const showConnectProject =
     !session.project_id && typeof onConnectProject === "function";
+  const showViewDetailsButton = typeof onViewDetails === "function";
+  const resolvedViewDetailsLabel =
+    viewDetailsLabel ?? t("projectCard.viewDetails", { defaultValue: "View details" });
 
   return (
     <div
@@ -172,7 +183,23 @@ const DeadSimpleSessionBanner = ({ session, onClick, onConnectProject }: DeadSim
             onStatusChange={() => {}}
             size="sm"
           />
-          <ChevronRight className="h-4 w-4 text-gray-400" />
+          {showViewDetailsButton ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="surface"
+              className="px-3.5 shadow-sm"
+              onClick={(event) => {
+                event.stopPropagation();
+                onViewDetails?.(session.id) ?? onClick(session.id);
+              }}
+            >
+              {resolvedViewDetailsLabel}
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <ChevronRight className="h-4 w-4 text-gray-400" />
+          )}
         </div>
       </div>
     </div>

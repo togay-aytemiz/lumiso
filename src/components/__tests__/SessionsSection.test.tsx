@@ -23,16 +23,27 @@ jest.mock("react-router-dom", () => ({
 }));
 
 const mockDeadSimpleSessionBanner = jest.fn(
-  ({ session, onClick }: { session: Session; onClick: () => void }) => (
-    <button data-testid={`session-banner-${session.id}`} onClick={onClick}>
-      banner-{session.id}
-    </button>
+  ({
+    session,
+    onClick,
+    onViewDetails,
+  }: { session: Session; onClick: () => void; onViewDetails?: (sessionId: string) => void }) => (
+    <div>
+      <button data-testid={`session-banner-${session.id}`} onClick={onClick}>
+        banner-{session.id}
+      </button>
+      {onViewDetails ? (
+        <button data-testid={`session-view-${session.id}`} onClick={() => onViewDetails(session.id)}>
+          view-session
+        </button>
+      ) : null}
+    </div>
   )
 );
 
 jest.mock("../DeadSimpleSessionBanner", () => ({
   __esModule: true,
-  default: (props: { session: Session; onClick: () => void }) =>
+  default: (props: { session: Session; onClick: () => void; onViewDetails?: (sessionId: string) => void }) =>
     mockDeadSimpleSessionBanner(props),
 }));
 
@@ -213,11 +224,25 @@ describe("SessionsSection", () => {
     ];
     expect(bannerButtons[0]).toBeInTheDocument();
 
+    expect(mockDeadSimpleSessionBanner).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        session: expect.objectContaining({ id: "session-2" }),
+        onClick: expect.any(Function),
+        onViewDetails: expect.any(Function),
+      })
+    );
+
     fireEvent.click(bannerButtons[0]);
     const sheet = screen.getByTestId("session-sheet-view");
     expect(sheet).toHaveAttribute("data-open", "true");
 
     fireEvent.click(screen.getByText("view-details"));
+    expect(mockNavigate).toHaveBeenCalledWith("/sessions/session-2", {
+      state: { from: "/projects/abc" },
+    });
+
+    fireEvent.click(screen.getByTestId("session-view-session-2"));
     expect(mockNavigate).toHaveBeenCalledWith("/sessions/session-2", {
       state: { from: "/projects/abc" },
     });

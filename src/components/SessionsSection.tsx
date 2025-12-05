@@ -61,10 +61,14 @@ export function SessionsSection({
     setIsSessionSheetOpen(true);
   };
 
+  const handleViewSessionDetails = (sessionId: string) => {
+    const currentPath = `${location.pathname}${location.search}${location.hash}`;
+    navigate(`/sessions/${sessionId}`, { state: { from: currentPath } });
+  };
+
   const handleViewFullSessionDetails = () => {
     if (selectedSessionId) {
-      const currentPath = `${location.pathname}${location.search}${location.hash}`;
-      navigate(`/sessions/${selectedSessionId}`, { state: { from: currentPath } });
+      handleViewSessionDetails(selectedSessionId);
     }
   };
 
@@ -136,6 +140,7 @@ export function SessionsSection({
           action: !hasSessions ? renderNewSessionButton() : undefined
         }}
         onSessionClick={handleSessionClick}
+        onViewDetails={handleViewSessionDetails}
         onConnectProject={handleConnectProject}
       />
 

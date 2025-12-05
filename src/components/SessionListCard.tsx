@@ -12,6 +12,7 @@ interface SessionListCardProps {
   icon?: LucideIcon;
   headerAction?: ReactNode;
   summary?: ReactNode;
+  onViewDetails?: (sessionId: string) => void;
   emptyState?: {
     icon?: LucideIcon;
     title: ReactNode;
@@ -30,6 +31,7 @@ export function SessionListCard({
   icon: TitleIcon,
   headerAction,
   summary,
+  onViewDetails,
   emptyState,
   onSessionClick,
   onConnectProject
@@ -66,6 +68,7 @@ export function SessionListCard({
                 key={session.id}
                 session={session}
                 onClick={() => onSessionClick(session.id)}
+                onViewDetails={onViewDetails ? () => onViewDetails(session.id) : undefined}
                 onConnectProject={onConnectProject}
               />
             ))}

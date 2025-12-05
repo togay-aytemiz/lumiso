@@ -49,6 +49,7 @@ describe("DeadSimpleSessionBanner", () => {
     "sessionLabels.project": "Project",
     "sessionSheet.placeholders.project": "No project linked",
     "sessionSheet.actions.connectProject": "Connect project",
+    "projectCard.viewDetails": "View details",
   } as const;
 
   const baseSession = {
@@ -155,6 +156,28 @@ describe("DeadSimpleSessionBanner", () => {
     fireEvent.click(connectButton);
 
     expect(onConnectProject).toHaveBeenCalledWith("session-1");
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("renders view details button when handler is provided", () => {
+    getRelativeDateMock.mockReturnValue("Today");
+    isOverdueSessionMock.mockReturnValue(false);
+
+    const onClick = jest.fn();
+    const onViewDetails = jest.fn();
+
+    render(
+      <DeadSimpleSessionBanner
+        session={{ ...baseSession, notes: "Discuss roadmap" }}
+        onClick={onClick}
+        onViewDetails={onViewDetails}
+      />
+    );
+
+    const viewButton = screen.getByText("View details");
+    fireEvent.click(viewButton);
+
+    expect(onViewDetails).toHaveBeenCalledWith("session-1");
     expect(onClick).not.toHaveBeenCalled();
   });
 });

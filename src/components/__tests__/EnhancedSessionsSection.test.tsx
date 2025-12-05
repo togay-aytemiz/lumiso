@@ -14,17 +14,35 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
 }));
 
 const mockDeadSimpleSessionBanner = jest.fn(
-  ({ session, onClick }: { session: Session; onClick: (sessionId: string) => void }) => (
-    <button data-testid={`session-${session.id}`} onClick={() => onClick(session.id)}>
-      banner-{session.id}
-    </button>
+  ({
+    session,
+    onClick,
+    onViewDetails,
+  }: {
+    session: Session;
+    onClick: (sessionId: string) => void;
+    onViewDetails?: (sessionId: string) => void;
+  }) => (
+    <div>
+      <button data-testid={`session-${session.id}`} onClick={() => onClick(session.id)}>
+        banner-{session.id}
+      </button>
+      {onViewDetails ? (
+        <button data-testid={`session-view-${session.id}`} onClick={() => onViewDetails(session.id)}>
+          view
+        </button>
+      ) : null}
+    </div>
   )
 );
 
 jest.mock("../DeadSimpleSessionBanner", () => ({
   __esModule: true,
-  default: (props: { session: Session; onClick: (sessionId: string) => void }) =>
-    mockDeadSimpleSessionBanner(props),
+  default: (props: {
+    session: Session;
+    onClick: (sessionId: string) => void;
+    onViewDetails?: (sessionId: string) => void;
+  }) => mockDeadSimpleSessionBanner(props),
 }));
 
 const mockSortSessionsByLifecycle = sortSessionsByLifecycle as jest.Mock;

@@ -405,6 +405,9 @@ export function ProjectPackageSummaryCard({
                 })
               )
             }
+            valueClassName={
+              hasAnyDeliveryDetails ? undefined : "text-sm font-normal italic text-muted-foreground opacity-80"
+            }
           />
           {servicesSummary ? (
             <InfoRow
@@ -439,20 +442,24 @@ interface InfoRowProps {
   icon: ReactNode;
   label: string;
   value: ReactNode;
+  valueClassName?: string;
 }
 
-const InfoRow = ({ icon, label, value }: InfoRowProps) => (
-  <div className="flex items-center gap-3 rounded-lg border border-border/70 px-3 py-2">
-    <div className="rounded-md bg-primary/10 p-2 text-primary">{icon ?? <PackageCheck className="h-4 w-4" />}</div>
-    <div className="min-w-0">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      {typeof value === "string" ? (
-        <p className="text-sm font-normal text-foreground line-clamp-2">{value}</p>
-      ) : (
-        <div className="mt-1 text-sm font-medium text-foreground">{value}</div>
-      )}
+const InfoRow = ({ icon, label, value, valueClassName }: InfoRowProps) => {
+  const appliedValueClassName = valueClassName ?? "text-sm font-medium text-foreground";
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-border/70 px-3 py-2">
+      <div className="rounded-md bg-primary/10 p-2 text-primary">{icon ?? <PackageCheck className="h-4 w-4" />}</div>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        {typeof value === "string" ? (
+          <p className={`${appliedValueClassName} line-clamp-2`}>{value}</p>
+        ) : (
+          <div className={`mt-1 ${appliedValueClassName}`}>{value}</div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};

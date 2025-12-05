@@ -82,10 +82,14 @@ export function LeadSessionsSection({
     setEditingStartStep("project");
   };
 
+  const handleViewSessionDetails = (sessionId: string) => {
+    const currentPath = `${location.pathname}${location.search}${location.hash}`;
+    navigate(`/sessions/${sessionId}`, { state: { from: currentPath } });
+  };
+
   const handleViewFullDetails = () => {
     if (!selectedSessionId) return;
-    const currentPath = `${location.pathname}${location.search}${location.hash}`;
-    navigate(`/sessions/${selectedSessionId}`, { state: { from: currentPath } });
+    handleViewSessionDetails(selectedSessionId);
   };
 
   const handleNavigateToLead = () => {
@@ -122,6 +126,7 @@ export function LeadSessionsSection({
           action: emptyStateAction
         }}
         onSessionClick={handleSessionClick}
+        onViewDetails={handleViewSessionDetails}
         onConnectProject={handleConnectProject}
       />
 

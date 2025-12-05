@@ -133,6 +133,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
   const [isVisible, setIsVisible] = useState(true);
   const [userEmail, setUserEmail] = useState<string>("");
   const [isBackgroundDark, setIsBackgroundDark] = useState(false);
+  const [globalOverlayOpen, setGlobalOverlayOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useProfile();
@@ -258,6 +259,42 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     };
   }, [location.pathname]);
 
+  // Detect any global overlays (dialogs, drawers, sheets) and dim the nav to avoid distraction.
+  useEffect(() => {
+    const selectors = [
+      '[data-radix-dialog-content][data-state="open"]',
+      '[data-radix-drawer-content][data-state="open"]',
+      '[data-radix-popover-content][data-state="open"]',
+      '[role="dialog"][data-state="open"]',
+      '[role="alertdialog"][data-state="open"]',
+      '.modal-overlay',
+      '.sheet-overlay',
+    ];
+
+    const computeOverlay = () => {
+      if (typeof document === "undefined") return false;
+      return selectors.some((selector) => document.querySelector(selector));
+    };
+
+    setGlobalOverlayOpen(computeOverlay());
+
+    if (typeof MutationObserver === "undefined") {
+      return;
+    }
+
+    const observer = new MutationObserver(() => {
+      setGlobalOverlayOpen(computeOverlay());
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   const handleSignOut = async () => {
     const confirmMessage = t("menu.sign_out_confirm", "Are you sure you want to sign out?");
     if (window.confirm(confirmMessage)) {
@@ -370,9 +407,12 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
 
   const activeColor = "text-primary";
   const inactiveColor = isBackgroundDark ? "text-foreground/80" : "text-muted-foreground";
+  const overlayActive = globalOverlayOpen || bookingsOpen || automationOpen || moreOpen || helpOpen;
   const navBackgroundClasses = isBackgroundDark
     ? "bg-white supports-[backdrop-filter]:bg-white/85 backdrop-blur-lg border-border/60 shadow-[0_-6px_18px_rgba(0,0,0,0.16)]"
     : "bg-white supports-[backdrop-filter]:bg-white/85 backdrop-blur-lg border-border/70 shadow-[0_-4px_12px_rgba(0,0,0,0.12)]";
+  const navOverlayClasses =
+    "supports-[backdrop-filter]:bg-white/60 bg-white/70 backdrop-blur-md opacity-70 pointer-events-none shadow-none";
   const buttonHoverClasses = "hover:bg-muted/60 active:bg-muted/70";
   const bookingsSheetTitle = t("menu.sessions");
   const automationSheetTitle = t("mobile_sheets.automation");
@@ -385,8 +425,9 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
       <nav 
         ref={navRef}
         className={cn(
-          "md:hidden fixed bottom-0 left-0 right-0 z-50 border-t mobile-bottom-nav transition-colors",
-          navBackgroundClasses
+          "md:hidden fixed bottom-0 left-0 right-0 border-t mobile-bottom-nav transition-colors",
+          overlayActive ? "z-30" : "z-50",
+          overlayActive ? navOverlayClasses : navBackgroundClasses
         )}
         style={{ 
           paddingBottom: 'max(env(safe-area-inset-bottom), 8px)',

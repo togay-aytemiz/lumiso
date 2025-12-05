@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";  
-import { HelpCircle, ArrowRight, CheckCircle, Clock } from "lucide-react";
+import { HelpCircle, ArrowRight, ArrowRightCircle, CheckCircle, Clock } from "lucide-react";
 import { SampleDataModal } from "@/components/SampleDataModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
 import { ExitGuidanceModeButton } from "@/components/ExitGuidanceModeButton";
@@ -77,6 +77,7 @@ const GettingStarted = () => {
       return indexA - indexB;
     });
   }, [completedSteps]);
+  const hasCompletedAnyStep = completedSteps.length > 0;
 
   // If guided setup is complete, redirect to dashboard
   useEffect(() => {
@@ -111,7 +112,10 @@ const GettingStarted = () => {
     }
 
     setHasCelebrated(true);
-    completionBannerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const scrollTarget = completionBannerRef.current;
+    if (scrollTarget && typeof scrollTarget.scrollIntoView === "function") {
+      scrollTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
 
     setConfettiPieces(createConfettiPieces());
     setShowConfetti(true);
@@ -156,6 +160,7 @@ const GettingStarted = () => {
                 size="sm"
                 onClick={() => setShowSampleDataModal(true)}
               >
+                <ArrowRightCircle className="w-4 h-4 mr-2" />
                 {t('onboarding.getting_started.skip_setup')}
               </Button>
             </div>
@@ -165,38 +170,28 @@ const GettingStarted = () => {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-safe">
         {/* Progress Section */}
-        <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
-          <Card className="border-none shadow-lg rounded-2xl">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                {t('onboarding.getting_started.setup_progress')}
-                {completedSteps.length > 0 && (
+        {hasCompletedAnyStep && (
+          <div className={`mb-4 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
+            <Card className="border-none shadow-lg rounded-2xl">
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-xl">
+                  {t('onboarding.getting_started.setup_progress')}
                   <CheckCircle className="w-5 h-5 text-green-500" />
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <GuidedStepProgress 
-                  currentValue={currentStep - 1}
-                  targetValue={currentStep - 1}
-                  totalSteps={totalSteps}
-                  animate={true}
-                />
-                <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                  <div className="font-medium">
-                    <span className="text-foreground">{t('onboarding.getting_started.now_label')}</span> {currentStepInfo ? t(`onboarding.steps.step_${currentStepInfo.id}.title`) : t('onboarding.getting_started.all_tasks_complete')}
-                  </div>
-                  {nextStepInfo && (
-                    <div>
-                      <span className="text-foreground">{t('onboarding.getting_started.next_label')}</span> {t(`onboarding.steps.step_${nextStepInfo.id}.title`)}
-                    </div>
-                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 sm:space-y-4">
+                  <GuidedStepProgress 
+                    currentValue={currentStep - 1}
+                    targetValue={currentStep - 1}
+                    totalSteps={totalSteps}
+                    animate={true}
+                  />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Learning Path Header */}
         <div className="mb-6 sm:mb-8 text-center">

@@ -31,10 +31,11 @@ interface BaseOnboardingModalProps {
   description?: ReactNode;
   eyebrow?: ReactNode;
   headerSlot?: ReactNode;
+  headerSideBySide?: boolean;
   children?: ReactNode;
   actions: OnboardingAction[];
   contentClassName?: string;
-  size?: "default" | "wide";
+  size?: "compact" | "default" | "wide";
 }
 
 export function BaseOnboardingModal({
@@ -44,6 +45,7 @@ export function BaseOnboardingModal({
   description,
   eyebrow,
   headerSlot,
+  headerSideBySide = false,
   children,
   actions,
   contentClassName,
@@ -63,38 +65,70 @@ export function BaseOnboardingModal({
       ? "flex flex-col gap-3 pt-2"
       : `grid gap-3 pt-2 ${actionLayout}`;
 
+  const sizeClass =
+    size === "wide"
+      ? "w-[min(640px,calc(100%-2rem))] sm:max-w-[1100px] lg:w-[min(96vw,1240px)] lg:max-w-[1240px]"
+      : size === "compact"
+        ? "w-[min(500px,calc(100%-2rem))] sm:max-w-[640px] lg:w-[min(72vw,700px)] lg:max-w-[700px]"
+        : "w-[min(540px,calc(100%-2rem))] sm:max-w-[720px] lg:w-[min(84vw,820px)] lg:max-w-3xl";
+
   return (
     <Dialog open={open} onOpenChange={() => { /* ignore external close */ }}>
       <DialogContent
         className={cn(
           "max-h-[90vh] overflow-y-auto md:max-h-none h-auto rounded-xl md:rounded-2xl p-0 gap-0 shadow-xl border border-border/60",
-          size === "wide"
-            ? "w-[min(640px,calc(100%-2rem))] sm:max-w-[1100px] lg:w-[min(96vw,1240px)] lg:max-w-[1240px]"
-            : "w-[min(540px,calc(100%-2rem))] sm:max-w-[720px] lg:w-[min(84vw,820px)] lg:max-w-3xl"
+          sizeClass
         )}
         hideClose
         onEscapeKeyDown={(e) => { e.preventDefault(); }}
         onPointerDownOutside={(e) => { e.preventDefault(); }}
       >
         <div className={cn("flex flex-col p-6 sm:p-8", contentClassName ?? "gap-6")}>
-          <DialogHeader className="space-y-2 text-left">
-            {eyebrow && (
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {eyebrow}
+          {headerSideBySide ? (
+            <DialogHeader className="space-y-3 sm:space-y-2 text-left">
+              {eyebrow && (
+                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {eyebrow}
+                </div>
+              )}
+              <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left sm:gap-4">
+                {headerSlot && (
+                  <div className="mb-2 sm:mb-0 sm:flex-shrink-0">
+                    {headerSlot}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <DialogTitle className="text-2xl font-semibold leading-tight">
+                    {title}
+                  </DialogTitle>
+                  {description && (
+                    <DialogDescription className="text-base leading-relaxed text-muted-foreground">
+                      {description}
+                    </DialogDescription>
+                  )}
+                </div>
               </div>
-            )}
-            {headerSlot && (
-              <div className="mt-1">{headerSlot}</div>
-            )}
-            <DialogTitle className="text-2xl font-semibold leading-tight">
-              {title}
-            </DialogTitle>
-            {description && (
-              <DialogDescription className="text-base leading-relaxed text-muted-foreground">
-                {description}
-              </DialogDescription>
-            )}
-          </DialogHeader>
+            </DialogHeader>
+          ) : (
+            <DialogHeader className="space-y-2 text-left">
+              {eyebrow && (
+                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {eyebrow}
+                </div>
+              )}
+              {headerSlot && (
+                <div className="mt-1">{headerSlot}</div>
+              )}
+              <DialogTitle className="text-2xl font-semibold leading-tight">
+                {title}
+              </DialogTitle>
+              {description && (
+                <DialogDescription className="text-base leading-relaxed text-muted-foreground">
+                  {description}
+                </DialogDescription>
+              )}
+            </DialogHeader>
+          )}
 
           {children && (
             <div className="space-y-4">

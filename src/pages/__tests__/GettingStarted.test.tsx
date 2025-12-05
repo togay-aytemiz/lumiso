@@ -107,9 +107,9 @@ describe("GettingStarted page", () => {
   it("renders current step info and allows navigation to tutorial routes", async () => {
     const state = buildOnboardingState({
       completedSteps: [
-        { id: 99, route: "/completed" },
+        { id: 1, route: "/settings/profile" },
       ],
-      currentStepInfo: { id: 1, route: "/projects", title: "Projects" },
+      currentStepInfo: { id: 2, route: "/projects", title: "Projects" },
       nextStepInfo: { id: 3, route: "/calendar", title: "Calendar" },
       currentStep: 2,
     });
@@ -125,11 +125,11 @@ describe("GettingStarted page", () => {
 
     const user = userEvent.setup();
     const primaryButton = screen.getByRole("button", {
-      name: "onboarding.steps.step_1.button",
+      name: "onboarding.steps.step_2.button",
     });
     await user.click(primaryButton);
 
-    expect(navigate).toHaveBeenCalledWith("/projects?tutorial=true");
+    expect(navigate).toHaveBeenCalledWith("/projects");
 
     expect(screen.queryByTestId("sample-data-modal")).not.toBeInTheDocument();
     const skipButton = screen.getByRole("button", {
@@ -142,6 +142,21 @@ describe("GettingStarted page", () => {
     await waitFor(() =>
       expect(screen.queryByTestId("sample-data-modal")).not.toBeInTheDocument()
     );
+  });
+
+  it("hides setup progress until the first step is completed", () => {
+    const state = buildOnboardingState({
+      completedSteps: [],
+      currentStepInfo: { id: 1, route: "/projects", title: "Projects" },
+      nextStepInfo: { id: 2, route: "/calendar", title: "Calendar" },
+      currentStep: 1,
+    });
+    mockUseOnboarding.mockReturnValue(state);
+
+    render(<GettingStarted />);
+
+    expect(screen.queryByText("onboarding.getting_started.setup_progress")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("guided-progress")).not.toBeInTheDocument();
   });
 
   it("completes onboarding when finishing guided steps", async () => {

@@ -3063,7 +3063,7 @@
     "getting_started": {
       "welcome_title": "Lumiso'ya Hoş Geldiniz 🎉",
       "welcome_subtitle": "Lumiso'yu birlikte adım adım kuralım",
-      "need_help": "Yardıma mı ihtiyacınız var",
+      "need_help": "Yardım ve Destek",
       "skip_setup": "Kurulumu Atla",
       "setup_progress": "Kurulum İlerlemesi",
       "now_label": "Şimdi:",
@@ -3137,6 +3137,7 @@
       "description": "Rehberli kurulumu sürdürebilir ya da eğitimi sonlandırıp kendi hızında devam edebilirsin.",
       "choice_title": "Nasıl devam etmek istersin?",
       "choice_description": "Eğitimi kapatmak için örnek verilerle keşfetmeyi ya da temiz başlamayı seç.",
+      "video_thumbnail_alt": "Video eğitimleri önizlemesi",
       "path_continue_description": "Rehberli kontrol listesini tamamlayarak ayarlarını adım adım oturt.",
       "path_skip_description": "Eğitimi sonlandırıp örnek verilerle keşfetmeyi ya da temiz alanla başlamayı seç.",
       "selection_hint": "Eğitimi kapatacaksan aşağıdan nasıl ilerleyeceğini seç.",

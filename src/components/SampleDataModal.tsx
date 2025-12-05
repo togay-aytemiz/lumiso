@@ -45,6 +45,13 @@ export function SampleDataModal({
   const modalDescription = isChoosingSkip
     ? t("onboarding.sample_data.choice_description")
     : t("onboarding.sample_data.description");
+  const headerIllustration = !isChoosingSkip ? (
+    <img
+      src="/video-tutorials.png"
+      alt={t("onboarding.sample_data.video_thumbnail_alt")}
+      className="w-36 h-24 sm:w-40 sm:h-28 object-contain"
+    />
+  ) : undefined;
 
   useEffect(() => {
     if (open) {
@@ -264,7 +271,10 @@ export function SampleDataModal({
       onClose={onClose}
       title={modalTitle}
       description={modalDescription}
+      headerSlot={headerIllustration}
+      headerSideBySide={!isChoosingSkip}
       actions={actions}
+      size="compact"
     >
       <div
         className={cn(

@@ -48,7 +48,7 @@ export function GuidedStepProgress({
   const progressPercentage = (displayValue / totalSteps) * 100;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <Progress 
         value={progressPercentage} 
         className="w-full h-2 transition-all duration-300" 

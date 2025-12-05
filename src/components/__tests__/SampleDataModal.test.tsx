@@ -57,6 +57,9 @@ interface ModalProps {
   open: boolean;
   title: string;
   description: string;
+  headerSlot?: ReactNode;
+  size?: string;
+  headerSideBySide?: boolean;
   actions?: ModalAction[];
   children?: ReactNode;
 }

@@ -3048,7 +3048,7 @@
     "getting_started": {
       "welcome_title": "Welcome to Lumiso! \ud83c\udf89",
       "welcome_subtitle": "Let's set up your photography business step by step",
-      "need_help": "Need Help?",
+      "need_help": "Help & Support",
       "skip_setup": "Skip Setup",
       "setup_progress": "Setup Progress",
       "now_label": "Now:",
@@ -3122,6 +3122,7 @@
       "description": "Stay in guided setup or end the tutorial and move forward your way.",
       "choice_title": "How would you like to continue?",
       "choice_description": "Pick sample data or start clean, then we’ll exit the tutorial.",
+      "video_thumbnail_alt": "Video tutorials preview",
       "path_continue_description": "Finish the guided checklist to lock in your settings with our prompts.",
       "path_skip_description": "End the tutorial now and pick between sample data or a clean slate.",
       "selection_hint": "If you choose to exit, pick how you want to explore.",

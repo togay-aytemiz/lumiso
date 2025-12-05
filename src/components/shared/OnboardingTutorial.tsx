@@ -32,10 +32,10 @@ interface OnboardingTutorialProps {
   displayTotal?: number;
 }
 
-export function OnboardingTutorial({ 
-  steps, 
-  onComplete, 
-  onExit, 
+export function OnboardingTutorial({
+  steps,
+  onComplete,
+  onExit,
   isVisible,
   initialStepIndex = 0,
   displayOffset = 0,
@@ -193,21 +193,21 @@ export function OnboardingTutorial({
       <span className="text-[11px] font-semibold tracking-wide text-muted-foreground">{stepLabel}</span>
     </div>
   );
-  
+
   // Only show Exit Tutorial button if not the last step
   if (!isLastStep) {
     actions.push({
       label: t('onboarding.tutorial.exit_tutorial_hold'),
       onClick: handleExitNow,
       variant: "dangerOutline",
-      longPress: { 
-        duration: 3000, 
-        holdingLabel: t('onboarding.tutorial.hold_to_exit'), 
+      longPress: {
+        duration: 3000,
+        holdingLabel: t('onboarding.tutorial.hold_to_exit'),
         completeLabel: t('onboarding.tutorial.exiting')
       }
     });
   }
-  
+
   actions.push({
     label: currentStep.primaryCtaLabel ?? (isLastStep ? t('onboarding.tutorial.continue_setup') : t('onboarding.tutorial.next')),
     onClick: handleNext,

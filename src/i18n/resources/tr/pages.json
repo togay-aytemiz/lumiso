@@ -428,8 +428,8 @@
         "placeholder": "Videonun görünmesi için VITE_PROJECT_TUTORIAL_VIDEO_URL değerini ekleyin."
       },
       "exploreProjects": {
-        "title": "Mükemmel! Şimdi Proje Özelliklerini Keşfedin",
-        "description": "Eklenen proje kartını açarak güçlü proje yönetimi araçlarını keşfedin:",
+        "title": "Şimdi Proje Özelliklerini Keşfedin",
+        "description": "Devam etmeye hazır olduğunuzda İleri'ye basın.",
         "points": [
           "Ödemeleri ve faturaları takip edin",
           "Fotoğraf seanslarını yönetin",

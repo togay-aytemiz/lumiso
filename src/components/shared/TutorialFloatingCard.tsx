@@ -33,7 +33,7 @@ export function TutorialFloatingCard({
   position = "top-right"
 }: TutorialFloatingCardProps) {
   const { t } = useTranslation('pages');
-  
+
   const getPositionClasses = () => {
     switch (position) {
       case "top-right":
@@ -64,18 +64,18 @@ export function TutorialFloatingCard({
           </div>
           <CardTitle className="text-lg text-white leading-tight">{title}</CardTitle>
         </CardHeader>
-        
+
         <CardContent className="space-y-4 pt-0">
           <p className="text-sm text-white/80 leading-relaxed">
             {description}
           </p>
-          
+
           {content && (
             <div className="text-sm text-white/90 [&_.text-muted-foreground]:text-white/75 [&_.text-foreground]:text-white [&_.text-card-foreground]:text-white [&_.text-secondary-foreground]:text-white/80">
               {content}
             </div>
           )}
-          
+
           {requiresAction && !canProceed && disabledTooltip && (
             <p className="text-xs font-semibold text-amber-200/90 leading-snug bg-amber-500/15 border border-amber-300/40 rounded-md px-3 py-2">
               {disabledTooltip}
@@ -92,7 +92,7 @@ export function TutorialFloatingCard({
               completeLabel={t('onboarding.tutorial.exiting')}
               className="flex-1 border border-white/25 bg-white/15 text-white font-semibold hover:bg-white/25"
             />
-            
+
             {requiresAction && !canProceed ? (
               <TooltipProvider delayDuration={0}>
                 <Tooltip>

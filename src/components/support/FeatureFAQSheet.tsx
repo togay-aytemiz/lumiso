@@ -49,7 +49,7 @@ function getCategoryIcon(categoryName: string) {
 }
 
 export function FeatureFAQSheet({ open, onOpenChange }: FeatureFAQSheetProps) {
-  const { t } = useTranslation("navigation");
+  const { t } = useTranslation(["navigation", "common"]);
   const isMobile = useIsMobile();
   const [selectedCategory, setSelectedCategory] = useState<FeatureFaqCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -199,7 +199,7 @@ export function FeatureFAQSheet({ open, onOpenChange }: FeatureFAQSheetProps) {
           isMobile ? "h-[90vh] rounded-t-3xl" : "h-full border-l"
         )}
       >
-        <div className="flex h-full flex-col gap-4 p-6">
+        <div className="flex h-full flex-col gap-4 p-6 pb-0">
           <SheetHeader className="space-y-1 text-left">
             <SheetTitle>{t("help.faq_sheet.title")}</SheetTitle>
             <SheetDescription>{t("help.faq_sheet.description")}</SheetDescription>
@@ -232,6 +232,17 @@ export function FeatureFAQSheet({ open, onOpenChange }: FeatureFAQSheetProps) {
             <ScrollArea className="h-full pr-4">
               <div className="pb-6">{content}</div>
             </ScrollArea>
+          </div>
+
+          {/* Fixed bottom close button */}
+          <div className="sticky bottom-0 border-t bg-background px-6 py-4 -mx-6">
+            <Button
+              variant="surface"
+              className="btn-surface-accent w-full"
+              onClick={() => handleOpenChange(false)}
+            >
+              {t("help.close")}
+            </Button>
           </div>
         </div>
       </SheetContent>

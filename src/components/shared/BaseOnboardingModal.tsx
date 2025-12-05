@@ -37,14 +37,14 @@ interface BaseOnboardingModalProps {
   size?: "default" | "wide";
 }
 
-export function BaseOnboardingModal({ 
-  open, 
-  onClose, 
-  title, 
-  description, 
+export function BaseOnboardingModal({
+  open,
+  onClose,
+  title,
+  description,
   eyebrow,
   headerSlot,
-  children, 
+  children,
   actions,
   contentClassName,
   size = "default"
@@ -65,15 +65,15 @@ export function BaseOnboardingModal({
 
   return (
     <Dialog open={open} onOpenChange={() => { /* ignore external close */ }}>
-      <DialogContent 
+      <DialogContent
         className={cn(
           "max-h-[90vh] overflow-y-auto md:max-h-none h-auto rounded-xl md:rounded-2xl p-0 gap-0 shadow-xl border border-border/60",
           size === "wide"
             ? "w-[min(640px,calc(100%-2rem))] sm:max-w-[1100px] lg:w-[min(96vw,1240px)] lg:max-w-[1240px]"
             : "w-[min(540px,calc(100%-2rem))] sm:max-w-[720px] lg:w-[min(84vw,820px)] lg:max-w-3xl"
-        )} 
-        hideClose 
-        onEscapeKeyDown={(e) => { e.preventDefault(); }} 
+        )}
+        hideClose
+        onEscapeKeyDown={(e) => { e.preventDefault(); }}
         onPointerDownOutside={(e) => { e.preventDefault(); }}
       >
         <div className={cn("flex flex-col p-6 sm:p-8", contentClassName ?? "gap-6")}>

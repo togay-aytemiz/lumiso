@@ -24,6 +24,7 @@ import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { useNavigate } from "react-router-dom";
 import { useOptionalOrganization } from "@/hooks/useOptionalOrganization";
 import type { Database } from "@/integrations/supabase/types";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 interface EnhancedAddLeadDialogProps {
   open: boolean;
@@ -50,6 +51,7 @@ export function EnhancedAddLeadDialog({
   const { upsertFieldValues } = useLeadFieldValues("");
   const toast = useI18nToast();
   const { profile } = useProfile();
+  const { isOnboardingComplete } = useOnboarding();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const optionalOrganization = useOptionalOrganization();
@@ -394,6 +396,8 @@ export function EnhancedAddLeadDialog({
     }
   ];
   const shouldShowFieldHelper = showFieldHelper && !fieldsLoading;
+  const helperLocked = shouldShowFieldHelper && !isOnboardingComplete;
+  const helperUnlocked = shouldShowFieldHelper && isOnboardingComplete;
 
   if (fieldsLoading || !defaultsReady) {
     return (
@@ -445,7 +449,7 @@ export function EnhancedAddLeadDialog({
             visibleOnly={true}
           />
 
-          {shouldShowFieldHelper && (
+          {(helperLocked || helperUnlocked) && (
             <Alert className="mt-6 border-amber-300/70 bg-amber-50 text-amber-900">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-600" />
@@ -454,31 +458,37 @@ export function EnhancedAddLeadDialog({
                     {t("lead_fields.helper.title")}
                   </AlertTitle>
                   <AlertDescription className="mt-1 text-sm text-amber-900/90">
-                    {t("lead_fields.helper.description")}
+                    {helperLocked
+                      ? t("lead_fields.helper.locked_message")
+                      : t("lead_fields.helper.description")}
                   </AlertDescription>
-                  <div className="mt-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto px-0 text-sm font-semibold text-amber-900 hover:bg-transparent hover:underline"
-                      onClick={handleManageLeadFields}
-                    >
-                      {t("lead_fields.helper.action")}
-                    </Button>
-                  </div>
+                  {helperUnlocked && (
+                    <div className="mt-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto px-0 text-sm font-semibold text-amber-900 hover:bg-transparent hover:underline"
+                        onClick={handleManageLeadFields}
+                      >
+                        {t("lead_fields.helper.action")}
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                <Button
-                  type="button"
-                  variant="tinted"
-                  colorScheme="amber"
-                  size="icon"
-                  className="ml-2 shrink-0"
-                  onClick={dismissLeadFieldHelper}
-                  aria-label={t("lead_fields.helper.dismiss")}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                {helperUnlocked && (
+                  <Button
+                    type="button"
+                    variant="tinted"
+                    colorScheme="amber"
+                    size="icon"
+                    className="ml-2 shrink-0"
+                    onClick={dismissLeadFieldHelper}
+                    aria-label={t("lead_fields.helper.dismiss")}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </Alert>
           )}

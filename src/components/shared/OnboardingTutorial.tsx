@@ -105,18 +105,22 @@ export function OnboardingTutorial({
     const floatingPosition = getFloatingPosition();
 
     if (isMobile) {
+      const spacerHeight = 140; // Reserve space so underlying content remains scrollable on mobile
       return (
-        <TutorialMobileBanner
-          stepNumber={displayStepNumber}
-          totalSteps={effectiveTotal}
-          title={typeof currentStep.title === 'string' ? currentStep.title : 'Step'}
-          description={currentStep.description}
-          canProceed={currentStep.canProceed}
-          requiresAction={currentStep.requiresAction}
-          disabledTooltip={currentStep.disabledTooltip}
-          onNext={handleNext}
-          onExit={handleExit}
-        />
+        <>
+          <div style={{ height: `${spacerHeight}px` }} aria-hidden />
+          <TutorialMobileBanner
+            stepNumber={displayStepNumber}
+            totalSteps={effectiveTotal}
+            title={typeof currentStep.title === 'string' ? currentStep.title : 'Step'}
+            description={currentStep.description}
+            canProceed={currentStep.canProceed}
+            requiresAction={currentStep.requiresAction}
+            disabledTooltip={currentStep.disabledTooltip}
+            onNext={handleNext}
+            onExit={handleExit}
+          />
+        </>
       );
     }
 

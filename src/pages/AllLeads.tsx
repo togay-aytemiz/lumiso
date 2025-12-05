@@ -40,6 +40,7 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset } from "@/components/ui/kpi-presets";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { EmptyState } from "@/components/EmptyState";
 import {
   CONVERTED_STATUS_KEYWORDS,
@@ -191,6 +192,7 @@ const AllLeadsNew = () => {
   const { t } = useTranslation('pages');
   const { t: tCommon } = useTranslation('common');
   const { activeOrganizationId } = useOrganization();
+  const isMobile = useIsMobile();
   const [initialInactiveFilter] = useState(() => searchParams.get("inactive") === "1");
 
   useEffect(() => {
@@ -489,6 +491,15 @@ const AllLeadsNew = () => {
     setPage(1);
     await refetchLeads();
   }, [activeOrganizationId, refetchLeads]);
+
+  const handleLeadCreated = useCallback(async () => {
+    await refreshLeads();
+    if (isMobile) {
+      window.setTimeout(() => {
+        scrollToTable();
+      }, 120);
+    }
+  }, [isMobile, refreshLeads, scrollToTable]);
 
   useThrottledRefetchOnFocus(refreshLeads, 30_000);
 
@@ -1144,7 +1155,10 @@ const AllLeadsNew = () => {
           )}
         </section>
 
-        <section ref={tableSectionRef}>
+        <section
+          ref={tableSectionRef}
+          className="pb-6 sm:pb-0"
+        >
           {columnsLoading ? (
             <TableLoadingSkeleton />
           ) : (
@@ -1171,7 +1185,7 @@ const AllLeadsNew = () => {
       </div>
 
       <EnhancedAddLeadDialog
-        onSuccess={() => refreshLeads()}
+        onSuccess={handleLeadCreated}
         open={addLeadDialogOpen}
         onOpenChange={handleAddLeadDialogChange}
         onClose={() => handleAddLeadDialogChange(false)}

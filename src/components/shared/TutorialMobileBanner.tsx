@@ -38,14 +38,14 @@ export function TutorialMobileBanner({
   }
 
   return createPortal(
-    <div className="fixed inset-x-0 bottom-0 z-[90] px-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pt-3">
+    <div className="fixed inset-x-0 bottom-0 z-[40] px-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pt-3">
       <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 text-white shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur">
-        <div className="flex flex-col gap-3 px-4 py-3">
-          <div className="flex items-start justify-between gap-3">
-            <p className="text-sm font-semibold leading-tight truncate">
+        <div className="flex flex-col gap-2.5 px-3.5 py-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[13px] font-semibold leading-snug truncate">
               {title}
             </p>
-            <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-white/60">
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-white/60">
               {t("onboarding.tutorial.step_of", {
                 current: stepNumber,
                 total: totalSteps,

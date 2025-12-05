@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import type { LeadFieldDefinition } from "@/types/leadFields";
 import { useOptionalOrganization } from "@/hooks/useOptionalOrganization";
 import { Tooltip, TooltipContentDark, TooltipTrigger } from "@/components/ui/tooltip";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 interface Lead {
   id: string;
@@ -284,6 +285,9 @@ export function UnifiedClientDetails({
   const coreFields = allFields.filter((field) => field.type === "core");
   const customFields = allFields.filter((field) => field.type === "custom");
   const shouldShowFieldHelper = showFieldHelper && !loading;
+  const { isOnboardingComplete } = useOnboarding();
+  const helperLocked = shouldShowFieldHelper && !isOnboardingComplete;
+  const helperUnlocked = shouldShowFieldHelper && isOnboardingComplete;
 
   // Handle inline editing - Single photographer has full edit access
   const canEdit = true;
@@ -701,9 +705,9 @@ export function UnifiedClientDetails({
               </div>
             )}
 
-            {(shouldShowFieldHelper || customFields.length > 0) && (
+            {(helperLocked || helperUnlocked || customFields.length > 0) && (
               <div className="pt-3 border-t space-y-3">
-                {shouldShowFieldHelper && (
+                {(helperLocked || helperUnlocked) && (
                   <Alert className="relative border-amber-300/70 bg-amber-50 text-amber-900">
                     <div className="flex items-start gap-3">
                       <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-600" />
@@ -712,31 +716,37 @@ export function UnifiedClientDetails({
                           {tForms("lead_fields.helper.title")}
                         </AlertTitle>
                         <AlertDescription className="mt-1 text-sm text-amber-900/90">
-                          {tForms("lead_fields.helper.description")}
+                          {helperLocked
+                            ? tForms("lead_fields.helper.locked_message")
+                            : tForms("lead_fields.helper.description")}
                         </AlertDescription>
-                        <div className="mt-2">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto px-0 text-sm font-semibold text-amber-900 hover:bg-transparent hover:underline"
-                            onClick={handleManageLeadFields}
-                          >
-                            {tForms("lead_fields.helper.action")}
-                          </Button>
-                        </div>
+                        {helperUnlocked && (
+                          <div className="mt-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-auto px-0 text-sm font-semibold text-amber-900 hover:bg-transparent hover:underline"
+                              onClick={handleManageLeadFields}
+                            >
+                              {tForms("lead_fields.helper.action")}
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                      <Button
-                        type="button"
-                        variant="tinted"
-                        colorScheme="amber"
-                        size="icon"
-                        className="ml-2 shrink-0"
-                        onClick={dismissLeadFieldHelper}
-                        aria-label={tForms("lead_fields.helper.dismiss")}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                      {helperUnlocked && (
+                        <Button
+                          type="button"
+                          variant="tinted"
+                          colorScheme="amber"
+                          size="icon"
+                          className="ml-2 shrink-0"
+                          onClick={dismissLeadFieldHelper}
+                          aria-label={tForms("lead_fields.helper.dismiss")}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </Alert>
                 )}

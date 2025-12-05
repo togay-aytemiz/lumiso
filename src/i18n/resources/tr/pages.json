@@ -252,7 +252,7 @@
     "tutorial": {
       "welcome": {
         "title": "Kişi Yönetimine Hoş Geldiniz",
-        "description": "2 dakikalık turu izleyin veya kısa özetlere bakın.",
+        "description": "2 dakikalık hızlı videoyu izleyin; kişi yönetimine hemen göz atın.",
         "video": {
           "title": "2 dakikalık hızlı tur",
           "caption": "Kartları, filtreleri ve sıralamayı nasıl kullanacağınızı görün.",
@@ -393,7 +393,7 @@
     "tutorial": {
       "intro": {
         "title": "Kişi Detaylarına Hoş Geldiniz! 📋",
-        "description": "Bu kişinin tüm bilgilerini burada yönetirsiniz. Neler yapabileceğinize kısaca bakalım:",
+        "description": "Kısa turu izleyin; kişi detaylarını yönetmeyi ve projeye dönüştürmeyi görün.",
         "video": {
           "title": "Kişi Detayları hızlı turu"
         },
@@ -1420,7 +1420,7 @@
     "tutorial": {
       "welcome": {
         "title": "Proje Yönetim Merkezinize Hoş Geldiniz",
-        "description": "2 dakikalık turu izleyin veya kısa özetlere bakın.",
+        "description": "2 dakikalık hızlı videoyu izleyin; pano ve liste görünümlerine önden bakın.",
         "subtitle": "En çok kullanacağınız üç görünüm için hızlı tur:",
         "video": {
           "title": "2 dakikalık hızlı tur",

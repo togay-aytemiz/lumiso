@@ -1685,7 +1685,8 @@
       "title": "Daha fazla müşteri veya faturalama alanına mı ihtiyacınız var?",
       "description": "Fatura adresi ya da ihtiyacınız olan diğer bilgileri toplamak için özel kişi alanları ekleyin.",
       "action": "Alanları yönet",
-      "dismiss": "Yardımı kapat"
+      "dismiss": "Yardımı kapat",
+      "locked_message": "Eğitimi tamamladıktan sonra özel kişi alanlarını yönetebilirsin."
     },
     "table": {
       "field_name": "Alan Adı",

@@ -396,7 +396,9 @@ export function AdvancedDataTable<T>({
       onClick={handleToggleFilters}
       className={cn(
         "flex items-center gap-2",
-        "w-full grow-0 justify-center sm:w-auto sm:flex-none sm:justify-start"
+        isMobile
+          ? "w-auto shrink-0 px-3"
+          : "w-full grow-0 justify-center sm:w-auto sm:flex-none sm:justify-start"
       )}
     >
       <Filter className="h-4 w-4" />
@@ -406,6 +408,8 @@ export function AdvancedDataTable<T>({
       </Badge>
     </Button>
   ) : null;
+
+  const shouldRenderControls = showHeaderSearch || (!isMobile && filters) || actions;
 
   const loadMoreOffsetPx = loadMoreOffset ?? 320;
   const canLazyLoad = Boolean(onLoadMore) && (hasMore ?? true);
@@ -442,6 +446,7 @@ export function AdvancedDataTable<T>({
     <RootComponent
       className={cn(
         isPlain ? "border-none bg-transparent p-0 shadow-none" : "border border-border/60 shadow-sm",
+        !isPlain && isMobile && "mb-5",
         className
       )}
     >
@@ -455,26 +460,31 @@ export function AdvancedDataTable<T>({
           {/* Title + controls */}
           <div className="flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
             {(title || description) && (
-              <div className="min-w-0 flex-1">
-                {title && (
-                  <CardTitle className="text-base font-semibold leading-tight whitespace-nowrap">
-                    {title}
-                  </CardTitle>
-                )}
-                {description && (
-                  <CardDescription className="text-muted-foreground">
-                    {description}
-                  </CardDescription>
-                )}
+              <div className="flex items-center justify-between gap-2 lg:items-start lg:gap-3">
+                <div className="min-w-0 flex-1">
+                  {title && (
+                    <CardTitle className="text-base font-semibold leading-tight whitespace-nowrap">
+                      {title}
+                    </CardTitle>
+                  )}
+                  {description && (
+                    <CardDescription className="text-muted-foreground">
+                      {description}
+                    </CardDescription>
+                  )}
+                </div>
+                {isMobile && filterTriggerButton ? (
+                  <div className="flex shrink-0 items-center">{filterTriggerButton}</div>
+                ) : null}
               </div>
             )}
 
-            {(showHeaderSearch || filters || actions) && (
+            {shouldRenderControls && (
               <div className="flex w-full sm:w-auto flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-end sm:flex-shrink-0">
                 {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
-                {(filters || actions) && (
+                {(actions || (!isMobile && filters)) && (
                   <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
-                    {filterTriggerButton}
+                    {!isMobile && filterTriggerButton}
                     {actions && (
                       <div className="flex w-full basis-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
                         {actions}
@@ -574,7 +584,7 @@ export function AdvancedDataTable<T>({
 
       <ContentComponent
         className={cn(
-          isPlain ? "px-0 pt-0" : "px-4 md:px-6 pt-2 pb-0",
+          isPlain ? "px-0 pt-0" : "px-4 md:px-6 pt-2 pb-3 sm:pb-0",
           mobileSummaryPresent ? "mt-0" : "mt-2 sm:mt-1"
         )}
       >
@@ -646,7 +656,7 @@ export function AdvancedDataTable<T>({
                     <div className="w-full max-w-md">{resolvedEmptyStateContent}</div>
                   </div>
                 ) : (
-                  <DataTableContainer>
+                  <DataTableContainer className={cn(isMobile && "hide-scrollbar mobile-scroll-hint")}>
                     <Table className="min-w-full border-separate border-spacing-0 text-sm">
                       <TableHeader>
                         <TableRow className="relative border-b border-border/60 bg-muted/20 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-border/80">

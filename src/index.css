@@ -575,6 +575,28 @@ All colors MUST be HSL.
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  .mobile-scroll-hint {
+    position: relative;
+  }
+
+  @media (max-width: 767px) {
+    .mobile-scroll-hint::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 72px;
+      height: 100%;
+      pointer-events: none;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0),
+        hsl(var(--background) / 0.75) 55%,
+        hsl(var(--background))
+      );
+    }
+  }
 }
 
 .data-table-container th,

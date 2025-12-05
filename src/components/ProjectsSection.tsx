@@ -46,6 +46,7 @@ interface ProjectsSectionProps {
   tutorialMode?: boolean;
   tutorialVideoUrl?: string;
   onboardingActive?: boolean;
+  refreshKey?: number;
 }
 
 export function ProjectsSection({
@@ -57,6 +58,7 @@ export function ProjectsSection({
   tutorialMode = false,
   tutorialVideoUrl,
   onboardingActive = false,
+  refreshKey = 0,
 }: ProjectsSectionProps) {
   const { t } = useTranslation(['pages', 'common']);
   const isMobile = useIsMobile();
@@ -138,7 +140,8 @@ export function ProjectsSection({
 
   useEffect(() => {
     fetchProjects();
-  }, [fetchProjects]);
+    setRefreshTrigger(prev => prev + 1);
+  }, [fetchProjects, refreshKey]);
 
   // Persist "Show archived" preference per user
   useEffect(() => {

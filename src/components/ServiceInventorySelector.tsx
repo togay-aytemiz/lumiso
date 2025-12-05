@@ -386,7 +386,7 @@ export function ServiceInventorySelector({
                       <Badge
                         variant="outline"
                         className={cn(
-                          "rounded-full px-2.5 py-0.5 text-xs font-semibold shadow-sm",
+                          "rounded-full px-2.5 py-0.5 text-xs font-semibold shadow-sm whitespace-nowrap",
                           hasSelection
                             ? "border-amber-400/80 bg-amber-50 text-amber-700"
                             : "border-slate-300 bg-slate-100 text-slate-500"
@@ -396,7 +396,7 @@ export function ServiceInventorySelector({
                       </Badge>
                       <Badge
                         variant="secondary"
-                        className="rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm"
+                        className="rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm whitespace-nowrap"
                       >
                         {quantityTagLabel}
                       </Badge>

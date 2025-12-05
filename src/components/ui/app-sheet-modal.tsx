@@ -208,6 +208,15 @@ export function AppSheetModal({
 
   const sideVariant = isMobile ? 'bottom' : 'right';
 
+  const mobileHeightClasses = isMobile
+    ? cn(
+        mobileHeightClass,
+        mobileMinHeightClass,
+        "h-[calc(100vh-12px)]",
+        "rounded-t-xl"
+      )
+    : undefined;
+
   const sizeClassMap: Record<NonNullable<AppSheetModalProps["size"]>, string> = {
     content: "sm:max-w-md",
     default: "sm:max-w-4xl",
@@ -220,7 +229,7 @@ export function AppSheetModal({
   const sheetContentClass = cn(
     "flex min-h-0 flex-col overflow-hidden w-full",
     !isMobile && sizeClassMap[size],
-    isMobile && cn(mobileHeightClass, mobileMinHeightClass, "rounded-t-xl")
+    mobileHeightClasses
   );
 
   return (

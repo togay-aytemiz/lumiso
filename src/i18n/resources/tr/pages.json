@@ -333,7 +333,9 @@
         "none": "Henüz proje yok",
         "updated": "Son güncelleme {{time}}",
         "updatedFallback": "Yakın zamanda güncellendi",
-        "hint": "Proje oluşturup, takip edin."
+        "hint": "Proje oluşturup, takip edin.",
+        "newAction": "Yeni Proje Ekle",
+        "newActionShort": "Yeni Proje"
       },
       "payments": {
         "label": "Ödemeler",
@@ -414,8 +416,9 @@
       },
       "createProject": {
         "title": "İlk Projenizi Oluşturun",
-        "description": "Harika! Bu kişiyi bir projeye dönüştürmek için “Proje Ekle” düğmesine tıklayın.",
-        "disabledTooltip": "Devam etmek için önce bir proje oluşturun"
+        "description": "Harika! Yeni bir proje oluşturmak için “Proje Ekle” düğmesine tıklayın.",
+        "descriptionMobile": "Harika! Yeni bir proje oluşturmak için “Yeni Proje” düğmesine tıklayın.",
+        "disabledTooltip": "Bu görevde önce proje oluşturmanız gerekiyor."
       },
       "projectVideo": {
         "title": "Proje Oluşturmayı İzleyin",

@@ -683,6 +683,7 @@
   },
   "sessions": {
     "schedule_new": "Schedule New Session",
+    "schedule_new_short": "New Session",
     "sessionNotFound": "Session Not Found",
     "unableToLoadDetails": "Unable to load session details",
     "select_existing_client": "Select client",
@@ -868,6 +869,10 @@
       "sync_error": "Unable to sync deposit schedule"
     },
     "services": {
+      "catalog_notice_title": "Services come from Settings \u2192 Services",
+      "catalog_notice_description": "This list pulls from your Services catalog in Settings. Add new services or adjust details there, then include them here.",
+      "catalog_notice_onboarding_description": "This list pulls from your Services catalog in Settings. After onboarding, you can open Settings to add or edit services.",
+      "catalog_notice_action": "Open Services in Settings",
       "included_title": "Included in package",
       "count_label": "{{count}} services",
       "included_helper": "Already covered by the base package ({{total}}).",

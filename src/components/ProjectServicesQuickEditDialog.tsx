@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 import {
   ServiceInventorySelector,
   type ServiceInventoryItem,
@@ -29,6 +35,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
+import { AlertTriangle } from "lucide-react";
 
 export interface QuickServiceRecord {
   id: string;
@@ -135,6 +142,7 @@ export function ProjectServicesQuickEditDialog({
   const { t } = useFormsTranslation();
   const { t: tProject } = useTranslation("projectCreation");
   const { t: tCommon } = useTranslation("common");
+  const { isInGuidedSetup, isOnboardingComplete } = useOnboarding();
   const taxProfileQuery = useOrganizationTaxProfile();
   const vatExempt = Boolean(taxProfileQuery.data?.vatExempt);
   const vatUiEnabled = !vatExempt;
@@ -662,6 +670,11 @@ export function ProjectServicesQuickEditDialog({
     }
   }, [mode, onOpenChange, onSubmit, selectionMap, vatUiEnabled]);
 
+  const isCatalogLocked = isInGuidedSetup && !isOnboardingComplete;
+  const catalogDescriptionKey = isCatalogLocked
+    ? "payments.services.catalog_notice_onboarding_description"
+    : "payments.services.catalog_notice_description";
+
   return (
     <>
       <AppSheetModal
@@ -695,6 +708,39 @@ export function ProjectServicesQuickEditDialog({
       ]}
     >
       <div className="space-y-4">
+        <Alert className="border-amber-200/80 bg-amber-50 text-amber-900">
+          <div className="flex gap-3">
+            <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />
+            <div className="space-y-1">
+              <AlertTitle className="text-sm font-semibold text-amber-900">
+                {t("payments.services.catalog_notice_title", {
+                  defaultValue: "Services come from Settings \u2192 Services",
+                })}
+              </AlertTitle>
+              <AlertDescription className="text-sm text-amber-900/90">
+                <span className="block">
+                  {t(catalogDescriptionKey, {
+                    defaultValue: isCatalogLocked
+                      ? "This list pulls from your Services catalog in Settings. Once onboarding is done, you can manage services there."
+                      : "This list pulls from your Services catalog in Settings. Add new services or adjust details there, then include them here.",
+                  })}
+                </span>
+                {isCatalogLocked ? null : (
+                  <a
+                    href="/settings/services#services"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-flex items-center gap-1 font-semibold text-amber-800 underline underline-offset-4 hover:text-amber-900"
+                  >
+                    {t("payments.services.catalog_notice_action", {
+                      defaultValue: "Open Services in Settings",
+                    })}
+                  </a>
+                )}
+              </AlertDescription>
+            </div>
+          </div>
+        </Alert>
         <p className="text-sm text-muted-foreground">{helperNote}</p>
         <ServiceInventorySelector
           services={inventoryServices}

@@ -734,6 +734,7 @@
   },
   "sessions": {
     "schedule_new": "Yeni Seans Planla",
+    "schedule_new_short": "Yeni Seans",
     "select_existing_client": "Kişi seç",
     "available": "Müsait",
     "scheduled": "Planlandı",
@@ -1363,6 +1364,10 @@
       "sync_error": "Kapora planı güncellenemedi"
     },
     "services": {
+      "catalog_notice_title": "Hizmetler nereden geliyor?",
+      "catalog_notice_description": "Buradaki liste Ayarlar \u2192 Paketler ve Hizmetler bölümündeki katalogdan çekilir. Yeni hizmet eklemek veya bilgilerini güncellemek için Ayarlar’a gidebilirsin.",
+      "catalog_notice_onboarding_description": "Bu liste Ayarlar \u2192 Paketler ve Hizmetler’deki katalogdan gelir. Eğitimi tamamladıktan sonra hizmetleri Ayarlar’dan yönetebilirsin.",
+      "catalog_notice_action": "Hizmetleri Aç",
       "included_title": "Paket dahilindeki hizmetler",
       "count_label": "{{count}} hizmet",
       "included_helper": "Paket fiyatına dahil edilmiştir ({{total}}).",

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContentDark, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LongPressButton } from "@/components/ui/long-press-button";
 import { useTranslation } from "react-i18next";
 
@@ -54,28 +54,34 @@ export function TutorialFloatingCard({
 
   return (
     <div className={getPositionClasses()}>
-      <Card className="w-80 max-w-[90vw] shadow-lg border-primary/20">
-        <CardHeader className="pb-3">
+      <Card className="w-80 max-w-[90vw] shadow-[0_18px_60px_rgba(0,0,0,0.45)] border-white/10 bg-slate-900/95 text-white backdrop-blur">
+        <CardHeader className="pb-3 space-y-2">
           <div className="flex items-center justify-between">
-            <div className="text-xs text-muted-foreground font-medium">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-white/70">
               {t('onboarding.tutorial.step_of', { current: stepNumber, total: totalSteps })}
             </div>
           </div>
-          <CardTitle className="text-lg">{title}</CardTitle>
+          <CardTitle className="text-lg text-white leading-tight">{title}</CardTitle>
         </CardHeader>
         
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground leading-relaxed">
+        <CardContent className="space-y-4 pt-0">
+          <p className="text-sm text-white/80 leading-relaxed">
             {description}
           </p>
           
           {content && (
-            <div className="text-sm">
+            <div className="text-sm text-white/90">
               {content}
             </div>
           )}
           
-          <div className="flex gap-2 pt-2">
+          {requiresAction && !canProceed && disabledTooltip && (
+            <p className="text-xs font-semibold text-amber-200/90 leading-snug bg-amber-500/15 border border-amber-300/40 rounded-md px-3 py-2">
+              {disabledTooltip}
+            </p>
+          )}
+
+          <div className="flex gap-2 pt-1">
             <LongPressButton
               variant="dangerOutline"
               onConfirm={onExit}
@@ -83,7 +89,7 @@ export function TutorialFloatingCard({
               duration={3000}
               holdingLabel={t('onboarding.tutorial.hold_to_exit')}
               completeLabel={t('onboarding.tutorial.exiting')}
-              className="flex-1"
+              className="flex-1 border border-white/25 bg-white/15 text-white font-semibold hover:bg-white/25"
             />
             
             {requiresAction && !canProceed ? (
@@ -91,18 +97,18 @@ export function TutorialFloatingCard({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="flex-1">
-                      <Button disabled className="pointer-events-none w-full">
+                      <Button disabled className="pointer-events-none w-full bg-white text-slate-900 hover:bg-white/90">
                         {isLastStep ? t('onboarding.tutorial.complete') : t('onboarding.tutorial.next')}
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="top" align="center" collisionPadding={12} className="max-w-xs text-center">
+                  <TooltipContentDark side="top" align="center" collisionPadding={12} className="max-w-xs text-center">
                     <p>{disabledTooltip}</p>
-                  </TooltipContent>
+                  </TooltipContentDark>
                 </Tooltip>
               </TooltipProvider>
             ) : (
-              <Button onClick={onNext} className="flex-1">
+              <Button onClick={onNext} className="flex-1 bg-white text-slate-900 hover:bg-white/90">
                 {isLastStep ? t('onboarding.tutorial.complete') : t('onboarding.tutorial.next')}
               </Button>
             )}

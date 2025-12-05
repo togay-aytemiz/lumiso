@@ -40,6 +40,8 @@ import { formatDistanceToNow } from "date-fns";
 import { EntityHeader, type EntitySummaryItem } from "@/components/EntityHeader";
 import { useLeadDetailData } from "@/hooks/useLeadDetailData";
 import { Tooltip, TooltipContentDark, TooltipTrigger } from "@/components/ui/tooltip";
+import { ProjectCreationWizardSheet } from "@/features/project-creation";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const getDateKey = (value?: string | null) => (value ? value.slice(0, 10) : null);
 const safeFormatDate = (value?: string | null) => {
@@ -94,6 +96,7 @@ const LeadDetail = () => {
   const { t: tForms, i18n } = useFormsTranslation();
   const { t: tCommon } = useCommonTranslation();
   const { t: tPages } = useTranslation("pages");
+  const isMobile = useIsMobile();
   const {
     lead,
     leadQuery,
@@ -190,6 +193,8 @@ const LeadDetail = () => {
   const [hasViewedProject, setHasViewedProject] = useState(false);
   const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
   const [hasScheduledSession, setHasScheduledSession] = useState(false);
+  const [isProjectWizardOpen, setProjectWizardOpen] = useState(false);
+  const [projectRefreshKey, setProjectRefreshKey] = useState(0);
   const {
     todayCount,
     todayNext,
@@ -203,6 +208,11 @@ const LeadDetail = () => {
     const introSections = tPages("leadDetail.tutorial.intro.sections", { returnObjects: true }) as Array<{ title: string; description: string }>;
     const introIcons = [User, FolderPlus, Activity];
     const explorePoints = tPages("leadDetail.tutorial.exploreProjects.points", { returnObjects: true }) as string[];
+    const createProjectDescription = isMobile
+      ? tPages("leadDetail.tutorial.createProject.descriptionMobile", {
+          defaultValue: tPages("leadDetail.tutorial.createProject.description")
+        })
+      : tPages("leadDetail.tutorial.createProject.description");
 
     const steps: TutorialStep[] = [
       {
@@ -231,7 +241,7 @@ const LeadDetail = () => {
       {
         id: 5,
         title: tPages("leadDetail.tutorial.createProject.title"),
-        description: tPages("leadDetail.tutorial.createProject.description"),
+        description: createProjectDescription,
         content: null,
         mode: "floating",
         canProceed: hasProjects,
@@ -260,7 +270,7 @@ const LeadDetail = () => {
     ];
 
     return steps;
-  }, [hasProjects, hasViewedProject, tPages]);
+  }, [hasProjects, hasViewedProject, isMobile, tPages]);
 
   // Scheduling tutorial steps
   const schedulingTutorialSteps: TutorialStep[] = useMemo(() => {
@@ -433,6 +443,17 @@ const LeadDetail = () => {
 
   const handleSessionScheduled = () => {
     setHasScheduledSession(true);
+    void refetchAll();
+  };
+
+  const handleOpenProjectWizard = () => {
+    setProjectWizardOpen(true);
+  };
+
+  const handleProjectCreatedFromHeader = () => {
+    setProjectWizardOpen(false);
+    setProjectRefreshKey((prev) => prev + 1);
+    handleProjectUpdated();
     void refetchAll();
   };
 
@@ -968,6 +989,20 @@ const LeadDetail = () => {
   }
 
   const shouldShowSessionTutorialVideo = showTutorial && isSchedulingTutorial && !hasSessions;
+  const lockSessionsForProjectMission = isProjectTutorialStepActive;
+  const lockSessionsTooltip = tPages("leadDetail.tutorial.createProject.disabledTooltip");
+  const desktopProjectLabel = tPages("leadDetail.header.projects.newAction", {
+    defaultValue: "Yeni Proje Ekle"
+  });
+  const mobileProjectLabel = tPages("leadDetail.header.projects.newActionShort", {
+    defaultValue: "Yeni Proje"
+  });
+  const desktopSessionLabel = tForms("sessions.schedule_new");
+  const mobileSessionLabel = tForms("sessions.schedule_new_short", {
+    defaultValue: "Yeni Seans"
+  });
+  const scheduleButtonClassName =
+    "min-w-0 sm:min-w-[140px] gap-1 sm:gap-2 px-2.5 sm:px-4";
 
   const renderScheduleSessionButton = () => (
     <ScheduleSessionDialog
@@ -975,10 +1010,24 @@ const LeadDetail = () => {
       leadName={lead.name}
       onSessionScheduled={handleSessionScheduled}
       tutorialMode={shouldShowSessionTutorialVideo}
+      buttonClassName={scheduleButtonClassName}
+      buttonLabel={desktopSessionLabel}
+      mobileButtonLabel={mobileSessionLabel}
+      hideIconOnMobile
+      disabled={lockSessionsForProjectMission}
+      disabledTooltip={lockSessionsForProjectMission ? lockSessionsTooltip : undefined}
     />
   );
   return (
     <div className="min-h-screen bg-background">
+      <ProjectCreationWizardSheet
+        isOpen={isProjectWizardOpen}
+        onOpenChange={setProjectWizardOpen}
+        leadId={lead.id}
+        leadName={lead.name}
+        entrySource="lead_detail_header"
+        onProjectCreated={handleProjectCreatedFromHeader}
+      />
       <div className="mx-auto max-w-full px-4 py-4 md:px-8 md:py-8">
         <div className="space-y-6 md:space-y-8">
           <EntityHeader
@@ -1003,12 +1052,18 @@ const LeadDetail = () => {
             fallbackInitials="LD"
             actions={
               <div className="flex w-full items-center gap-2 sm:w-auto">
-                <ScheduleSessionDialog
-                  leadId={lead.id}
-                  leadName={lead.name}
-                  onSessionScheduled={handleSessionScheduled}
-                  tutorialMode={shouldShowSessionTutorialVideo}
-                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="min-w-0 sm:min-w-[140px] gap-1 sm:gap-2 px-2.5 sm:px-4 whitespace-nowrap border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950"
+                  onClick={handleOpenProjectWizard}
+                  aria-label={desktopProjectLabel}
+                >
+                  <FolderPlus className="hidden h-4 w-4 sm:inline-block" />
+                  <span className="sm:hidden">{mobileProjectLabel}</span>
+                  <span className="hidden sm:inline">{desktopProjectLabel}</span>
+                </Button>
+                {renderScheduleSessionButton()}
                 {quickStatusButtons}
               </div>
             }
@@ -1039,6 +1094,7 @@ const LeadDetail = () => {
                   <ProjectsSection
                     leadId={lead.id}
                     leadName={lead.name}
+                    refreshKey={projectRefreshKey}
                     onProjectUpdated={handleProjectUpdated}
                     onActivityUpdated={handleActivityUpdated}
                     onProjectClicked={handleProjectClicked}

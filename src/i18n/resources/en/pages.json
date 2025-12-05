@@ -318,7 +318,9 @@
         "none": "No projects yet",
         "updated": "Updated {{time}}",
         "updatedFallback": "Recently updated",
-        "hint": "Convert this lead into a project to get started."
+        "hint": "Convert this lead into a project to get started.",
+        "newAction": "Add New Project",
+        "newActionShort": "New Project"
       },
       "payments": {
         "label": "Payments",
@@ -399,8 +401,9 @@
       },
       "createProject": {
         "title": "Create Your First Project",
-        "description": "Great! Turn this lead into a project by clicking the \u201cAdd Project\u201d button below.",
-        "disabledTooltip": "Create a project first to continue"
+        "description": "Click the \u201cAdd Project\u201d button to create a new project.",
+        "descriptionMobile": "Tap the \u201cNew Project\u201d button to create a new project.",
+        "disabledTooltip": "For this step, create the project first."
       },
       "projectVideo": {
         "title": "Watch How to Create a Project",

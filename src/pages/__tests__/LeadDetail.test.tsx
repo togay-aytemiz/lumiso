@@ -128,6 +128,13 @@ type ScheduleSessionDialogProps = {
   leadName?: string;
   onSessionScheduled?: () => void;
   tutorialMode?: boolean;
+  buttonClassName?: string;
+  buttonLabel?: string;
+  mobileButtonLabel?: string;
+  hideIconOnMobile?: boolean;
+  disabled?: boolean;
+  disabledTooltip?: string;
+  buttonLabel?: string;
 };
 
 type LayoutSection = {

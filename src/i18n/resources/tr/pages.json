@@ -3197,8 +3197,8 @@
       "next": "İleri",
       "complete": "Tamamla",
       "continue_setup": "Kuruluma Devam Et",
-      "start_exploring": "Keşfetmeye başla",
-      "exit_tutorial_hold": "Eğitimden çık (basılı tut)"
+      "start_exploring": "Keşfet",
+      "exit_tutorial_hold": "Eğitimden çık"
     },
     "buttons": {
       "restart_guided_mode": "Rehberli Modu Yeniden Başlat",

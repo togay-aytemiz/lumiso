@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { LongPressButton } from "@/components/ui/long-press-button";
 import { useTranslation } from "react-i18next";
@@ -7,7 +8,7 @@ type TutorialMobileBannerProps = {
   stepNumber: number;
   totalSteps: number;
   title: string;
-  description: string;
+  description: ReactNode;
   canProceed: boolean;
   requiresAction?: boolean;
   disabledTooltip?: string;

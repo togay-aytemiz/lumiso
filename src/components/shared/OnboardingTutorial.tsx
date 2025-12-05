@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { BaseOnboardingModal, OnboardingAction } from "./BaseOnboardingModal";
 import { TutorialFloatingCard } from "./TutorialFloatingCard";
@@ -9,8 +10,8 @@ import { TutorialMobileBanner } from "./TutorialMobileBanner";
 
 export interface TutorialStep {
   id: number;
-  title: string | React.ReactNode;
-  description: string;
+  title: string | ReactNode;
+  description: ReactNode;
   content: React.ReactNode;
   canProceed: boolean;
   route?: string;
@@ -53,6 +54,36 @@ export function OnboardingTutorial({
     currentStepTitle: typeof currentStep?.title === 'string' ? currentStep.title : 'Current Step',
     onExitComplete: onExit
   });
+
+  // Ensure scrolling stays enabled during floating steps (mobile tutorial banner)
+  useEffect(() => {
+    if (!isVisible || currentStep?.mode !== "floating") return;
+    if (typeof document === "undefined") return;
+
+    const hasOpenDialog = document.querySelector('[data-radix-dialog-content][data-state="open"]');
+    if (hasOpenDialog) return;
+
+    const body = document.body;
+    const html = document.documentElement;
+    const previous = {
+      bodyOverflow: body.style.overflow,
+      htmlOverflow: html.style.overflow,
+      bodyTouchAction: body.style.touchAction,
+      htmlTouchAction: html.style.touchAction,
+    };
+
+    body.style.overflow = "auto";
+    html.style.overflow = "auto";
+    body.style.touchAction = "auto";
+    html.style.touchAction = "auto";
+
+    return () => {
+      body.style.overflow = previous.bodyOverflow === "hidden" ? "" : previous.bodyOverflow;
+      html.style.overflow = previous.htmlOverflow === "hidden" ? "" : previous.htmlOverflow;
+      body.style.touchAction = previous.bodyTouchAction === "none" ? "" : previous.bodyTouchAction;
+      html.style.touchAction = previous.htmlTouchAction === "none" ? "" : previous.htmlTouchAction;
+    };
+  }, [currentStep?.mode, isVisible]);
 
   // Update step index when initialStepIndex changes
   useEffect(() => {
@@ -107,9 +138,17 @@ export function OnboardingTutorial({
 
     if (isMobile) {
       const spacerHeight = 140; // Reserve space so underlying content remains scrollable on mobile
+      const spacer = (
+        <div
+          aria-hidden
+          className="pointer-events-none"
+          style={{ height: `${spacerHeight}px` }}
+        />
+      );
+
       return (
         <>
-          <div style={{ height: `${spacerHeight}px` }} aria-hidden />
+          {typeof document !== "undefined" ? createPortal(spacer, document.body) : null}
           <TutorialMobileBanner
             stepNumber={displayStepNumber}
             totalSteps={effectiveTotal}

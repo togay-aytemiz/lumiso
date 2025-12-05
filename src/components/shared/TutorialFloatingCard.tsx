@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContentDark, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -8,8 +9,8 @@ interface TutorialFloatingCardProps {
   stepNumber: number;
   totalSteps: number;
   title: string;
-  description: string;
-  content?: React.ReactNode;
+  description: ReactNode;
+  content?: ReactNode;
   canProceed: boolean;
   requiresAction?: boolean;
   disabledTooltip?: string;

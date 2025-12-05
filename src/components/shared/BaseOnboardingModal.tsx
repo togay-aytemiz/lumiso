@@ -28,7 +28,7 @@ interface BaseOnboardingModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  description?: string;
+  description?: ReactNode;
   eyebrow?: ReactNode;
   headerSlot?: ReactNode;
   children?: ReactNode;

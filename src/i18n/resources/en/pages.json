@@ -3055,7 +3055,7 @@
       "next_label": "Next:",
       "all_tasks_complete": "All tasks complete! \ud83c\udf89",
       "your_learning_path": "Your Learning Path",
-      "learning_path_subtitle": "Each step teaches you how to use Lumiso naturally.",
+      "learning_path_subtitle": "Ready to go in about 10 minutes—just follow the steps.",
       "coming_next": "Coming Next",
       "congratulations": "Congratulations! \ud83c\udf89",
       "setup_complete": "You've completed the guided setup!",
@@ -3065,19 +3065,19 @@
     "steps": {
       "step_1": {
         "title": "Review your profile",
-        "description": "Your display name and studio name came from the intake form—just drop in your brand color, email signature, or avatar if you like.",
+        "description": "Quickly check your name and studio info; add brand color, signature, and avatar.",
         "button": "Open profile settings",
         "duration": "1 min"
       },
       "step_2": {
         "title": "Create Your First Lead",
-        "description": "Add a potential client to start tracking opportunities",
+        "description": "Add your first lead to start tracking clients.",
         "button": "Go to Leads",
         "duration": "2 min"
       },
       "step_3": {
         "title": "Confirm general settings",
-        "description": "Your business name is already saved from intake—use this step to verify contact info, logo, and regional defaults.",
+        "description": "Verify contact info, logo, and defaults; your business name is already saved.",
         "button": "Open General settings",
         "duration": "2 min"
       },
@@ -3089,13 +3089,13 @@
       },
       "step_5": {
         "title": "Schedule a Photo Session",
-        "description": "Book your first session and manage your calendar",
+        "description": "Schedule your first session and organize your calendar.",
         "button": "Schedule Session",
         "duration": "3 min"
       },
       "step_6": {
         "title": "Configure Your Packages",
-        "description": "Set up photography packages and pricing structure",
+        "description": "Set up your photo packages and pricing.",
         "button": "Set Up Packages",
         "duration": "5 min"
       }

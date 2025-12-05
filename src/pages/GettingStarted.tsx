@@ -231,35 +231,33 @@ const GettingStarted = () => {
           <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardContent className="p-4 md:p-6">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-4">
                   <div className="flex gap-3">
                     <div className="flex items-center justify-center w-11 h-11 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse shrink-0 leading-none">
                       {currentStepInfo.id}
                     </div>
                     <div className="flex flex-col gap-2">
-                      <div className="flex flex-row flex-wrap items-center gap-2">
-                        <CardTitle className="text-base sm:text-lg md:text-xl leading-tight">
-                          {t(`onboarding.steps.step_${currentStepInfo.id}.title`)}
-                        </CardTitle>
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 w-fit">
-                          <Clock className="w-3 h-3 mr-1 text-indigo-600" />
-                          {t(`onboarding.steps.step_${currentStepInfo.id}.duration`)}
-                        </span>
-                      </div>
+                      <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {t(`onboarding.steps.step_${currentStepInfo.id}.duration`)}
+                      </span>
+                      <CardTitle className="text-base sm:text-lg md:text-xl leading-tight">
+                        {t(`onboarding.steps.step_${currentStepInfo.id}.title`)}
+                      </CardTitle>
                       <CardDescription className="text-sm md:text-base text-muted-foreground leading-relaxed">
                         {t(`onboarding.steps.step_${currentStepInfo.id}.description`)}
                       </CardDescription>
+                      <div className="pt-2">
+                        <Button 
+                          size="lg"
+                          onClick={() => handleStepAction(currentStepInfo)}
+                          className="w-full sm:w-auto justify-center hover-scale"
+                        >
+                          {t(`onboarding.steps.step_${currentStepInfo.id}.button`)}
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="md:ml-8">
-                    <Button 
-                      size="lg" 
-                      onClick={() => handleStepAction(currentStepInfo)}
-                      className="w-full md:w-auto justify-center hover-scale"
-                    >
-                      {t(`onboarding.steps.step_${currentStepInfo.id}.button`)}
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -276,41 +274,39 @@ const GettingStarted = () => {
               <div className="h-px bg-border flex-1"></div>
             </div>
             
-            <Card className="opacity-50 pointer-events-none grayscale-[0.3] hover:opacity-60 transition-opacity">
+            <Card className="bg-muted/20">
               <CardContent className="p-4 md:p-6">
                 {/* Mobile-first responsive layout for next step preview */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-muted-foreground/30 text-muted-foreground text-lg font-bold flex-shrink-0">
+                      <div className="flex items-center justify-center w-11 h-11 rounded-full border-2 border-muted-foreground/30 text-muted-foreground text-lg font-bold flex-shrink-0">
                         {nextStepInfo.id}
                       </div>
                       <div className="flex-1 space-y-2">
-                        <div className="flex flex-row flex-wrap items-center gap-2">
-                          <CardTitle className="text-base sm:text-lg text-muted-foreground leading-tight">
-                            {t(`onboarding.steps.step_${nextStepInfo.id}.title`)}
-                          </CardTitle>
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 w-fit">
-                            <Clock className="w-3 h-3 mr-1 text-indigo-600" />
-                            {t(`onboarding.steps.step_${nextStepInfo.id}.duration`)}
-                          </span>
-                        </div>
+                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {t(`onboarding.steps.step_${nextStepInfo.id}.duration`)}
+                        </span>
+                        <CardTitle className="text-base sm:text-lg text-muted-foreground leading-tight">
+                          {t(`onboarding.steps.step_${nextStepInfo.id}.title`)}
+                        </CardTitle>
                         <CardDescription className="text-sm sm:text-base text-muted-foreground/80 leading-relaxed">
                           {t(`onboarding.steps.step_${nextStepInfo.id}.description`)}
                         </CardDescription>
+                        <div className="pt-1">
+                          <Button 
+                            size="lg"
+                            variant="outline"
+                            disabled
+                            className="opacity-50 w-full sm:w-auto"
+                          >
+                            {t(`onboarding.steps.step_${nextStepInfo.id}.button`)}
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <Button 
-                      size="lg"
-                      variant="outline"
-                      disabled
-                      className="opacity-50 w-full sm:w-auto"
-                    >
-                      {t(`onboarding.steps.step_${nextStepInfo.id}.button`)}
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
                   </div>
                 </div>
               </CardContent>

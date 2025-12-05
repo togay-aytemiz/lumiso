@@ -3061,7 +3061,7 @@
   },
   "onboarding": {
     "getting_started": {
-      "welcome_title": "Lumiso'ya Hoş Geldiniz 🎉",
+      "welcome_title": "Lumiso'ya Hoş Geldin 🎉",
       "welcome_subtitle": "Lumiso'yu birlikte adım adım kuralım",
       "need_help": "Yardım ve Destek",
       "skip_setup": "Kurulumu Atla",
@@ -3069,8 +3069,8 @@
       "now_label": "Şimdi:",
       "next_label": "Sonraki:",
       "all_tasks_complete": "Tüm görevler tamamlandı 🎉",
-      "your_learning_path": "Öğrenme Yolunuz",
-      "learning_path_subtitle": "Her adım Lumiso'yu doğal olarak kullanmayı öğretir.",
+      "your_learning_path": "Öğrenme Yolun",
+      "learning_path_subtitle": "Sadece 10 dakikada kurulumunu bitirip kullanmaya hazırsın.",
       "coming_next": "Sırada Ne Var",
       "congratulations": "Tebrikler 🎉",
       "setup_complete": "Rehberli kurulumu tamamladınız",
@@ -3080,37 +3080,37 @@
     "steps": {
       "step_1": {
         "title": "Profil ayarlarını gözden geçir",
-        "description": "Başlangıç formunda girdiğin ad ve işletme bilgileri burada. Sadece iş e-postası, marka rengi ve avatarını tamamla.",
+        "description": "Adını ve işletme bilgilerini hızla kontrol et; iş e-postası, marka rengi ve avatarını tamamla.",
         "button": "Profil sayfasını aç",
         "duration": "1 dk"
       },
       "step_2": {
         "title": "İlk Kişinizi Oluşturun",
-        "description": "Mevcut ve potansiyel müşterileri düzenli takip etmek için ilk kişi kaydınızı oluşturun",
+        "description": "İlk kişi kaydını ekle, müşterilerini düzenli takip etmeye başla.",
         "button": "Kişilere Git",
         "duration": "2 dk"
       },
       "step_3": {
         "title": "İlk Projenizi Oluşturun",
-        "description": "Seanslar, ödemeler ve teslimatlar için ilk projenizi kurun ve her şeyi tek yerde yönetin.",
+        "description": "Seans, ödeme ve teslimatlar için ilk projeni kur; her şeyi tek yerde topla.",
         "button": "Projeyi oluştur",
         "duration": "4 dk"
       },
       "step_4": {
         "title": "Projeler Sayfasını Keşfedin",
-        "description": "Pano, Liste ve Arşiv görünümlerini öğrenin",
+        "description": "Pano, Liste ve Arşiv görünümlerine hızlıca göz at.",
         "button": "Projeleri Keşfet",
         "duration": "3 dk"
       },
       "step_5": {
         "title": "Fotoğraf Seansı Planlayın",
-        "description": "İlk seansınızı ayarlayın ve takviminizi yönetin",
+        "description": "İlk seansını planla, takvimini düzenle.",
         "button": "Seans Planla",
         "duration": "3 dk"
       },
       "step_6": {
         "title": "Paketlerinizi Yapılandırın",
-        "description": "Fotoğrafçılık paketlerini ve fiyatlandırmayı ayarlayın",
+        "description": "Fotoğraf paketlerini ve fiyatlarını ayarla.",
         "button": "Paketleri Ayarla",
         "duration": "5 dk"
       }

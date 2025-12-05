@@ -450,7 +450,7 @@ export const ProjectCreationWizard = ({
           <div className="flex min-h-0 flex-1 flex-col">
             <div
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-2 py-4 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex-1 overflow-y-auto overflow-x-auto px-2 py-4 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               <div className="mx-auto w-full max-w-3xl space-y-2 sm:space-y-6 pb-8 sm:pb-10">
                 <div

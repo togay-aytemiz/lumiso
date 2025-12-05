@@ -133,14 +133,16 @@ All colors MUST be HSL.
   @media (max-width: 768px) {
     html,
     body {
-      height: 100vh;
-      height: -webkit-fill-available;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
       overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     #root {
-      height: 100vh;
-      height: -webkit-fill-available;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
     }
   }
 

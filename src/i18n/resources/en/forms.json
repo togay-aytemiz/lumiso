@@ -2001,6 +2001,7 @@
     "change_package": "Paketi değiştir",
     "select_package": "Paket seç",
     "none": "Not specified",
+    "delivery_missing": "Delivery details not provided.",
     "photo_range": "{{min}} – {{max}} photos",
     "photo_single": "{{count}} photos",
     "lead_time": "{{value}} {{unit}}",

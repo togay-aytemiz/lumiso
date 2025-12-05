@@ -27,6 +27,7 @@
     "tools": "TOOLS",
     "system": "SYSTEM"
   },
+  "close": "Close",
   "trialIndicator": {
     "title": "Free trial",
     "short": "Trial",

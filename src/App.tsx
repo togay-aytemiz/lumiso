@@ -135,8 +135,10 @@ const RouteAwareErrorBoundary = ({ children }: { children: ReactNode }) => {
   const backgroundLocation = (location.state as { backgroundLocation?: Location } | null)?.backgroundLocation;
   // When a settings overlay is open, keep the boundary keyed to the background route
   // so the underlying page doesn't remount (avoids background flashes on desktop).
+  // Keep the key stable across query/hash updates so typing into search inputs
+  // doesn't recreate the entire tree (which was closing the mobile keyboard).
   const resetKeyLocation = backgroundLocation ?? location;
-  const resetKey = `${resetKeyLocation.key ?? location.key ?? "default"}-${resetKeyLocation.pathname}${resetKeyLocation.search}${resetKeyLocation.hash}`;
+  const resetKey = resetKeyLocation.pathname;
   return <ErrorBoundary key={resetKey}>{children}</ErrorBoundary>;
 };
 

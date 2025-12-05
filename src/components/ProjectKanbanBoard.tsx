@@ -351,7 +351,7 @@ const ProjectKanbanBoard = ({
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className="mb-2 last:mb-0"
+          className="mb-1.5 last:mb-0 md:mb-2"
         >
           <ProfessionalKanbanCard
             project={project}
@@ -373,9 +373,9 @@ const ProjectKanbanBoard = ({
     return (
       <div
         key={statusId}
-        className="flex w-72 flex-shrink-0 flex-col rounded-2xl border border-border/40 bg-muted/30"
+        className="flex w-64 flex-shrink-0 flex-col rounded-2xl border border-border/40 bg-muted/30 md:w-72"
       >
-        <div className="flex items-center justify-between gap-1.5 px-2.5 pt-3 pb-2 min-w-0">
+        <div className="flex items-center justify-between gap-1.5 px-2 pt-2.5 pb-1.5 min-w-0 md:px-2.5 md:pt-3 md:pb-2">
           <div className="flex items-center gap-1.5 min-w-0">
             <button
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80 min-w-0 max-w-[220px]"
@@ -410,7 +410,7 @@ const ProjectKanbanBoard = ({
               ref={provided.innerRef}
               {...provided.droppableProps}
               className={cn(
-                "relative flex flex-col gap-2.5 px-2.5 pb-3 pt-1",
+                "relative flex flex-col gap-2 px-2 pb-2.5 pt-1 md:gap-2.5 md:px-2.5 md:pb-3",
                 snapshot.isDraggingOver && "bg-accent/10"
               )}
             >
@@ -473,9 +473,9 @@ const ProjectKanbanBoard = ({
         className="w-full max-w-full overflow-x-auto"
         style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "thin", touchAction: "pan-x pan-y" }}
       >
-        <div className="px-3 py-3 sm:px-5 sm:py-4">
+        <div className="px-2.5 py-2.5 md:px-5 md:py-4">
           <DnD.DragDropContext onDragEnd={handleDragEnd}>
-            <div className="flex items-start gap-2.5 sm:gap-3 pb-3" style={{ width: "max-content", minWidth: "100%" }}>
+            <div className="flex items-start gap-2 md:gap-3 pb-2.5 md:pb-3" style={{ width: "max-content", minWidth: "100%" }}>
               {statuses.map(status => renderColumn(status, getProjectsByStatus(status.id)))}
               {getProjectsWithoutStatus().length > 0 && renderColumn(null, getProjectsWithoutStatus())}
             </div>

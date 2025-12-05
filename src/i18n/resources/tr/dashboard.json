@@ -1,7 +1,9 @@
 {
   "page": {
     "title": "Gösterge Paneli",
-    "subtitle": "Hoş geldiniz! Fotoğrafçılık işinizin genel görünümü"
+    "subtitle": "Hoş geldiniz! Fotoğrafçılık işinizin genel görünümü",
+    "quickTourTitle": "Gösterge panelini keşfet",
+    "quickTourDescription": "Gösterge panelini keşfedin ve en sık kullanacağınız kısayollara hızlıca göz atın."
   },
   "stats": {
     "total_leads": "Toplam Kişi",

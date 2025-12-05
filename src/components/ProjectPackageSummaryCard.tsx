@@ -226,6 +226,37 @@ export function ProjectPackageSummaryCard({
     resolvedPackageName ??
     t("project_package_card.custom_label", { defaultValue: "Custom plan" });
 
+  const hasPhotoDetails = useMemo(() => {
+    const delivery = effectiveSnapshot?.delivery;
+    if (!delivery || delivery.photosEnabled === false) {
+      return false;
+    }
+    if (delivery.photoCountMin && delivery.photoCountMax && delivery.photoCountMin !== delivery.photoCountMax) {
+      return true;
+    }
+    const value = delivery.photoCountMin ?? delivery.photoCountMax;
+    return Boolean(value);
+  }, [effectiveSnapshot]);
+
+  const hasLeadTimeDetails = useMemo(() => {
+    const delivery = effectiveSnapshot?.delivery;
+    if (!delivery || delivery.leadTimeEnabled === false || !delivery.leadTimeValue || !delivery.leadTimeUnit) {
+      return false;
+    }
+    return true;
+  }, [effectiveSnapshot]);
+
+  const hasMethodDetails = useMemo(() => {
+    const delivery = effectiveSnapshot?.delivery;
+    const methods = delivery?.methods;
+    if (!delivery || delivery.methodsEnabled === false || !methods || methods.length === 0) {
+      return false;
+    }
+    return true;
+  }, [effectiveSnapshot]);
+
+  const hasAnyDeliveryDetails = hasPhotoDetails || hasLeadTimeDetails || hasMethodDetails;
+
   const lineItemsSignature = useMemo(() => {
     if (!effectiveSnapshot) return "";
     return effectiveSnapshot.lineItems
@@ -356,17 +387,23 @@ export function ProjectPackageSummaryCard({
             icon={<Send className="h-4 w-4 text-primary" />}
             label={t("project_package_card.delivery_summary", { defaultValue: "Delivery" })}
             value={
-              <div className="flex flex-wrap gap-2">
-                {deliveryItems.map((item) => (
-                  <span
-                    key={item.key}
-                    className="flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
-                  >
-                    <span className="text-primary">{item.icon}</span>
-                    <span className="text-foreground">{item.label}</span>
-                  </span>
-                ))}
-              </div>
+              hasAnyDeliveryDetails ? (
+                <div className="flex flex-wrap gap-2">
+                  {deliveryItems.map((item) => (
+                    <span
+                      key={item.key}
+                      className="flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
+                    >
+                      <span className="text-primary">{item.icon}</span>
+                      <span className="text-foreground">{item.label}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                t("project_package_card.delivery_missing", {
+                  defaultValue: "Delivery details not provided.",
+                })
+              )
             }
           />
           {servicesSummary ? (
@@ -412,7 +449,7 @@ const InfoRow = ({ icon, label, value }: InfoRowProps) => (
         {label}
       </p>
       {typeof value === "string" ? (
-        <p className="text-sm font-medium text-foreground line-clamp-2">{value}</p>
+        <p className="text-sm font-normal text-foreground line-clamp-2">{value}</p>
       ) : (
         <div className="mt-1 text-sm font-medium text-foreground">{value}</div>
       )}

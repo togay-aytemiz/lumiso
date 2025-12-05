@@ -591,12 +591,12 @@ const CrmDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800 overflow-x-hidden">
       <PageHeader
         title={t('page.title')}
-        helpTitle={t('page.quickTourTitle', { defaultValue: "Lumiso'da hızlı tur" })}
+        helpTitle={t('page.quickTourTitle', { defaultValue: "Gösterge panelini keşfet" })}
         helpDescription={t('page.quickTourDescription', {
-          defaultValue: "Gösterge tablosunu nasıl kullanacağınızı hızlıca öğrenin.",
+          defaultValue: "Gösterge panelini keşfedin ve en sık kullanacağınız alanlara hızlıca göz atın.",
         })}
         helpVideoId={DASHBOARD_VIDEO_ID}
-        helpVideoTitle={t('page.quickTourTitle', { defaultValue: "Lumiso'da hızlı tur" })}
+        helpVideoTitle={t('page.quickTourTitle', { defaultValue: "Gösterge panelini keşfet" })}
       >
         <PageHeaderSearch>
           <GlobalSearch variant="header" />
@@ -645,9 +645,9 @@ const CrmDashboard = () => {
         open={isDashboardVideoOpen}
         onClose={closeDashboardVideo}
         videoId={DASHBOARD_VIDEO_ID}
-        title={t('page.quickTourTitle', { defaultValue: "Lumiso'da hızlı tur" })}
+        title={t('page.quickTourTitle', { defaultValue: "Gösterge panelini keşfet" })}
         description={t('page.quickTourDescription', {
-          defaultValue: "Gösterge tablosunu nasıl kullanacağınızı hızlıca öğrenin.",
+          defaultValue: "Gösterge panelini keşfedin ve en sık kullanacağınız alanlara hızlıca göz atın.",
         })}
         labels={{
           remindMeLater: t('page.videoRemindMeLater', { defaultValue: "Daha sonra hatırlat" }),

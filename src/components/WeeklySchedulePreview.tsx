@@ -370,6 +370,7 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
     "overflow-x-auto",
     isMobile && "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:none]"
   );
+  const blockGutter = isMobile ? 2 : 1;
   const timeColumnHeaderClasses = cn(
     "px-2 py-2 text-center",
     isMobile && "sticky left-0 z-20 bg-slate-50/95 backdrop-blur-sm"
@@ -401,8 +402,10 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
                   <div
                     key={index}
                     className={cn(
-                      "flex flex-col items-center justify-center gap-0.5 px-2 py-2 text-center first:border-l-0",
-                      isMobile ? "border-l border-transparent" : "border-l",
+                      "flex flex-col items-center justify-center gap-0.5 py-2 text-center first:border-l-0",
+                      isMobile
+                        ? "border-l border-slate-200/70 px-1.5"
+                        : "border-l px-2",
                       selectedDayIndex === index &&
                         (isMobile
                           ? "rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20"
@@ -520,7 +523,7 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
                         const widthPercent = 100 / columnCount;
                         const leftPercent = (columnIndex * widthPercent).toFixed(3);
                         const widthValue = widthPercent.toFixed(3);
-                        const gutter = columnCount > 1 ? 1 : 0;
+                        const gutter = columnCount > 1 ? blockGutter : 0;
 
                         return {
                           top,
@@ -534,11 +537,13 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
                     : null;
 
                   const columnClasses = cn(
-                    "relative first:border-l-0",
-                    isMobile ? "border-l-0" : "border-l",
+                    "relative first:border-l-0 overflow-hidden",
+                    isMobile ? "border-l border-slate-200/70" : "border-l",
                     selectedDayIndex === index &&
                       (isMobile ? "bg-primary/5" : "bg-primary/5")
                   );
+
+                  const columnInnerClass = "relative";
 
                   return (
                     <div
@@ -550,7 +555,7 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
                       }}
                     >
                       <div
-                        className="relative"
+                        className={columnInnerClass}
                         style={{ height: `${containerHeight}px` }}
                       >
                         {hourMarkers.map((marker) => {
@@ -608,7 +613,7 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
                             durationMinutes !== undefined
                               ? formatDurationLabel(durationMinutes, t)
                               : undefined;
-                          const gutter = session.columnCount > 1 ? 1 : 0;
+                          const gutter = session.columnCount > 1 ? blockGutter : 0;
                           const tooltipDetails = [
                             session.lead_name || t("sessionScheduling.unknown_client"),
                             session.project_name,

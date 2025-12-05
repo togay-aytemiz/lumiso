@@ -1,7 +1,9 @@
 {
   "page": {
     "title": "Dashboard",
-    "subtitle": "Welcome back! Here's an overview of your photography business"
+    "subtitle": "Welcome back! Here's an overview of your photography business",
+    "quickTourTitle": "Explore the dashboard",
+    "quickTourDescription": "Take a quick look at the dashboard and the shortcuts you'll use most often."
   },
   "stats": {
     "total_leads": "Total Leads",

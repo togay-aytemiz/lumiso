@@ -2002,6 +2002,7 @@
     "change_package": "Paketi değiştir",
     "select_package": "Paket seç",
     "none": "Belirtilmedi",
+    "delivery_missing": "Teslimat detayları belirtilmedi",
     "photo_range": "{{min}} – {{max}} fotoğraf",
     "photo_single": "{{count}} fotoğraf",
     "lead_time": "{{value}} {{unit}}",

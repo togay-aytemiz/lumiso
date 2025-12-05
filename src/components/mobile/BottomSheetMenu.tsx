@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface MenuItem {
   title: string;
@@ -27,6 +28,8 @@ export function BottomSheetMenu({
   leadingContent,
   customContent
 }: BottomSheetMenuProps) {
+  const { t } = useTranslation("navigation");
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent
@@ -41,7 +44,7 @@ export function BottomSheetMenu({
               onClick={() => onOpenChange(false)}
               className="text-xs font-medium text-slate-500 hover:text-slate-700 focus:outline-none px-2 py-1"
             >
-              Close
+              {t("close", { defaultValue: "Kapat" })}
             </button>
           </div>
         </SheetHeader>

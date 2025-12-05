@@ -368,12 +368,12 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     location.pathname.startsWith(path)
   ) || isAutomationActive;
 
-  const activeColor = isBackgroundDark ? "text-white" : "text-primary";
-  const inactiveColor = isBackgroundDark ? "text-white/80" : "text-muted-foreground";
+  const activeColor = "text-primary";
+  const inactiveColor = isBackgroundDark ? "text-foreground/80" : "text-muted-foreground";
   const navBackgroundClasses = isBackgroundDark
-    ? "bg-slate-950/85 supports-[backdrop-filter]:bg-slate-950/80 backdrop-blur-xl border-white/20 shadow-[0_-4px_16px_rgba(0,0,0,0.5)]"
-    : "bg-background/92 supports-[backdrop-filter]:bg-background/75 backdrop-blur-lg border-border/70";
-  const buttonHoverClasses = isBackgroundDark ? "hover:bg-white/15 active:bg-white/20" : "hover:bg-muted/50 active:bg-muted";
+    ? "bg-white supports-[backdrop-filter]:bg-white/85 backdrop-blur-lg border-border/60 shadow-[0_-6px_18px_rgba(0,0,0,0.16)]"
+    : "bg-white supports-[backdrop-filter]:bg-white/85 backdrop-blur-lg border-border/70 shadow-[0_-4px_12px_rgba(0,0,0,0.12)]";
+  const buttonHoverClasses = "hover:bg-muted/60 active:bg-muted/70";
   const bookingsSheetTitle = t("menu.sessions");
   const automationSheetTitle = t("mobile_sheets.automation");
   const moreSheetTitle = t("menu.more");
@@ -477,7 +477,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
         items={moreItems}
         leadingContent={<TrialStatusIndicator variant="mobile" />}
         customContent={
-          <div className="mt-4 border-t pt-4">
+          <div className="mt-2 border-t pt-3 px-1.5">
             <UserMenu
               variant="mobile"
               onNavigate={() => setMoreOpen(false)}

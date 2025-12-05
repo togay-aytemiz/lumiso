@@ -24,7 +24,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
 import { EmptyState } from "@/components/EmptyState";
 import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 
 interface Project {
   id: string;
@@ -293,6 +293,7 @@ export function ProjectsSection({
       <BaseOnboardingModal
         open={tutorialMode && showProjectTutorialModal}
         onClose={handleCloseTutorialModal}
+        size="wide"
         title={t('pages:leadDetail.tutorial.projectVideo.title')}
         description={t('pages:leadDetail.tutorial.projectVideo.description')}
         actions={[
@@ -308,21 +309,20 @@ export function ProjectsSection({
           }
         ]}
       >
-        <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg bg-muted">
-          {hasTutorialVideo ? (
-            <iframe
-              src={projectTutorialVideoUrl}
-              title={t('pages:leadDetail.tutorial.projectVideo.title')}
-              className="h-full w-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-              {t('pages:leadDetail.tutorial.projectVideo.placeholder')}
+        {hasTutorialVideo ? (
+          <OnboardingVideo
+            src={projectTutorialVideoUrl}
+            title={t('pages:leadDetail.tutorial.projectVideo.title')}
+          />
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-lg sm:min-h-[460px] lg:min-h-[520px]">
+            <div className="aspect-video w-full">
+              <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
+                {t('pages:leadDetail.tutorial.projectVideo.placeholder')}
+              </div>
             </div>
-          )}
-        </AspectRatio>
+          </div>
+        )}
       </BaseOnboardingModal>
 
       <Card className="w-full">

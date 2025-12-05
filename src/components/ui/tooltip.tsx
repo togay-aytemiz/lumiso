@@ -69,29 +69,42 @@ type TooltipProps = React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>
 
 const Tooltip = ({ delayDuration, disableHoverableContent, open: openProp, defaultOpen, onOpenChange, children, ...props }: TooltipProps) => {
   const isTouch = useIsTouchDevice()
-  const [open, setOpen] = React.useState(defaultOpen ?? false)
+  const isControlled = openProp !== undefined
+  const [openState, setOpenState] = React.useState(defaultOpen ?? false)
+  const resolvedOpen = isControlled ? openProp : openState
 
   // Auto-close touch tooltips after a short time to avoid leaving them stuck open
   React.useEffect(() => {
-    if (!isTouch || !open) return
-    const timer = window.setTimeout(() => setOpen(false), TOUCH_AUTO_CLOSE_MS)
+    if (!isTouch || !resolvedOpen) return
+    const timer = window.setTimeout(() => {
+      if (!isControlled) {
+        setOpenState(false)
+      }
+      onOpenChange?.(false)
+    }, TOUCH_AUTO_CLOSE_MS)
     return () => window.clearTimeout(timer)
-  }, [isTouch, open])
+  }, [isControlled, isTouch, onOpenChange, resolvedOpen])
+
+  const handleOpenChange = (next: boolean) => {
+    if (!isControlled) {
+      setOpenState(next)
+    }
+    onOpenChange?.(next)
+  }
 
   const contextValue = React.useMemo(
     () => ({
       isTouch,
-      setOpen: isTouch ? setOpen : onOpenChange
+      setOpen: isTouch ? handleOpenChange : onOpenChange
     }),
-    [isTouch, onOpenChange]
+    [handleOpenChange, isTouch, onOpenChange]
   )
 
   return (
     <TooltipTouchContext.Provider value={contextValue}>
       <TooltipPrimitive.Root
-        open={isTouch ? open : openProp}
-        defaultOpen={isTouch ? undefined : defaultOpen}
-        onOpenChange={isTouch ? setOpen : onOpenChange}
+        open={resolvedOpen}
+        onOpenChange={handleOpenChange}
         delayDuration={isTouch ? 0 : delayDuration}
         disableHoverableContent={isTouch ? true : disableHoverableContent}
         {...props}

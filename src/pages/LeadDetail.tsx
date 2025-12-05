@@ -30,6 +30,7 @@ import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettin
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 // Permissions removed for single photographer mode
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { OnboardingChecklistItem } from "@/components/shared/OnboardingChecklistItem";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -220,19 +221,14 @@ const LeadDetail = () => {
         title: tPages("leadDetail.tutorial.intro.title"),
         description: tPages("leadDetail.tutorial.intro.description"),
         modalSize: "wide",
+        primaryCtaLabel: tPages("onboarding.tutorial.start_exploring"),
         content: (
-          <div className="mx-auto w-full space-y-4 sm:space-y-5">
-            <div className="overflow-hidden rounded-2xl border border-border/60 bg-black shadow-lg">
-              <iframe
-                title={tPages("leadDetail.tutorial.intro.video.title")}
-                src={leadDetailsIntroVideoUrl}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="strict-origin-when-cross-origin"
-                className="aspect-video w-full"
-              />
-            </div>
+          <div className="mx-auto w-full">
+            <OnboardingVideo
+              title={tPages("leadDetail.tutorial.intro.video.title")}
+              src={leadDetailsIntroVideoUrl}
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
           </div>
         ),
         mode: "modal",

@@ -117,7 +117,7 @@ export function LongPressButton({
       <span
         className={cn(
           "relative z-10 block text-left leading-[16px] whitespace-normal",
-          isHoldingState ? "text-[11px]" : "text-sm font-medium"
+          isHoldingState ? "text-[11px] sm:text-sm font-medium" : "text-sm font-medium"
         )}
         style={
           isHoldingState

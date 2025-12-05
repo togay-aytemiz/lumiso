@@ -36,8 +36,9 @@ import {
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import type { ProjectCreationStepId } from "@/features/project-creation/types";
 import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";
+import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { TutorialFloatingCard } from "@/components/shared/TutorialFloatingCard";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { TutorialMobileBanner } from "@/components/shared/TutorialMobileBanner";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 
 const getErrorMessage = (error: unknown): string =>
@@ -915,26 +916,38 @@ export default function ProjectDetail() {
       </div>
 
       {showProjectExploreCard && (isInGuidedSetup || onboardingFlag === "project-details") && (
-        <TutorialFloatingCard
-          stepNumber={4}
-          totalSteps={5}
-          title={tPages("leadDetail.tutorial.exploreProjects.title")}
-          description={tPages("leadDetail.tutorial.exploreProjects.description")}
-          content={
-            <div className="space-y-2">
-              {explorePoints.map((point) => (
-                <div key={point} className="flex items-center gap-2 text-sm text-foreground">
-                  <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
-                  <span>{point}</span>
-                </div>
-              ))}
-            </div>
-          }
-          canProceed
-          onNext={handleExploreNext}
-          onExit={handleExploreExit}
-          position="bottom-right"
-        />
+        isMobile ? (
+          <TutorialMobileBanner
+            stepNumber={4}
+            totalSteps={5}
+            title={tPages("leadDetail.tutorial.exploreProjects.title")}
+            description={tPages("leadDetail.tutorial.exploreProjects.description")}
+            canProceed
+            onNext={handleExploreNext}
+            onExit={handleExploreExit}
+          />
+        ) : (
+          <TutorialFloatingCard
+            stepNumber={4}
+            totalSteps={5}
+            title={tPages("leadDetail.tutorial.exploreProjects.title")}
+            description={tPages("leadDetail.tutorial.exploreProjects.description")}
+            content={
+              <div className="space-y-2">
+                {explorePoints.map((point) => (
+                  <div key={point} className="flex items-center gap-2 text-sm text-foreground">
+                    <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
+                    <span>{point}</span>
+                  </div>
+                ))}
+              </div>
+            }
+            canProceed
+            onNext={handleExploreNext}
+            onExit={handleExploreExit}
+            position="bottom-right"
+          />
+        )
       )}
 
       <BaseOnboardingModal
@@ -966,6 +979,7 @@ export default function ProjectDetail() {
       <BaseOnboardingModal
         open={showProjectOnboardingModal}
         onClose={() => setShowProjectOnboardingModal(false)}
+        size="wide"
         title={tPages("projectDetail.onboardingModal.title")}
         description={tPages("projectDetail.onboardingModal.description")}
         actions={[
@@ -981,22 +995,20 @@ export default function ProjectDetail() {
           }
         ]}
       >
-        <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg bg-muted">
-          {hasProjectDetailsVideo ? (
-            <iframe
-              src={projectDetailsVideoUrl}
-              title={tPages("projectDetail.onboardingModal.title")}
-              className="h-full w-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              loading="lazy"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-              {tPages("projectDetail.onboardingModal.placeholder")}
+        {hasProjectDetailsVideo ? (
+          <OnboardingVideo
+            src={projectDetailsVideoUrl}
+            title={tPages("projectDetail.onboardingModal.title")}
+          />
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-lg sm:min-h-[460px] lg:min-h-[520px]">
+            <div className="aspect-video w-full">
+              <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
+                {tPages("projectDetail.onboardingModal.placeholder")}
+              </div>
             </div>
-          )}
-        </AspectRatio>
+          </div>
+        )}
       </BaseOnboardingModal>
 
       <AlertDialog

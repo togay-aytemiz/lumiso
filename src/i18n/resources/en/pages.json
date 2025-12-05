@@ -3181,7 +3181,9 @@
       "exiting": "Exiting\u2026",
       "next": "Next",
       "complete": "Complete",
-      "continue_setup": "Continue Setup"
+      "continue_setup": "Continue Setup",
+      "start_exploring": "Start exploring",
+      "exit_tutorial_hold": "Exit tutorial (press and hold)"
     },
     "buttons": {
       "restart_guided_mode": "Restart Guided Mode",

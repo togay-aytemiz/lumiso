@@ -70,7 +70,7 @@ export function TutorialFloatingCard({
           </p>
           
           {content && (
-            <div className="text-sm text-white/90">
+            <div className="text-sm text-white/90 [&_.text-muted-foreground]:text-white/75 [&_.text-foreground]:text-white [&_.text-card-foreground]:text-white [&_.text-secondary-foreground]:text-white/80">
               {content}
             </div>
           )}

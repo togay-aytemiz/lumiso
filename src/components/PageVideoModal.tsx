@@ -1,4 +1,5 @@
 import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";
+import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 
 interface PageVideoModalProps {
   open: boolean;
@@ -46,21 +47,16 @@ export function PageVideoModal({
     <BaseOnboardingModal
       open={open}
       onClose={onClose || onSnooze}
+      size="wide"
+      contentClassName="gap-8 sm:gap-10"
       title={title}
       description={description}
       actions={actions}
     >
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/30 shadow-sm">
-        <div className="aspect-video w-full bg-black">
-          <iframe
-            title={title}
-            className="h-full w-full"
-            src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
-        </div>
-      </div>
+      <OnboardingVideo
+        src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`}
+        title={title}
+      />
     </BaseOnboardingModal>
   );
 }

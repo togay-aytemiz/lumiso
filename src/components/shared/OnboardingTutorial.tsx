@@ -18,6 +18,7 @@ export interface TutorialStep {
   requiresAction?: boolean;
   disabledTooltip?: string;
   modalSize?: "default" | "wide";
+  primaryCtaLabel?: string;
 }
 
 interface OnboardingTutorialProps {
@@ -46,7 +47,7 @@ export function OnboardingTutorial({
   const isLastStep = currentStepIndex === steps.length - 1;
   const effectiveTotal = displayTotal ?? displayOffset + steps.length;
   const displayStepNumber = displayOffset + currentStepIndex + 1;
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile() || (typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches);
 
   const { isExiting, handleExitNow } = useTutorialExit({
     currentStepTitle: typeof currentStep?.title === 'string' ? currentStep.title : 'Current Step',
@@ -157,7 +158,7 @@ export function OnboardingTutorial({
   // Only show Exit Tutorial button if not the last step
   if (!isLastStep) {
     actions.push({
-      label: t('onboarding.tutorial.exit_tutorial'),
+      label: t('onboarding.tutorial.exit_tutorial_hold'),
       onClick: handleExitNow,
       variant: "dangerOutline",
       longPress: { 
@@ -169,7 +170,7 @@ export function OnboardingTutorial({
   }
   
   actions.push({
-    label: isLastStep ? t('onboarding.tutorial.continue_setup') : t('onboarding.tutorial.next'),
+    label: currentStep.primaryCtaLabel ?? (isLastStep ? t('onboarding.tutorial.continue_setup') : t('onboarding.tutorial.next')),
     onClick: handleNext,
     variant: "default",
     disabled: !currentStep.canProceed

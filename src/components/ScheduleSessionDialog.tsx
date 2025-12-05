@@ -6,7 +6,7 @@ import { SessionSchedulingSheet } from "@/components/SessionSchedulingSheet";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useTranslation } from "react-i18next";
 import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { cn } from "@/lib/utils";
 
 interface ScheduleSessionDialogProps {
@@ -189,6 +189,7 @@ const ScheduleSessionDialog = ({
       <BaseOnboardingModal
         open={tutorialMode && showTutorialModal}
         onClose={() => setShowTutorialModal(false)}
+        size="wide"
         title={tPages("leadDetail.scheduling.sessionVideo.title", {
           defaultValue: "Watch how to plan a session",
         })}
@@ -211,25 +212,24 @@ const ScheduleSessionDialog = ({
           },
         ]}
       >
-        <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg bg-muted">
-          {hasTutorialVideo ? (
-            <iframe
-              src={normalizedTutorialVideoUrl}
-              title={tPages("leadDetail.scheduling.sessionVideo.title", {
-                defaultValue: "Watch how to plan a session",
-              })}
-              className="h-full w-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-              {tPages("leadDetail.scheduling.sessionVideo.placeholder", {
-                defaultValue: "Add your tutorial video URL to show it here.",
-              })}
+        {hasTutorialVideo ? (
+          <OnboardingVideo
+            src={normalizedTutorialVideoUrl}
+            title={tPages("leadDetail.scheduling.sessionVideo.title", {
+              defaultValue: "Watch how to plan a session",
+            })}
+          />
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-lg sm:min-h-[460px] lg:min-h-[520px]">
+            <div className="aspect-video w-full">
+              <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
+                {tPages("leadDetail.scheduling.sessionVideo.placeholder", {
+                  defaultValue: "Add your tutorial video URL to show it here.",
+                })}
+              </div>
             </div>
-          )}
-        </AspectRatio>
+          </div>
+        )}
       </BaseOnboardingModal>
     </>
   );

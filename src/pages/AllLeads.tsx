@@ -8,6 +8,7 @@ import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { ADD_ACTION_EVENTS } from "@/constants/addActionEvents";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import {
   Calendar,
@@ -512,19 +513,14 @@ const AllLeadsNew = () => {
       title: t('leads.tutorial.welcome.title'),
       description: t('leads.tutorial.welcome.description'),
       modalSize: "wide",
+      primaryCtaLabel: t('onboarding.tutorial.start_exploring'),
       content: (
-        <div className="mx-auto w-full space-y-4 sm:space-y-5">
-          <div className="overflow-hidden rounded-2xl border border-border/60 bg-black shadow-lg">
-            <iframe
-              title={t('leads.tutorial.welcome.video.title')}
-              src={leadIntroEmbedUrl}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-              className="aspect-video w-full"
-            />
-          </div>
+        <div className="mx-auto w-full">
+          <OnboardingVideo
+            title={t('leads.tutorial.welcome.video.title')}
+            src={leadIntroEmbedUrl}
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
         </div>
       ),
       mode: "modal",

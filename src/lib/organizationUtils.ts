@@ -17,8 +17,10 @@ type MembershipUpdates = {
 const handleMembershipTableError = (error: unknown) => {
   const code = typeof error === 'object' && error !== null ? (error as { code?: string }).code : undefined;
   if (code === 'PGRST205') {
-    membershipTableUnavailable = true;
-    console.warn('organization_members table not available; skipping membership enforcement until schema sync completes.');
+    if (!membershipTableUnavailable) {
+      membershipTableUnavailable = true;
+      console.warn('organization_members table not available; skipping membership enforcement until schema sync completes.');
+    }
     return true;
   }
   return false;

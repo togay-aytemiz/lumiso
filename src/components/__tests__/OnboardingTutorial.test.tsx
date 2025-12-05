@@ -107,10 +107,12 @@ describe("OnboardingTutorial", () => {
       t: (key: string, options?: Record<string, unknown>) => {
         const dictionary: Record<string, string> = {
           "onboarding.tutorial.exit_tutorial": "Exit Tutorial",
+          "onboarding.tutorial.exit_tutorial_hold": "Exit tutorial (press and hold)",
           "onboarding.tutorial.hold_to_exit": "Hold to exit",
           "onboarding.tutorial.exiting": "Exiting…",
           "onboarding.tutorial.next": "Next",
           "onboarding.tutorial.continue_setup": "Continue setup",
+          "onboarding.tutorial.start_exploring": "Start exploring",
           "onboarding.tutorial.step_title": `Step ${options?.current}/${options?.total} · ${options?.title}`,
         };
         return dictionary[key] ?? key;

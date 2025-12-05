@@ -38,11 +38,11 @@ export function TutorialMobileBanner({
   }
 
   return createPortal(
-    <div className="fixed inset-x-0 bottom-0 z-[40] px-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pt-3">
-      <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 text-white shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur">
-        <div className="flex flex-col gap-2.5 px-3.5 py-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-[13px] font-semibold leading-snug truncate">
+    <div className="fixed inset-x-0 bottom-0 z-[40] px-2 pb-[calc(env(safe-area-inset-bottom,0px)+10px)] pt-2">
+      <div className="w-full rounded-2xl border border-white/12 bg-slate-900/95 text-white shadow-[0_16px_46px_rgba(0,0,0,0.35)] backdrop-blur">
+        <div className="flex flex-col gap-2 px-3.5 py-3">
+          <div className="flex items-center gap-2">
+            <p className="flex-1 text-sm font-semibold leading-snug">
               {title}
             </p>
             <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-white/60">
@@ -53,19 +53,9 @@ export function TutorialMobileBanner({
             </span>
           </div>
 
-          <div className="space-y-1">
-            <p
-              className="text-xs leading-snug text-white/80"
-              style={{
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden"
-              }}
-            >
-              {description}
-            </p>
-          </div>
+          <p className="text-xs leading-snug text-white/80 line-clamp-2">
+            {description}
+          </p>
 
           {isBlocked && disabledTooltip && (
             <p className="text-[11px] leading-tight text-amber-100/90">
@@ -73,19 +63,19 @@ export function TutorialMobileBanner({
             </p>
           )}
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 pt-0.5">
             <LongPressButton
               onConfirm={onExit}
               label={t("onboarding.tutorial.exit_tutorial")}
               holdingLabel={t("onboarding.tutorial.hold_to_exit")}
               completeLabel={t("onboarding.tutorial.exiting")}
               duration={2200}
-              className="flex-1 border border-white/25 bg-white/20 text-white font-semibold hover:bg-white/30"
+              className="flex-1 h-11 border border-white/25 bg-white/15 text-white font-semibold hover:bg-white/25"
             />
             <Button
               onClick={onNext}
               disabled={isBlocked}
-              className="flex-1 bg-white text-slate-900 hover:bg-white/90"
+              className="flex-1 h-11 bg-white text-slate-900 hover:bg-white/90"
             >
               {stepNumber === totalSteps
                 ? t("onboarding.tutorial.complete")

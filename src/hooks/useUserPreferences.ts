@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { OnboardingStage } from "@/constants/onboarding";
@@ -39,8 +40,43 @@ export interface UserPreferences {
 
 const PREFERENCES_CACHE_KEY = "user-preferences";
 const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours in ms
+const PREFERENCES_STORAGE_KEY = "lumiso:user-preferences";
 
 let pageVideosColumnAvailable: boolean | null = null;
+
+const loadCachedPreferences = (userId: string): UserPreferences | null => {
+  if (typeof localStorage === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(`${PREFERENCES_STORAGE_KEY}:${userId}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.userId === userId) {
+      return parsed as UserPreferences;
+    }
+  } catch {
+    // best-effort cache only
+  }
+  return null;
+};
+
+const cachePreferences = (prefs: UserPreferences | undefined) => {
+  if (!prefs || typeof localStorage === "undefined") return;
+  try {
+    localStorage.setItem(`${PREFERENCES_STORAGE_KEY}:${prefs.userId}`, JSON.stringify(prefs));
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const clearCachedPreferences = (userId?: string) => {
+  if (typeof localStorage === "undefined") return;
+  if (!userId) return;
+  try {
+    localStorage.removeItem(`${PREFERENCES_STORAGE_KEY}:${userId}`);
+  } catch {
+    // ignore storage errors
+  }
+};
 
 // Fetch all user preferences in a single optimized query
 async function fetchUserPreferences(userId: string): Promise<UserPreferences> {
@@ -166,10 +202,13 @@ export function useUserPreferences() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  const cachedPreferences = user?.id ? loadCachedPreferences(user.id) : null;
+
   const query = useQuery({
     queryKey: [PREFERENCES_CACHE_KEY, user?.id],
     queryFn: () => fetchUserPreferences(user!.id),
     enabled: !!user?.id,
+    initialData: cachedPreferences ?? undefined,
     staleTime: CACHE_TTL, // Consider data fresh for 12 hours
     gcTime: CACHE_TTL * 2, // Keep in cache for 24 hours
     refetchOnWindowFocus: false, // Don't refetch on window focus
@@ -177,6 +216,12 @@ export function useUserPreferences() {
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
   });
+
+  useEffect(() => {
+    if (query.data) {
+      cachePreferences(query.data);
+    }
+  }, [query.data]);
 
   // Update preferences function with optimistic updates
   const updatePreferences = async (updates: Partial<UserPreferences>) => {
@@ -188,10 +233,12 @@ export function useUserPreferences() {
     queryClient.setQueryData(
       [PREFERENCES_CACHE_KEY, user.id],
       (old: UserPreferences | undefined) => {
-        if (!old) return old;
-        return { ...old, ...updates, lastUpdated: new Date().toISOString() };
-      }
-    );
+      if (!old) return old;
+      const next = { ...old, ...updates, lastUpdated: new Date().toISOString() };
+      cachePreferences(next);
+      return next;
+    }
+  );
 
     try {
       // Update database (onboarding + lightweight page video prefs)
@@ -253,6 +300,7 @@ export function useUserPreferences() {
   const clearCache = () => {
     console.log("🔄 clearCache: Clearing preferences cache");
     queryClient.removeQueries({ queryKey: [PREFERENCES_CACHE_KEY] });
+    clearCachedPreferences(user?.id || undefined);
   };
 
   return {

@@ -17,6 +17,7 @@ import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { formatDate, isNetworkError } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
@@ -1160,19 +1161,14 @@ const AllProjects = () => {
       title: tForms('projects.welcomeTutorialTitle'),
       description: tForms('projects.welcomeTutorialDescription'),
       modalSize: "wide",
+      primaryCtaLabel: t('onboarding.tutorial.start_exploring'),
       content: (
-        <div className="mx-auto w-full space-y-4 sm:space-y-5">
-          <div className="overflow-hidden rounded-2xl border border-border/60 bg-black shadow-lg">
-            <iframe
-              title={t('projects.tutorial.welcome.video.title')}
-              src={projectVideoEmbedUrl}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-              className="aspect-video w-full"
-            />
-          </div>
+        <div className="mx-auto w-full">
+          <OnboardingVideo
+            title={t('projects.tutorial.welcome.video.title')}
+            src={projectVideoEmbedUrl}
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
         </div>
       ),
       canProceed: true,

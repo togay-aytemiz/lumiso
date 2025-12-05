@@ -33,15 +33,24 @@ export function BottomSheetMenu({
         side="bottom"
         className="max-h-[85vh] rounded-t-xl border-t"
       >
-        <SheetHeader className="pb-4">
-          <SheetTitle className="text-center text-lg font-semibold">{title}</SheetTitle>
+        <SheetHeader className="pb-3 px-1">
+          <div className="flex items-center justify-between gap-3">
+            <SheetTitle className="text-left text-lg font-semibold">{title}</SheetTitle>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="text-xs font-medium text-slate-500 hover:text-slate-700 focus:outline-none px-2 py-1"
+            >
+              Close
+            </button>
+          </div>
         </SheetHeader>
 
         {leadingContent && (
           <div className="px-2 pb-4">{leadingContent}</div>
         )}
 
-        <div className="space-y-2 pb-6 px-2">
+        <div className={cn("space-y-2 px-2", customContent ? "pb-3" : "pb-6")}>
           {items.map((item, index) => {
             const Icon = item.icon;
             return (

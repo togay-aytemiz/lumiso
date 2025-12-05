@@ -4,6 +4,8 @@ import { BaseOnboardingModal, OnboardingAction } from "./BaseOnboardingModal";
 import { TutorialFloatingCard } from "./TutorialFloatingCard";
 import { useTutorialExit } from "@/hooks/useTutorialExit";
 import { useTranslation } from "react-i18next";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { TutorialMobileBanner } from "./TutorialMobileBanner";
 
 export interface TutorialStep {
   id: number;
@@ -15,6 +17,7 @@ export interface TutorialStep {
   mode?: 'modal' | 'floating';
   requiresAction?: boolean;
   disabledTooltip?: string;
+  modalSize?: "default" | "wide";
 }
 
 interface OnboardingTutorialProps {
@@ -43,6 +46,7 @@ export function OnboardingTutorial({
   const isLastStep = currentStepIndex === steps.length - 1;
   const effectiveTotal = displayTotal ?? displayOffset + steps.length;
   const displayStepNumber = displayOffset + currentStepIndex + 1;
+  const isMobile = useIsMobile();
 
   const { isExiting, handleExitNow } = useTutorialExit({
     currentStepTitle: typeof currentStep?.title === 'string' ? currentStep.title : 'Current Step',
@@ -98,6 +102,24 @@ export function OnboardingTutorial({
 
   // Floating tutorial rendering
   if (currentStep.mode === "floating") {
+    const floatingPosition = getFloatingPosition();
+
+    if (isMobile) {
+      return (
+        <TutorialMobileBanner
+          stepNumber={displayStepNumber}
+          totalSteps={effectiveTotal}
+          title={typeof currentStep.title === 'string' ? currentStep.title : 'Step'}
+          description={currentStep.description}
+          canProceed={currentStep.canProceed}
+          requiresAction={currentStep.requiresAction}
+          disabledTooltip={currentStep.disabledTooltip}
+          onNext={handleNext}
+          onExit={handleExit}
+        />
+      );
+    }
+
     return (
       <>
         <TutorialFloatingCard
@@ -111,7 +133,7 @@ export function OnboardingTutorial({
           disabledTooltip={currentStep.disabledTooltip}
           onNext={handleNext}
           onExit={handleExit}
-          position={getFloatingPosition()}
+          position={floatingPosition}
         />
       </>
     );
@@ -154,6 +176,7 @@ export function OnboardingTutorial({
       <BaseOnboardingModal
         open={isVisible && !isExiting}
         onClose={handleExit}
+        size={currentStep.modalSize}
         eyebrow={eyebrowContent}
         title={typeof currentStep.title === 'string' ? currentStep.title : stepLabel}
         description={currentStep.description}

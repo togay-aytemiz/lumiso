@@ -1797,7 +1797,7 @@
         },
         "addBusinessName": {
           "title": "İşletme kimliğinizi doğrulayın",
-          "description": "Stüdyo adınızı biz kaydettik — bu adımda sosyal kanallarını ekleyin ve otomatik saat dilimi/tarih ayarlarını gözden geçirin.",
+          "description": "Stüdyo adını doğrula; sosyal kanallar ve saat dilimi/tarih ayarlarını hızlıca kontrol et.",
           "required": "Devam etmek için işletme adını yaz ya da doğrula (bilgileri biz doldurduk, değiştiyse güncelle).",
           "appearsOn": "Sosyal kanallarını burada ekle; e-postalarda, imzalarda ve müşteri tarafındaki tüm alanlarda aynı şekilde gösterilir.",
           "canChange": "Saat dilimi ve tarih formatı gibi bölgesel ayarları kontrol edip dilediğinizde güncelleyebilirsiniz."
@@ -1874,7 +1874,7 @@
         },
         "completeInfo": {
           "title": "Sadece profilini doğrula",
-          "description": "Görünen adın başlangıç formundan geldi; istersen burada değiştir ve hızlıca fotoğraf ekle.",
+          "description": "Görünen adını kontrol et; gerekirse düzenle ve hızlıca fotoğraf ekle.",
           "fullNameRequired": "Devam etmek için görünen adını yaz ya da doğrula (biz doldurduk; istersen düzenle).",
           "workingHours": "Çalışma saatleri takvime müsaitliğini anlatır.",
           "profilePhoto": "Profil fotoğrafı yönetici ekranlarında ve müşteri e-postalarında görünür."

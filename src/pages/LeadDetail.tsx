@@ -209,12 +209,10 @@ const LeadDetail = () => {
         id: 4,
         title: tPages("leadDetail.tutorial.intro.title"),
         description: tPages("leadDetail.tutorial.intro.description"),
+        modalSize: "wide",
         content: (
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <p className="text-sm font-semibold text-foreground">
-                {tPages("leadDetail.tutorial.intro.video.title")}
-              </p>
+          <div className="mx-auto w-full space-y-4 sm:space-y-5">
+            <div className="overflow-hidden rounded-2xl border border-border/60 bg-black shadow-lg">
               <iframe
                 title={tPages("leadDetail.tutorial.intro.video.title")}
                 src={leadDetailsIntroVideoUrl}
@@ -222,23 +220,8 @@ const LeadDetail = () => {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="strict-origin-when-cross-origin"
-                className="aspect-video w-full rounded-lg bg-black shadow-sm"
+                className="aspect-video w-full"
               />
-            </div>
-
-            <div className="space-y-3">
-              {introSections.map((section, index) => {
-                const Icon = introIcons[index] ?? User;
-                return (
-                  <OnboardingChecklistItem
-                    key={section.title}
-                    icon={Icon}
-                    title={section.title}
-                    description={section.description}
-                    titleClassName="font-medium"
-                  />
-                );
-              })}
             </div>
           </div>
         ),

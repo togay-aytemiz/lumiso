@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LongPressButton } from "@/components/ui/long-press-button";
 import { Tooltip, TooltipContent, TooltipContentDark, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface OnboardingAction {
   label: string;
@@ -33,6 +34,7 @@ interface BaseOnboardingModalProps {
   children?: ReactNode;
   actions: OnboardingAction[];
   contentClassName?: string;
+  size?: "default" | "wide";
 }
 
 export function BaseOnboardingModal({ 
@@ -44,21 +46,32 @@ export function BaseOnboardingModal({
   headerSlot,
   children, 
   actions,
-  contentClassName
+  contentClassName,
+  size = "default"
 }: BaseOnboardingModalProps) {
   const hasSingleAction = actions.length === 1;
+  const isMobile = useIsMobile();
   const actionLayout = actions.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1";
   const baseButtonClass = hasSingleAction
     ? "h-11 w-full sm:w-auto sm:min-w-[200px]"
-    : "w-full h-11";
+    : isMobile
+      ? "h-11 w-full flex-1"
+      : "w-full h-11";
   const actionContainerClass = hasSingleAction
     ? "flex flex-col sm:flex-row sm:justify-end gap-3 pt-2"
-    : `grid gap-3 pt-2 ${actionLayout}`;
+    : isMobile
+      ? "flex flex-row gap-3 pt-2"
+      : `grid gap-3 pt-2 ${actionLayout}`;
 
   return (
     <Dialog open={open} onOpenChange={() => { /* ignore external close */ }}>
       <DialogContent 
-        className="w-[min(560px,calc(100%-2rem))] sm:max-w-[560px] lg:w-[min(96vw,1120px)] lg:max-w-5xl max-h-[90vh] overflow-y-auto md:max-h-none h-auto rounded-xl md:rounded-2xl p-0 gap-0 shadow-xl border border-border/60" 
+        className={cn(
+          "max-h-[90vh] overflow-y-auto md:max-h-none h-auto rounded-xl md:rounded-2xl p-0 gap-0 shadow-xl border border-border/60",
+          size === "wide"
+            ? "w-[min(640px,calc(100%-2rem))] sm:max-w-[1100px] lg:w-[min(96vw,1240px)] lg:max-w-[1240px]"
+            : "w-[min(540px,calc(100%-2rem))] sm:max-w-[720px] lg:w-[min(84vw,820px)] lg:max-w-3xl"
+        )} 
         hideClose 
         onEscapeKeyDown={(e) => { e.preventDefault(); }} 
         onPointerDownOutside={(e) => { e.preventDefault(); }}

@@ -85,6 +85,14 @@ export function LongPressButton({
   const remainingSeconds = Math.max(0, (1 - progress) * (duration / 1000));
   const holdingText = `${holdingLabel} ${remainingSeconds.toFixed(1)}s`;
 
+  const renderText = () => {
+    if (completed) return completeLabel;
+    if (holding) return holdingText;
+    return label;
+  };
+
+  const isHoldingState = holding && !completed;
+
   return (
     <Button
       type="button"
@@ -106,8 +114,23 @@ export function LongPressButton({
         className="pointer-events-none absolute inset-y-0 left-0 bg-destructive/20"
         style={{ width: `${progress * 100}%` }}
       />
-      <span className="relative z-10">
-        {completed ? completeLabel : holding ? holdingText : label}
+      <span
+        className={cn(
+          "relative z-10 block text-left leading-[16px] whitespace-normal",
+          isHoldingState ? "text-[11px]" : "text-sm font-medium"
+        )}
+        style={
+          isHoldingState
+            ? {
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }
+            : undefined
+        }
+      >
+        {renderText()}
       </span>
     </Button>
   );

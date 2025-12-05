@@ -500,12 +500,10 @@ const AllLeadsNew = () => {
       id: 1,
       title: t('leads.tutorial.welcome.title'),
       description: t('leads.tutorial.welcome.description'),
+      modalSize: "wide",
       content: (
-        <div className="space-y-5">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground">
-              {t('leads.tutorial.welcome.video.title')}
-            </p>
+        <div className="mx-auto w-full space-y-4 sm:space-y-5">
+          <div className="overflow-hidden rounded-2xl border border-border/60 bg-black shadow-lg">
             <iframe
               title={t('leads.tutorial.welcome.video.title')}
               src={leadIntroEmbedUrl}
@@ -513,28 +511,7 @@ const AllLeadsNew = () => {
               allowFullScreen
               loading="lazy"
               referrerPolicy="strict-origin-when-cross-origin"
-              className="aspect-video w-full rounded-lg bg-black shadow-sm"
-            />
-          </div>
-
-          <div className="space-y-3">
-            <OnboardingChecklistItem
-              icon={Users}
-              title={t('leads.tutorial.welcome.trackLeads.title')}
-              description={t('leads.tutorial.welcome.trackLeads.description')}
-              titleClassName="font-medium"
-            />
-            <OnboardingChecklistItem
-              icon={Filter}
-              title={t('leads.tutorial.welcome.filterSort.title')}
-              description={t('leads.tutorial.welcome.filterSort.description')}
-              titleClassName="font-medium"
-            />
-            <OnboardingChecklistItem
-              icon={FileText}
-              title={t('leads.tutorial.welcome.customizeColumns.title')}
-              description={t('leads.tutorial.welcome.customizeColumns.description')}
-              titleClassName="font-medium"
+              className="aspect-video w-full"
             />
           </div>
         </div>

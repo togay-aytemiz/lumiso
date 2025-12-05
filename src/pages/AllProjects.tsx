@@ -1159,12 +1159,10 @@ const AllProjects = () => {
       id: 1,
       title: tForms('projects.welcomeTutorialTitle'),
       description: tForms('projects.welcomeTutorialDescription'),
+      modalSize: "wide",
       content: (
-        <div className="space-y-5">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground">
-              {t('projects.tutorial.welcome.video.title')}
-            </p>
+        <div className="mx-auto w-full space-y-4 sm:space-y-5">
+          <div className="overflow-hidden rounded-2xl border border-border/60 bg-black shadow-lg">
             <iframe
               title={t('projects.tutorial.welcome.video.title')}
               src={projectVideoEmbedUrl}
@@ -1172,31 +1170,7 @@ const AllProjects = () => {
               allowFullScreen
               loading="lazy"
               referrerPolicy="strict-origin-when-cross-origin"
-              className="aspect-video w-full rounded-lg bg-black shadow-sm"
-            />
-          </div>
-
-          <div className="space-y-3">
-            <OnboardingChecklistItem
-              icon={LayoutGrid}
-              title={tForms('projects.boardViewTitle')}
-              description={t('projects.board_view_benefit')}
-              titleClassName="text-sm font-semibold"
-              descriptionClassName="text-sm"
-            />
-            <OnboardingChecklistItem
-              icon={List}
-              title={tForms('projects.listViewTitle')}
-              description={t('projects.list_view_benefit')}
-              titleClassName="text-sm font-semibold"
-              descriptionClassName="text-sm"
-            />
-            <OnboardingChecklistItem
-              icon={Archive}
-              title={tForms('projects.archivedTitle')}
-              description={t('projects.archived_view_benefit')}
-              titleClassName="text-sm font-semibold"
-              descriptionClassName="text-sm"
+              className="aspect-video w-full"
             />
           </div>
         </div>

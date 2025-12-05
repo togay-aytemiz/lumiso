@@ -60,7 +60,7 @@ export function BaseOnboardingModal({
   const actionContainerClass = hasSingleAction
     ? "flex flex-col sm:flex-row sm:justify-end gap-3 pt-2"
     : isMobile
-      ? "flex flex-row gap-3 pt-2"
+      ? "flex flex-col gap-3 pt-2"
       : `grid gap-3 pt-2 ${actionLayout}`;
 
   return (

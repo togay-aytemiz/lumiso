@@ -589,7 +589,7 @@ const ProjectCreationWizardSheetInner = ({
               className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline-none"
               onClick={() => {
                 const url =
-                  shouldLockNavigation && currentStep >= 3
+                  shouldLockNavigation && currentStep >= 2
                     ? `/projects/${newProject.id}?onboarding=project-details`
                     : `/projects/${newProject.id}`;
                 navigate(url);
@@ -602,7 +602,7 @@ const ProjectCreationWizardSheetInner = ({
         className: "flex-col items-start",
       });
 
-      if (!editingProjectId && shouldLockNavigation && currentStep === 3) {
+      if (!editingProjectId && shouldLockNavigation && currentStep === 2) {
         try {
           await completeCurrentStep();
         } catch (error) {

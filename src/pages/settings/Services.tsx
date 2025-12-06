@@ -94,9 +94,9 @@ export default function Services() {
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const navigate = useNavigate();
 
-  // Auto-start packages tutorial when we're on step 6 (currentStep = 6)
+  // Auto-start packages tutorial when we're on the packages step
   useEffect(() => {
-    if (currentStep === 6 && !showTutorial) {
+    if (currentStep === 5 && !showTutorial) {
       // Auto-starting packages tutorial for final step
       setShowTutorial(true);
       setCurrentTutorialStep(0);
@@ -106,10 +106,10 @@ export default function Services() {
   // Handle tutorial completion
   const handleTutorialComplete = async () => {
     try {
-      console.log('🎉 Packages tutorial completed - completing step 6');
+      console.log('🎉 Packages tutorial completed - completing packages step');
       setShowTutorial(false);
       
-      // Complete step 6 and mark guidance as complete
+      // Complete the packages step and mark guidance as complete
       await completeCurrentStep();
       
       // Final tutorial step completed

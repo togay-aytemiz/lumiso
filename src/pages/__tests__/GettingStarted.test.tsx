@@ -107,10 +107,10 @@ describe("GettingStarted page", () => {
   it("renders current step info and allows navigation to tutorial routes", async () => {
     const state = buildOnboardingState({
       completedSteps: [
-        { id: 1, route: "/settings/profile" },
+        { id: 1, route: "/leads" },
       ],
-      currentStepInfo: { id: 2, route: "/projects", title: "Projects" },
-      nextStepInfo: { id: 3, route: "/calendar", title: "Calendar" },
+      currentStepInfo: { id: 2, route: "/leads", title: "Projects" },
+      nextStepInfo: { id: 3, route: "/projects", title: "Projects" },
       currentStep: 2,
     });
     mockUseOnboarding.mockReturnValue(state);
@@ -129,7 +129,7 @@ describe("GettingStarted page", () => {
     });
     await user.click(primaryButton);
 
-    expect(navigate).toHaveBeenCalledWith("/projects");
+    expect(navigate).toHaveBeenCalledWith("/leads");
 
     expect(screen.queryByTestId("sample-data-modal")).not.toBeInTheDocument();
     const skipButton = screen.getByRole("button", {
@@ -147,8 +147,8 @@ describe("GettingStarted page", () => {
   it("hides setup progress until the first step is completed", () => {
     const state = buildOnboardingState({
       completedSteps: [],
-      currentStepInfo: { id: 1, route: "/projects", title: "Projects" },
-      nextStepInfo: { id: 2, route: "/calendar", title: "Calendar" },
+      currentStepInfo: { id: 1, route: "/leads", title: "Projects" },
+      nextStepInfo: { id: 2, route: "/projects", title: "Projects" },
       currentStep: 1,
     });
     mockUseOnboarding.mockReturnValue(state);

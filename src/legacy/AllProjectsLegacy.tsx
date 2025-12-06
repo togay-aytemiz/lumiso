@@ -154,8 +154,8 @@ const AllProjects = () => {
   // Check if user is in guided mode but missing tutorial parameter
   const { shouldLockNavigation, currentStepInfo } = useOnboarding();
   useEffect(() => {
-    if (shouldLockNavigation && currentStepInfo?.id === 4 && !showTutorial) {
-      console.log('🔧 User in guided mode step 4 but no tutorial - redirecting with tutorial param');
+    if (shouldLockNavigation && currentStepInfo?.id === 3 && !showTutorial) {
+      console.log('🔧 User in guided mode step 3 but no tutorial - redirecting with tutorial param');
       navigate('/projects?tutorial=true', { replace: true });
     }
   }, [shouldLockNavigation, currentStepInfo, showTutorial, navigate]);

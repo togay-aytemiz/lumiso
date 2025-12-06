@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Plus, ChevronDown, UserPlus, FolderPlus, CalendarClock } from "lucide-react";
+import { Plus, ChevronDown, UserPlus, FolderPlus, CalendarClock, Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,8 @@ import {
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import NewSessionDialog from "@/components/NewSessionDialog";
+import { useOnboarding } from "@/contexts/OnboardingContext";
+import { toast } from "@/hooks/use-toast";
 
 import "./AddAction.css";
 
@@ -38,6 +40,7 @@ export function AddAction({ className }: AddActionProps) {
   const location = useLocation();
   const { t } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
+  const { isInGuidedSetup, currentStepInfo } = useOnboarding();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [leadDialogOpen, setLeadDialogOpen] = useState(false);
@@ -76,6 +79,16 @@ export function AddAction({ className }: AddActionProps) {
   );
 
   const labels = isMobile ? mobileActionLabels : actionLabels;
+  const isLeadOnboardingStep = isInGuidedSetup && currentStepInfo?.id === 1;
+  const onboardingLockTitle = t("addAction.onboarding.lockedTitle", {
+    defaultValue: "Finish your first mission",
+  });
+  const onboardingLockDescription = t("addAction.onboarding.lockedDescription", {
+    defaultValue: "Add your first lead to unlock project and session creation.",
+  });
+  const onboardingLockLabel = t("addAction.onboarding.lockedLabel", {
+    defaultValue: "Locked for onboarding",
+  });
 
   const routeConfigs = useMemo<AddActionRouteConfig[]>(() => {
     const addNewRoutes = [
@@ -135,8 +148,17 @@ export function AddAction({ className }: AddActionProps) {
     };
   }, [routeConfigs, location.pathname, labels.addNew]);
 
-  const primaryLabel = currentConfig.label ?? tCommon("buttons.new");
-  const recommendedType = currentConfig.primaryAction;
+  const isActionLocked = useCallback(
+    (type: AddActionType) => isLeadOnboardingStep && type !== "lead",
+    [isLeadOnboardingStep]
+  );
+
+  const primaryLabel = isLeadOnboardingStep
+    ? labels.lead
+    : currentConfig.label ?? tCommon("buttons.new");
+  const recommendedType: AddActionType | null = isLeadOnboardingStep
+    ? "lead"
+    : currentConfig.primaryAction;
 
   const openFallbackDialog = useCallback((type: AddActionType) => {
     switch (type) {
@@ -172,8 +194,23 @@ export function AddAction({ className }: AddActionProps) {
     openMenu();
   }, [closeMenu, menuOpen, openMenu]);
 
+  const showLockedNotice = useCallback(() => {
+    toast({
+      title: onboardingLockTitle,
+      description: onboardingLockDescription,
+    });
+  }, [onboardingLockDescription, onboardingLockTitle]);
+
   const handlePrimaryButtonClick = () => {
     if (recommendedType) {
+      if (isActionLocked(recommendedType)) {
+        showLockedNotice();
+        if (!menuOpen) {
+          openMenu();
+        }
+        return;
+      }
+
       if (menuOpen) {
         closeMenu();
       }
@@ -186,6 +223,11 @@ export function AddAction({ className }: AddActionProps) {
   };
 
   const handleAction = (type: AddActionType) => {
+    if (isActionLocked(type)) {
+      showLockedNotice();
+      return;
+    }
+
     if (typeof window === "undefined") {
       openFallbackDialog(type);
       return;
@@ -462,24 +504,44 @@ export function AddAction({ className }: AddActionProps) {
               <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
                 {dropdownItems.map((item, index) => {
                   const isRecommended = recommendedType === item.type;
+                  const isLocked = isActionLocked(item.type);
+                  const itemDescription = isLocked ? onboardingLockDescription : item.description;
+
+                  const hoverClasses = !isLocked
+                    ? "hover:-translate-y-1 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
+                    : "";
 
                   return (
                     <button
                       key={item.type}
                       ref={index === 0 ? firstCardRef : undefined}
                       type="button"
+                      aria-disabled={isLocked}
+                      data-locked={isLocked ? "true" : undefined}
                       onClick={() => {
+                        if (isLocked) {
+                          showLockedNotice();
+                          return;
+                        }
                         handleAction(item.type);
                         closeMenu();
                       }}
                       className={cn(
-                        "add-action-card group relative flex h-full flex-col rounded-2xl border border-transparent bg-gradient-to-b from-white via-white/90 to-white/80 p-4 text-left shadow-lg shadow-slate-900/5 transition duration-300 ease-out hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary sm:p-5",
+                        "add-action-card group relative flex h-full flex-col rounded-2xl border border-transparent bg-gradient-to-b from-white via-white/90 to-white/80 p-4 text-left shadow-lg shadow-slate-900/5 transition duration-300 ease-out focus-visible:outline-none sm:p-5",
+                        hoverClasses,
                         isRecommended &&
-                          "border-primary/40 bg-gradient-to-b from-primary/10 via-white/90 to-white/80 shadow-primary/20"
+                          "border-primary/40 bg-gradient-to-b from-primary/10 via-white/90 to-white/80 shadow-primary/20",
+                        isLocked &&
+                          "cursor-not-allowed border-slate-200/80 bg-gradient-to-b from-slate-50/70 via-white/85 to-white/75 opacity-80 backdrop-blur-sm focus-visible:ring-0"
                       )}
                       style={{ transitionDelay: menuOpen ? `${index * 70}ms` : "0ms" }}
                     >
-                      {isRecommended ? (
+                      {isLocked ? (
+                        <span className="absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-slate-800 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-100 shadow-md sm:px-3.5 sm:py-1.5">
+                          <Lock className="h-4 w-4" aria-hidden="true" />
+                          {onboardingLockLabel}
+                        </span>
+                      ) : isRecommended ? (
                         <span className="absolute right-4 top-4 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-primary sm:right-5 sm:top-5 sm:px-3">
                           {t("addAction.recommended", { defaultValue: "Önerilen" })}
                         </span>
@@ -492,8 +554,8 @@ export function AddAction({ className }: AddActionProps) {
                           <p className="text-base font-semibold leading-tight text-foreground">
                             {item.label}
                           </p>
-                          <p className="text-sm text-muted-foreground">
-                            {item.description}
+                          <p className={cn("text-sm text-muted-foreground", isLocked && "text-muted-foreground/90")}>
+                            {itemDescription}
                           </p>
                         </div>
                       </div>

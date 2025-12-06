@@ -3059,6 +3059,16 @@
       }
     }
   },
+  "addAction": {
+    "title": "Hızlı Ekle",
+    "subtitle": "Kişi ekle, proje başlat ya da seans planla",
+    "recommended": "Önerilen",
+    "onboarding": {
+      "lockedTitle": "İlk görevi tamamla",
+      "lockedDescription": "Proje ve seans oluşturmayı açmak için önce ilk kişinizi ekleyin.",
+      "lockedLabel": "Kilitli, ilerleyen adımlarda açılacak"
+    }
+  },
   "onboarding": {
     "getting_started": {
       "welcome_title": "Lumiso'ya Hoş Geldin 🎉",
@@ -3079,36 +3089,30 @@
     },
     "steps": {
       "step_1": {
-        "title": "Profil ayarlarını gözden geçir",
-        "description": "Adını ve işletme bilgilerini hızla kontrol et; iş e-postası, marka rengi ve avatarını tamamla.",
-        "button": "Profil sayfasını aç",
-        "duration": "1 dk"
-      },
-      "step_2": {
         "title": "İlk Kişinizi Oluşturun",
         "description": "İlk kişi kaydını ekle, müşterilerini düzenli takip etmeye başla.",
         "button": "Kişilere Git",
         "duration": "2 dk"
       },
-      "step_3": {
+      "step_2": {
         "title": "İlk Projenizi Oluşturun",
         "description": "Seans, ödeme ve teslimatlar için ilk projeni kur; her şeyi tek yerde topla.",
         "button": "Projeyi oluştur",
         "duration": "4 dk"
       },
-      "step_4": {
+      "step_3": {
         "title": "Projeler Sayfasını Keşfedin",
         "description": "Pano, Liste ve Arşiv görünümlerine hızlıca göz at.",
         "button": "Projeleri Keşfet",
         "duration": "3 dk"
       },
-      "step_5": {
+      "step_4": {
         "title": "Fotoğraf Seansı Planlayın",
         "description": "İlk seansını planla, takvimini düzenle.",
         "button": "Seans Planla",
         "duration": "3 dk"
       },
-      "step_6": {
+      "step_5": {
         "title": "Paketlerinizi Yapılandırın",
         "description": "Fotoğraf paketlerini ve fiyatlarını ayarla.",
         "button": "Paketleri Ayarla",
@@ -3120,8 +3124,8 @@
       "welcome_subtitle": "Lumiso'yu öğrenmene yardım edeceğiz",
       "what_youll_learn": "Neler öğreneceksiniz:",
       "bullets": {
-        "profile_and_settings": "Profil ve genel ayarları gözden geçir",
-        "contacts_projects_sessions": "Kişi, proje ve seans oluşturmayı öğren",
+        "profile_and_settings": "Kişi ekle ve projeye dönüştür",
+        "contacts_projects_sessions": "Seans planla ve işleri kontrol altında tut",
         "packages_and_services": "Paketlerini ve hizmetlerini yönet"
       },
       "skip_sample_data": "Eğitimi Atla",

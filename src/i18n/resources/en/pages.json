@@ -3044,6 +3044,16 @@
       }
     }
   },
+  "addAction": {
+    "title": "Quick Add",
+    "subtitle": "Add a lead, start a project, or schedule a session",
+    "recommended": "Recommended",
+    "onboarding": {
+      "lockedTitle": "Finish your first mission",
+      "lockedDescription": "Add your first lead to unlock project and session creation.",
+      "lockedLabel": "Locked for onboarding"
+    }
+  },
   "onboarding": {
     "getting_started": {
       "welcome_title": "Welcome to Lumiso! \ud83c\udf89",
@@ -3064,36 +3074,30 @@
     },
     "steps": {
       "step_1": {
-        "title": "Review your profile",
-        "description": "Quickly check your name and studio info; add brand color, signature, and avatar.",
-        "button": "Open profile settings",
-        "duration": "1 min"
-      },
-      "step_2": {
         "title": "Create Your First Lead",
         "description": "Add your first lead to start tracking clients.",
         "button": "Go to Leads",
         "duration": "2 min"
       },
-      "step_3": {
-        "title": "Confirm general settings",
-        "description": "Verify contact info, logo, and defaults; your business name is already saved.",
-        "button": "Open General settings",
-        "duration": "2 min"
+      "step_2": {
+        "title": "Set Up a Photography Project",
+        "description": "Convert a lead into a project to organize sessions and deliverables.",
+        "button": "Create Project from Lead",
+        "duration": "4 min"
       },
-      "step_4": {
+      "step_3": {
         "title": "Explore Projects Page",
         "description": "Learn about different project views: Board, List, and Archived projects",
         "button": "Explore Projects",
         "duration": "3 min"
       },
-      "step_5": {
+      "step_4": {
         "title": "Schedule a Photo Session",
         "description": "Schedule your first session and organize your calendar.",
         "button": "Schedule Session",
         "duration": "3 min"
       },
-      "step_6": {
+      "step_5": {
         "title": "Configure Your Packages",
         "description": "Set up your photo packages and pricing.",
         "button": "Set Up Packages",
@@ -3105,8 +3109,8 @@
       "welcome_subtitle": "We'll help you learn Lumiso.",
       "what_youll_learn": "What you'll learn:",
       "bullets": {
-        "profile_and_settings": "Review your profile and general settings",
-        "contacts_projects_sessions": "Learn to create contacts, projects, and sessions",
+        "profile_and_settings": "Create leads and turn them into projects",
+        "contacts_projects_sessions": "Schedule sessions and keep work on track",
         "packages_and_services": "Manage your packages and services"
       },
       "skip_sample_data": "Skip Tutorial",

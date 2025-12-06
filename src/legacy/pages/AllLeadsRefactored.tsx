@@ -217,7 +217,7 @@ const AllLeadsRefactored = () => {
       setIsSchedulingTutorial(true);
       setShowTutorial(true);
       setCurrentTutorialStep(0);
-    } else if (currentStep === 2) {
+    } else if (currentStep === 1) {
       setShowTutorial(true);
       setCurrentTutorialStep(0);
     }

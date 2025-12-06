@@ -1,4 +1,4 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { OnboardingProvider, useOnboarding } from "../OnboardingContext";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { ONBOARDING_STEPS, TOTAL_STEPS } from "@/constants/onboarding";
@@ -189,6 +189,37 @@ describe("OnboardingContext", () => {
       currentOnboardingStep: 1,
       welcomeModalShown: true,
     });
+  });
+
+  it("normalizes and auto-completes when the stored step exceeds total steps", async () => {
+    const updatePreferences = createUpdatePreferencesMock();
+
+    mockUseUserPreferences.mockReturnValue(
+      createUserPreferencesResponse({
+        data: {
+          ...basePreferences,
+          onboardingStage: "in_progress",
+          currentOnboardingStep: TOTAL_STEPS + 3,
+          welcomeModalShown: true,
+        },
+        updatePreferences,
+      })
+    );
+
+    const { result } = renderHook(() => useOnboarding(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.currentStep).toBe(TOTAL_STEPS + 1);
+    expect(result.current.isOnboardingComplete).toBe(true);
+    expect(result.current.shouldLockNavigation).toBe(false);
+
+    await waitFor(() =>
+      expect(updatePreferences).toHaveBeenCalledWith({
+        onboardingStage: "completed",
+        currentOnboardingStep: TOTAL_STEPS + 1,
+      })
+    );
   });
 
   it("throws when hook used outside provider", () => {

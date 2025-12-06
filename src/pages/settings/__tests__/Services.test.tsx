@@ -79,7 +79,7 @@ describe("Services settings page", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseOnboarding.mockReturnValue({
-      currentStep: 6,
+      currentStep: 5,
       completeCurrentStep: jest.fn().mockResolvedValue(undefined),
     });
   });
@@ -88,7 +88,7 @@ describe("Services settings page", () => {
     jest.useRealTimers();
   });
 
-  it("shows all service management sections and starts the tutorial when on step six", () => {
+  it("shows all service management sections and starts the tutorial when on step five", () => {
     render(<Services />);
 
     expect(screen.getByTestId("settings-page-wrapper")).toBeInTheDocument();
@@ -114,7 +114,7 @@ describe("Services settings page", () => {
       .mockResolvedValue(undefined);
 
     mockUseOnboarding.mockReturnValue({
-      currentStep: 6,
+      currentStep: 5,
       completeCurrentStep,
     });
 
@@ -143,7 +143,7 @@ describe("Services settings page", () => {
       .mockResolvedValue(undefined);
 
     mockUseOnboarding.mockReturnValue({
-      currentStep: 6,
+      currentStep: 5,
       completeCurrentStep,
     });
 

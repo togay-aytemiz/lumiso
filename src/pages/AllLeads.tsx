@@ -599,7 +599,7 @@ const AllLeadsNew = () => {
       setIsSchedulingTutorial(true);
       setShowTutorial(true);
       setCurrentTutorialStep(0);
-    } else if (currentStep === 2) {
+    } else if (currentStep === 1) {
       setShowTutorial(true);
       setCurrentTutorialStep(0);
     }
@@ -615,7 +615,7 @@ const AllLeadsNew = () => {
   // Handle tutorial completion
   const handleTutorialComplete = async () => {
     try {
-      // Complete Step 2 (leads) since this tutorial was accessed from leads page
+      // Complete Step 1 (leads) since this tutorial was accessed from leads page
       await completeCurrentStep();
       setShowTutorial(false);
       console.log(t('leads.messages.tutorialCompleted'));

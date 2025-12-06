@@ -40,7 +40,7 @@ const createConfettiPieces = (count = 36): ConfettiPiece[] =>
     size: 0.6 + Math.random() * 0.8
   }));
 
-const COMPLETED_DISPLAY_ORDER = [1, 3, 2, 4, 5, 6];
+const COMPLETED_DISPLAY_ORDER = ONBOARDING_STEPS.map((step) => step.id);
 
 // Remove duplicate step definitions - now using centralized ones from hook
 
@@ -126,14 +126,6 @@ const GettingStarted = () => {
   }, [isAllStepsComplete, hasCelebrated]);
 
   const handleStepAction = (step: (typeof ONBOARDING_STEPS)[number]) => {
-    if (step.id === 1) {
-      navigate("/settings/profile?tutorial=true&step=1");
-      return;
-    }
-    if (step.id === 4 || step.id === 5) {
-      navigate(step.route);
-      return;
-    }
     navigate(step.route);
   };
 

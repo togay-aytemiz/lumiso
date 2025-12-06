@@ -399,7 +399,7 @@ describe("AllLeads", () => {
   it("completes the tutorial and navigates back to getting started", async () => {
     const completeCurrentStep = jest.fn().mockResolvedValue(undefined);
     mockUseOnboarding.mockReturnValue({
-      currentStep: 2,
+      currentStep: 1,
       completeCurrentStep,
     });
 

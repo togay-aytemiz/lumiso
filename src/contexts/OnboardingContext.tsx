@@ -1,6 +1,13 @@
-import React, { createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { ONBOARDING_STEPS, TOTAL_STEPS, OnboardingStage } from "@/constants/onboarding";
+
+const normalizeOnboardingStep = (step?: number | null) => {
+  if (typeof step !== "number" || Number.isNaN(step)) return 1;
+  const rounded = Math.round(step);
+  const minimum = Math.max(1, rounded);
+  return Math.min(minimum, TOTAL_STEPS + 1);
+};
 
 interface OnboardingContextValue {
   // State
@@ -32,8 +39,39 @@ interface OnboardingContextValue {
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
-export function OnboardingProvider({ children }: { children: React.ReactNode }) {
+export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { data: preferences, isLoading, updatePreferences } = useUserPreferences();
+  const normalizationAttemptedRef = useRef(false);
+
+  const normalizedCurrentStep = normalizeOnboardingStep(preferences?.currentOnboardingStep);
+  const onboardingStage = preferences?.onboardingStage || 'not_started';
+  const shouldAutoComplete = onboardingStage === 'in_progress' && normalizedCurrentStep > TOTAL_STEPS;
+  const stepNeedsNormalization =
+    preferences &&
+    preferences.currentOnboardingStep !== undefined &&
+    normalizedCurrentStep !== preferences.currentOnboardingStep;
+
+  // Auto-heal onboarding data when steps change (e.g., removed steps)
+  useEffect(() => {
+    if (!preferences || isLoading) return;
+    if (!shouldAutoComplete && !stepNeedsNormalization) return;
+    if (normalizationAttemptedRef.current) return;
+
+    normalizationAttemptedRef.current = true;
+    const payload: { onboardingStage?: OnboardingStage; currentOnboardingStep?: number } = {};
+
+    if (shouldAutoComplete) {
+      payload.onboardingStage = 'completed';
+      payload.currentOnboardingStep = TOTAL_STEPS + 1;
+    } else if (stepNeedsNormalization) {
+      payload.currentOnboardingStep = normalizedCurrentStep;
+    }
+
+    updatePreferences(payload).catch(() => {
+      // allow retry if the update fails
+      normalizationAttemptedRef.current = false;
+    });
+  }, [preferences, isLoading, shouldAutoComplete, stepNeedsNormalization, normalizedCurrentStep, updatePreferences]);
 
   // Memoized computed values to prevent excessive recalculations
   const computedValues = useMemo(() => {
@@ -50,31 +88,32 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       };
     }
 
-    const { onboardingStage, currentOnboardingStep, welcomeModalShown } = preferences;
+    const { welcomeModalShown } = preferences;
 
     // BULLETPROOF: Modal shows ONLY if user has NEVER seen it
     const shouldShowWelcomeModal = onboardingStage === 'not_started' && !welcomeModalShown;
     
     const isInGuidedSetup = onboardingStage === 'in_progress';
     
-    const isOnboardingComplete = onboardingStage === 'completed' || onboardingStage === 'skipped';
+    const isOnboardingComplete =
+      onboardingStage === 'completed' || onboardingStage === 'skipped' || normalizedCurrentStep > TOTAL_STEPS;
     
-    const shouldLockNavigation = onboardingStage === 'in_progress';
+    const shouldLockNavigation = onboardingStage === 'in_progress' && normalizedCurrentStep <= TOTAL_STEPS;
 
     // Step information
-    const currentStepInfo = isInGuidedSetup && currentOnboardingStep >= 1 && currentOnboardingStep <= TOTAL_STEPS
-      ? ONBOARDING_STEPS[currentOnboardingStep - 1]
+    const currentStepInfo = isInGuidedSetup && normalizedCurrentStep >= 1 && normalizedCurrentStep <= TOTAL_STEPS
+      ? ONBOARDING_STEPS[normalizedCurrentStep - 1]
       : null;
 
-    const nextStepInfo = isInGuidedSetup && currentOnboardingStep < TOTAL_STEPS
-      ? ONBOARDING_STEPS[currentOnboardingStep]
+    const nextStepInfo = isInGuidedSetup && normalizedCurrentStep < TOTAL_STEPS
+      ? ONBOARDING_STEPS[normalizedCurrentStep]
       : null;
 
     const completedSteps = isInGuidedSetup 
-      ? ONBOARDING_STEPS.slice(0, currentOnboardingStep - 1)
+      ? ONBOARDING_STEPS.slice(0, Math.min(normalizedCurrentStep - 1, TOTAL_STEPS))
       : [];
 
-    const isAllStepsComplete = isInGuidedSetup && currentOnboardingStep > TOTAL_STEPS;
+    const isAllStepsComplete = normalizedCurrentStep > TOTAL_STEPS;
 
     return {
       shouldShowWelcomeModal,
@@ -86,7 +125,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       completedSteps,
       isAllStepsComplete
     };
-  }, [preferences, isLoading]);
+  }, [preferences, isLoading, normalizedCurrentStep, onboardingStage]);
 
   // Action functions
   const startGuidedSetup = async () => {
@@ -107,14 +146,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       return;
     }
 
-    const nextStep = preferences.currentOnboardingStep + 1;
+    const safeCurrentStep = normalizeOnboardingStep(preferences.currentOnboardingStep);
+    const nextStep = safeCurrentStep >= TOTAL_STEPS ? TOTAL_STEPS + 1 : safeCurrentStep + 1;
     // Completing current step and advancing to next
-
-    // Bulletproof: Prevent completing beyond total steps (but allow final step to advance to TOTAL_STEPS + 1)
-    if (preferences.currentOnboardingStep > TOTAL_STEPS) {
-      console.warn("🚫 completeCurrentStep: Attempted to complete step beyond total steps");
-      return;
-    }
 
     await updatePreferences({
       currentOnboardingStep: nextStep
@@ -127,14 +161,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       return;
     }
 
-    const targetStep = preferences.currentOnboardingStep + numberOfSteps;
+    const safeCurrentStep = normalizeOnboardingStep(preferences.currentOnboardingStep);
+    const targetStep = safeCurrentStep + numberOfSteps;
     // Completing multiple steps in batch
-
-    // Prevent completing beyond total steps
-    if (preferences.currentOnboardingStep > TOTAL_STEPS) {
-      console.warn("🚫 completeMultipleSteps: Already at or beyond total steps");
-      return;
-    }
 
     const finalStep = Math.min(targetStep, TOTAL_STEPS + 1);
     
@@ -177,8 +206,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const contextValue: OnboardingContextValue = {
     // State
-    stage: preferences?.onboardingStage || 'not_started',
-    currentStep: preferences?.currentOnboardingStep || 1,
+    stage: onboardingStage,
+    currentStep: normalizedCurrentStep,
     loading: isLoading,
     
     // Computed values (memoized)

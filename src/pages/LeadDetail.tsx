@@ -185,8 +185,7 @@ const LeadDetail = () => {
 
   const {
     currentStep,
-    completeCurrentStep,
-    completeMultipleSteps // BULLETPROOF: For combined tutorials
+    completeCurrentStep
   } = useOnboarding();
   const schedulingTutorialHandledRef = useRef(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -342,7 +341,7 @@ const LeadDetail = () => {
     
     // Check if we should show tutorial either from navigation state OR onboarding progress
     const shouldShowFromState = continueTutorial && tutorialStep;
-    const shouldShowFromProgress = currentStep === 2; // User completed first step, now on leads
+    const shouldShowFromProgress = currentStep === 2; // After creating a lead, continue with project setup
 
     if (shouldShowFromState) {
       if (tutorialType === 'scheduling') {
@@ -360,16 +359,16 @@ const LeadDetail = () => {
     }
   }, [location.state?.continueTutorial, location.state?.tutorialStep, location.state?.tutorialType, currentStep]);
 
-  // Auto-start scheduling tutorial when currentStep is 5 (after step 4, now on step 5)
+  // Auto-start scheduling tutorial when currentStep is 4 (scheduling step)
   useEffect(() => {
     if (
-      currentStep === 5 &&
+      currentStep === 4 &&
       !showTutorial &&
       !location.state?.continueTutorial &&
       !schedulingTutorialHandledRef.current
     ) {
       schedulingTutorialHandledRef.current = true;
-      console.log('🚀 Auto-starting scheduling tutorial for step 5');
+      console.log('🚀 Auto-starting scheduling tutorial for step 4');
       setIsSchedulingTutorial(true);
       setShowTutorial(true);
       setCurrentTutorialStep(0); // Start with first scheduling step
@@ -380,20 +379,19 @@ const LeadDetail = () => {
   const handleTutorialComplete = async () => {
     try {
       if (isSchedulingTutorial) {
-        // For scheduling tutorial, complete step 5 (scheduling step)
-        console.log('🎯 BULLETPROOF LeadDetail: Completing scheduling tutorial (Step 5)');
+        // For scheduling tutorial, complete the scheduling step
+        console.log('🎯 BULLETPROOF LeadDetail: Completing scheduling tutorial (Step 4)');
         await completeCurrentStep();
         setShowTutorial(false);
         console.log('🎉 BULLETPROOF LeadDetail: Scheduling tutorial completed! Navigating back to getting-started');
         navigate('/getting-started');
       } else {
-        // For regular lead details tutorial that includes project creation
-        // Complete BOTH Step 2 (leads) and Step 3 (projects) in one atomic operation
-        console.log('🎯 BULLETPROOF LeadDetail: Completing combined tutorial (Steps 2 & 3) atomically');
-        await completeMultipleSteps(2); // Complete 2 steps at once: current + next
+        // For project setup tutorial, mark the project step complete
+        console.log('🎯 BULLETPROOF LeadDetail: Completing project setup tutorial (Step 2)');
+        await completeCurrentStep();
         
         setShowTutorial(false);
-        console.log('🎉 BULLETPROOF LeadDetail: Combined tutorial completed! Both Step 2 & 3 completed atomically, navigating back to getting-started');
+        console.log('🎉 BULLETPROOF LeadDetail: Project setup tutorial completed, navigating back to getting-started');
         navigate('/getting-started');
       }
     } catch (error) {
@@ -665,11 +663,11 @@ const LeadDetail = () => {
     void summaryQuery.refetch();
     void latestActivityQuery.refetch();
 
-    // If tutorial is active and we're on the project creation step (Step 5 = index 1), advance to project exploration step
+    // If tutorial is active and we're on the project creation step (index 1), advance to project exploration step
     if (showTutorial && currentTutorialStep === 1) {
       // Use setTimeout to ensure state update happens after component re-render
       setTimeout(() => {
-        setCurrentTutorialStep(2); // Move to "Now Explore Your Project" step (Step 6)
+        setCurrentTutorialStep(2); // Move to "Now Explore Your Project" step
       }, 100);
     }
   };

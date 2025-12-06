@@ -314,7 +314,7 @@ const AllProjects = () => {
   useEffect(() => {
     if (
       shouldLockNavigation &&
-      currentStepInfo?.id === 4 &&
+      currentStepInfo?.id === 3 &&
       !showTutorial &&
       !tutorialInitiated
     ) {

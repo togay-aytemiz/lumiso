@@ -134,6 +134,18 @@ export default function ProjectDetail() {
     defaultProjectDetailsVideoUrl;
   const hasProjectDetailsVideo = projectDetailsVideoUrl.length > 0;
   const onboardingFlag = searchParams.get("onboarding");
+  const sessionPlanningLockTitle = tPages("projectDetail.sessionPlanningLock.title", {
+    defaultValue: "Session planning unlocks in the next mission",
+  });
+  const sessionPlanningLockDescription = tPages("projectDetail.sessionPlanningLock.description", {
+    defaultValue: "Keep exploring this project for now—the planner opens during the dedicated Session Planning step.",
+  });
+  const archiveLockTitle = tPages("projectDetail.archiveLock.title", {
+    defaultValue: "Archiving is disabled during onboarding",
+  });
+  const archiveLockDescription = tPages("projectDetail.archiveLock.description", {
+    defaultValue: "Finish the onboarding missions before archiving projects.",
+  });
   const explorePoints = useMemo(
     () =>
       (tPages("leadDetail.tutorial.exploreProjects.points", {
@@ -152,6 +164,34 @@ export default function ProjectDetail() {
   const plannedSessionsCount = useMemo(() => {
     return sessions.filter(session => (session.status || "").toLowerCase() === "planned").length;
   }, [sessions]);
+
+  const isSessionPlanningLocked = isInGuidedSetup && currentStep < 4;
+  const isArchiveLocked = isInGuidedSetup && !isArchived;
+  const projectsShortcutMessage = useMemo(
+    () =>
+      isMobile
+        ? tPages("leadDetail.tutorial.complete.projectsShortcutMobile", {
+            defaultValue: "Projelerinize istediğiniz zaman mobilde alt menüdeki Projeler sekmesinden erişebilirsiniz.",
+          })
+        : tPages("leadDetail.tutorial.complete.projectsShortcutDesktop", {
+            defaultValue: "Projelerinize istediğiniz zaman masaüstünde kenar çubuğundaki Projeler sayfasından erişebilirsiniz.",
+          }),
+    [isMobile, tPages]
+  );
+
+  const handleSessionPlanningLocked = useCallback(() => {
+    toast({
+      title: sessionPlanningLockTitle,
+      description: sessionPlanningLockDescription,
+    });
+  }, [sessionPlanningLockDescription, sessionPlanningLockTitle, toast]);
+
+  const handleArchiveLocked = useCallback(() => {
+    toast({
+      title: archiveLockTitle,
+      description: archiveLockDescription,
+    });
+  }, [archiveLockDescription, archiveLockTitle, toast]);
 
   const formatArchiveAmount = (amount: number) => {
     try {
@@ -304,6 +344,12 @@ export default function ProjectDetail() {
   useEffect(() => {
     fetchProject();
   }, [fetchProject]);
+
+  useEffect(() => {
+    if (isSessionPlanningLocked) {
+      setSessionSheetOpen(false);
+    }
+  }, [isSessionPlanningLocked]);
 
   useEffect(() => {
     if (hasSeenProjectOnboardingModal) {
@@ -481,6 +527,25 @@ export default function ProjectDetail() {
     }
   };
 
+  const handleOpenSessionPlanner = useCallback(() => {
+    if (isSessionPlanningLocked) {
+      handleSessionPlanningLocked();
+      return;
+    }
+    setSessionSheetOpen(true);
+  }, [handleSessionPlanningLocked, isSessionPlanningLocked]);
+
+  const handleSessionSheetOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (isSessionPlanningLocked && nextOpen) {
+        handleSessionPlanningLocked();
+        return;
+      }
+      setSessionSheetOpen(nextOpen);
+    },
+    [handleSessionPlanningLocked, isSessionPlanningLocked]
+  );
+
   const executeArchiveToggle = async () => {
     if (!project) return;
 
@@ -510,6 +575,10 @@ export default function ProjectDetail() {
 
   const handleArchiveAction = () => {
     if (!project) return;
+    if (isArchiveLocked) {
+      handleArchiveLocked();
+      return;
+    }
 
     if (isArchived) {
       executeArchiveToggle();
@@ -658,11 +727,33 @@ export default function ProjectDetail() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" side="bottom">
-        <DropdownMenuItem onSelect={() => setSessionSheetOpen(true)}>
+        <DropdownMenuItem
+          className={isSessionPlanningLocked ? "cursor-not-allowed opacity-60" : undefined}
+          aria-disabled={isSessionPlanningLocked}
+          onSelect={(event) => {
+            if (isSessionPlanningLocked) {
+              event.preventDefault();
+              handleSessionPlanningLocked();
+              return;
+            }
+            setSessionSheetOpen(true);
+          }}
+        >
           <CalendarPlus className="mr-2 h-4 w-4" />
           <span>{t("sessions.schedule_new")}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={handleArchiveAction}>
+        <DropdownMenuItem
+          onSelect={(event) => {
+            if (isArchiveLocked && !isArchived) {
+              event.preventDefault();
+              handleArchiveLocked();
+              return;
+            }
+            handleArchiveAction();
+          }}
+          className={isArchiveLocked && !isArchived ? "cursor-not-allowed opacity-60" : undefined}
+          aria-disabled={isArchiveLocked && !isArchived}
+        >
           {isArchived ? (
             <>
               <ArchiveRestore className="mr-2 h-4 w-4" />
@@ -684,8 +775,10 @@ export default function ProjectDetail() {
       <Button
         variant="outline"
         size="sm"
-        className="min-w-[140px] gap-2 border-indigo-500 bg-indigo-100 text-indigo-800 hover:bg-indigo-200 hover:text-indigo-900"
-        onClick={() => setSessionSheetOpen(true)}
+        className={`min-w-[140px] gap-2 border-indigo-500 bg-indigo-100 text-indigo-800 hover:bg-indigo-200 hover:text-indigo-900 ${isSessionPlanningLocked ? "cursor-not-allowed opacity-70" : ""}`}
+        onClick={handleOpenSessionPlanner}
+        aria-disabled={isSessionPlanningLocked}
+        title={isSessionPlanningLocked ? sessionPlanningLockTitle : undefined}
       >
         <CalendarPlus className="h-4 w-4" />
         {t("sessions.schedule_new")}
@@ -694,7 +787,16 @@ export default function ProjectDetail() {
         variant="pill"
         size="sm"
         className="min-w-[140px]"
-        onClick={handleArchiveAction}
+        onClick={(event) => {
+          if (isArchiveLocked && !isArchived) {
+            event.preventDefault();
+            handleArchiveLocked();
+            return;
+          }
+          handleArchiveAction();
+        }}
+        aria-disabled={isArchiveLocked && !isArchived}
+        title={isArchiveLocked && !isArchived ? archiveLockTitle : undefined}
       >
         {isArchived ? t("project_sheet.restore_project") : t("project_sheet.archive_project")}
       </Button>
@@ -869,6 +971,9 @@ export default function ProjectDetail() {
                   projectName={project!.name} 
                   onSessionUpdated={handleSessionUpdated} 
                   onDeleteSession={handleDeleteSession} 
+                  sessionPlanningLocked={isSessionPlanningLocked}
+                  onSessionPlanningLocked={handleSessionPlanningLocked}
+                  sessionPlanningLockTooltip={sessionPlanningLockDescription}
                 />
               )
             }, 
@@ -958,11 +1063,6 @@ export default function ProjectDetail() {
         description={tPages("leadDetail.tutorial.complete.description")}
         actions={[
           {
-            label: tPages("onboarding.tutorial.exit_tutorial"),
-            onClick: () => setShowProjectCompletionModal(false),
-            variant: "outline",
-          },
-          {
             label: tPages("onboarding.tutorial.continue_setup"),
             onClick: handleProjectCompletion,
             variant: "default",
@@ -971,7 +1071,7 @@ export default function ProjectDetail() {
       >
         <div className="p-3 bg-primary/5 border border-primary/30 rounded-lg">
           <p className="text-sm font-medium text-primary">
-            {tPages("leadDetail.tutorial.complete.projectsShortcut")}
+            {projectsShortcutMessage}
           </p>
         </div>
       </BaseOnboardingModal>
@@ -1105,7 +1205,7 @@ export default function ProjectDetail() {
           projectId={project.id}
           projectName={project.name}
           isOpen={sessionSheetOpen}
-          onOpenChange={setSessionSheetOpen}
+          onOpenChange={handleSessionSheetOpenChange}
           onSessionScheduled={() => {
             handleSessionUpdated();
             triggerSummaryRefresh();

@@ -20,6 +20,9 @@ interface SessionsSectionProps {
   projectName: string;
   onSessionUpdated: () => void;
   onDeleteSession: (sessionId: string) => void;
+  sessionPlanningLocked?: boolean;
+  onSessionPlanningLocked?: () => void;
+  sessionPlanningLockTooltip?: string;
 }
 export function SessionsSection({
   sessions,
@@ -29,7 +32,10 @@ export function SessionsSection({
   leadName,
   projectName,
   onSessionUpdated,
-  onDeleteSession
+  onDeleteSession,
+  sessionPlanningLocked = false,
+  onSessionPlanningLocked,
+  sessionPlanningLockTooltip
 }: SessionsSectionProps) {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
@@ -110,6 +116,9 @@ export function SessionsSection({
       projectName={projectName}
       projectId={projectId}
       onSessionScheduled={onSessionUpdated}
+      disabled={sessionPlanningLocked}
+      disabledTooltip={sessionPlanningLockTooltip}
+      onLockedClick={onSessionPlanningLocked}
     />
   );
 

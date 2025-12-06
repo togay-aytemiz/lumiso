@@ -373,10 +373,11 @@
         "infoLabel": "How activity tracking works"
       }
     },
-    "messages": {
-      "projectsShortcut": "You can access all your projects anytime from the Projects page in the sidebar!",
-      "sessionAdded": "Your session has been added to your calendar and you can find it in the Calendar page!"
-    },
+  "messages": {
+    "projectsShortcutDesktop": "You can access all your projects anytime from the Projects page in the sidebar.",
+    "projectsShortcutMobile": "You can access all your projects anytime from the Projects tab in the bottom navigation.",
+    "sessionAdded": "Your session has been added to your calendar and you can find it in the Calendar page!"
+  },
     "tutorial": {
       "intro": {
         "title": "Welcome to Lead Details! \ud83d\udccb",
@@ -425,7 +426,8 @@
       "complete": {
         "title": "\ud83c\udf89 Congratulations! Tutorial Complete!",
         "description": "Amazing work! You've mastered the fundamentals\u2014from creating leads and converting them to projects, to managing client details and tracking progress.",
-        "projectsShortcut": "You can access all your projects anytime from the Projects page in the sidebar!"
+        "projectsShortcutDesktop": "You can access all your projects anytime from the Projects page in the sidebar.",
+        "projectsShortcutMobile": "You can access all your projects anytime from the Projects tab in the bottom navigation."
       }
     },
     "scheduling": {
@@ -630,6 +632,14 @@
     "dialogs": {
       "deleteTitle": "Delete Project",
       "deleteDescription": "This action cannot be undone. This will permanently delete the project and all associated data including sessions, todos, and payments."
+    },
+    "archiveLock": {
+      "title": "Archiving is disabled during onboarding",
+      "description": "Finish the onboarding missions before archiving projects."
+    },
+    "sessionPlanningLock": {
+      "title": "Session planning unlocks in the next mission",
+      "description": "Keep exploring this project for now—the planner opens during the dedicated Session Planning step."
     },
     "onboardingModal": {
       "title": "Explore your project workspace",

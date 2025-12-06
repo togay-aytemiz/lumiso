@@ -389,7 +389,8 @@
       }
     },
     "messages": {
-      "projectsShortcut": "Projelerinize istediğiniz zaman kenar çubuğundaki Projeler sayfasından erişebilirsiniz!",
+      "projectsShortcutDesktop": "Projelerinize istediğiniz zaman kenar çubuğundaki Projeler sayfasından erişebilirsiniz.",
+      "projectsShortcutMobile": "Projelerinize istediğiniz zaman alt menüdeki Projeler sekmesinden erişebilirsiniz.",
       "sessionAdded": "Seansınız takviminize eklendi ve Takvim sayfasında bulabilirsiniz!"
     },
     "tutorial": {
@@ -440,7 +441,8 @@
       "complete": {
         "title": "🎉 Tebrikler! Eğitim Tamamlandı!",
         "description": "Harika iş çıkardınız! Kişi oluşturma, projeye dönüştürme, müşteri detaylarını yönetme ve ilerlemeyi takip etme temellerini ustalıkla tamamladınız.",
-        "projectsShortcut": "Projelerinize istediğiniz zaman kenar çubuğundaki Projeler sayfasından erişebilirsiniz!"
+        "projectsShortcutDesktop": "Projelerinize istediğiniz zaman masaüstünde kenar çubuğundaki Projeler sayfasından erişebilirsiniz.",
+        "projectsShortcutMobile": "Projelerinize istediğiniz zaman mobilde alt menüdeki Projeler sekmesinden erişebilirsiniz."
       }
     },
     "scheduling": {
@@ -645,6 +647,14 @@
     "dialogs": {
       "deleteTitle": "Projeyi Sil",
       "deleteDescription": "Bu işlem geri alınamaz. Projeyi ve seanslar, yapılacaklar, ödemeler dahil tüm ilgili verileri kalıcı olarak siler."
+    },
+    "archiveLock": {
+      "title": "Eğitim sürecinde arşivleme kapalı",
+      "description": "Projeleri arşivlemek için eğitim görevlerini tamamlayın."
+    },
+    "sessionPlanningLock": {
+      "title": "Seans planlama bir sonraki görevde açılacak",
+      "description": "Şimdilik projeyi keşfetmeye devam et; seans planlayıcı özel görevde açılacak."
     },
     "onboardingModal": {
       "title": "Proje alanını keşfedin",

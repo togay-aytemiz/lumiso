@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { SessionSchedulingSheet } from "@/components/SessionSchedulingSheet";
@@ -11,6 +11,9 @@ interface NewSessionDialogForProjectProps {
   projectName: string;
   projectId: string;
   onSessionScheduled?: () => void;
+  disabled?: boolean;
+  disabledTooltip?: string;
+  onLockedClick?: () => void;
 }
 
 export function NewSessionDialogForProject({ 
@@ -18,10 +21,35 @@ export function NewSessionDialogForProject({
   leadName, 
   projectName,
   projectId, 
-  onSessionScheduled 
+  onSessionScheduled,
+  disabled = false,
+  disabledTooltip,
+  onLockedClick
 }: NewSessionDialogForProjectProps) {
   const { t } = useFormsTranslation();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (disabled) {
+      setOpen(false);
+    }
+  }, [disabled]);
+
+  const handleToggle = () => {
+    if (disabled) {
+      onLockedClick?.();
+      return;
+    }
+    setOpen(true);
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (disabled) {
+      setOpen(false);
+      return;
+    }
+    setOpen(nextOpen);
+  };
 
   return (
     <>
@@ -29,9 +57,12 @@ export function NewSessionDialogForProject({
         size="sm"
         variant="outline"
         className={cn(
-          "min-w-[140px] gap-2 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-900"
+          "min-w-[140px] gap-2 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-900",
+          disabled && "cursor-not-allowed opacity-70"
         )}
-        onClick={() => setOpen(true)}
+        onClick={handleToggle}
+        aria-disabled={disabled}
+        title={disabled ? disabledTooltip : undefined}
       >
         <Plus className="h-4 w-4" />
         {t('sessions.schedule_new')}
@@ -43,7 +74,7 @@ export function NewSessionDialogForProject({
         projectId={projectId}
         projectName={projectName}
         isOpen={open}
-        onOpenChange={setOpen}
+        onOpenChange={handleOpenChange}
         onSessionScheduled={onSessionScheduled}
       />
     </>

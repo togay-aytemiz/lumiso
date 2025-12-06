@@ -628,12 +628,11 @@ export default function ProjectDetail() {
   const handleProjectCompletion = useCallback(async () => {
     try {
       if (isInGuidedSetup) {
-        // Advance enough steps so the user lands on the Projects exploration step (step 4)
-        const stepsToComplete = Math.max(1, 4 - currentStep);
-        if (stepsToComplete > 1) {
+        // Advance only a single step to avoid skipping missions
+        const nextStep = Math.min(currentStep + 1, 4);
+        const stepsToComplete = Math.max(0, nextStep - currentStep);
+        if (stepsToComplete > 0) {
           await completeMultipleSteps(stepsToComplete);
-        } else {
-          await completeCurrentStep();
         }
       }
       navigate("/getting-started");
@@ -1026,7 +1025,7 @@ export default function ProjectDetail() {
             stepNumber={4}
             totalSteps={5}
             title={tPages("leadDetail.tutorial.exploreProjects.title")}
-            description={tPages("leadDetail.tutorial.exploreProjects.description")}
+            description={tPages("leadDetail.tutorial.exploreProjects.reviewDescription")}
             canProceed
             onNext={handleExploreNext}
             onExit={handleExploreExit}
@@ -1036,7 +1035,7 @@ export default function ProjectDetail() {
             stepNumber={4}
             totalSteps={5}
             title={tPages("leadDetail.tutorial.exploreProjects.title")}
-            description={tPages("leadDetail.tutorial.exploreProjects.description")}
+            description={tPages("leadDetail.tutorial.exploreProjects.reviewDescription")}
             content={
               <div className="space-y-2">
                 {explorePoints.map((point) => (

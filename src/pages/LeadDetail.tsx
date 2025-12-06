@@ -246,7 +246,7 @@ const LeadDetail = () => {
       {
         id: 6,
         title: tPages("leadDetail.tutorial.exploreProjects.title"),
-        description: tPages("leadDetail.tutorial.exploreProjects.description"),
+        description: tPages("leadDetail.tutorial.exploreProjects.openDescription"),
         content: (
           <div className="text-sm space-y-2">
             {explorePoints.map(point => (

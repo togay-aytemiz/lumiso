@@ -430,7 +430,8 @@
       },
       "exploreProjects": {
         "title": "Şimdi Proje Özelliklerini Keşfedin",
-        "description": "İncelemeyi bitirdiğinizde İleri'ye tıklayarak görevi tamamlayabilirsiniz.",
+        "openDescription": "\"Detayları Gör\" butonuna tıklayarak projenizi açın. Bir sonraki adımda bölümleri birlikte inceleyeceğiz.",
+        "reviewDescription": "Projedeki bölümleri inceleyin; hazır olduğunuzda İleri'ye tıklayarak bu adımı tamamlandı olarak işaretleyin.",
         "points": [
           "Ödemeleri ve faturaları takip edin",
           "Fotoğraf seanslarını yönetin",
@@ -1463,7 +1464,11 @@
     "messages": {
       "errorLoading": "Projeler yüklenemedi",
       "tutorialCompleted": "Projeler eğitimi tamamlandı. Sonraki adıma geçiliyor.",
-      "errorCompletingTutorial": "Eğitimi tamamlarken hata:"
+      "errorCompletingTutorial": "Eğitimi tamamlarken hata:",
+      "exploreLockAddActionTitle": "Bu turda ekleme menüsü kapalı",
+      "exploreLockAddActionDescription": "Projeler sayfası görevini bitirdikten sonra yeni kişi, proje veya seans ekleyebilirsin.",
+      "exploreLockNavigationTitle": "Bu adımda Projeler sayfasında kalıyoruz",
+      "exploreLockNavigationDescription": "Projeler görevini tamamlayana kadar proje detayını açmadan devam edelim."
     }
   },
   "calendar": {

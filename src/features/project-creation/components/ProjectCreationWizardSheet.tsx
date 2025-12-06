@@ -602,9 +602,13 @@ const ProjectCreationWizardSheetInner = ({
         className: "flex-col items-start",
       });
 
-      if (!editingProjectId && shouldLockNavigation && currentStep === 2) {
+      if (!editingProjectId && shouldLockNavigation && currentStep <= 2) {
         try {
-          await completeCurrentStep();
+          // Advance through project-related missions without skipping the projects page exploration
+          const stepsToComplete = Math.max(0, 3 - currentStep);
+          if (stepsToComplete > 0) {
+            await completeMultipleSteps(stepsToComplete);
+          }
         } catch (error) {
           console.error("Failed to complete onboarding step:", error);
         }

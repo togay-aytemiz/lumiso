@@ -415,7 +415,8 @@
       },
       "exploreProjects": {
         "title": "Now Explore Your Project Features",
-        "description": "Open your project and explore the sections. When you're done reviewing, press Next to finish this step.",
+        "openDescription": "Open your project with \"View details\" to continue. We'll review its sections in the next step.",
+        "reviewDescription": "Look through each section of your project. When you're done, click Next to mark this step complete.",
         "points": [
           "Track payments and billing",
           "Manage photography sessions",
@@ -1448,7 +1449,11 @@
     "messages": {
       "errorLoading": "Failed to load projects",
       "tutorialCompleted": "Projects tutorial completed! Navigating to next step.",
-      "errorCompletingTutorial": "Error completing tutorial:"
+      "errorCompletingTutorial": "Error completing tutorial:",
+      "exploreLockAddActionTitle": "Add menu disabled during this walkthrough",
+      "exploreLockAddActionDescription": "Finish the Projects page mission before creating new leads, projects, or sessions.",
+      "exploreLockNavigationTitle": "Stay on the Projects page for this step",
+      "exploreLockNavigationDescription": "Finish the Projects mission before opening project details. We'll unlock full navigation after."
     }
   },
   "calendar": {

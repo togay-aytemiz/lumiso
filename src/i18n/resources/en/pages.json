@@ -414,7 +414,7 @@
       },
       "exploreProjects": {
         "title": "Now Explore Your Project Features",
-        "description": "Press Next when you're ready to continue.",
+        "description": "Open your project and look around. When you're ready, press Next to continue.",
         "points": [
           "Track payments and billing",
           "Manage photography sessions",
@@ -3051,7 +3051,7 @@
     "onboarding": {
       "lockedTitle": "Finish your first mission",
       "lockedDescription": "Add your first lead to unlock project and session creation.",
-      "lockedLabel": "Locked for onboarding"
+      "lockedLabel": "Locked until later steps"
     }
   },
   "onboarding": {

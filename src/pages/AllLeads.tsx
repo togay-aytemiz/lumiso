@@ -500,7 +500,10 @@ const AllLeadsNew = () => {
         scrollToTable();
       }, 120);
     }
-  }, [isMobile, refreshLeads, scrollToTable]);
+    if (showTutorial && !isSchedulingTutorial) {
+      setCurrentTutorialStep((prev) => (prev < 2 ? 2 : prev));
+    }
+  }, [isMobile, refreshLeads, scrollToTable, showTutorial, isSchedulingTutorial]);
 
   useThrottledRefetchOnFocus(refreshLeads, 30_000);
 

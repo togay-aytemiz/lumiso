@@ -338,7 +338,11 @@ export function EnhancedAddLeadDialog({
           <button
             type="button"
             className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline-none"
-            onClick={() => navigate(`/leads/${newLead.id}`)}
+            onClick={() =>
+              navigate(`/leads/${newLead.id}`, {
+                state: { continueTutorial: true, tutorialStep: 4 },
+              })
+            }
           >
             {tCommon('buttons.view_lead')}
           </button>

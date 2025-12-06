@@ -537,10 +537,12 @@ export function AddAction({ className }: AddActionProps) {
                       style={{ transitionDelay: menuOpen ? `${index * 70}ms` : "0ms" }}
                     >
                       {isLocked ? (
-                        <span className="absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-slate-800 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-100 shadow-md sm:px-3.5 sm:py-1.5">
-                          <Lock className="h-4 w-4" aria-hidden="true" />
-                          {onboardingLockLabel}
-                        </span>
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                          <span className="flex items-center gap-2 rounded-2xl bg-slate-800/95 px-3.5 py-2 text-[11px] font-semibold tracking-wide text-slate-50 shadow-md sm:px-4">
+                            <Lock className="h-5 w-5" aria-hidden="true" />
+                            <span className="text-center leading-tight">{onboardingLockLabel}</span>
+                          </span>
+                        </div>
                       ) : isRecommended ? (
                         <span className="absolute right-4 top-4 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-primary sm:right-5 sm:top-5 sm:px-3">
                           {t("addAction.recommended", { defaultValue: "Önerilen" })}

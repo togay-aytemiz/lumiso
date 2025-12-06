@@ -440,15 +440,37 @@ const LeadDetail = () => {
     void refetchAll();
   };
 
+  const scrollToProjectsSection = useCallback(() => {
+    if (typeof document === "undefined") return;
+    const element = document.getElementById("lead-projects");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
+
   const handleOpenProjectWizard = () => {
     setProjectWizardOpen(true);
   };
 
-  const handleProjectCreatedFromHeader = () => {
+  const handleProjectCreatedFromHeader = async () => {
     setProjectWizardOpen(false);
     setProjectRefreshKey((prev) => prev + 1);
     handleProjectUpdated();
+    scrollToProjectsSection();
     void refetchAll();
+
+    if (showTutorial && !isSchedulingTutorial) {
+      setShowTutorial(true);
+      setCurrentTutorialStep((prev) => (prev < 2 ? 2 : prev));
+    }
+
+    if (currentStep === 2) {
+      try {
+        await completeCurrentStep();
+      } catch (error) {
+        console.error("Failed to complete onboarding step after project creation:", error);
+      }
+    }
   };
 
   // Debug tutorial step changes

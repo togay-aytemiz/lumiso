@@ -3243,7 +3243,12 @@
     },
     "restrictions": {
       "deleteTitle": "Deletion locked during onboarding",
-      "deleteDescription": "Finish the onboarding missions before deleting leads, projects, or sessions."
+      "deleteDescription": "Finish the onboarding missions before deleting leads, projects, or sessions.",
+      "projectMissionTitle": "Project creation mission active",
+      "projectMissionScheduleDescription": "Finish creating a project for this lead before planning a session.",
+      "projectMissionDeleteDescription": "Lead and project deletion is disabled until you finish the project creation mission.",
+      "sessionLockTitle": "Session scheduling locked for this mission",
+      "sessionLockDescription": "Finish the current onboarding mission before creating a session."
     },
     "users": {
       "title": "User Management",

@@ -147,7 +147,13 @@ export default function ProjectDetail() {
   const archiveLockDescription = tPages("projectDetail.archiveLock.description", {
     defaultValue: "Finish the onboarding missions before archiving projects.",
   });
-  const { ensureCanDelete } = useOnboardingDeletionGuard();
+  const projectMissionRestrictionTitle = tPages("onboarding.restrictions.projectMissionTitle", {
+    defaultValue: "Project creation mission active",
+  });
+  const projectMissionDeleteDescription = tPages("onboarding.restrictions.projectMissionDeleteDescription", {
+    defaultValue: "Lead and project deletion is disabled until the project mission is complete.",
+  });
+  const { ensureCanDelete, isDeletionBlocked } = useOnboardingDeletionGuard();
   const explorePoints = useMemo(
     () =>
       (tPages("leadDetail.tutorial.exploreProjects.points", {
@@ -167,8 +173,10 @@ export default function ProjectDetail() {
     return sessions.filter(session => (session.status || "").toLowerCase() === "planned").length;
   }, [sessions]);
 
+  const isProjectMissionActive = isInGuidedSetup && currentStep === 2;
   const isSessionPlanningLocked = isInGuidedSetup && currentStep < 4;
   const isArchiveLocked = isInGuidedSetup && !isArchived;
+  const isProjectDeletionLocked = isDeletionBlocked;
   const projectsShortcutMessage = useMemo(
     () =>
       isMobile
@@ -194,6 +202,13 @@ export default function ProjectDetail() {
       description: archiveLockDescription,
     });
   }, [archiveLockDescription, archiveLockTitle, toast]);
+
+  const handleProjectMissionDeletionLocked = useCallback(() => {
+    toast({
+      title: projectMissionRestrictionTitle,
+      description: projectMissionDeleteDescription,
+    });
+  }, [projectMissionDeleteDescription, projectMissionRestrictionTitle, toast]);
 
   const formatArchiveAmount = (amount: number) => {
     try {
@@ -443,6 +458,11 @@ export default function ProjectDetail() {
 
   const handleDeleteProject = async () => {
     if (!project) return;
+    if (isProjectMissionActive) {
+      handleProjectMissionDeletionLocked();
+      setShowDeleteDialog(false);
+      return;
+    }
     if (!ensureCanDelete()) {
       setShowDeleteDialog(false);
       return;
@@ -503,6 +523,17 @@ export default function ProjectDetail() {
       setIsDeleting(false);
       setShowDeleteDialog(false);
     }
+  };
+
+  const handleDeleteClick = () => {
+    if (isProjectMissionActive) {
+      handleProjectMissionDeletionLocked();
+      return;
+    }
+    if (!ensureCanDelete()) {
+      return;
+    }
+    setShowDeleteDialog(true);
   };
 
   const handleSessionUpdated = () => {
@@ -1014,8 +1045,11 @@ export default function ProjectDetail() {
               <div className="space-y-3">
                 <Button 
                   variant="outline" 
-                  onClick={() => setShowDeleteDialog(true)} 
-                  className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={handleDeleteClick}
+                  aria-disabled={isProjectDeletionLocked}
+                  className={`w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground ${
+                    isProjectDeletionLocked ? "cursor-not-allowed opacity-70" : ""
+                  }`}
                   size="lg"
                 >
                   {t('danger_zone.title')}

@@ -3258,7 +3258,12 @@
     },
     "restrictions": {
       "deleteTitle": "Eğitim sırasında silme kapalı",
-      "deleteDescription": "Rehberli görevler bitene kadar kişi, proje veya seans silemezsiniz."
+      "deleteDescription": "Rehberli görevler bitene kadar kişi, proje veya seans silemezsiniz.",
+      "projectMissionTitle": "Proje oluşturma görevi aktif",
+      "projectMissionScheduleDescription": "Bu görevde seans planlama kilitli; önce projeni oluştur.",
+      "projectMissionDeleteDescription": "Proje oluşturma görevi tamamlanana kadar kişi veya proje silemezsin.",
+      "sessionLockTitle": "Bu görevde seans planlama kilitli",
+      "sessionLockDescription": "Seans planlama adımına gelene kadar yeni seans oluşturamazsın."
     },
     "users": {
       "title": "Kullanıcı Yönetimi",

@@ -64,6 +64,7 @@ const GettingStarted = () => {
   const [showCompletionChoice, setShowCompletionChoice] = useState(false);
   const [completionChoice, setCompletionChoice] = useState<"sample" | "clean" | null>(null);
   const [isSubmittingChoice, setIsSubmittingChoice] = useState(false);
+  const projectStepAutoCompleteAttemptedRef = useRef(false);
   const { 
     stage,
     loading, 
@@ -75,7 +76,8 @@ const GettingStarted = () => {
     isAllStepsComplete,
     totalSteps,
     currentStep,
-    completeOnboarding
+    completeOnboarding,
+    completeMultipleSteps
   } = useOnboarding();
   const { activeOrganizationId } = useOrganization();
   const { settings, updateSettings, refreshSettings } = useOrganizationSettings();
@@ -151,6 +153,35 @@ const GettingStarted = () => {
 
     return () => clearTimeout(timer);
   }, [isAllStepsComplete, hasCelebrated]);
+
+  // Auto-complete project creation mission when a project already exists
+  useEffect(() => {
+    if (!isInGuidedSetup || loading) return;
+    if (currentStep >= 3) return;
+    if (projectStepAutoCompleteAttemptedRef.current) return;
+
+    const verifyProjectMission = async () => {
+      try {
+        const { count, error } = await supabase
+          .from("projects")
+          .select("id", { count: "exact", head: true });
+        if (error) throw error;
+        const hasProject = (count ?? 0) > 0;
+        if (hasProject) {
+          const stepsToComplete = Math.max(0, 3 - currentStep);
+          if (stepsToComplete > 0) {
+            await completeMultipleSteps(stepsToComplete);
+          }
+        }
+      } catch (error) {
+        console.error("Auto-complete project onboarding step failed:", error);
+      } finally {
+        projectStepAutoCompleteAttemptedRef.current = true;
+      }
+    };
+
+    void verifyProjectMission();
+  }, [completeMultipleSteps, currentStep, isInGuidedSetup, loading]);
 
   const ensureSeedPreference = async (value: boolean) => {
     if (!settings?.organization_id && !activeOrganizationId) {

@@ -21,6 +21,7 @@ interface ScheduleSessionDialogProps {
   hideIconOnMobile?: boolean;
   tutorialMode?: boolean;
   tutorialVideoUrl?: string;
+  onDisabledClick?: () => void;
 }
 
 const DEFAULT_SESSION_TUTORIAL_VIDEO_URL = "https://www.youtube.com/embed/na7ByGdB6Mg";
@@ -64,7 +65,8 @@ const ScheduleSessionDialog = ({
   mobileButtonLabel,
   hideIconOnMobile = false,
   tutorialMode = false,
-  tutorialVideoUrl
+  tutorialVideoUrl,
+  onDisabledClick
 }: ScheduleSessionDialogProps) => {
   const { t } = useFormsTranslation();
   const { t: tPages } = useTranslation("pages");
@@ -130,16 +132,17 @@ const ScheduleSessionDialog = ({
             onOpenChange={setShowTooltip}
             delayDuration={0}
           >
-            <TooltipTrigger asChild>
-              <span
-                className="inline-flex"
-                onPointerDown={(event) => {
-                  event.preventDefault();
-                  triggerTooltip();
-                }}
-              >
-                <Button
-                  disabled
+          <TooltipTrigger asChild>
+            <span
+              className="inline-flex"
+              onPointerDown={(event) => {
+                event.preventDefault();
+                onDisabledClick?.();
+                triggerTooltip();
+              }}
+            >
+              <Button
+                disabled
                   variant="outline"
                   className={cn(
                     "opacity-50 cursor-not-allowed min-w-[140px] gap-2 border-amber-300 bg-amber-50 text-amber-800",

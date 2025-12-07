@@ -189,7 +189,7 @@ const LeadDetail = () => {
     completeCurrentStep,
     isInGuidedSetup
   } = useOnboarding();
-  const { ensureCanDelete } = useOnboardingDeletionGuard();
+  const { ensureCanDelete, isDeletionBlocked } = useOnboardingDeletionGuard();
   const schedulingTutorialHandledRef = useRef(false);
   const schedulingStepAutoAdvancedRef = useRef(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -206,10 +206,23 @@ const LeadDetail = () => {
     overdueCount
   } = sessionMetrics;
   const leadDetailsIntroVideoUrl = "https://www.youtube.com/embed/CkceP4ukkUo?rel=0&modestbranding=1&playsinline=1";
+  const isProjectMissionActive = isInGuidedSetup && currentStep === 2;
   const isSchedulingMissionActive = isInGuidedSetup && currentStep === 4;
   const schedulingRestrictionTitle = tPages("leadDetail.restrictions.schedulingTitle");
   const schedulingProjectLockMessage = tPages("leadDetail.restrictions.projectsLockedForScheduling");
   const schedulingDeleteLockMessage = tPages("leadDetail.restrictions.deleteLockedForScheduling");
+  const projectMissionRestrictionTitle = tPages("onboarding.restrictions.projectMissionTitle", {
+    defaultValue: "Project creation mission active",
+  });
+  const sessionLockedUntilSchedulingTitle = tPages("onboarding.restrictions.sessionLockTitle", {
+    defaultValue: "Session scheduling locked for this mission",
+  });
+  const sessionLockedUntilSchedulingMessage = tPages("onboarding.restrictions.sessionLockDescription", {
+    defaultValue: "Finish the current onboarding mission before creating a session.",
+  });
+  const projectMissionDeleteLockMessage = tPages("onboarding.restrictions.projectMissionDeleteDescription", {
+    defaultValue: "Lead and project deletion is disabled during the project creation mission.",
+  });
 
   const notifySchedulingRestriction = useCallback(
     (message?: string) => {
@@ -219,6 +232,16 @@ const LeadDetail = () => {
       });
     },
     [schedulingRestrictionTitle, schedulingProjectLockMessage]
+  );
+
+  const notifyProjectMissionRestriction = useCallback(
+    (message?: string) => {
+      toast({
+        title: projectMissionRestrictionTitle,
+        description: message ?? sessionLockedUntilSchedulingMessage
+      });
+    },
+    [projectMissionRestrictionTitle, sessionLockedUntilSchedulingMessage]
   );
 
   // Dynamically update tutorial steps based on hasProjects
@@ -638,9 +661,16 @@ const LeadDetail = () => {
   }, [aggregatedPayments.currency]);
 
   const handleDelete = async () => {
+    if (isProjectMissionActive) {
+      notifyProjectMissionRestriction(projectMissionDeleteLockMessage);
+      setShowDeleteDialog(false);
+      setConfirmDeleteText('');
+      return;
+    }
     if (isSchedulingMissionActive) {
       notifySchedulingRestriction(schedulingDeleteLockMessage);
       setShowDeleteDialog(false);
+      setConfirmDeleteText('');
       return;
     }
     if (!ensureCanDelete()) {
@@ -723,6 +753,20 @@ const LeadDetail = () => {
       setShowDeleteDialog(false);
       setConfirmDeleteText('');
     }
+  };
+  const handleDeleteClick = () => {
+    if (isSchedulingMissionActive) {
+      notifySchedulingRestriction(schedulingDeleteLockMessage);
+      return;
+    }
+    if (isProjectMissionActive) {
+      notifyProjectMissionRestriction(projectMissionDeleteLockMessage);
+      return;
+    }
+    if (!ensureCanDelete()) {
+      return;
+    }
+    setShowDeleteDialog(true);
   };
   const handleSessionUpdated = () => {
     void sessionsQuery.refetch();
@@ -1055,8 +1099,8 @@ const LeadDetail = () => {
   }
 
   const shouldShowSessionTutorialVideo = showTutorial && isSchedulingTutorial && !hasSessions;
-  const lockSessionsForProjectMission = isProjectTutorialStepActive;
-  const lockSessionsTooltip = tPages("leadDetail.tutorial.createProject.disabledTooltip");
+  const lockSessionsForProjectMission = isInGuidedSetup && currentStep < 4;
+  const lockSessionsTooltip = sessionLockedUntilSchedulingMessage;
   const lockProjectsForSchedulingMission = isSchedulingMissionActive;
   const desktopProjectLabel = tPages("leadDetail.header.projects.newAction", {
     defaultValue: "Yeni Proje Ekle"
@@ -1070,6 +1114,7 @@ const LeadDetail = () => {
   });
   const scheduleButtonClassName =
     "min-w-0 sm:min-w-[140px] gap-1 sm:gap-2 px-2.5 sm:px-4";
+  const isLeadDeletionLocked = isDeletionBlocked;
 
   const renderScheduleSessionButton = () => (
     <ScheduleSessionDialog
@@ -1083,6 +1128,7 @@ const LeadDetail = () => {
       hideIconOnMobile
       disabled={lockSessionsForProjectMission}
       disabledTooltip={lockSessionsForProjectMission ? lockSessionsTooltip : undefined}
+      onDisabledClick={() => notifyProjectMissionRestriction(sessionLockedUntilSchedulingMessage)}
     />
   );
   return (
@@ -1230,16 +1276,10 @@ const LeadDetail = () => {
                 <div className="space-y-3">
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      if (isSchedulingMissionActive) {
-                        notifySchedulingRestriction(schedulingDeleteLockMessage);
-                        return;
-                      }
-                      setShowDeleteDialog(true);
-                    }}
-                    aria-disabled={isSchedulingMissionActive}
+                    onClick={handleDeleteClick}
+                    aria-disabled={isLeadDeletionLocked}
                     className={`w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground ${
-                      isSchedulingMissionActive ? "opacity-60 cursor-not-allowed" : ""
+                      isLeadDeletionLocked ? "opacity-60 cursor-not-allowed" : ""
                     }`}
                   >
                     {tForms("leadDangerZone.deleteLead")}

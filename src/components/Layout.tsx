@@ -66,6 +66,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     };
   }, [location.pathname, location.search, location.hash, location.key]);
 
+  const shouldHideMobileNav =
+    isOnGettingStartedPage ||
+    showOnboardingModal ||
+    shouldLockNavigation ||
+    stage === "in_progress";
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -88,12 +94,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
       <MobileBottomNav
-        hideForOnboarding={
-          isOnGettingStartedPage ||
-          showOnboardingModal ||
-          shouldLockNavigation ||
-          stage !== "completed"
-        }
+        hideForOnboarding={shouldHideMobileNav}
       />
       
       {/* Onboarding Modal with enhanced close handling */}

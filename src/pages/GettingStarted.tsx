@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, type CSSProperties } from "react"
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";  
 import { Badge } from "@/components/ui/badge";
-import { HelpCircle, ArrowRight, ArrowRightCircle, CheckCircle, Clock, Sparkles, CircleOff } from "lucide-react";
+import { HelpCircle, ArrowRight, ArrowRightCircle, CheckCircle, Clock, Sparkles, CircleOff, LogOut } from "lucide-react";
 import { SampleDataModal } from "@/components/SampleDataModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
 import { ExitGuidanceModeButton } from "@/components/ExitGuidanceModeButton";
@@ -18,6 +18,13 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { useOrganizationTrialStatus } from "@/hooks/useOrganizationTrialStatus";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { cn } from "@/lib/utils";
 import { canonicalizeProjectTypeSlug } from "@/lib/projectTypes";
 
 type ConfettiPiece = {
@@ -48,6 +55,152 @@ const createConfettiPieces = (count = 36): ConfettiPiece[] =>
   }));
 
 const COMPLETED_DISPLAY_ORDER = ONBOARDING_STEPS.map((step) => step.id);
+
+interface OnboardingUserMenuProps {
+  variant: "desktop" | "mobile";
+}
+
+const OnboardingUserMenu = ({ variant }: OnboardingUserMenuProps) => {
+  const { t: tForms } = useFormsTranslation();
+  const { t: tNavigation } = useTranslation("navigation");
+  const { user, signOut } = useAuth();
+  const { profile } = useProfile();
+  const { isTrial, daysLeft } = useOrganizationTrialStatus();
+  const navigate = useNavigate();
+
+  if (!user) return null;
+
+  const displayName =
+    profile?.full_name ||
+    (user.email ? user.email.split("@")[0] : tForms("userMenu.unknownUser", { defaultValue: "Kullanıcı" }));
+
+  const initials = (() => {
+    if (profile?.full_name) {
+      return profile.full_name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+    }
+    if (user.email) {
+      return user.email.slice(0, 2).toUpperCase();
+    }
+    return "U";
+  })();
+
+  const trialLabel = useMemo(() => {
+    if (!isTrial) return null;
+    if (daysLeft == null) return tNavigation("trialIndicator.expired", { defaultValue: "Deneme süresi doldu" });
+    if (daysLeft === 0) return tNavigation("trialIndicator.endsToday", { defaultValue: "Deneme bugün bitiyor" });
+    return tNavigation("trialIndicator.daysLeft", { count: daysLeft, defaultValue: "{{count}} gün kaldı" });
+  }, [daysLeft, isTrial, tNavigation]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate("/auth");
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
+  };
+
+  const triggerButton = (
+    <button
+      type="button"
+      className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background shadow-sm transition hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+      aria-label={tForms("userMenu.signOut", { defaultValue: "Çıkış yap" })}
+    >
+      <Avatar className="h-11 w-11">
+        {profile?.profile_photo_url ? (
+          <AvatarImage src={profile.profile_photo_url} alt={displayName} className="object-cover" />
+        ) : null}
+        <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+          {initials}
+        </AvatarFallback>
+      </Avatar>
+    </button>
+  );
+
+  const TrialBadge = trialLabel ? (
+    <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+      <Sparkles className="h-4 w-4" />
+      <span>{trialLabel}</span>
+    </div>
+  ) : null;
+
+  if (variant === "mobile") {
+    return (
+      <Drawer>
+        <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
+        <DrawerContent className="pb-6">
+          <div className="flex items-center gap-3 px-4 pt-4">
+            <Avatar className="h-11 w-11">
+              {profile?.profile_photo_url ? (
+                <AvatarImage src={profile.profile_photo_url} alt={displayName} className="object-cover" />
+              ) : null}
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
+              {user.email ? (
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              ) : null}
+            </div>
+          </div>
+          <div className="mt-4 space-y-3 px-4">
+            {TrialBadge}
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              className="w-full justify-start gap-3 rounded-xl border border-destructive/40 bg-destructive/5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>{tForms("userMenu.signOut")}</span>
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Popover>
+        <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
+        <PopoverContent align="end" side="bottom" className="w-64 p-3 shadow-lg">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-11 w-11">
+              {profile?.profile_photo_url ? (
+                <AvatarImage src={profile.profile_photo_url} alt={displayName} className="object-cover" />
+              ) : null}
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+                {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
+            {user.email ? (
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            ) : null}
+          </div>
+        </div>
+        <div className={cn("mt-3 space-y-2", trialLabel ? "" : "pt-1")}>
+          {TrialBadge}
+          <Button
+            variant="ghost"
+            onClick={handleSignOut}
+            className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>{tForms("userMenu.signOut")}</span>
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 // Remove duplicate step definitions - now using centralized ones from hook
 
@@ -257,12 +410,17 @@ const GettingStarted = () => {
   return (
     <div className={`min-h-screen ${pageBackgroundClass}`}>
       {!isAllStepsComplete && (
-        <div className="bg-card border-b border-border">
+        <div className="relative bg-card border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-6 gap-6">
-              <div className="text-center sm:text-left">
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('onboarding.getting_started.welcome_title')}</h1>
-                <p className="text-sm text-muted-foreground mt-2">{t('onboarding.getting_started.welcome_subtitle')}</p>
+              <div className="flex items-start sm:items-center w-full">
+                <div className="flex-1 text-left">
+                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('onboarding.getting_started.welcome_title')}</h1>
+                  <p className="text-sm text-muted-foreground mt-1 sm:mt-2">{t('onboarding.getting_started.welcome_subtitle')}</p>
+                </div>
+                <div className="ml-4 sm:hidden">
+                  <OnboardingUserMenu variant="mobile" />
+                </div>
               </div>
               <div className="flex items-center justify-center sm:justify-end gap-3">
                 <Button variant="surface" size="sm" onClick={() => setIsHelpModalOpen(true)}>
@@ -277,6 +435,9 @@ const GettingStarted = () => {
                   <ArrowRightCircle className="w-4 h-4 mr-2" />
                   {t('onboarding.getting_started.skip_setup')}
                 </Button>
+                <div className="hidden sm:flex">
+                  <OnboardingUserMenu variant="desktop" />
+                </div>
               </div>
             </div>
           </div>

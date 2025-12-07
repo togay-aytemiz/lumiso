@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 // Import namespace form to avoid ESM/CJS interop edge cases that can surface as
 // "Component is not a function" inside DragDropContext's ErrorBoundary.
 import * as DnD from "@hello-pangea/dnd";
@@ -11,6 +11,7 @@ import { useI18nToast } from "@/lib/toastHelpers";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { ProfessionalKanbanCard } from "@/components/ProfessionalKanbanCard";
 import { KanbanLoadingSkeleton } from "@/components/ui/loading-presets";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useKanbanSettings } from "@/hooks/useKanbanSettings";
@@ -31,6 +32,9 @@ interface ProjectKanbanBoardProps {
   onLoadMore?: () => void;
   hasMore?: boolean;
   isLoadingMore?: boolean;
+  disableProjectCreation?: boolean;
+  onProjectCreationBlocked?: () => void;
+  disabledAddMessage?: string;
 }
 
 const GAP = PROJECT_SORT_GAP;
@@ -95,6 +99,9 @@ const ProjectKanbanBoard = ({
   onLoadMore,
   hasMore = false,
   isLoadingMore = false,
+  disableProjectCreation = false,
+  onProjectCreationBlocked,
+  disabledAddMessage,
 }: ProjectKanbanBoardProps) => {
   const { t } = useTranslation('forms');
   const toast = useI18nToast();
@@ -332,6 +339,12 @@ const ProjectKanbanBoard = ({
   };
 
   const handleAddProject = (statusId: string | null) => {
+    if (disableProjectCreation) {
+      if (onProjectCreationBlocked) {
+        onProjectCreationBlocked();
+      }
+      return;
+    }
     setSelectedStatusId(statusId);
     setProjectWizardOpen(true);
   };
@@ -342,6 +355,18 @@ const ProjectKanbanBoard = ({
       setViewingProject(project);
       setShowViewDialog(true);
     }
+  };
+
+  const wrapWithTooltip = (node: React.ReactNode) => {
+    if (!disableProjectCreation || !disabledAddMessage) return node;
+    return (
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>{node}</TooltipTrigger>
+        <TooltipContent side="top" align="end" className="max-w-xs text-sm leading-relaxed">
+          {disabledAddMessage}
+        </TooltipContent>
+      </Tooltip>
+    );
   };
 
   const renderProjectCard = (project: ProjectListItem, index: number) => (
@@ -394,14 +419,21 @@ const ProjectKanbanBoard = ({
               {ordered.length}
             </Badge>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleAddProject(status?.id || null)}
-            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
+          {wrapWithTooltip(
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleAddProject(status?.id || null)}
+              disabled={disableProjectCreation}
+              aria-disabled={disableProjectCreation}
+              className={cn(
+                "h-6 w-6 text-muted-foreground hover:text-foreground",
+                disableProjectCreation && "opacity-60 cursor-not-allowed"
+              )}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
         <DnD.Droppable droppableId={statusId}>
@@ -421,27 +453,41 @@ const ProjectKanbanBoard = ({
               <div>
                 {ordered.length === 0 ? (
                   <div className="flex flex-col items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-muted-foreground/30 bg-background/60 px-3 py-7 text-center">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleAddProject(status?.id || null)}
-                      className="flex items-center gap-1.5 border-dashed"
-                    >
-                      <Plus className="h-4 w-4" />
-                      {t('common:buttons.add_project')}
-                    </Button>
+                    {wrapWithTooltip(
+                      <Button
+                        variant="outline"
+                        onClick={() => handleAddProject(status?.id || null)}
+                        disabled={disableProjectCreation}
+                        aria-disabled={disableProjectCreation}
+                        className={cn(
+                          "flex items-center gap-1.5 border-dashed",
+                          disableProjectCreation && "opacity-60 cursor-not-allowed"
+                        )}
+                      >
+                        <Plus className="h-4 w-4" />
+                        {t('common:buttons.add_project')}
+                      </Button>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {t('forms:projects.drop_here')}
                     </p>
                   </div>
                 ) : (
-                  <Button
-                    variant="outline"
-                    onClick={() => handleAddProject(status?.id || null)}
-                    className="w-full flex items-center gap-1.5 border-dashed"
-                  >
-                    <Plus className="h-4 w-4" />
-                    {t('common:buttons.add_project')}
-                  </Button>
+                  wrapWithTooltip(
+                    <Button
+                      variant="outline"
+                      onClick={() => handleAddProject(status?.id || null)}
+                      disabled={disableProjectCreation}
+                      aria-disabled={disableProjectCreation}
+                      className={cn(
+                        "w-full flex items-center gap-1.5 border-dashed",
+                        disableProjectCreation && "opacity-60 cursor-not-allowed"
+                      )}
+                    >
+                      <Plus className="h-4 w-4" />
+                      {t('common:buttons.add_project')}
+                    </Button>
+                  )
                 )}
               </div>
 

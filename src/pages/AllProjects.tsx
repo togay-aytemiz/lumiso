@@ -442,6 +442,22 @@ const AllProjects = () => {
 
   // Helpers moved above first usage to avoid TDZ errors
   const isProjectsExploreMission = isInGuidedSetup && currentStep === 3;
+  const projectsExploreLockTitle = t("projects.messages.exploreLockAddActionTitle");
+  const projectsExploreLockDescription = t(
+    "projects.messages.exploreLockAddActionDescription"
+  );
+
+  const handleProjectsExploreCreationLocked = useCallback(() => {
+    if (!isProjectsExploreMission) return;
+    toast({
+      title: projectsExploreLockTitle,
+      description: projectsExploreLockDescription,
+    });
+  }, [
+    isProjectsExploreMission,
+    projectsExploreLockDescription,
+    projectsExploreLockTitle,
+  ]);
 
   const handleQuickView = useCallback(
     (project: ProjectListItem) => {
@@ -1610,6 +1626,9 @@ const AllProjects = () => {
               hasMore={boardHasMore}
               onLoadMore={boardHasMore ? loadMoreBoard : undefined}
               isLoadingMore={boardLoadingMore}
+              disableProjectCreation={isProjectsExploreMission}
+              onProjectCreationBlocked={handleProjectsExploreCreationLocked}
+              disabledAddMessage={projectsExploreLockDescription}
             />
           ) : (
             <div className="h-full overflow-y-auto p-4 sm:p-6">

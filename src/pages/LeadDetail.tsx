@@ -185,9 +185,11 @@ const LeadDetail = () => {
 
   const {
     currentStep,
-    completeCurrentStep
+    completeCurrentStep,
+    isInGuidedSetup
   } = useOnboarding();
   const schedulingTutorialHandledRef = useRef(false);
+  const schedulingStepAutoAdvancedRef = useRef(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [hasViewedProject, setHasViewedProject] = useState(false);
@@ -202,6 +204,20 @@ const LeadDetail = () => {
     overdueCount
   } = sessionMetrics;
   const leadDetailsIntroVideoUrl = "https://www.youtube.com/embed/CkceP4ukkUo?rel=0&modestbranding=1&playsinline=1";
+  const isSchedulingMissionActive = isInGuidedSetup && currentStep === 4;
+  const schedulingRestrictionTitle = tPages("leadDetail.restrictions.schedulingTitle");
+  const schedulingProjectLockMessage = tPages("leadDetail.restrictions.projectsLockedForScheduling");
+  const schedulingDeleteLockMessage = tPages("leadDetail.restrictions.deleteLockedForScheduling");
+
+  const notifySchedulingRestriction = useCallback(
+    (message?: string) => {
+      toast({
+        title: schedulingRestrictionTitle,
+        description: message ?? schedulingProjectLockMessage
+      });
+    },
+    [schedulingRestrictionTitle, schedulingProjectLockMessage]
+  );
 
   // Dynamically update tutorial steps based on hasProjects
   const leadDetailsTutorialSteps: TutorialStep[] = useMemo(() => {
@@ -272,12 +288,17 @@ const LeadDetail = () => {
     const schedulingSections = tPages("leadDetail.scheduling.scheduleSession.sections", { returnObjects: true }) as Array<{ title: string; description: string }>;
     const schedulingIcons = [Calendar, CheckSquare];
     const scheduledTips = tPages("leadDetail.scheduling.sessionScheduled.tips", { returnObjects: true }) as string[];
+    const scheduleDescription = isMobile
+      ? tPages("leadDetail.scheduling.scheduleSession.descriptionMobile", {
+          defaultValue: tPages("leadDetail.scheduling.scheduleSession.description")
+        })
+      : tPages("leadDetail.scheduling.scheduleSession.description");
 
     return [
       {
         id: 3,
         title: tPages("leadDetail.scheduling.scheduleSession.title"),
-        description: tPages("leadDetail.scheduling.scheduleSession.description"),
+        description: scheduleDescription,
         content: (
           <div className="space-y-4">
             {schedulingSections.map((section, index) => {
@@ -324,7 +345,7 @@ const LeadDetail = () => {
         canProceed: true,
       },
     ];
-  }, [hasScheduledSession, tPages]);
+  }, [hasScheduledSession, isMobile, tPages]);
 
   const isProjectTutorialStepActive =
     showTutorial &&
@@ -428,6 +449,18 @@ const LeadDetail = () => {
     setHasScheduledSession(sessions.length > 0);
   }, [lead?.id, sessions.length, viewedProjectStorageKey]);
 
+  useEffect(() => {
+    if (
+      isSchedulingTutorial &&
+      showTutorial &&
+      hasScheduledSession &&
+      !schedulingStepAutoAdvancedRef.current
+    ) {
+      schedulingStepAutoAdvancedRef.current = true;
+      setCurrentTutorialStep(1);
+    }
+  }, [hasScheduledSession, isSchedulingTutorial, showTutorial]);
+
   const handleProjectClicked = () => {
     setHasViewedProject(true);
     if (viewedProjectStorageKey) {
@@ -437,6 +470,11 @@ const LeadDetail = () => {
 
   const handleSessionScheduled = () => {
     setHasScheduledSession(true);
+    if (isSchedulingTutorial) {
+      schedulingStepAutoAdvancedRef.current = true;
+      setShowTutorial(true);
+      setCurrentTutorialStep(1);
+    }
     void refetchAll();
   };
 
@@ -598,6 +636,11 @@ const LeadDetail = () => {
   }, [aggregatedPayments.currency]);
 
   const handleDelete = async () => {
+    if (isSchedulingMissionActive) {
+      notifySchedulingRestriction(schedulingDeleteLockMessage);
+      setShowDeleteDialog(false);
+      return;
+    }
     if (!lead) return;
     setDeleting(true);
     try {
@@ -1007,6 +1050,7 @@ const LeadDetail = () => {
   const shouldShowSessionTutorialVideo = showTutorial && isSchedulingTutorial && !hasSessions;
   const lockSessionsForProjectMission = isProjectTutorialStepActive;
   const lockSessionsTooltip = tPages("leadDetail.tutorial.createProject.disabledTooltip");
+  const lockProjectsForSchedulingMission = isSchedulingMissionActive;
   const desktopProjectLabel = tPages("leadDetail.header.projects.newAction", {
     defaultValue: "Yeni Proje Ekle"
   });
@@ -1068,17 +1112,33 @@ const LeadDetail = () => {
             fallbackInitials="LD"
             actions={
               <div className="flex w-full items-center gap-2 sm:w-auto">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="min-w-0 sm:min-w-[140px] gap-1 sm:gap-2 px-2.5 sm:px-4 whitespace-nowrap border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950"
-                  onClick={handleOpenProjectWizard}
-                  aria-label={desktopProjectLabel}
-                >
-                  <FolderPlus className="hidden h-4 w-4 sm:inline-block" />
-                  <span className="sm:hidden">{mobileProjectLabel}</span>
-                  <span className="hidden sm:inline">{desktopProjectLabel}</span>
-                </Button>
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className={`min-w-0 sm:min-w-[140px] gap-1 sm:gap-2 px-2.5 sm:px-4 whitespace-nowrap border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950 ${
+                        lockProjectsForSchedulingMission ? "opacity-60 cursor-not-allowed" : ""
+                      }`}
+                      onClick={() => {
+                        if (lockProjectsForSchedulingMission) {
+                          notifySchedulingRestriction();
+                          return;
+                        }
+                        handleOpenProjectWizard();
+                      }}
+                      aria-label={desktopProjectLabel}
+                      aria-disabled={lockProjectsForSchedulingMission}
+                    >
+                      <FolderPlus className="hidden h-4 w-4 sm:inline-block" />
+                      <span className="sm:hidden">{mobileProjectLabel}</span>
+                      <span className="hidden sm:inline">{desktopProjectLabel}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  {lockProjectsForSchedulingMission ? (
+                    <TooltipContentDark>{schedulingProjectLockMessage}</TooltipContentDark>
+                  ) : null}
+                </Tooltip>
                 {renderScheduleSessionButton()}
                 {quickStatusButtons}
               </div>
@@ -1116,6 +1176,10 @@ const LeadDetail = () => {
                     onProjectClicked={handleProjectClicked}
                     tutorialMode={isProjectTutorialStepActive}
                     onboardingActive={shouldForceProjectDetailPage}
+                    disableProjectCreation={lockProjectsForSchedulingMission}
+                    disableProjectNavigation={lockProjectsForSchedulingMission}
+                    lockMessage={schedulingProjectLockMessage}
+                    onProjectActionBlocked={notifySchedulingRestriction}
                   />
                 )
               },
@@ -1159,8 +1223,17 @@ const LeadDetail = () => {
                 <div className="space-y-3">
                   <Button
                     variant="outline"
-                    onClick={() => setShowDeleteDialog(true)}
-                    className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() => {
+                      if (isSchedulingMissionActive) {
+                        notifySchedulingRestriction(schedulingDeleteLockMessage);
+                        return;
+                      }
+                      setShowDeleteDialog(true);
+                    }}
+                    aria-disabled={isSchedulingMissionActive}
+                    className={`w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground ${
+                      isSchedulingMissionActive ? "opacity-60 cursor-not-allowed" : ""
+                    }`}
                   >
                     {tForms("leadDangerZone.deleteLead")}
                   </Button>

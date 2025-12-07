@@ -309,7 +309,9 @@
       "failedToSaveProgress": "İlerleme kaydedilemedi. Lütfen tekrar deneyin.",
       "errorFetchingStatuses": "Kişi durumları getirilirken hata:",
       "failedToLoadProjects": "Projeler yüklenemedi",
-      "columnPreferencesError": "Sütun tercihleri kaydedilemedi. Lütfen tekrar deneyin."
+      "columnPreferencesError": "Sütun tercihleri kaydedilemedi. Lütfen tekrar deneyin.",
+      "schedulingLockAddActionTitle": "Bu görevde ekleme menüsü kapalı",
+      "schedulingLockAddActionDescription": "Bu seans planlama görevini, bir kişiyi açıp seans planlayarak tamamlayın. Sonra yeni kişi, proje veya seans ekleyebilirsiniz."
     },
     "multiSelectHint": "Birden fazla seçenek seçin"
   },
@@ -393,6 +395,11 @@
       "projectsShortcutMobile": "Projelerinize istediğiniz zaman alt menüdeki Projeler sekmesinden erişebilirsiniz.",
       "sessionAdded": "Seansınız takviminize eklendi ve Takvim sayfasında bulabilirsiniz!"
     },
+    "restrictions": {
+      "schedulingTitle": "Eğitim görevi aktif",
+      "projectsLockedForScheduling": "Bu adımda yeni proje oluşturamaz veya projeleri açamazsınız. Seans planlayıp görevi tamamlayın.",
+      "deleteLockedForScheduling": "Seans planlama görevi sırasında kişiyi silemezsiniz."
+    },
     "tutorial": {
       "intro": {
         "title": "Kişi Detaylarına Hoş Geldiniz! 📋",
@@ -449,7 +456,8 @@
     "scheduling": {
       "scheduleSession": {
         "title": "Fotoğraf Seansınızı Planlayın",
-        "description": "Bu kişi için bir fotoğraf seansı planlayalım. Formu açmak için aşağıdaki “Seans Planla” düğmesine tıklayın.",
+        "description": "Bu kişi için bir fotoğraf seansı planlayalım. Yukarıdaki “Yeni Seans Planla” düğmesine tıklayın.",
+        "descriptionMobile": "Bu kişi için bir fotoğraf seansı planlayalım. Yukarıdaki \"Yeni Seans\" düğmesine dokunun.",
         "sections": [
           {
             "title": "Seans Planlama",
@@ -3091,6 +3099,8 @@
       "need_help": "Yardım ve Destek",
       "skip_setup": "Kurulumu Atla",
       "setup_progress": "Kurulum İlerlemesi",
+      "final_step_chip_title": "Son görev 🚀",
+      "final_step_chip_subtitle": "Bir adım sonra kullanmaya başlıyorsun",
       "now_label": "Şimdi:",
       "next_label": "Sonraki:",
       "all_tasks_complete": "Tüm görevler tamamlandı 🎉",

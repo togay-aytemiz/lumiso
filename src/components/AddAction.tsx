@@ -80,6 +80,11 @@ export function AddAction({ className }: AddActionProps) {
 
   const labels = isMobile ? mobileActionLabels : actionLabels;
   const isLeadOnboardingStep = isInGuidedSetup && currentStepInfo?.id === 1;
+  const isSchedulingStep = isInGuidedSetup && currentStepInfo?.id === 4 && matchesRoute(location.pathname, "/leads");
+  const isProjectsExploreStep =
+    isInGuidedSetup &&
+    currentStepInfo?.id === 3 &&
+    matchesRoute(location.pathname, "/projects");
   const onboardingLockTitle = t("addAction.onboarding.lockedTitle", {
     defaultValue: "Finish your first mission",
   });
@@ -88,6 +93,18 @@ export function AddAction({ className }: AddActionProps) {
   });
   const onboardingLockLabel = t("addAction.onboarding.lockedLabel", {
     defaultValue: "Locked for onboarding",
+  });
+  const projectsExploreLockTitle = t("projects.messages.exploreLockAddActionTitle", {
+    defaultValue: "Add menu disabled during this walkthrough",
+  });
+  const projectsExploreLockDescription = t("projects.messages.exploreLockAddActionDescription", {
+    defaultValue: "Finish the Projects page mission before creating new leads, projects, or sessions.",
+  });
+  const schedulingLockTitle = t("leads.messages.schedulingLockAddActionTitle", {
+    defaultValue: "Add menu disabled during this mission",
+  });
+  const schedulingLockDescription = t("leads.messages.schedulingLockAddActionDescription", {
+    defaultValue: "Complete the scheduling mission by opening a lead and planning a session before adding new items.",
   });
 
   const routeConfigs = useMemo<AddActionRouteConfig[]>(() => {
@@ -149,16 +166,18 @@ export function AddAction({ className }: AddActionProps) {
   }, [routeConfigs, location.pathname, labels.addNew]);
 
   const isActionLocked = useCallback(
-    (type: AddActionType) => isLeadOnboardingStep && type !== "lead",
-    [isLeadOnboardingStep]
+    (type: AddActionType) => {
+      if (isSchedulingStep) return true;
+      return isLeadOnboardingStep && type !== "lead";
+    },
+    [isLeadOnboardingStep, isSchedulingStep]
   );
 
   const primaryLabel = isLeadOnboardingStep
     ? labels.lead
     : currentConfig.label ?? tCommon("buttons.new");
-  const recommendedType: AddActionType | null = isLeadOnboardingStep
-    ? "lead"
-    : currentConfig.primaryAction;
+  const recommendedType: AddActionType | null =
+    isLeadOnboardingStep ? "lead" : isSchedulingStep ? null : currentConfig.primaryAction;
 
   const openFallbackDialog = useCallback((type: AddActionType) => {
     switch (type) {
@@ -175,11 +194,32 @@ export function AddAction({ className }: AddActionProps) {
   }, []);
 
   const openMenu = useCallback(() => {
+    if (isSchedulingStep) {
+      toast({
+        title: schedulingLockTitle,
+        description: schedulingLockDescription,
+      });
+      return;
+    }
+    if (isProjectsExploreStep) {
+      toast({
+        title: projectsExploreLockTitle,
+        description: projectsExploreLockDescription,
+      });
+      return;
+    }
     setMenuVisible(true);
     requestAnimationFrame(() => {
       setMenuOpen(true);
     });
-  }, []);
+  }, [
+    isProjectsExploreStep,
+    isSchedulingStep,
+    projectsExploreLockDescription,
+    projectsExploreLockTitle,
+    schedulingLockDescription,
+    schedulingLockTitle,
+  ]);
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
@@ -201,7 +241,29 @@ export function AddAction({ className }: AddActionProps) {
     });
   }, [onboardingLockDescription, onboardingLockTitle]);
 
+  const showProjectsExploreLockedNotice = useCallback(() => {
+    toast({
+      title: projectsExploreLockTitle,
+      description: projectsExploreLockDescription,
+    });
+  }, [projectsExploreLockDescription, projectsExploreLockTitle]);
+
+  const showSchedulingLockedNotice = useCallback(() => {
+    toast({
+      title: schedulingLockTitle,
+      description: schedulingLockDescription,
+    });
+  }, [schedulingLockDescription, schedulingLockTitle]);
+
   const handlePrimaryButtonClick = () => {
+    if (isSchedulingStep) {
+      showSchedulingLockedNotice();
+      return;
+    }
+    if (isProjectsExploreStep) {
+      showProjectsExploreLockedNotice();
+      return;
+    }
     if (recommendedType) {
       if (isActionLocked(recommendedType)) {
         showLockedNotice();
@@ -223,6 +285,14 @@ export function AddAction({ className }: AddActionProps) {
   };
 
   const handleAction = (type: AddActionType) => {
+    if (isSchedulingStep) {
+      showSchedulingLockedNotice();
+      return;
+    }
+    if (isProjectsExploreStep) {
+      showProjectsExploreLockedNotice();
+      return;
+    }
     if (isActionLocked(type)) {
       showLockedNotice();
       return;
@@ -397,6 +467,7 @@ export function AddAction({ className }: AddActionProps) {
   const panelWidth = isFixedPosition ? `calc(100vw - ${totalHorizontalPadding}px)` : undefined;
 
   const primaryButtonControlsMenu = !recommendedType;
+  const isGloballyLocked = isSchedulingStep || isProjectsExploreStep;
 
   return (
     <>
@@ -404,6 +475,7 @@ export function AddAction({ className }: AddActionProps) {
         ref={triggerRef}
         className={cn(
           "group relative flex items-center overflow-hidden rounded-full border border-slate-200/80 bg-gradient-to-r from-slate-50 via-slate-100 to-white text-slate-900 transition-all duration-300 focus-within:ring-2 focus-within:ring-slate-300/70 focus-within:ring-offset-2 focus-within:ring-offset-background",
+          isGloballyLocked && "opacity-70",
           className
         )}
       >
@@ -420,7 +492,8 @@ export function AddAction({ className }: AddActionProps) {
           variant="ghost"
           className={cn(
             "group/button relative z-10 rounded-l-full rounded-r-none px-3 text-sm font-semibold tracking-tight text-slate-900 transition-all duration-200 hover:bg-slate-900/5 hover:text-slate-950 focus-visible:ring-0 focus-visible:ring-offset-0 sm:h-12 sm:px-5 sm:text-base",
-            isMobile ? "h-10" : "h-12"
+            isMobile ? "h-10" : "h-12",
+            isGloballyLocked && "cursor-not-allowed"
           )}
           onClick={handlePrimaryButtonClick}
           aria-label={primaryLabel ?? tCommon("buttons.new")}
@@ -444,7 +517,8 @@ export function AddAction({ className }: AddActionProps) {
           type="button"
           className={cn(
             "group/button relative z-10 rounded-l-none rounded-r-full px-0 text-slate-700 transition-all duration-200 hover:bg-slate-900/5 hover:text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 sm:h-12 sm:w-12",
-            isMobile ? "h-10 w-10" : "h-12 w-12"
+            isMobile ? "h-10 w-10" : "h-12 w-12",
+            isGloballyLocked && "cursor-not-allowed"
           )}
           variant="ghost"
           aria-label={tCommon("buttons.moreOptions")}

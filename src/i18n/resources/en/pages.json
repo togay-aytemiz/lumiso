@@ -294,7 +294,9 @@
       "failedToSaveProgress": "Failed to save progress. Please try again.",
       "errorFetchingStatuses": "Error fetching lead statuses:",
       "failedToLoadProjects": "Failed to load projects",
-      "columnPreferencesError": "Failed to save column preferences. Please try again."
+      "columnPreferencesError": "Failed to save column preferences. Please try again.",
+      "schedulingLockAddActionTitle": "Add menu disabled during this mission",
+      "schedulingLockAddActionDescription": "Finish the scheduling mission by opening a lead and planning a session before creating new leads, projects, or sessions."
     },
     "multiSelectHint": "Select multiple options"
   },
@@ -373,11 +375,16 @@
         "infoLabel": "How activity tracking works"
       }
     },
-  "messages": {
-    "projectsShortcutDesktop": "You can access all your projects anytime from the Projects page in the sidebar.",
-    "projectsShortcutMobile": "You can access all your projects anytime from the Projects tab in the bottom navigation.",
-    "sessionAdded": "Your session has been added to your calendar and you can find it in the Calendar page!"
-  },
+    "messages": {
+      "projectsShortcutDesktop": "You can access all your projects anytime from the Projects page in the sidebar.",
+      "projectsShortcutMobile": "You can access all your projects anytime from the Projects tab in the bottom navigation.",
+      "sessionAdded": "Your session has been added to your calendar and you can find it in the Calendar page!"
+    },
+    "restrictions": {
+      "schedulingTitle": "Guided mission in progress",
+      "projectsLockedForScheduling": "Project actions are locked for this step. Schedule a session to keep going.",
+      "deleteLockedForScheduling": "Lead deletion is disabled while the scheduling mission is active."
+    },
     "tutorial": {
       "intro": {
         "title": "Welcome to Lead Details! \ud83d\udccb",
@@ -434,7 +441,8 @@
     "scheduling": {
       "scheduleSession": {
         "title": "Schedule Your Photo Session",
-        "description": "Let\u2019s schedule a photo session for this client. Click \u201cSchedule Session\u201d below to open the form.",
+        "description": "Let\u2019s schedule a photo session for this client. Click \u201cSchedule Session\u201d above to open the form.",
+        "descriptionMobile": "Let\u2019s schedule a photo session for this client. Tap the \u201cNew Session\u201d button above to open the form.",
         "sections": [
           {
             "title": "Session Scheduling",
@@ -3076,6 +3084,8 @@
       "need_help": "Help & Support",
       "skip_setup": "Skip Setup",
       "setup_progress": "Setup Progress",
+      "final_step_chip_title": "Last task 🚀",
+      "final_step_chip_subtitle": "You're about to start using Lumiso",
       "now_label": "Now:",
       "next_label": "Next:",
       "all_tasks_complete": "All tasks complete! \ud83c\udf89",

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";  
+import { Badge } from "@/components/ui/badge";
 import { HelpCircle, ArrowRight, ArrowRightCircle, CheckCircle, Clock } from "lucide-react";
 import { SampleDataModal } from "@/components/SampleDataModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
@@ -78,6 +79,7 @@ const GettingStarted = () => {
     });
   }, [completedSteps]);
   const hasCompletedAnyStep = completedSteps.length > 0;
+  const isOnFinalStep = !isAllStepsComplete && currentStep === totalSteps;
 
   // If guided setup is complete, redirect to dashboard
   useEffect(() => {
@@ -166,10 +168,22 @@ const GettingStarted = () => {
           <div className={`mb-4 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
             <Card className="border-none shadow-lg rounded-2xl">
               <CardHeader className="pb-3 sm:pb-4">
-                <CardTitle className="flex items-center gap-2 text-base sm:text-xl">
-                  {t('onboarding.getting_started.setup_progress')}
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                </CardTitle>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-xl">
+                    {t('onboarding.getting_started.setup_progress')}
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  </CardTitle>
+                  {isOnFinalStep && (
+                    <Badge variant="success" className="flex flex-col items-start px-3 py-1.5 text-xs sm:text-[13px] leading-tight">
+                      <span className="flex items-center gap-1 font-semibold">
+                        {t('onboarding.getting_started.final_step_chip_title')}
+                      </span>
+                      <span className="font-normal text-[11px] sm:text-xs">
+                        {t('onboarding.getting_started.final_step_chip_subtitle')}
+                      </span>
+                    </Badge>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 sm:space-y-4">

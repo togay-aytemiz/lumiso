@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { FolderPlus, Plus } from "lucide-react";
+import { FolderPlus, Lock, Plus } from "lucide-react";
 import { ProjectCard } from "./ProjectCard";
 import { ProjectSheetView } from "./ProjectSheetView";
 import {
@@ -25,6 +25,7 @@ import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoShe
 import { EmptyState } from "@/components/EmptyState";
 import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";
 import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Project {
   id: string;
@@ -47,6 +48,10 @@ interface ProjectsSectionProps {
   tutorialVideoUrl?: string;
   onboardingActive?: boolean;
   refreshKey?: number;
+  disableProjectCreation?: boolean;
+  disableProjectNavigation?: boolean;
+  lockMessage?: string;
+  onProjectActionBlocked?: () => void;
 }
 
 export function ProjectsSection({
@@ -59,6 +64,10 @@ export function ProjectsSection({
   tutorialVideoUrl,
   onboardingActive = false,
   refreshKey = 0,
+  disableProjectCreation = false,
+  disableProjectNavigation = false,
+  lockMessage,
+  onProjectActionBlocked,
 }: ProjectsSectionProps) {
   const { t } = useTranslation(['pages', 'common']);
   const isMobile = useIsMobile();
@@ -92,6 +101,19 @@ export function ProjectsSection({
     import.meta.env.VITE_PROJECT_TUTORIAL_VIDEO_URL ??
     "https://www.youtube.com/embed/RouTuh9llXs";
   const hasTutorialVideo = Boolean(projectTutorialVideoUrl);
+  const restrictionTitle = t("pages:leadDetail.restrictions.schedulingTitle");
+  const resolvedLockMessage =
+    lockMessage ?? t("pages:leadDetail.restrictions.projectsLockedForScheduling");
+  const showProjectsLockedMessage = useCallback(() => {
+    if (onProjectActionBlocked) {
+      onProjectActionBlocked();
+      return;
+    }
+    toast({
+      title: restrictionTitle,
+      description: resolvedLockMessage,
+    });
+  }, [onProjectActionBlocked, restrictionTitle, resolvedLockMessage, toast]);
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -173,6 +195,10 @@ export function ProjectsSection({
 
 
   const handleViewProject = (project: Project) => {
+    if (disableProjectNavigation) {
+      showProjectsLockedMessage();
+      return;
+    }
     if (onProjectClicked) {
       onProjectClicked();
     }
@@ -180,6 +206,10 @@ export function ProjectsSection({
   };
 
   const handleQuickViewProject = (project: Project) => {
+    if (disableProjectNavigation) {
+      showProjectsLockedMessage();
+      return;
+    }
     if (onboardingActive) {
       if (onProjectClicked) {
         onProjectClicked();
@@ -203,6 +233,11 @@ export function ProjectsSection({
 
   const handleViewFullDetails = () => {
     if (viewingProject) {
+      if (disableProjectNavigation) {
+        showProjectsLockedMessage();
+        setShowViewDialog(false);
+        return;
+      }
       if (onProjectClicked) {
         onProjectClicked();
       }
@@ -254,6 +289,10 @@ export function ProjectsSection({
     onProjectUpdated?.();
   };
   const handleOpenProjectWizard = () => {
+    if (disableProjectCreation) {
+      showProjectsLockedMessage();
+      return;
+    }
     setProjectWizardOpen(true);
     if (tutorialMode) {
       setShowProjectTutorialModal(true);
@@ -340,7 +379,10 @@ export function ProjectsSection({
               <Button
                 size="sm"
                 variant="outline"
-                className="min-w-[140px] gap-2 whitespace-nowrap border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950"
+                aria-disabled={disableProjectCreation}
+                className={`min-w-[140px] gap-2 whitespace-nowrap border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950 ${
+                  disableProjectCreation ? "opacity-60 cursor-not-allowed" : ""
+                }`}
                 onClick={handleOpenProjectWizard}
               >
                 <Plus className="h-4 w-4" />
@@ -351,6 +393,17 @@ export function ProjectsSection({
         </div>
       </CardHeader>
       <CardContent>
+        {(disableProjectCreation || disableProjectNavigation) && (
+          <div className="mb-4">
+            <Alert className="border-amber-200 bg-amber-50 text-amber-900">
+              <AlertTitle className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                {restrictionTitle}
+              </AlertTitle>
+              <AlertDescription>{resolvedLockMessage}</AlertDescription>
+            </Alert>
+          </div>
+        )}
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2].map((i) => (
@@ -379,7 +432,10 @@ export function ProjectsSection({
               <Button
                 variant="outline"
                 size="sm"
-                className="min-w-[140px] gap-2 border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950"
+                aria-disabled={disableProjectCreation}
+                className={`min-w-[140px] gap-2 border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950 ${
+                  disableProjectCreation ? "opacity-60 cursor-not-allowed" : ""
+                }`}
                 onClick={handleOpenProjectWizard}
               >
                 <Plus className="h-4 w-4" />
@@ -426,6 +482,11 @@ export function ProjectsSection({
         project={viewingProject}
         open={showViewDialog}
         onOpenChange={(open) => {
+          if (disableProjectNavigation && open) {
+            showProjectsLockedMessage();
+            setShowViewDialog(false);
+            return;
+          }
           setShowViewDialog(open);
         }}
         onProjectUpdated={() => {

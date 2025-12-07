@@ -57,7 +57,10 @@ export function LeadSessionsSection({
   }, [loading, sessions.length, tPages]);
 
   const handleSessionClick = (sessionId: string) => {
-    if (isMobile) {
+    const shouldOpenFullPage =
+      isMobile ||
+      (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches);
+    if (shouldOpenFullPage) {
       const currentPath = `${location.pathname}${location.search}${location.hash}`;
       navigate(`/sessions/${sessionId}`, { state: { from: currentPath } });
       return;

@@ -165,7 +165,7 @@ const AllProjects = () => {
   const { activeOrganizationId } = useOrganization();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { completeCurrentStep } = useOnboarding();
+  const { completeCurrentStep, isInGuidedSetup, currentStep } = useOnboarding();
   const isMobile = useIsMobile();
   const { t, i18n } = useTranslation(["pages", "common"]);
   const { t: tForms } = useFormsTranslation();
@@ -441,8 +441,17 @@ const AllProjects = () => {
   }, [archivedFiltersState]);
 
   // Helpers moved above first usage to avoid TDZ errors
+  const isProjectsExploreMission = isInGuidedSetup && currentStep === 3;
+
   const handleQuickView = useCallback(
     (project: ProjectListItem) => {
+      if (isProjectsExploreMission) {
+        toast({
+          title: t("projects.messages.exploreLockNavigationTitle"),
+          description: t("projects.messages.exploreLockNavigationDescription"),
+        });
+        return;
+      }
       if (isMobile) {
         navigate(`/projects/${project.id}`);
         return;
@@ -450,7 +459,7 @@ const AllProjects = () => {
       setQuickViewProject(project);
       setShowQuickView(true);
     },
-    [isMobile, navigate]
+    [isMobile, isProjectsExploreMission, navigate, t]
   );
 
   const handleLeadClick = useCallback(
@@ -1316,11 +1325,17 @@ const AllProjects = () => {
   );
 
   const handleViewFullDetails = useCallback(() => {
-    if (quickViewProject) {
-      navigate(`/projects/${quickViewProject.id}`);
-      setShowQuickView(false);
+    if (!quickViewProject) return;
+    if (isProjectsExploreMission) {
+      toast({
+        title: t("projects.messages.exploreLockNavigationTitle"),
+        description: t("projects.messages.exploreLockNavigationDescription"),
+      });
+      return;
     }
-  }, [navigate, quickViewProject]);
+    navigate(`/projects/${quickViewProject.id}`);
+    setShowQuickView(false);
+  }, [isProjectsExploreMission, navigate, quickViewProject, t]);
 
   const handleViewChange = useCallback((view: ViewMode) => {
     setViewMode(view);

@@ -480,9 +480,16 @@ const AllProjects = () => {
 
   const handleLeadClick = useCallback(
     (leadId: string) => {
+      if (isProjectsExploreMission) {
+        toast({
+          title: t("projects.messages.exploreLockNavigationTitle"),
+          description: t("projects.messages.exploreLockNavigationDescription"),
+        });
+        return;
+      }
       navigate(`/leads/${leadId}`);
     },
-    [navigate]
+    [isProjectsExploreMission, navigate, t]
   );
 
   const renderProgressCell = useCallback((row: ProjectListItem) => {

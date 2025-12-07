@@ -1461,7 +1461,7 @@
       "exploreLockAddActionTitle": "Add menu disabled during this walkthrough",
       "exploreLockAddActionDescription": "Finish the Projects page mission before creating new leads, projects, or sessions.",
       "exploreLockNavigationTitle": "Stay on the Projects page for this step",
-      "exploreLockNavigationDescription": "Finish the Projects mission before opening project details. We'll unlock full navigation after."
+      "exploreLockNavigationDescription": "Finish the Projects mission before opening any details pages. We'll unlock full navigation after."
     }
   },
   "calendar": {

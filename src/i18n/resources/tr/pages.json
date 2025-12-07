@@ -1476,7 +1476,7 @@
       "exploreLockAddActionTitle": "Bu turda ekleme menüsü kapalı",
       "exploreLockAddActionDescription": "Projeler sayfası görevini bitirdikten sonra yeni kişi, proje veya seans ekleyebilirsin.",
       "exploreLockNavigationTitle": "Bu adımda Projeler sayfasında kalıyoruz",
-      "exploreLockNavigationDescription": "Projeler görevini tamamlayana kadar proje detayını açmadan devam edelim."
+      "exploreLockNavigationDescription": "Projeler görevini tamamlayana kadar detay sayfalarını açmadan devam edelim."
     }
   },
   "calendar": {

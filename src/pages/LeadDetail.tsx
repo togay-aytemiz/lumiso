@@ -43,6 +43,7 @@ import { useLeadDetailData } from "@/hooks/useLeadDetailData";
 import { Tooltip, TooltipContentDark, TooltipTrigger } from "@/components/ui/tooltip";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useOnboardingDeletionGuard } from "@/hooks/useOnboardingDeletionGuard";
 
 const getDateKey = (value?: string | null) => (value ? value.slice(0, 10) : null);
 const safeFormatDate = (value?: string | null) => {
@@ -188,6 +189,7 @@ const LeadDetail = () => {
     completeCurrentStep,
     isInGuidedSetup
   } = useOnboarding();
+  const { ensureCanDelete } = useOnboardingDeletionGuard();
   const schedulingTutorialHandledRef = useRef(false);
   const schedulingStepAutoAdvancedRef = useRef(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -639,6 +641,11 @@ const LeadDetail = () => {
     if (isSchedulingMissionActive) {
       notifySchedulingRestriction(schedulingDeleteLockMessage);
       setShowDeleteDialog(false);
+      return;
+    }
+    if (!ensureCanDelete()) {
+      setShowDeleteDialog(false);
+      setConfirmDeleteText('');
       return;
     }
     if (!lead) return;

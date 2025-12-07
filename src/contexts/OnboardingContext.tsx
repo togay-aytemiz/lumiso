@@ -9,7 +9,7 @@ const normalizeOnboardingStep = (step?: number | null) => {
   return Math.min(minimum, TOTAL_STEPS + 1);
 };
 
-interface OnboardingContextValue {
+export interface OnboardingContextValue {
   // State
   stage: OnboardingStage;
   currentStep: number;
@@ -228,6 +228,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       {children}
     </OnboardingContext.Provider>
   );
+}
+
+export function useOptionalOnboarding(): OnboardingContextValue | null {
+  return useContext(OnboardingContext);
 }
 
 export function useOnboarding(): OnboardingContextValue {

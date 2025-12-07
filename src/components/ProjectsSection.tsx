@@ -26,6 +26,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";
 import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useOnboardingDeletionGuard } from "@/hooks/useOnboardingDeletionGuard";
 
 interface Project {
   id: string;
@@ -89,6 +90,7 @@ export function ProjectsSection({
   const [isProjectWizardOpen, setProjectWizardOpen] = useState(false);
   const [showProjectInfo, setShowProjectInfo] = useState(false);
   const { toast } = useToast();
+  const { ensureCanDelete } = useOnboardingDeletionGuard();
   const projectInfoSectionsRaw = t("pages:projects.emptyState.sections", {
     returnObjects: true,
     defaultValue: []
@@ -247,11 +249,20 @@ export function ProjectsSection({
   };
 
   const handleDeleteProject = (project: Project) => {
+    if (!ensureCanDelete()) {
+      return;
+    }
     setProjectToDelete(project);
     setShowDeleteDialog(true);
   };
 
   const confirmDelete = async () => {
+    if (!ensureCanDelete()) {
+      setShowDeleteDialog(false);
+      setProjectToDelete(null);
+      return;
+    }
+
     if (!projectToDelete) return;
 
     setIsDeleting(true);

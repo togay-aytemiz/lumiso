@@ -40,6 +40,7 @@ import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { TutorialFloatingCard } from "@/components/shared/TutorialFloatingCard";
 import { TutorialMobileBanner } from "@/components/shared/TutorialMobileBanner";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboardingDeletionGuard } from "@/hooks/useOnboardingDeletionGuard";
 
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "Unknown error";
@@ -146,6 +147,7 @@ export default function ProjectDetail() {
   const archiveLockDescription = tPages("projectDetail.archiveLock.description", {
     defaultValue: "Finish the onboarding missions before archiving projects.",
   });
+  const { ensureCanDelete } = useOnboardingDeletionGuard();
   const explorePoints = useMemo(
     () =>
       (tPages("leadDetail.tutorial.exploreProjects.points", {
@@ -441,6 +443,10 @@ export default function ProjectDetail() {
 
   const handleDeleteProject = async () => {
     if (!project) return;
+    if (!ensureCanDelete()) {
+      setShowDeleteDialog(false);
+      return;
+    }
     
     setIsDeleting(true);
     try {
@@ -504,6 +510,10 @@ export default function ProjectDetail() {
   };
 
   const handleDeleteSession = async (sessionId: string) => {
+    if (!ensureCanDelete()) {
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('sessions')

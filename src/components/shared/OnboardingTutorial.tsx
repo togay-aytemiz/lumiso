@@ -30,6 +30,7 @@ interface OnboardingTutorialProps {
   initialStepIndex?: number;
   displayOffset?: number;
   displayTotal?: number;
+  onStepChange?: (index: number, step: TutorialStep) => void;
 }
 
 export function OnboardingTutorial({
@@ -39,7 +40,8 @@ export function OnboardingTutorial({
   isVisible,
   initialStepIndex = 0,
   displayOffset = 0,
-  displayTotal
+  displayTotal,
+  onStepChange
 }: OnboardingTutorialProps) {
   const { t } = useTranslation('pages');
   const [currentStepIndex, setCurrentStepIndex] = useState(initialStepIndex);
@@ -89,6 +91,12 @@ export function OnboardingTutorial({
   useEffect(() => {
     setCurrentStepIndex(initialStepIndex);
   }, [initialStepIndex]);
+
+  // Notify parent when the step changes (used for smooth scrolling/focus)
+  useEffect(() => {
+    if (!isVisible || !currentStep) return;
+    onStepChange?.(currentStepIndex, currentStep);
+  }, [currentStep, currentStepIndex, isVisible, onStepChange]);
 
   // Navigate to step route if specified
   useEffect(() => {

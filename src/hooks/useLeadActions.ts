@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { LeadService, LeadWithCustomFields, CreateLeadData, UpdateLeadData } from '@/services/LeadService';
 import { useEntityActions } from './useEntityActions';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '@/constants/entityConstants';
+import { useOnboardingDeletionGuard } from './useOnboardingDeletionGuard';
 
 export interface UseLeadActionsOptions {
   onLeadCreated?: (lead: LeadWithCustomFields) => void;
@@ -14,6 +15,7 @@ export function useLeadActions(options: UseLeadActionsOptions = {}) {
   const { executeAction, getActionState, clearActionState } = useEntityActions();
   const leadService = useMemo(() => new LeadService(), []);
   const optionsRef = useRef(options);
+  const { ensureCanDelete } = useOnboardingDeletionGuard();
 
   useEffect(() => {
     optionsRef.current = options;
@@ -44,6 +46,10 @@ export function useLeadActions(options: UseLeadActionsOptions = {}) {
   }, [executeAction, leadService]);
 
   const deleteLead = useCallback(async (id: string) => {
+    if (!ensureCanDelete()) {
+      return null;
+    }
+
     return executeAction(
       'deleteLead',
       () => leadService.deleteLead(id),
@@ -53,7 +59,7 @@ export function useLeadActions(options: UseLeadActionsOptions = {}) {
         errorMessage: ERROR_MESSAGES.DELETE_FAILED
       }
     );
-  }, [executeAction, leadService]);
+  }, [ensureCanDelete, executeAction, leadService]);
 
   const updateCustomField = useCallback(async (
     leadId: string, 

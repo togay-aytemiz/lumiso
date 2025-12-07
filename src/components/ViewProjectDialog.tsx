@@ -28,6 +28,7 @@ import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import type { ProjectCreationStepId } from "@/features/project-creation/types";
 import type { ProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapshot";
 import { useTranslation } from "react-i18next";
+import { useOnboardingDeletionGuard } from "@/hooks/useOnboardingDeletionGuard";
 // AssigneesList removed - single user organization
 interface Project {
   id: string;
@@ -124,6 +125,7 @@ export function ViewProjectDialog({
   } = useToast();
   const { t } = useTranslation(["messages", "common"]);
   const { deleteSession } = useSessionActions();
+  const { ensureCanDelete } = useOnboardingDeletionGuard();
   const fetchProjectSessions = useCallback(async () => {
     const projectId = project?.id;
     if (!projectId) return;
@@ -332,6 +334,10 @@ export function ViewProjectDialog({
   };
   const handleDeleteProject = async () => {
     if (!project) return;
+    if (!ensureCanDelete()) {
+      setShowDeleteDialog(false);
+      return;
+    }
     setIsDeleting(true);
     try {
       // Delete all related data in the correct order to avoid foreign key constraints
@@ -402,6 +408,9 @@ export function ViewProjectDialog({
     onProjectUpdated(); // Notify parent component to refresh sessions
   };
   const handleDeleteSession = async (sessionId: string) => {
+    if (!ensureCanDelete()) {
+      return;
+    }
     try {
       const {
         error

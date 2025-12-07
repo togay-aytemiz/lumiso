@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { ProjectService, ProjectWithDetails, CreateProjectData, UpdateProjectData } from '@/services/ProjectService';
 import { useEntityActions } from './useEntityActions';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '@/constants/entityConstants';
+import { useOnboardingDeletionGuard } from './useOnboardingDeletionGuard';
 
 export interface UseProjectActionsOptions {
   onProjectCreated?: (project: ProjectWithDetails) => void;
@@ -21,6 +22,7 @@ export function useProjectActions(options: UseProjectActionsOptions = {}) {
     onStatusChanged,
     onArchived
   } = options;
+  const { ensureCanDelete } = useOnboardingDeletionGuard();
 
   const createProject = useCallback(async (data: CreateProjectData) => {
     return executeAction(
@@ -47,6 +49,10 @@ export function useProjectActions(options: UseProjectActionsOptions = {}) {
   }, [executeAction, onProjectUpdated, projectService]);
 
   const deleteProject = useCallback(async (id: string) => {
+    if (!ensureCanDelete()) {
+      return null;
+    }
+
     return executeAction(
       'deleteProject',
       async () => {
@@ -59,7 +65,7 @@ export function useProjectActions(options: UseProjectActionsOptions = {}) {
         errorMessage: ERROR_MESSAGES.DELETE_FAILED
       }
     );
-  }, [executeAction, onProjectDeleted, projectService]);
+  }, [ensureCanDelete, executeAction, onProjectDeleted, projectService]);
 
   const archiveProject = useCallback(async (id: string, currentlyArchived: boolean = false) => {
     return executeAction(

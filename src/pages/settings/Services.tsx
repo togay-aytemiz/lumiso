@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import SessionTypesSection from "@/components/SessionTypesSection";
@@ -7,70 +7,57 @@ import ServicesSection from "@/components/ServicesSection";
 // Permissions removed for single photographer mode
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
-import { OnboardingChecklistItem } from "@/components/shared/OnboardingChecklistItem";
-import { Package, DollarSign, Target } from "lucide-react";
+import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
 
-const createPackagesSetupSteps = (t: TFunction<"pages">): TutorialStep[] => [
+const PACKAGES_TUTORIAL_VIDEO_ID = import.meta.env.VITE_PACKAGES_TUTORIAL_VIDEO_ID || "VIDEO_PLACEHOLDER";
+const PACKAGES_TUTORIAL_VIDEO_URL = `https://www.youtube.com/embed/${PACKAGES_TUTORIAL_VIDEO_ID}?rel=0&modestbranding=1&playsinline=1`;
+
+const createPackagesSetupSteps = (t: TFunction<"pages">, videoUrl = PACKAGES_TUTORIAL_VIDEO_URL): TutorialStep[] => [
   {
-    id: 1,
-    title: t("settings.services.tutorial.steps.reviewTemplates.title"),
-    description: t("settings.services.tutorial.steps.reviewTemplates.description"),
+    id: 0,
+    title: t("settings.services.tutorial.steps.introVideo.title"),
+    description: t("settings.services.tutorial.steps.introVideo.description"),
     content: (
       <div className="space-y-3">
-        <OnboardingChecklistItem
-          icon={Package}
-          title={t("settings.services.highlights.reviewPackages")}
-          className="text-sm text-muted-foreground"
-          titleClassName="text-sm font-medium text-muted-foreground"
+        <OnboardingVideo
+          src={videoUrl}
+          title={t("settings.services.tutorial.steps.introVideo.videoTitle")}
+          referrerPolicy="strict-origin-when-cross-origin"
         />
-        <div className="text-xs text-muted-foreground">
-          {t("settings.services.tutorial.steps.reviewTemplates.tip")}
-        </div>
+        <p className="text-sm text-muted-foreground text-center">
+          {t("settings.services.tutorial.steps.introVideo.placeholder")}
+        </p>
       </div>
     ),
+    canProceed: true,
+    mode: "modal",
+    modalSize: "wide",
+    primaryCtaLabel: t("settings.services.tutorial.steps.introVideo.cta"),
+  },
+  {
+    id: 1,
+    title: t("settings.services.tutorial.steps.configureServices.title"),
+    description: t("settings.services.tutorial.steps.configureServices.description"),
+    content: null,
     canProceed: true,
     mode: "floating",
   },
   {
     id: 2,
-    title: t("settings.services.tutorial.steps.setPricing.title"),
-    description: t("settings.services.tutorial.steps.setPricing.description"),
-    content: (
-      <div className="space-y-3">
-        <OnboardingChecklistItem
-          icon={DollarSign}
-          title={t("settings.services.highlights.setPrices")}
-          className="text-sm text-muted-foreground"
-          titleClassName="text-sm font-medium text-muted-foreground"
-        />
-        <div className="text-xs text-muted-foreground">
-          {t("settings.services.tutorial.steps.setPricing.tip")}
-        </div>
-      </div>
-    ),
+    title: t("settings.services.tutorial.steps.reviewTemplates.title"),
+    description: t("settings.services.tutorial.steps.reviewTemplates.description"),
+    content: null,
     canProceed: true,
     mode: "floating",
   },
   {
     id: 3,
-    title: t("settings.services.tutorial.steps.configureServices.title"),
-    description: t("settings.services.tutorial.steps.configureServices.description"),
-    content: (
-      <div className="space-y-3">
-        <OnboardingChecklistItem
-          icon={Target}
-          title={t("settings.services.highlights.customizeOfferings")}
-          className="text-sm text-muted-foreground"
-          titleClassName="text-sm font-medium text-muted-foreground"
-        />
-        <div className="text-xs text-muted-foreground">
-          {t("settings.services.tutorial.steps.configureServices.tip")}
-        </div>
-      </div>
-    ),
+    title: t("settings.services.tutorial.steps.sessionTypes.title"),
+    description: t("settings.services.tutorial.steps.sessionTypes.description"),
+    content: null,
     canProceed: true,
     mode: "floating",
   },
@@ -92,6 +79,9 @@ export default function Services() {
   const { currentStep, completeCurrentStep } = useOnboarding();
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
+  const sessionTypesRef = useRef<HTMLDivElement | null>(null);
+  const packagesRef = useRef<HTMLDivElement | null>(null);
+  const servicesRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 
   // Auto-start packages tutorial when we're on the packages step
@@ -127,6 +117,25 @@ export default function Services() {
   const handleTutorialExit = () => {
     setShowTutorial(false);
   };
+
+  const scrollToSection = useCallback((target: React.RefObject<HTMLDivElement>) => {
+    const element = target.current;
+    if (!element || typeof element.scrollIntoView !== "function") return;
+    element.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+  }, []);
+
+  const handleTutorialStepChange = useCallback(
+    (_index: number, step: TutorialStep) => {
+      if (step.id === 1) {
+        scrollToSection(servicesRef);
+      } else if (step.id === 2) {
+        scrollToSection(packagesRef);
+      } else if (step.id === 3) {
+        scrollToSection(sessionTypesRef);
+      }
+    },
+    [scrollToSection]
+  );
   
   // Permissions removed for single photographer mode - always allow
   // if (loading) {
@@ -159,9 +168,15 @@ export default function Services() {
       <SettingsPageWrapper>
         <div className="space-y-8">
           {/* Always show all sections in single photographer mode */}
-          <SessionTypesSection />
-          <PackagesSection />
-          <ServicesSection />
+          <div ref={sessionTypesRef}>
+            <SessionTypesSection />
+          </div>
+          <div ref={packagesRef}>
+            <PackagesSection />
+          </div>
+          <div ref={servicesRef}>
+            <ServicesSection />
+          </div>
         </div>
       </SettingsPageWrapper>
 
@@ -172,6 +187,7 @@ export default function Services() {
         onExit={handleTutorialExit}
         isVisible={showTutorial}
         initialStepIndex={currentTutorialStep}
+        onStepChange={handleTutorialStepChange}
       />
     </>
   );

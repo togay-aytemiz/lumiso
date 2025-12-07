@@ -2144,20 +2144,31 @@
       },
       "tutorial": {
         "steps": {
+          "introVideo": {
+            "title": "See how Packages & Services works",
+            "description": "Watch a quick walkthrough before configuring your packages and pricing.",
+            "videoTitle": "Packages & Services overview",
+            "cta": "Start setup",
+            "placeholder": "Placeholder video — we'll drop in the final link soon."
+          },
           "reviewTemplates": {
             "title": "Review Your Package Templates",
-            "description": "We've created some default photography packages for you. You can modify, delete, or keep them as they are. Click on any package to edit its details.",
-            "tip": "Tip: You can edit package names, descriptions, and what's included"
+            "description": "Starter packages are locked; delete or add your own as needed. They're used when creating projects.",
+            "tip": "Tip: Duplicate to adjust pricing or inclusions fast"
           },
           "setPricing": {
             "title": "Set Your Package Pricing",
-            "description": "Add or update pricing for your packages to streamline your client proposals and booking process.",
-            "tip": "Remember: You can always adjust prices later for individual projects"
+            "description": "Keep pricing simple—use clean numbers clients understand.",
+            "tip": "You can still adjust per project later"
           },
           "configureServices": {
             "title": "Configure Your Services",
-            "description": "Review and customize the individual services that make up your packages. These are the building blocks you'll use when creating packages.",
-            "tip": "Services can be reused across multiple packages"
+            "description": "Manage services here—add new ones or edit ours. Keep what you sell, remove what you don't.",
+            "tip": "Services can be reused across packages"
+          },
+          "sessionTypes": {
+            "title": "Confirm Session Types",
+            "description": "Add the shoot types you offer. We added two samples—edit, delete, or add more to keep the calendar clean."
           },
           "complete": {
             "title": "\ud83c\udf89 Packages Setup Complete!",
@@ -3229,6 +3240,10 @@
         "exit_error": "Failed to exit guidance mode. Please try again.",
         "error_title": "Error"
       }
+    },
+    "restrictions": {
+      "deleteTitle": "Deletion locked during onboarding",
+      "deleteDescription": "Finish the onboarding missions before deleting leads, projects, or sessions."
     },
     "users": {
       "title": "User Management",

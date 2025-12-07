@@ -6,6 +6,14 @@ jest.mock("@/hooks/use-toast", () => ({
   useToast: () => ({ toast: toastMock }),
 }));
 
+jest.mock("@/hooks/useOnboardingDeletionGuard", () => ({
+  useOnboardingDeletionGuard: () => ({
+    isDeletionBlocked: false,
+    ensureCanDelete: () => true,
+    showDeletionBlockedToast: jest.fn(),
+  }),
+}));
+
 const cancelSessionRemindersMock = jest.fn();
 jest.mock("@/hooks/useSessionReminderScheduling", () => ({
   useSessionReminderScheduling: () => ({

@@ -2159,20 +2159,31 @@
       },
       "tutorial": {
         "steps": {
+          "introVideo": {
+            "title": "Paketler ve Hizmetler nasıl çalışır?",
+            "description": "Paketlerinizi ve fiyatlarınızı ayarlamadan önce kısa turu izleyin.",
+            "videoTitle": "Paketler ve Hizmetler genel bakış",
+            "cta": "Kuruluma başla",
+            "placeholder": "Video şimdilik yer tutucu—linki yakında ekleyeceğiz."
+          },
           "reviewTemplates": {
-            "title": "Paket Şablonlarınızı Gözden Geçirin",
-            "description": "Sizin için varsayılan fotoğrafçılık paketleri oluşturduk. Dilerseniz düzenleyebilir, silebilir veya olduğu gibi bırakabilirsiniz. Detaylarını düzenlemek için herhangi bir pakete tıklayın.",
-            "tip": "İpucu: Paket adlarını, açıklamalarını ve içerikleri düzenleyebilirsiniz"
+            "title": "Paket Şablonlarını Gözden Geçir",
+            "description": "Hazır paketler kilitli; dilersen sil ya da yenisini ekle. Paketler proje oluştururken kullanılır.",
+            "tip": "İpucu: Fiyat/içerik için hızlıca kopyala"
           },
           "setPricing": {
-            "title": "Paket Fiyatlandırmanızı Belirleyin",
-            "description": "Paketleriniz için fiyat ekleyin veya güncelleyin, böylece müşteri teklifleri ve rezervasyon süreci hızlansın.",
-            "tip": "Unutmayın: Gerektiğinde projelere özel fiyatları sonradan güncelleyebilirsiniz"
+            "title": "Paket Fiyatlandırmanı Belirle",
+            "description": "Basit fiyatlarla kal; müşterinin hemen anlayacağı rakamlar kullan.",
+            "tip": "Gerekirse projeye özel fiyatları sonra düzenleyebilirsin"
           },
           "configureServices": {
-            "title": "Hizmetlerinizi Yapılandırın",
-            "description": "Paketlerinizi oluşturan bireysel hizmetleri gözden geçirip özelleştirin. Bunlar paketleri oluştururken kullanacağınız yapı taşlarıdır.",
-            "tip": "Hizmetler birden fazla pakette yeniden kullanılabilir"
+            "title": "Hizmetleri Düzenle",
+            "description": "Hizmetlerini burada yönet: yeni ekle, düzenle. Örnekler ekledik; dilersen sil veya değiştir.",
+            "tip": "Hizmetler birden çok pakette yeniden kullanılabilir"
+          },
+          "sessionTypes": {
+            "title": "Seans Tiplerini Onayla",
+            "description": "Sunduğun çekim türlerini gir. 2 örnek ekledik; düzenle, sil veya yenisini ekle. Takvimi düzenli tutar."
           },
           "complete": {
             "title": "🎉 Paket Kurulumu Tamamlandı!",
@@ -3244,6 +3255,10 @@
         "exit_error": "Rehberlik modundan çıkılamadı. Lütfen tekrar deneyin.",
         "error_title": "Hata"
       }
+    },
+    "restrictions": {
+      "deleteTitle": "Eğitim sırasında silme kapalı",
+      "deleteDescription": "Rehberli görevler bitene kadar kişi, proje veya seans silemezsiniz."
     },
     "users": {
       "title": "Kullanıcı Yönetimi",

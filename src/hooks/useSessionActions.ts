@@ -2,13 +2,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSessionReminderScheduling } from '@/hooks/useSessionReminderScheduling';
 import { useWorkflowTriggers } from './useWorkflowTriggers';
+import { useOnboardingDeletionGuard } from './useOnboardingDeletionGuard';
 
 export const useSessionActions = () => {
   const { toast } = useToast();
   const { cancelSessionReminders } = useSessionReminderScheduling();
   const { triggerSessionCompleted, triggerSessionCancelled } = useWorkflowTriggers();
+  const { ensureCanDelete } = useOnboardingDeletionGuard();
 
   const deleteSession = async (sessionId: string) => {
+    if (!ensureCanDelete()) {
+      return false;
+    }
+
     try {
       // Hard-delete any scheduled reminders first to avoid FK constraint issues
       const { error: remindersError } = await supabase

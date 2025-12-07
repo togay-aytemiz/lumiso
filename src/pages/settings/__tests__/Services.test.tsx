@@ -11,6 +11,7 @@ interface TutorialMockProps {
   isVisible: boolean;
   onComplete: () => void;
   onExit: () => void;
+  onStepChange?: (index: number) => void;
 }
 
 jest.mock("react-i18next", () => ({

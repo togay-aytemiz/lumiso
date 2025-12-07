@@ -73,7 +73,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
     saveCategoryChanges,
     categoryChanges,
   } = useSettingsContext();
-  const { shouldLockNavigation } = useOnboarding();
+  const { shouldLockNavigation, currentStep } = useOnboarding();
   const { t } = useTranslation("navigation");
   const { t: tCommon } = useTranslation("common");
   const { t: tPages } = useTranslation("pages");
@@ -82,7 +82,8 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
 
   const currentPath = location.pathname;
   const isSettingsRoot = currentPath === "/settings";
-  const showMobileBackButton = isMobile && !isSettingsRoot;
+  const isPackagesMissionLocked = shouldLockNavigation && currentStep === 5;
+  const showMobileBackButton = isMobile && !isSettingsRoot && !isPackagesMissionLocked;
   const hasChanges = hasCategoryChanges(currentPath);
 
   const backgroundLocationRef = useRef<Location | null>(
@@ -373,6 +374,9 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
       });
     },
     navigationHandler: (target) => {
+      if ((target === CLOSE_TARGET || target === null) && isPackagesMissionLocked) {
+        return;
+      }
       if (target === CLOSE_TARGET || target === null) {
         runCloseAnimation();
         return;
@@ -387,6 +391,9 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
+        if (isPackagesMissionLocked) {
+          return;
+        }
         if (handleModalClose()) {
           runCloseAnimation();
         } else {
@@ -398,7 +405,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [runCloseAnimation, handleModalClose, handleNavigationAttempt]);
+  }, [runCloseAnimation, handleModalClose, handleNavigationAttempt, isPackagesMissionLocked]);
 
   const isItemLocked = useCallback(
     (itemHref: string) => {
@@ -412,12 +419,15 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
   );
 
   const handleCloseClick = useCallback(() => {
+    if (isPackagesMissionLocked) {
+      return;
+    }
     if (handleModalClose()) {
       runCloseAnimation();
     } else {
       handleNavigationAttempt(CLOSE_TARGET);
     }
-  }, [runCloseAnimation, handleModalClose, handleNavigationAttempt]);
+  }, [runCloseAnimation, handleModalClose, handleNavigationAttempt, isPackagesMissionLocked]);
 
   const handleNavItemInteraction = useCallback(
     (event: React.MouseEvent, itemHref: string) => {
@@ -434,12 +444,15 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
   );
 
   const handleMobileBackToDashboard = useCallback(() => {
+    if (isPackagesMissionLocked) {
+      return;
+    }
     const target = lastPathRef.current ?? "/";
     if (!handleNavigationAttempt(target)) {
       return;
     }
     pushSettingsPath(target, { replace: true });
-  }, [handleNavigationAttempt, pushSettingsPath]);
+  }, [handleNavigationAttempt, pushSettingsPath, isPackagesMissionLocked]);
 
   const handleMobileNavClick = useCallback(
     (itemHref: string) => {
@@ -934,7 +947,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
           </div>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2">
-          {shouldUseOverlay && (
+          {shouldUseOverlay && !isPackagesMissionLocked && (
             <Button
               variant="ghost"
               size="icon"

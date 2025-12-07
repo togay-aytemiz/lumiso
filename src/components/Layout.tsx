@@ -16,7 +16,7 @@ const LAST_NON_SETTINGS_PATH_KEY = "lumiso:last-non-settings-path";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const { shouldShowWelcomeModal, loading: onboardingLoading, shouldLockNavigation } = useOnboarding();
+  const { shouldShowWelcomeModal, loading: onboardingLoading, shouldLockNavigation, stage } = useOnboarding();
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [isProfileIntakeBlocking, setIsProfileIntakeBlocking] = useState(true);
   const isMobile = useIsMobile();
@@ -87,7 +87,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
-      <MobileBottomNav hideForOnboarding={showOnboardingModal || shouldLockNavigation} />
+      <MobileBottomNav
+        hideForOnboarding={
+          isOnGettingStartedPage ||
+          showOnboardingModal ||
+          shouldLockNavigation ||
+          stage !== "completed"
+        }
+      />
       
       {/* Onboarding Modal with enhanced close handling */}
       <OnboardingModal 

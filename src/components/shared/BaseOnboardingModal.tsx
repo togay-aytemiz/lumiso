@@ -9,7 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 export interface OnboardingAction {
   label: string;
   onClick: () => void; // used as onConfirm when longPress is provided
-  variant?: "default" | "outline" | "secondary" | "destructive" | "ghost" | "link" | "cta" | "dangerOutline";
+  variant?: "default" | "outline" | "secondary" | "destructive" | "ghost" | "link" | "cta" | "dangerOutline" | "surface";
   disabled?: boolean;
   icon?: ReactNode;
   className?: string;

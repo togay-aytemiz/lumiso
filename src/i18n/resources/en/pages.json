@@ -2172,7 +2172,7 @@
           },
           "complete": {
             "title": "\ud83c\udf89 Packages Setup Complete!",
-            "description": "Excellent! You've successfully configured your photography packages and services. Your business is now ready to create professional proposals and manage bookings."
+            "description": "Great! You now know where to manage packages, services, and session types—even if you skipped adding your own."
           }
         }
       }
@@ -3104,7 +3104,7 @@
       "learning_path_subtitle": "Ready to go in about 10 minutes—just follow the steps.",
       "coming_next": "Coming Next",
       "congratulations": "Congratulations! \ud83c\udf89",
-      "setup_complete": "You've completed the guided setup!",
+      "setup_complete": "Guided setup is done—you're ready to use Lumiso.",
       "go_to_dashboard": "Go to Dashboard",
       "loading": "Loading..."
     },
@@ -3161,7 +3161,7 @@
       "title": "Before you skip the checklist",
       "description": "Stay in guided setup or end the tutorial and move forward your way.",
       "choice_title": "How would you like to continue?",
-      "choice_description": "Pick sample data or start clean, then we’ll exit the tutorial.",
+      "choice_description": "Choose sample data or start clean—we'll set up Lumiso accordingly before exiting.",
       "video_thumbnail_alt": "Video tutorials preview",
       "path_continue_description": "Finish the guided checklist to lock in your settings with our prompts.",
       "path_skip_description": "End the tutorial now and pick between sample data or a clean slate.",

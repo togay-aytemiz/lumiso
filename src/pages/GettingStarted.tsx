@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, type CSSProperties } from "react"
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";  
 import { Badge } from "@/components/ui/badge";
-import { HelpCircle, ArrowRight, ArrowRightCircle, CheckCircle, Clock } from "lucide-react";
+import { HelpCircle, ArrowRight, ArrowRightCircle, CheckCircle, Clock, Sparkles, CircleOff } from "lucide-react";
 import { SampleDataModal } from "@/components/SampleDataModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
 import { ExitGuidanceModeButton } from "@/components/ExitGuidanceModeButton";
@@ -13,6 +13,12 @@ import { useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useTranslation } from "react-i18next";
 import { ONBOARDING_STEPS } from "@/constants/onboarding";
+import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { canonicalizeProjectTypeSlug } from "@/lib/projectTypes";
 
 type ConfettiPiece = {
   id: number;
@@ -55,7 +61,11 @@ const GettingStarted = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiPieces, setConfettiPieces] = useState<ConfettiPiece[]>([]);
   const [hasCelebrated, setHasCelebrated] = useState(false);
+  const [showCompletionChoice, setShowCompletionChoice] = useState(false);
+  const [completionChoice, setCompletionChoice] = useState<"sample" | "clean" | null>(null);
+  const [isSubmittingChoice, setIsSubmittingChoice] = useState(false);
   const { 
+    stage,
     loading, 
     isInGuidedSetup, 
     isOnboardingComplete,
@@ -67,6 +77,9 @@ const GettingStarted = () => {
     currentStep,
     completeOnboarding
   } = useOnboarding();
+  const { activeOrganizationId } = useOrganization();
+  const { settings, updateSettings, refreshSettings } = useOrganizationSettings();
+  const { toast: showToast } = useToast();
   const completionBannerRef = useRef<HTMLDivElement | null>(null);
   const orderedCompletedSteps = useMemo(() => {
     if (!completedSteps.length) return [];
@@ -80,22 +93,34 @@ const GettingStarted = () => {
   }, [completedSteps]);
   const hasCompletedAnyStep = completedSteps.length > 0;
   const isOnFinalStep = !isAllStepsComplete && currentStep === totalSteps;
+  const startOptions = [
+    {
+      value: "sample" as const,
+      icon: Sparkles,
+      title: t("onboarding.sample_data.options.sample.title"),
+      description: t("onboarding.sample_data.options.sample.description"),
+      recommended: true
+    },
+    {
+      value: "clean" as const,
+      icon: CircleOff,
+      title: t("onboarding.sample_data.options.clean.title"),
+      description: t("onboarding.sample_data.options.clean.description"),
+      recommended: false
+    }
+  ];
 
   // If guided setup is complete, redirect to dashboard
   useEffect(() => {
-    if (!loading && (!isInGuidedSetup || isOnboardingComplete)) {
+    if (!loading && stage !== "in_progress" && !isAllStepsComplete && (!isInGuidedSetup || isOnboardingComplete)) {
       navigate('/', { replace: true });
     }
-  }, [loading, isInGuidedSetup, isOnboardingComplete, navigate]);
+  }, [loading, stage, isAllStepsComplete, isInGuidedSetup, isOnboardingComplete, navigate]);
   
   // Handle completion
   const handleComplete = async () => {
-    try {
-      await completeOnboarding();
-      navigate('/', { replace: true });
-    } catch (error) {
-      console.error('Error completing onboarding:', error);
-    }
+    setCompletionChoice(null);
+    setShowCompletionChoice(true);
   };
 
   // Animation on mount and when currentStep changes
@@ -127,6 +152,65 @@ const GettingStarted = () => {
     return () => clearTimeout(timer);
   }, [isAllStepsComplete, hasCelebrated]);
 
+  const ensureSeedPreference = async (value: boolean) => {
+    if (!settings?.organization_id && !activeOrganizationId) {
+      throw new Error("missing-organization");
+    }
+    if (settings?.seed_sample_data_onboarding === value) return;
+    const result = await updateSettings({ seed_sample_data_onboarding: value });
+    if (!result?.success) {
+      throw result?.error ?? new Error("failed-to-update-settings");
+    }
+    await refreshSettings();
+  };
+
+  const seedSampleData = async () => {
+    if (!user?.id) throw new Error("missing-user");
+    const orgId = settings?.organization_id ?? activeOrganizationId;
+    if (!orgId) throw new Error("missing-organization");
+
+    const preferredSlugs = (settings?.preferred_project_types ?? [])
+      .map((slug) => canonicalizeProjectTypeSlug(slug))
+      .filter((slug): slug is string => Boolean(slug));
+    const locale = settings?.preferred_locale ?? "tr";
+
+    const { error } = await supabase.rpc("seed_sample_data_for_org", {
+      owner_uuid: user.id,
+      org_id: orgId,
+      final_locale: locale,
+      preferred_slugs: preferredSlugs,
+    });
+
+    if (error) {
+      throw error;
+    }
+  };
+
+  const handleCompletionChoiceSubmit = async () => {
+    if (!completionChoice || isSubmittingChoice) return;
+    setIsSubmittingChoice(true);
+    try {
+      if (completionChoice === "sample") {
+        await ensureSeedPreference(true);
+        await seedSampleData();
+      } else {
+        await ensureSeedPreference(false);
+      }
+
+      await completeOnboarding();
+      setShowCompletionChoice(false);
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error("Error finishing onboarding choice:", error);
+      showToast({
+        title: t('onboarding.sample_data.toast.error_title', { defaultValue: "Bir şeyler ters gitti" }),
+        description: t('onboarding.sample_data.toast.error_description', { defaultValue: "Lütfen tekrar deneyin." }),
+        variant: "destructive"
+      });
+      setIsSubmittingChoice(false);
+    }
+  };
+
   const handleStepAction = (step: (typeof ONBOARDING_STEPS)[number]) => {
     navigate(step.route);
   };
@@ -135,32 +219,38 @@ const GettingStarted = () => {
     return <div className="min-h-screen bg-background flex items-center justify-center">{t('onboarding.getting_started.loading')}</div>;
   }
 
+  const pageBackgroundClass = isAllStepsComplete
+    ? "bg-gradient-to-br from-[#f6fbff] via-[#f7f9ff] to-[#f5fff9]"
+    : "bg-background";
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-6 gap-6">
-            <div className="text-center sm:text-left">
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('onboarding.getting_started.welcome_title')}</h1>
-              <p className="text-sm text-muted-foreground mt-2">{t('onboarding.getting_started.welcome_subtitle')}</p>
-            </div>
-            <div className="flex items-center justify-center sm:justify-end gap-3">
-              <Button variant="surface" size="sm" onClick={() => setIsHelpModalOpen(true)}>
-                <HelpCircle className="w-4 h-4 mr-2" />
-                {t('onboarding.getting_started.need_help')}
-              </Button>
-              <Button 
-                variant="surface" 
-                size="sm"
-                onClick={() => setShowSampleDataModal(true)}
-              >
-                <ArrowRightCircle className="w-4 h-4 mr-2" />
-                {t('onboarding.getting_started.skip_setup')}
-              </Button>
+    <div className={`min-h-screen ${pageBackgroundClass}`}>
+      {!isAllStepsComplete && (
+        <div className="bg-card border-b border-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-6 gap-6">
+              <div className="text-center sm:text-left">
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('onboarding.getting_started.welcome_title')}</h1>
+                <p className="text-sm text-muted-foreground mt-2">{t('onboarding.getting_started.welcome_subtitle')}</p>
+              </div>
+              <div className="flex items-center justify-center sm:justify-end gap-3">
+                <Button variant="surface" size="sm" onClick={() => setIsHelpModalOpen(true)}>
+                  <HelpCircle className="w-4 h-4 mr-2" />
+                  {t('onboarding.getting_started.need_help')}
+                </Button>
+                <Button 
+                  variant="surface" 
+                  size="sm"
+                  onClick={() => setShowSampleDataModal(true)}
+                >
+                  <ArrowRightCircle className="w-4 h-4 mr-2" />
+                  {t('onboarding.getting_started.skip_setup')}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-safe">
         {/* Progress Section */}
@@ -200,14 +290,16 @@ const GettingStarted = () => {
         )}
 
         {/* Learning Path Header */}
-        <div className="mb-6 sm:mb-8 text-center">
-          <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
-            {t('onboarding.getting_started.your_learning_path')}
-          </h2>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            {t('onboarding.getting_started.learning_path_subtitle')}
-          </p>
-        </div>
+        {!isAllStepsComplete && (
+          <div className="mb-6 sm:mb-8 text-center">
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
+              {t('onboarding.getting_started.your_learning_path')}
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              {t('onboarding.getting_started.learning_path_subtitle')}
+            </p>
+          </div>
+        )}
 
         {/* Completed Steps */}
         {orderedCompletedSteps.length > 0 && (
@@ -323,25 +415,27 @@ const GettingStarted = () => {
         {/* Completion */}
         {isAllStepsComplete && (
           <div className={`text-center ${isAnimating ? 'animate-scale-in' : ''}`} ref={completionBannerRef}>
-            <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
-              <CardContent className="py-12">
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 animate-pulse" />
-                <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">
-                  {t('onboarding.getting_started.congratulations')}
-                </h2>
-                <p className="text-green-600 dark:text-green-300 mb-6">
-                  {t('onboarding.getting_started.setup_complete')}
-                </p>
-                <Button 
-                  size="lg" 
-                  className="bg-green-600 hover:bg-green-700 hover-scale"
-                  onClick={handleComplete}
-                >
-                  {t('onboarding.getting_started.go_to_dashboard')}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="mx-auto max-w-2xl rounded-3xl bg-white/60 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur-sm border border-white/70 px-6 py-10 sm:px-10 sm:py-14">
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 animate-pulse" />
+              <h2 className="text-2xl sm:text-3xl font-bold text-green-700 mb-3">
+                {t('onboarding.getting_started.congratulations')}
+              </h2>
+              <p className="text-base sm:text-lg text-foreground/80 mb-8">
+                {t('onboarding.getting_started.setup_complete')}
+              </p>
+              <Button 
+                size="lg"
+                variant="surface"
+                className="btn-surface-accent hover-scale"
+                onClick={handleComplete}
+                disabled={isSubmittingChoice}
+              >
+                {isSubmittingChoice
+                  ? t("onboarding.sample_data.starting", { defaultValue: "Hazırlanıyor..." })
+                  : t('onboarding.getting_started.go_to_dashboard')}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -352,6 +446,68 @@ const GettingStarted = () => {
       />
 
       <HelpModal isOpen={isHelpModalOpen} onOpenChange={setIsHelpModalOpen} />
+
+      <BaseOnboardingModal
+        open={showCompletionChoice}
+        onClose={() => setShowCompletionChoice(false)}
+        title={t("onboarding.sample_data.choice_title", { defaultValue: "Nasıl devam etmek istersin?" })}
+        description={t("onboarding.sample_data.choice_description", { defaultValue: "Eğitimi kapatmak için örnek verilerle keşfetmeyi ya da temiz başlamayı seç." })}
+        actions={[
+          {
+            label: isSubmittingChoice
+              ? t("onboarding.sample_data.starting", { defaultValue: "Hazırlanıyor..." })
+              : t('onboarding.getting_started.go_to_dashboard'),
+            onClick: handleCompletionChoiceSubmit,
+            variant: "surface",
+            className: "btn-surface-accent",
+            disabled: isSubmittingChoice || !completionChoice,
+            tooltip: !completionChoice
+              ? {
+                  content: t("onboarding.sample_data.select_option_tooltip", { defaultValue: "Devam etmek için bir seçenek seç." }),
+                  variant: "dark"
+                }
+              : undefined
+          }
+        ]}
+        size="compact"
+      >
+        <div className="space-y-3">
+          {startOptions.map((option) => {
+            const Icon = option.icon;
+            const active = completionChoice === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setCompletionChoice(option.value)}
+                disabled={isSubmittingChoice}
+                className={`w-full rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                  active ? "border-primary bg-primary/5 shadow-sm" : "border-border/70 bg-muted/30 hover:bg-muted/50"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`rounded-full p-2 ${option.value === "sample" ? "text-primary bg-primary/10" : "text-muted-foreground bg-muted/50"}`}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm text-foreground">{option.title}</p>
+                      {option.recommended && (
+                        <Badge variant="success" className="text-[11px] font-semibold">
+                          {t("onboarding.sample_data.recommended", { defaultValue: "Önerilen" })}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-snug">{option.description}</p>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </BaseOnboardingModal>
 
       <RestartGuidedModeButton />
       <ExitGuidanceModeButton />

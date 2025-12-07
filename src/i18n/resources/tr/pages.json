@@ -2187,7 +2187,7 @@
           },
           "complete": {
             "title": "🎉 Paket Kurulumu Tamamlandı!",
-            "description": "Harika! Fotoğrafçılık paketlerinizi ve hizmetlerinizi başarıyla yapılandırdınız. Artık profesyonel teklif ve rezervasyon süreçlerine hazırsınız."
+            "description": "Harika! Paketleri, hizmetleri ve seans tiplerini nereden yöneteceğini artık biliyorsun, dilediğin zaman Ayarlar'dan erişebilirsin."
           }
         }
       }
@@ -3119,7 +3119,7 @@
       "learning_path_subtitle": "Sadece 10 dakikada kurulumunu bitirip kullanmaya hazırsın.",
       "coming_next": "Sırada Ne Var",
       "congratulations": "Tebrikler 🎉",
-      "setup_complete": "Rehberli kurulumu tamamladınız",
+      "setup_complete": "Rehberli kurulum tamam; Lumiso'yu kullanmaya hazırsın.",
       "go_to_dashboard": "Gösterge Paneline Git",
       "loading": "Yükleniyor..."
     },
@@ -3176,7 +3176,7 @@
       "title": "Kurulumu atlamadan önce",
       "description": "Rehberli kurulumu sürdürebilir ya da eğitimi sonlandırıp kendi hızında devam edebilirsin.",
       "choice_title": "Nasıl devam etmek istersin?",
-      "choice_description": "Eğitimi kapatmak için örnek verilerle keşfetmeyi ya da temiz başlamayı seç.",
+      "choice_description": "✨ Örnek veriler veya temiz başlangıç seçimini yap. Lumiso'yu buna göre ayarlayıp eğitimi kapatacağız.",
       "video_thumbnail_alt": "Video eğitimleri önizlemesi",
       "path_continue_description": "Rehberli kontrol listesini tamamlayarak ayarlarını adım adım oturt.",
       "path_skip_description": "Eğitimi sonlandırıp örnek verilerle keşfetmeyi ya da temiz alanla başlamayı seç.",

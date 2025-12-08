@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -8,6 +8,8 @@ import { BaseOnboardingModal, type OnboardingAction } from "./shared/BaseOnboard
 import { SampleDataModal } from "./SampleDataModal";
 import { useTranslation } from "react-i18next";
 import { Package, Settings2, Users } from "lucide-react";
+import { useProfile } from "@/hooks/useProfile";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 interface OnboardingModalProps {
   open: boolean;
@@ -22,6 +24,38 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { startGuidedSetup } = useOnboarding();
+  const { profile } = useProfile();
+  const { settings } = useOrganizationSettings();
+
+  const onboardingFirstName = useMemo(() => {
+    const metadataFullName =
+      typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : undefined;
+    const fullName =
+      profile?.full_name ||
+      metadataFullName ||
+      (user?.email ? user.email.split("@")[0] : undefined);
+
+    if (!fullName) return null;
+    const first = fullName.trim().split(/\s+/)[0];
+    return first || null;
+  }, [profile?.full_name, user?.email, user?.user_metadata?.full_name]);
+
+  const onboardingBusinessName = useMemo(() => {
+    const name = settings?.photography_business_name?.trim();
+    return name || null;
+  }, [settings?.photography_business_name]);
+
+  const welcomeTitle = onboardingFirstName
+    ? t("onboarding.modal.welcome_title", { firstName: onboardingFirstName })
+    : t("onboarding.modal.welcome_title_generic", {
+        defaultValue: t("onboarding.modal.welcome_title", { defaultValue: "Lumiso'ya Hoş Geldiniz 🎉" })
+      });
+
+  const welcomeSubtitle = onboardingBusinessName
+    ? t("onboarding.modal.welcome_subtitle", { businessName: onboardingBusinessName })
+    : t("onboarding.modal.welcome_subtitle_generic", {
+        defaultValue: t("onboarding.modal.welcome_subtitle", { defaultValue: "Lumiso'yu öğrenmene yardım edeceğiz" })
+      });
 
   const handleStartLearning = async () => {
     if (!user) return;
@@ -33,7 +67,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
       onClose(); // Close modal
       navigate('/getting-started');
       toastFn({
-        title: t('onboarding.modal.welcome_title'),
+        title: welcomeTitle,
         description: t('onboarding.modal.toast.setup_started'),
       });
     } catch (error) {
@@ -83,8 +117,8 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
       <BaseOnboardingModal
         open={open && !showSampleDataModal}
         onClose={onClose} // Simple close handler
-        title={t('onboarding.modal.welcome_title')}
-        description={t('onboarding.modal.welcome_subtitle')}
+        title={welcomeTitle}
+        description={welcomeSubtitle}
         actions={actions}
       >
         <ul className="space-y-2">

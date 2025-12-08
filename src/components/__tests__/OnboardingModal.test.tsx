@@ -6,6 +6,8 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { toast } from "@/hooks/use-toast";
 import type { ReactNode } from "react";
+import { useProfile } from "@/hooks/useProfile";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 type BaseModalAction = {
   label: string;
@@ -39,6 +41,14 @@ jest.mock("@/contexts/AuthContext", () => ({
 
 jest.mock("@/contexts/OnboardingContext", () => ({
   useOnboarding: jest.fn(),
+}));
+
+jest.mock("@/hooks/useProfile", () => ({
+  useProfile: jest.fn(),
+}));
+
+jest.mock("@/hooks/useOrganizationSettings", () => ({
+  useOrganizationSettings: jest.fn(),
 }));
 
 jest.mock("@/lib/toastHelpers", () => ({
@@ -122,6 +132,8 @@ describe("OnboardingModal", () => {
     (useOnboarding as jest.Mock).mockReturnValue({
       startGuidedSetup: startGuidedSetupMock,
     });
+    (useProfile as jest.Mock).mockReturnValue({ profile: null });
+    (useOrganizationSettings as jest.Mock).mockReturnValue({ settings: null });
     (useI18nToast as jest.Mock).mockReturnValue(toastHelperMock);
     (toast as jest.Mock).mockImplementation(toastFnMock);
   });
@@ -130,8 +142,8 @@ describe("OnboardingModal", () => {
     render(<OnboardingModal open onClose={onCloseMock} />);
 
     expect(screen.getByTestId("base-onboarding-modal")).toBeInTheDocument();
-    expect(screen.getByText("onboarding.modal.welcome_title")).toBeInTheDocument();
-    expect(screen.getByText("onboarding.modal.welcome_subtitle")).toBeInTheDocument();
+    expect(screen.getByText("onboarding.modal.welcome_title_generic")).toBeInTheDocument();
+    expect(screen.getByText("onboarding.modal.welcome_subtitle_generic")).toBeInTheDocument();
 
     // Ensure the guided steps list is rendered
     expect(screen.getByText("onboarding.modal.bullets.profile_and_settings")).toBeInTheDocument();
@@ -163,7 +175,7 @@ describe("OnboardingModal", () => {
     expect(onCloseMock).toHaveBeenCalled();
     expect(navigateMock).toHaveBeenCalledWith("/getting-started");
     expect(toastFnMock).toHaveBeenCalledWith({
-      title: "onboarding.modal.welcome_title",
+      title: "onboarding.modal.welcome_title_generic",
       description: "onboarding.modal.toast.setup_started",
     });
   });

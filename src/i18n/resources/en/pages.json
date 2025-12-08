@@ -3090,8 +3090,10 @@
   },
   "onboarding": {
     "getting_started": {
-      "welcome_title": "Welcome to Lumiso! \ud83c\udf89",
-      "welcome_subtitle": "Let's set up your photography business step by step",
+      "welcome_title": "Welcome to Lumiso, {{firstName}}! \ud83c\udf89",
+      "welcome_title_generic": "Welcome to Lumiso! \ud83c\udf89",
+      "welcome_subtitle": "Let's set up Lumiso for {{businessName}} step by step",
+      "welcome_subtitle_generic": "Let's set up your photography business step by step",
       "need_help": "Help & Support",
       "skip_setup": "Skip Setup",
       "setup_progress": "Setup Progress",
@@ -3141,8 +3143,10 @@
       }
     },
     "modal": {
-      "welcome_title": "Welcome to Lumiso! \ud83c\udf89",
-      "welcome_subtitle": "We'll help you learn Lumiso.",
+      "welcome_title": "Welcome to Lumiso, {{firstName}}! \ud83c\udf89",
+      "welcome_title_generic": "Welcome to Lumiso! \ud83c\udf89",
+      "welcome_subtitle": "Let's set up Lumiso for {{businessName}} step by step.",
+      "welcome_subtitle_generic": "We'll help you learn Lumiso.",
       "what_youll_learn": "What you'll learn:",
       "bullets": {
         "profile_and_settings": "Create leads and turn them into projects",

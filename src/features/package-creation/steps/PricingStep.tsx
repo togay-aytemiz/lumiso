@@ -8,13 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Surface } from "@/components/layout-primitives";
 import { SummaryMetric } from "@/components/summary";
 import {
@@ -374,22 +367,29 @@ export const PricingStep = () => {
                   <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t("steps.pricing.packageVat.modeLabel")}
                   </Label>
-                  <Select
+                  <SegmentedControl
+                    className="mt-1"
                     value={packageVatMode}
                     onValueChange={(value) => handlePackageVatModeChange(value as PackageVatMode)}
-                  >
-                    <SelectTrigger className="h-9 w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="inclusive">
-                        {t("steps.pricing.packageVat.mode.inclusive")}
-                      </SelectItem>
-                      <SelectItem value="exclusive">
-                        {t("steps.pricing.packageVat.mode.exclusive")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                    options={[
+                      {
+                        value: "inclusive",
+                        label: (
+                          <span className="whitespace-nowrap">
+                            {t("steps.pricing.packageVat.mode.inclusive")}
+                          </span>
+                        ),
+                      },
+                      {
+                        value: "exclusive",
+                        label: (
+                          <span className="whitespace-nowrap">
+                            {t("steps.pricing.packageVat.mode.exclusive")}
+                          </span>
+                        ),
+                      },
+                    ]}
+                  />
                 </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">

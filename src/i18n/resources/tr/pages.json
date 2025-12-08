@@ -3105,8 +3105,10 @@
   },
   "onboarding": {
     "getting_started": {
-      "welcome_title": "Lumiso'ya Hoş Geldin 🎉",
-      "welcome_subtitle": "Lumiso'yu birlikte adım adım kuralım",
+      "welcome_title": "Lumiso'ya Hoş Geldin {{firstName}} 🎉",
+      "welcome_title_generic": "Lumiso'ya Hoş Geldin 🎉",
+      "welcome_subtitle": "{{businessName}} için Lumiso'yu birlikte adım adım kuralım",
+      "welcome_subtitle_generic": "Lumiso'yu birlikte adım adım kuralım",
       "need_help": "Yardım ve Destek",
       "skip_setup": "Kurulumu Atla",
       "setup_progress": "Kurulum İlerlemesi",
@@ -3156,8 +3158,10 @@
       }
     },
     "modal": {
-      "welcome_title": "Lumiso'ya Hoş Geldiniz 🎉",
-      "welcome_subtitle": "Lumiso'yu öğrenmene yardım edeceğiz",
+      "welcome_title": "Lumiso'ya Hoş Geldin {{firstName}} 🎉",
+      "welcome_title_generic": "Lumiso'ya Hoş Geldin 🎉",
+      "welcome_subtitle": "{{businessName}} için Lumiso'yu birlikte adım adım kuralım",
+      "welcome_subtitle_generic": "Lumiso'yu öğrenmene yardım edeceğiz",
       "what_youll_learn": "Neler öğreneceksiniz:",
       "bullets": {
         "profile_and_settings": "Kişi ekle ve projeye dönüştür",

@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
 
-const PACKAGES_TUTORIAL_VIDEO_ID = import.meta.env.VITE_PACKAGES_TUTORIAL_VIDEO_ID || "VIDEO_PLACEHOLDER";
+const PACKAGES_TUTORIAL_VIDEO_ID = import.meta.env.VITE_PACKAGES_TUTORIAL_VIDEO_ID || "oaK_S4FLSg8";
 const PACKAGES_TUTORIAL_VIDEO_URL = `https://www.youtube.com/embed/${PACKAGES_TUTORIAL_VIDEO_ID}?rel=0&modestbranding=1&playsinline=1`;
 
 const createPackagesSetupSteps = (t: TFunction<"pages">, videoUrl = PACKAGES_TUTORIAL_VIDEO_URL): TutorialStep[] => [
@@ -27,9 +27,6 @@ const createPackagesSetupSteps = (t: TFunction<"pages">, videoUrl = PACKAGES_TUT
           title={t("settings.services.tutorial.steps.introVideo.videoTitle")}
           referrerPolicy="strict-origin-when-cross-origin"
         />
-        <p className="text-sm text-muted-foreground text-center">
-          {t("settings.services.tutorial.steps.introVideo.placeholder")}
-        </p>
       </div>
     ),
     canProceed: true,

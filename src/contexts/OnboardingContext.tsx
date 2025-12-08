@@ -46,6 +46,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const normalizedCurrentStep = normalizeOnboardingStep(preferences?.currentOnboardingStep);
   const onboardingStage = preferences?.onboardingStage || 'not_started';
   const shouldAutoComplete = onboardingStage === 'in_progress' && normalizedCurrentStep > TOTAL_STEPS;
+  const shouldRestoreInProgress =
+    onboardingStage !== 'in_progress' &&
+    normalizedCurrentStep > 1 &&
+    normalizedCurrentStep <= TOTAL_STEPS;
   const stepNeedsNormalization =
     preferences &&
     preferences.currentOnboardingStep !== undefined &&
@@ -54,7 +58,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   // Auto-heal onboarding data when steps change (e.g., removed steps)
   useEffect(() => {
     if (!preferences || isLoading) return;
-    if (!shouldAutoComplete && !stepNeedsNormalization) return;
+    if (!shouldAutoComplete && !stepNeedsNormalization && !shouldRestoreInProgress) return;
     if (normalizationAttemptedRef.current) return;
 
     normalizationAttemptedRef.current = true;
@@ -63,15 +67,20 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (shouldAutoComplete) {
       payload.onboardingStage = 'completed';
       payload.currentOnboardingStep = TOTAL_STEPS + 1;
-    } else if (stepNeedsNormalization) {
-      payload.currentOnboardingStep = normalizedCurrentStep;
+    } else {
+      if (stepNeedsNormalization) {
+        payload.currentOnboardingStep = normalizedCurrentStep;
+      }
+      if (shouldRestoreInProgress) {
+        payload.onboardingStage = 'in_progress';
+      }
     }
 
     updatePreferences(payload).catch(() => {
       // allow retry if the update fails
       normalizationAttemptedRef.current = false;
     });
-  }, [preferences, isLoading, shouldAutoComplete, stepNeedsNormalization, normalizedCurrentStep, updatePreferences]);
+  }, [preferences, isLoading, shouldAutoComplete, stepNeedsNormalization, shouldRestoreInProgress, normalizedCurrentStep, updatePreferences]);
 
   // Memoized computed values to prevent excessive recalculations
   const computedValues = useMemo(() => {

@@ -21,6 +21,7 @@ interface ScheduleSessionDialogProps {
   hideIconOnMobile?: boolean;
   tutorialMode?: boolean;
   tutorialVideoUrl?: string;
+  suppressSuccessToast?: boolean;
   onDisabledClick?: () => void;
 }
 
@@ -66,6 +67,7 @@ const ScheduleSessionDialog = ({
   hideIconOnMobile = false,
   tutorialMode = false,
   tutorialVideoUrl,
+  suppressSuccessToast,
   onDisabledClick
 }: ScheduleSessionDialogProps) => {
   const { t } = useFormsTranslation();
@@ -187,6 +189,7 @@ const ScheduleSessionDialog = ({
         isOpen={open}
         onOpenChange={setOpen}
         onSessionScheduled={onSessionScheduled}
+        suppressSuccessToast={suppressSuccessToast}
       />
 
       <BaseOnboardingModal

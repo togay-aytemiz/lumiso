@@ -126,6 +126,7 @@ interface SessionPlanningWizardSheetProps {
   onOpenChange: (open: boolean) => void;
   onSessionScheduled?: () => void;
   onSessionUpdated?: () => void;
+  suppressSuccessToast?: boolean;
 }
 
 type SessionRecord = {
@@ -160,6 +161,7 @@ export const SessionPlanningWizardSheet = (props: SessionPlanningWizardSheetProp
     props.entrySource ??
     (props.projectId ? "project" : props.leadId ? "lead" : undefined);
   const derivedMode = props.mode ?? (props.sessionId ? "edit" : "create");
+  const suppressSuccessToast = props.suppressSuccessToast ?? false;
 
   const entryContext = useSessionPlanningEntryContext({
     leadId: props.leadId,
@@ -1073,22 +1075,24 @@ const SessionPlanningWizardSheetInner = ({
         }
       }
 
-      toast({
-        title: t("toast.sessionCreatedTitle"),
-        description: (
-          <div className="space-y-2">
-            <p>{t("toast.sessionCreatedDescription")}</p>
-            <button
-              type="button"
-              className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline-none"
-              onClick={() => navigate(`/sessions/${sessionId}`)}
-            >
-              {tCommon("buttons.view_session")}
-            </button>
-          </div>
-        ),
-        className: "flex-col items-start",
-      });
+      if (!suppressSuccessToast) {
+        toast({
+          title: t("toast.sessionCreatedTitle"),
+          description: (
+            <div className="space-y-2">
+              <p>{t("toast.sessionCreatedDescription")}</p>
+              <button
+                type="button"
+                className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline-none"
+                onClick={() => navigate(`/sessions/${sessionId}`)}
+              >
+                {tCommon("buttons.view_session")}
+              </button>
+            </div>
+          ),
+          className: "flex-col items-start",
+        });
+      }
 
       trackEvent("session_wizard_confirmed", {
         entrySource,

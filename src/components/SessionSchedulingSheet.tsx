@@ -10,6 +10,7 @@ interface SessionSchedulingSheetProps {
   onOpenChange: (open: boolean) => void;
   onSessionScheduled?: () => void;
   startStep?: SessionPlanningStepId;
+  suppressSuccessToast?: boolean;
 }
 
 export function SessionSchedulingSheet({
@@ -21,6 +22,7 @@ export function SessionSchedulingSheet({
   onOpenChange,
   onSessionScheduled,
   startStep,
+  suppressSuccessToast,
 }: SessionSchedulingSheetProps) {
   const entrySource = projectId ? "project" : "lead";
 
@@ -35,6 +37,7 @@ export function SessionSchedulingSheet({
       onOpenChange={onOpenChange}
       onSessionScheduled={onSessionScheduled}
       startStepOverride={startStep}
+      suppressSuccessToast={suppressSuccessToast}
     />
   );
 }

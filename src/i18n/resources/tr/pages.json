@@ -299,7 +299,7 @@
       },
       "selectLeadForSession": {
         "title": "Seans Planlamak İçin Kişi Seçin",
-        "description": "Seans planlayabileceğiniz detay sayfasını açmak için aşağıdaki listeden bir kişiye tıklayın.",
+        "description": "Seans planlayabileceğiniz detay sayfasını açmak için Kişi Kayıtları tablousunda bir kişiye tıklayın.",
         "disabledTooltip": "Devam etmek için bir kişiye tıklayın"
       }
     },

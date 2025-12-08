@@ -1122,6 +1122,7 @@ const LeadDetail = () => {
       leadName={lead.name}
       onSessionScheduled={handleSessionScheduled}
       tutorialMode={shouldShowSessionTutorialVideo}
+      suppressSuccessToast={isSchedulingMissionActive}
       buttonClassName={scheduleButtonClassName}
       buttonLabel={desktopSessionLabel}
       mobileButtonLabel={mobileSessionLabel}

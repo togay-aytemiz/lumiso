@@ -253,6 +253,8 @@ const AllLeadsNew = () => {
 
   const scrollAnimationRef = useRef<number | null>(null);
 
+  const lastTutorialStepIdRef = useRef<number | null>(null);
+
   const scrollToTable = useCallback(() => {
     if (tableSectionRef.current) {
       const rect = tableSectionRef.current.getBoundingClientRect();
@@ -636,6 +638,21 @@ const AllLeadsNew = () => {
   const handleTutorialExit = () => {
     setShowTutorial(false);
   };
+
+  // On mobile scheduling mission, make sure the select-lead step brings the table into view
+  const handleTutorialStepChange = useCallback(
+    (_index: number, step: TutorialStep) => {
+      if (!isSchedulingTutorial || !isMobile) return;
+
+      if (lastTutorialStepIdRef.current === step.id) return;
+      lastTutorialStepIdRef.current = step.id;
+
+      if (step.id === 2) {
+        scheduleScrollToTable();
+      }
+    },
+    [isMobile, isSchedulingTutorial, scheduleScrollToTable]
+  );
 
   const handleAddLeadDialogChange = (open: boolean) => {
     setAddLeadDialogOpen(open);
@@ -1196,6 +1213,7 @@ const AllLeadsNew = () => {
         onComplete={handleTutorialComplete}
         onExit={handleTutorialExit}
         initialStepIndex={currentTutorialStep}
+        onStepChange={handleTutorialStepChange}
       />
     </div>
   );

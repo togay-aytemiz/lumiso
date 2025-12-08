@@ -1,4 +1,11 @@
-import { forwardRef, useEffect, useMemo, useRef } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react";
 import {
   addDays,
   differenceInCalendarDays,
@@ -167,9 +174,11 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const dayRefs = useRef<Array<HTMLDivElement | null>>([]);
 
+  const anchorDate = selectedDate ?? referenceDate;
+
   const weekStart = useMemo(
-    () => startOfWeek(referenceDate, { weekStartsOn: 1 }),
-    [referenceDate]
+    () => startOfWeek(anchorDate, { weekStartsOn: 1 }),
+    [anchorDate]
   );
 
   const selectedDayIndex = useMemo(() => {
@@ -324,33 +333,45 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
 
   const hasDraftSelection = Boolean(isDraftActive);
 
-  useEffect(() => {
-    if (!isMobile || selectedDayIndex === null) return;
-    if (selectedDayIndex < 0 || selectedDayIndex > 6) return;
+  const centerSelectedDay = useCallback(() => {
+    if (!isMobile || selectedDayIndex === null) return false;
+    if (selectedDayIndex < 0 || selectedDayIndex > 6) return false;
     const container = scrollContainerRef.current;
     const target = dayRefs.current[selectedDayIndex];
-    if (!container || !target) return;
+    if (!container || !target) return false;
 
-    const centerTarget = () => {
-      const containerRect = container.getBoundingClientRect();
-      const targetRect = target.getBoundingClientRect();
-      const targetOffset = targetRect.left - containerRect.left + container.scrollLeft;
-      const targetCenter = targetOffset + targetRect.width / 2;
-      const desiredScroll = targetCenter - containerRect.width / 2;
-      const clampedScroll = Math.min(
-        Math.max(desiredScroll, 0),
-        Math.max(container.scrollWidth - containerRect.width, 0)
-      );
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const targetOffset = targetRect.left - containerRect.left + container.scrollLeft;
+    const targetCenter = targetOffset + targetRect.width / 2;
+    const desiredScroll = targetCenter - containerRect.width / 2;
+    const clampedScroll = Math.min(
+      Math.max(desiredScroll, 0),
+      Math.max(container.scrollWidth - containerRect.width, 0)
+    );
 
-      container.scrollTo({
-        left: clampedScroll,
-        behavior: "smooth",
-      });
+    container.scrollTo({
+      left: clampedScroll,
+      behavior: "smooth",
+    });
+    return true;
+  }, [isMobile, selectedDayIndex]);
+
+  useLayoutEffect(() => {
+    if (!isMobile || selectedDayIndex === null) return;
+    let cancelled = false;
+    const attemptCenter = () => {
+      if (cancelled) return;
+      const didCenter = centerSelectedDay();
+      if (!didCenter) {
+        window.requestAnimationFrame(attemptCenter);
+      }
     };
-
-    const raf = window.requestAnimationFrame(centerTarget);
-    return () => window.cancelAnimationFrame(raf);
-  }, [isMobile, selectedDayIndex, weekStart]);
+    window.requestAnimationFrame(attemptCenter);
+    return () => {
+      cancelled = true;
+    };
+  }, [centerSelectedDay, isMobile, selectedDayIndex, weekStart]);
 
   if (!sessions.length && !hasDraftSelection) {
     return (

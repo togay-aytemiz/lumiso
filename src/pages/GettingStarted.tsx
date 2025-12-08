@@ -265,13 +265,6 @@ const GettingStarted = () => {
     }
   ];
 
-  // If guided setup is complete, redirect to dashboard
-  useEffect(() => {
-    if (!loading && stage !== "in_progress" && !isAllStepsComplete && (!isInGuidedSetup || isOnboardingComplete)) {
-      navigate('/', { replace: true });
-    }
-  }, [loading, stage, isAllStepsComplete, isInGuidedSetup, isOnboardingComplete, navigate]);
-  
   // Handle completion
   const handleComplete = async () => {
     setCompletionChoice(null);

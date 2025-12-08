@@ -138,6 +138,24 @@ describe("WeeklySchedulePreview", () => {
     expect(screen.queryByText("05/20")).not.toBeInTheDocument();
   });
 
+  it("anchors the preview to the selected date even if the referenceDate is elsewhere", () => {
+    const referenceDate = new Date("2024-01-01T00:00:00Z");
+    const selectedDate = new Date("2025-12-18T00:00:00Z");
+
+    render(
+      <WeeklySchedulePreview
+        sessions={[]}
+        referenceDate={referenceDate}
+        selectedDate={selectedDate}
+        selectedTime="10:00"
+        locale="en-GB"
+      />
+    );
+
+    expect(screen.getByTestId("weekly-draft-selection")).toBeInTheDocument();
+    expect(screen.getByText(/15 Dec – 21 Dec/i)).toBeInTheDocument();
+  });
+
   it("applies accent styling and lightweight typography to session blocks", () => {
     const sessions: WeeklyScheduleSession[] = [
       {

@@ -196,12 +196,13 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
                 key={color}
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, color }))}
-                className={`w-10 h-10 rounded-full border-4 transition-all ${
+                className={`w-10 h-10 shrink-0 rounded-full border-4 p-0 transition-all ${
                   formData.color === color 
                     ? 'border-gray-900 scale-110' 
                     : 'border-transparent hover:scale-105'
                 }`}
-                style={{ backgroundColor: color }}
+                style={{ backgroundColor: color, borderRadius: "9999px", minWidth: "2.5rem", minHeight: "2.5rem" }}
+                data-touch-target="none"
               />
             ))}
           </div>
@@ -431,6 +432,7 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
       dirty={isDirty}
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}
+      footerInlineOnMobile
     >
       <div className="space-y-6">
         <div className="space-y-2">
@@ -458,12 +460,13 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
                 key={color}
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, color }))}
-                className={`w-10 h-10 rounded-full border-4 transition-all ${
+                className={`w-10 h-10 shrink-0 rounded-full border-4 p-0 transition-all ${
                   formData.color === color 
                     ? 'border-gray-900 scale-110' 
                     : 'border-transparent hover:scale-105'
                 }`}
-                style={{ backgroundColor: color }}
+                style={{ backgroundColor: color, borderRadius: "9999px", minWidth: "2.5rem", minHeight: "2.5rem" }}
+                data-touch-target="none"
               />
             ))}
           </div>

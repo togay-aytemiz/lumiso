@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,8 +10,8 @@ import {
 } from "@hello-pangea/dnd";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Edit, Trash2, GripVertical, Settings } from "lucide-react";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 
 const leadStatusSchema = z.object({
   name: z.string().min(1, "Status name is required").max(50, "Status name must be less than 50 characters"),
@@ -85,6 +86,8 @@ const LeadStatusesSection = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>(PREDEFINED_COLORS[0]);
   const [saving, setSaving] = useState(false);
+  const [isReorderSheetOpen, setIsReorderSheetOpen] = useState(false);
+  const [reorderStatuses, setReorderStatuses] = useState<LeadStatus[]>([]);
 
   const toast = useI18nToast();
   const { activeOrganizationId } = useOrganization();
@@ -190,27 +193,36 @@ const LeadStatusesSection = () => {
     }
   };
 
-  const handleCustomDragEnd = async (result: DropResult) => {
+  const customStatuses = useMemo(
+    () => statuses.filter(status => !status.is_system_final).sort((a, b) => a.sort_order - b.sort_order),
+    [statuses]
+  );
+  const systemStatuses = statuses.filter(status => status.is_system_final);
+
+  useEffect(() => {
+    if (isReorderSheetOpen) {
+      setReorderStatuses(customStatuses);
+    }
+  }, [isReorderSheetOpen, customStatuses]);
+
+  const handleReorderDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
 
-    const customStatuses = statuses.filter(status => !status.is_system_final);
-    const systemStatuses = statuses.filter(status => status.is_system_final);
-    
-    const items = Array.from(customStatuses);
+    const previous = reorderStatuses;
+    const items = Array.from(reorderStatuses);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
+    setReorderStatuses(items);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Update sort_order for custom statuses only
       const updates = items.map((status, index) => ({
         id: status.id,
         sort_order: systemStatuses.length + index + 1,
       }));
 
-      // Execute all updates
       for (const update of updates) {
         const { error } = await supabase
           .from('lead_statuses')
@@ -220,12 +232,11 @@ const LeadStatusesSection = () => {
         if (error) throw error;
       }
 
-      // Invalidate cache to refresh data
       queryClient.invalidateQueries({ queryKey: ['lead_statuses', activeOrganizationId] });
-
       toast.success(t('lead_statuses.reorder_success'));
     } catch (error) {
       console.error('Error updating status order:', error);
+      setReorderStatuses(previous);
       toast.error(t('lead_statuses.reorder_error'));
     }
   };
@@ -265,8 +276,6 @@ const LeadStatusesSection = () => {
   }
 
   // Get system statuses for dynamic description
-  const systemStatuses = statuses.filter(status => status.is_system_final);
-  const customStatuses = statuses.filter(status => !status.is_system_final);
   const systemStatusNames = systemStatuses.map(s => s.name).join(' and ');
   const dynamicDescription = systemStatusNames 
     ? t('lead_statuses.show_quick_buttons_help', { systemStatuses: systemStatusNames.toLowerCase() })
@@ -284,22 +293,24 @@ const LeadStatusesSection = () => {
         contentClassName="space-y-6"
       >
         <div className="space-y-6 rounded-2xl border border-border/60 bg-card p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="quick-status-buttons" className="text-base">
-                {t('lead_statuses.show_quick_buttons')}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {dynamicDescription}
-              </p>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-start justify-between gap-3 sm:items-center">
+              <div className="space-y-0.5">
+                <Label htmlFor="quick-status-buttons" className="text-sm font-medium leading-tight">
+                  {t('lead_statuses.show_quick_buttons')}
+                </Label>
+              </div>
+              <Switch
+                id="quick-status-buttons"
+                checked={showQuickButtons}
+                onCheckedChange={(checked) => updatePreference('show_quick_status_buttons', checked)}
+                disabled={saving || settingsLoading}
+                className="mt-1 shrink-0 sm:mt-0"
+              />
             </div>
-            <Switch
-              id="quick-status-buttons"
-              checked={showQuickButtons}
-              onCheckedChange={(checked) => updatePreference('show_quick_status_buttons', checked)}
-              disabled={saving || settingsLoading}
-              className="self-end sm:self-auto"
-            />
+            <p className="text-sm text-muted-foreground">
+              {dynamicDescription}
+            </p>
           </div>
 
           {/* System Statuses Section */}
@@ -341,75 +352,59 @@ const LeadStatusesSection = () => {
           <div className="space-y-3">
             <h4 className="text-sm font-medium">{t('lead_statuses.custom_statuses')}</h4>
             
-            <div className="p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {t('lead_statuses.drag_instructions')}
-              </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+                <span className="leading-relaxed">{t('lead_statuses.drag_instructions')}</span>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="surface"
+                className="inline-flex w-full items-center gap-2 sm:w-auto sm:self-start"
+                onClick={() => {
+                  setReorderStatuses(customStatuses);
+                  setIsReorderSheetOpen(true);
+                }}
+              >
+                <GripVertical className="h-4 w-4" />
+                {t('lead_statuses.reorder_button')}
+              </Button>
             </div>
 
-            <DragDropContext onDragEnd={handleCustomDragEnd}>
-              <Droppable droppableId="custom-statuses" direction="horizontal">
-                {(provided, snapshot) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className={cn(
-                      "flex flex-wrap gap-3 min-h-[48px] transition-colors rounded-lg p-2",
-                      snapshot.isDraggingOver && "bg-accent/20"
-                    )}
-                  >
-                    {customStatuses.map((status, index) => (
-                      <Draggable key={status.id} draggableId={status.id} index={index}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            className={cn(
-                              "inline-flex min-w-0 max-w-full flex-wrap items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all select-none",
-                              snapshot.isDragging ? "opacity-80 shadow-xl scale-105 z-50" : "hover:opacity-80 cursor-pointer",
-                              !snapshot.isDragging && "hover:scale-[1.02]"
-                            )}
-                            style={{ 
-                              backgroundColor: status.color + '20',
-                              color: status.color,
-                              border: `1px solid ${status.color}40`,
-                              ...provided.draggableProps.style
-                            }}
-                          >
-                            <div 
-                              {...provided.dragHandleProps}
-                              className="flex items-center cursor-grab active:cursor-grabbing hover:opacity-70 transition-opacity"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <GripVertical className="w-3 h-3 text-current opacity-60" />
-                            </div>
-                            <div 
-                              className="w-2 h-2 rounded-full flex-shrink-0" 
-                              style={{ backgroundColor: status.color }}
-                            />
-                            <span 
-                              className="break-words text-left text-sm font-semibold uppercase tracking-wide cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEdit(status);
-                              }}
-                            >
-                              {status.name}
-                            </span>
-                            {status.lifecycle && status.lifecycle !== 'active' && (
-                              <span className="break-words text-left text-xs font-normal capitalize opacity-60">
-                                · {status.lifecycle}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
+            <div className="grid gap-3">
+              {customStatuses.map((status) => (
+                <button
+                  key={status.id}
+                  type="button"
+                  onClick={() => handleEdit(status)}
+                  className="flex w-full items-center justify-between rounded-xl border border-border/70 bg-muted/40 px-3 py-2.5 text-left transition hover:border-border hover:bg-muted/60"
+                  style={{ boxShadow: `inset 0 0 0 1px ${status.color}26` }}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: status.color }}
+                    />
+                    <div className="min-w-0">
+                      <p
+                        className="truncate text-sm font-semibold uppercase tracking-wide"
+                        style={{ color: status.color }}
+                      >
+                        {status.name}
+                      </p>
+                      {status.lifecycle && status.lifecycle !== 'active' && (
+                        <span className="text-xs text-muted-foreground">
+                          {status.lifecycle}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                  <span className="text-xs font-medium text-muted-foreground text-right leading-snug max-w-[96px] whitespace-normal sm:max-w-none sm:text-left">
+                    {t('lead_statuses.tap_to_edit')}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -432,6 +427,77 @@ const LeadStatusesSection = () => {
           }}
         />
       </SettingsTwoColumnSection>
+
+      <AppSheetModal
+        title={t('lead_statuses.reorder_sheet_title')}
+        isOpen={isReorderSheetOpen}
+        onOpenChange={setIsReorderSheetOpen}
+        size="md"
+        footerActions={[
+          {
+            label: t('lead_statuses.reorder_done'),
+            onClick: () => setIsReorderSheetOpen(false),
+          },
+        ]}
+      >
+        <p className="text-sm text-muted-foreground">
+          {t('lead_statuses.reorder_sheet_description')}
+        </p>
+
+        <DragDropContext onDragEnd={handleReorderDragEnd}>
+          <Droppable droppableId="lead-custom-statuses-reorder" direction="vertical">
+            {(provided) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className="mt-3 flex flex-col gap-2"
+              >
+                {reorderStatuses.map((status, index) => (
+                  <Draggable key={status.id} draggableId={status.id} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        style={provided.draggableProps.style}
+                        className={cn(
+                          "flex items-center justify-between rounded-lg border border-border/80 bg-card px-3 py-2 transition",
+                          snapshot.isDragging && "shadow-lg ring-2 ring-primary/30"
+                        )}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <GripVertical className="h-4 w-4 text-muted-foreground" />
+                          <span
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{ backgroundColor: status.color }}
+                          />
+                          <div className="min-w-0">
+                            <p
+                              className="truncate text-sm font-semibold uppercase tracking-wide"
+                              style={{ color: status.color }}
+                            >
+                              {status.name}
+                            </p>
+                            {status.lifecycle && status.lifecycle !== 'active' && (
+                              <p className="text-xs text-muted-foreground">
+                                {status.lifecycle}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-xs text-muted-foreground text-right leading-snug max-w-[96px] whitespace-normal sm:max-w-none sm:text-left">
+                          {t('lead_statuses.reorder_hint')}
+                        </span>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </AppSheetModal>
     </>
   );
 };

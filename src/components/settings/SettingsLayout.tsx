@@ -998,7 +998,8 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
             colorScheme="slate"
             size="icon"
             onClick={handleMobileBackToDashboard}
-            className="h-10 w-10 shrink-0"
+            className="h-10 w-10 shrink-0 rounded-full"
+            style={{ borderRadius: "9999px" }}
             aria-label={mobileBackLabel}
           >
             <ChevronLeft className="h-5 w-5" />

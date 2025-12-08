@@ -33,6 +33,7 @@ interface AppSheetModalProps {
   mobileHeightClass?: string;
   mobileMinHeightClass?: string;
   bodyRef?: (node: HTMLDivElement | null) => void;
+  footerInlineOnMobile?: boolean;
 }
 
 const RECENT_OPEN_GUARD_MS = 200;
@@ -78,6 +79,7 @@ export function AppSheetModal({
   mobileHeightClass = "max-h-[85vh]",
   mobileMinHeightClass,
   bodyRef,
+  footerInlineOnMobile = false,
 }: AppSheetModalProps) {
   const isMobile = useIsMobile();
   const lastOpenedRef = useRef(0);
@@ -296,7 +298,12 @@ export function AppSheetModal({
         </div>
 
         {footerActions.length > 0 && (
-          <SheetFooter className="border-t pt-4 gap-2 px-1 sticky bottom-0 bg-background z-10">
+          <SheetFooter
+            className={cn(
+              "border-t pt-4 gap-2 px-1 sticky bottom-0 bg-background z-10",
+              footerInlineOnMobile && "flex-row flex-nowrap justify-end space-x-2 space-y-0"
+            )}
+          >
             {footerActions.map((action, index) => (
               <Button
                 key={index}

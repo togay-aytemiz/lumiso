@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   DragDropContext,
   Droppable,
@@ -24,6 +24,7 @@ import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useTranslation } from "react-i18next";
 import { useMessagesTranslation } from "@/hooks/useTypedTranslation";
 import { SettingsTwoColumnSection } from "@/components/settings/SettingsSections";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 // Permissions removed for single photographer mode
 
 const projectStatusSchema = z.object({
@@ -64,6 +65,8 @@ const ProjectStatusesSection = () => {
   const [editingStatus, setEditingStatus] = useState<ProjectStatus | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isReorderSheetOpen, setIsReorderSheetOpen] = useState(false);
+  const [reorderStatuses, setReorderStatuses] = useState<ProjectStatus[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const toast = useI18nToast();
   const { t } = useTranslation("forms");
@@ -246,19 +249,37 @@ const ProjectStatusesSection = () => {
     }
   };
 
-  const handleDragEnd = async (result: DropResult) => {
+  const visibleStatuses = useMemo(
+    () =>
+      statuses
+        .filter(
+          (status) =>
+            status.lifecycle !== "archived" &&
+            status.name.toLowerCase() !== "archived"
+        )
+        .sort((a, b) => a.sort_order - b.sort_order),
+    [statuses]
+  );
+
+  useEffect(() => {
+    if (isReorderSheetOpen) {
+      setReorderStatuses(visibleStatuses);
+    }
+  }, [isReorderSheetOpen, visibleStatuses]);
+
+  const handleReorderDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
+
+    const previousOrder = reorderStatuses;
+    const items = Array.from(reorderStatuses);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setReorderStatuses(items);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
       if (!activeOrganizationId) throw new Error('No organization found');
-
-      // Filter out archived statuses for reordering
-      const filteredStatuses = statuses.filter(status => status.lifecycle !== 'archived' && status.name.toLowerCase() !== 'archived');
-      const items = Array.from(filteredStatuses);
-      const [reorderedItem] = items.splice(result.source.index, 1);
-      items.splice(result.destination.index, 0, reorderedItem);
 
       // Update sort_order for filtered items only
       const updates = items.map((status, index) => ({
@@ -281,6 +302,7 @@ const ProjectStatusesSection = () => {
       await refetch();
     } catch (error) {
       console.error('Error updating status order:', error);
+      setReorderStatuses(previousOrder);
       toast.error(t("project_stages.reorder_error"));
     }
   };
@@ -423,15 +445,33 @@ const ProjectStatusesSection = () => {
 
   const canManageProjectStatuses = true; // Always allow in single photographer mode
 
-  const sectionAction = canManageProjectStatuses
-    ? {
-        label: t("project_stages.add_stage"),
-        onClick: handleAdd,
-        icon: Plus,
-        variant: "pill" as const,
-        size: "sm" as const,
-      }
-    : undefined;
+  const actionSlot = canManageProjectStatuses ? (
+    <div className="flex flex-col gap-2">
+      <Button
+        type="button"
+        size="sm"
+        variant="surface"
+        className="inline-flex w-full items-center gap-2 sm:w-auto sm:self-start"
+        onClick={handleAdd}
+      >
+        <Plus className="h-4 w-4" />
+        {t("project_stages.add_stage")}
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="surface"
+        className="inline-flex w-full items-center gap-2 sm:w-auto sm:self-start"
+        onClick={() => {
+          setReorderStatuses(visibleStatuses);
+          setIsReorderSheetOpen(true);
+        }}
+      >
+        <GripVertical className="h-4 w-4" />
+        {t("project_stages.reorder_button")}
+      </Button>
+    </div>
+  ) : undefined;
 
   if (isLoading) {
     return (
@@ -439,7 +479,7 @@ const ProjectStatusesSection = () => {
         sectionId="project-statuses"
         title={t("project_stages.title")}
         description={t("project_stages.description")}
-        action={sectionAction}
+        actionSlot={actionSlot}
         contentClassName="space-y-6"
       >
         <div className="rounded-2xl border border-border/60 bg-card p-6">
@@ -455,103 +495,52 @@ const ProjectStatusesSection = () => {
         sectionId="project-statuses"
         title={t("project_stages.title")}
         description={t("project_stages.description")}
-        action={sectionAction}
+        actionSlot={actionSlot}
         contentClassName="space-y-6"
       >
         <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-6">
-          <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/30 p-3">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {t("project_stages.drag_instructions")}
-            </p>
+          <div className="flex flex-col gap-2">
+            <div className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+              <span className="leading-relaxed">{t("project_stages.drag_instructions")}</span>
+            </div>
           </div>
 
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="statuses" direction="horizontal">
-              {(provided, snapshot) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className={cn(
-                    "flex min-h-[48px] flex-wrap gap-3 rounded-lg p-2 transition-colors",
-                    snapshot.isDraggingOver && "bg-accent/20"
-                  )}
-                >
-                  {statuses
-                    .filter(
-                      (status) =>
-                        status.lifecycle !== "archived" &&
-                        status.name.toLowerCase() !== "archived"
-                    )
-                    .map((status, index) => (
-                      <Draggable
-                        key={status.id}
-                        draggableId={status.id}
-                        index={index}
-                      >
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            className={cn(
-                              "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-all select-none",
-                              snapshot.isDragging
-                                ? "z-50 scale-105 opacity-80 shadow-xl"
-                                : "cursor-pointer hover:opacity-80",
-                              !snapshot.isDragging && "hover:scale-[1.02]"
-                            )}
-                            style={{
-                              backgroundColor: `${status.color}20`,
-                              color: status.color,
-                              border: `1px solid ${status.color}40`,
-                              ...provided.draggableProps.style,
-                            }}
-                          >
-                            <div
-                              {...provided.dragHandleProps}
-                              className="flex items-center cursor-grab active:cursor-grabbing hover:opacity-70 transition-opacity"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <GripVertical className="h-3 w-3 text-current opacity-60" />
-                            </div>
-                            <div
-                              className="h-2 w-2 flex-shrink-0 rounded-full"
-                              style={{ backgroundColor: status.color }}
-                            />
-                            <span
-                              className={`uppercase tracking-wide font-semibold ${
-                                canManageProjectStatuses
-                                  ? "cursor-pointer"
-                                  : "cursor-default"
-                              }`}
-                              onClick={
-                                canManageProjectStatuses
-                                  ? (e) => {
-                                      e.stopPropagation();
-                                      handleEdit(status);
-                                    }
-                                  : undefined
-                              }
-                            >
-                              {status.name}
-                            </span>
-                            {status.lifecycle &&
-                              status.lifecycle !== "active" && (
-                                <span className="text-xs font-normal capitalize opacity-60">
-                                  ·{" "}
-                                  {t(
-                                    `project_stage.lifecycle.${status.lifecycle}`
-                                  )}
-                                </span>
-                              )}
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                  {provided.placeholder}
+          <div className="grid gap-3">
+            {visibleStatuses.map((status) => (
+              <button
+                key={status.id}
+                type="button"
+                onClick={() => canManageProjectStatuses && handleEdit(status)}
+                className={cn(
+                  "flex w-full items-center justify-between rounded-xl border border-border/70 bg-muted/40 px-3 py-2.5 text-left transition hover:border-border hover:bg-muted/60",
+                  !canManageProjectStatuses && "cursor-default"
+                )}
+                style={{
+                  boxShadow: `inset 0 0 0 1px ${status.color}26`,
+                }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: status.color }}
+                  />
+                  <div className="min-w-0">
+                    <p
+                      className="truncate text-sm font-semibold uppercase tracking-wide"
+                      style={{ color: status.color }}
+                    >
+                      {status.name}
+                    </p>
+                  </div>
                 </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+                {canManageProjectStatuses && (
+                  <span className="text-xs font-medium text-muted-foreground text-right leading-snug max-w-[96px] whitespace-normal sm:max-w-none sm:text-left">
+                    {t("project_stages.tap_to_edit")}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </SettingsTwoColumnSection>
 
@@ -569,6 +558,76 @@ const ProjectStatusesSection = () => {
             onOpenChange={setIsEditDialogOpen}
             onStageUpdated={refetch}
           />
+
+          <AppSheetModal
+            title={t("project_stages.reorder_sheet_title")}
+            isOpen={isReorderSheetOpen}
+            onOpenChange={setIsReorderSheetOpen}
+            size="md"
+            footerActions={[
+              {
+                label: t("project_stages.reorder_done"),
+                onClick: () => setIsReorderSheetOpen(false),
+              },
+            ]}
+          >
+            <p className="text-sm text-muted-foreground">
+              {t("project_stages.reorder_sheet_description")}
+            </p>
+
+            <DragDropContext onDragEnd={handleReorderDragEnd}>
+              <Droppable droppableId="statuses-reorder" direction="vertical">
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="mt-3 flex flex-col gap-2"
+                  >
+                    {reorderStatuses.map((status, index) => (
+                      <Draggable
+                        key={status.id}
+                        draggableId={status.id}
+                        index={index}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={provided.draggableProps.style}
+                            className={cn(
+                              "flex items-center justify-between rounded-lg border border-border/80 bg-card px-3 py-2 transition",
+                              snapshot.isDragging && "shadow-lg ring-2 ring-primary/30"
+                            )}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <GripVertical className="h-4 w-4 text-muted-foreground" />
+                              <span
+                                className="h-2.5 w-2.5 rounded-full"
+                                style={{ backgroundColor: status.color }}
+                              />
+                              <div className="min-w-0">
+                                <p
+                                  className="truncate text-sm font-semibold uppercase tracking-wide"
+                                  style={{ color: status.color }}
+                                >
+                                  {status.name}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-xs text-muted-foreground text-right leading-snug max-w-[96px] whitespace-normal sm:max-w-none sm:text-left">
+                              {t("project_stages.reorder_hint")}
+                            </span>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </AppSheetModal>
         </>
       )}
     </>

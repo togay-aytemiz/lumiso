@@ -2219,8 +2219,8 @@ const DashboardDailyFocus = ({
           }}
         />
       </section>
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2 mb-10">
-        <Card className="border-slate-200 shadow-sm flex flex-col h-full">
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2 mb-10 items-stretch">
+        <Card className="border-slate-200 shadow-sm flex flex-col h-full xl:h-[72vh] xl:max-h-[72vh] xl:overflow-hidden">
           <CardHeader className="pb-0 sm:pb-1">
             <div className="flex flex-col gap-3 sm:gap-2">
               {/* Title row */}
@@ -2320,11 +2320,11 @@ const DashboardDailyFocus = ({
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-2 flex flex-col flex-1">
+          <CardContent className="pt-2 flex flex-col flex-1 min-h-0">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" />
 
             {weeklyHasSessions ? (
-              <div className="mt-2 flex-1 min-h-0">
+              <div className="mt-2 flex-1 min-h-0 h-full">
                 <CalendarWeek
                   currentDate={weekReference}
                   sessions={weeklySessions}
@@ -2335,7 +2335,8 @@ const DashboardDailyFocus = ({
                   projectsMap={calendarProjectsMap}
                   isMobile={isMobile}
                   getEventsForDate={getWeeklyEventsForDate}
-                  fullHeight
+                  maxHeight={isMobile ? undefined : "100%"}
+                  fullHeight={isMobile}
                   className="h-full"
                   onSessionClick={(session) => handleSessionCardClick(session.id)}
                   onActivityClick={(activity) => handleReminderLeadClick(activity.lead_id)}
@@ -2347,7 +2348,7 @@ const DashboardDailyFocus = ({
                 />
               </div>
             ) : (
-              <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-12 text-center flex-1">
+              <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-12 text-center flex-1 h-full">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-500 ring-4 ring-indigo-50/50">
                   <CalendarIcon className="h-6 w-6" />
                 </div>
@@ -2372,7 +2373,7 @@ const DashboardDailyFocus = ({
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 shadow-sm flex flex-col">
+        <Card className="border-slate-200 shadow-sm flex flex-col xl:h-[72vh] xl:max-h-[72vh] xl:overflow-hidden">
           <CardHeader className="pb-3">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -2522,9 +2523,9 @@ const DashboardDailyFocus = ({
               </div>
             </div>
           </CardHeader>
-          <CardContent className="flex-1">
+          <CardContent className="flex-1 min-h-0">
             {revenueTrendHasData ? (
-              <ChartContainer config={revenueChartConfig} className="h-full min-h-[420px] w-full">
+              <ChartContainer config={revenueChartConfig} className="h-full min-h-[360px] w-full">
                 <ComposedChart
                   data={revenueTrendData}
                   margin={{ top: 12, right: 12, left: -10, bottom: 0 }}
@@ -2596,7 +2597,7 @@ const DashboardDailyFocus = ({
                 </ComposedChart>
               </ChartContainer>
             ) : (
-              <div className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-4 text-center">
+              <div className="flex h-full min-h-[360px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-4 text-center">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-500 ring-4 ring-indigo-50/50">
                   <Coins className="h-6 w-6" />
                 </div>

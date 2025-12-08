@@ -207,6 +207,7 @@ const OnboardingUserMenu = ({ variant }: OnboardingUserMenuProps) => {
 const GettingStarted = () => {
   const { t } = useTranslation('pages');
   const { user } = useAuth();
+  const { profile } = useProfile();
   const navigate = useNavigate();
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
@@ -264,6 +265,38 @@ const GettingStarted = () => {
       recommended: false
     }
   ];
+
+  const onboardingFirstName = useMemo(() => {
+    const metadataFullName =
+      typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : undefined;
+    const fullName =
+      profile?.full_name ||
+      metadataFullName ||
+      (user?.email ? user.email.split("@")[0] : undefined);
+
+    if (!fullName) return null;
+    const first = fullName.trim().split(/\s+/)[0];
+    return first || null;
+  }, [profile?.full_name, user?.email, user?.user_metadata?.full_name]);
+
+  const onboardingBusinessName = useMemo(() => {
+    const name = settings?.photography_business_name?.trim();
+    return name || null;
+  }, [settings?.photography_business_name]);
+
+  const welcomeTitle = onboardingFirstName
+    ? t("onboarding.getting_started.welcome_title", { firstName: onboardingFirstName })
+    : t("onboarding.getting_started.welcome_title_generic", {
+        defaultValue: t("onboarding.getting_started.welcome_title", { defaultValue: "Lumiso'ya Hoş Geldin 🎉" })
+      });
+
+  const welcomeSubtitle = onboardingBusinessName
+    ? t("onboarding.getting_started.welcome_subtitle", { businessName: onboardingBusinessName })
+    : t("onboarding.getting_started.welcome_subtitle_generic", {
+        defaultValue: t("onboarding.getting_started.welcome_subtitle", {
+          defaultValue: "Lumiso'yu birlikte adım adım kuralım"
+        })
+      });
 
   // Handle completion
   const handleComplete = async () => {
@@ -408,8 +441,8 @@ const GettingStarted = () => {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-6 gap-6">
               <div className="flex items-start sm:items-center w-full">
                 <div className="flex-1 text-left">
-                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('onboarding.getting_started.welcome_title')}</h1>
-                  <p className="text-sm text-muted-foreground mt-1 sm:mt-2">{t('onboarding.getting_started.welcome_subtitle')}</p>
+                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">{welcomeTitle}</h1>
+                  <p className="text-sm text-muted-foreground mt-1 sm:mt-2">{welcomeSubtitle}</p>
                 </div>
                 <div className="ml-4 sm:hidden">
                   <OnboardingUserMenu variant="mobile" />

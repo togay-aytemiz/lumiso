@@ -213,12 +213,17 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
   const { t } = useTranslation("pages");
   const restoredDraftDirtyRef = useRef(false);
   const restoredCleanDraftRef = useRef(false);
+  const templateRef = useRef<TemplateBuilderData | null>(null);
   const dirtyVersionRef = useRef(0);
   const latestSavedVersionRef = useRef(0);
   const persistDraftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const untitledTemplateLabel = t("templateBuilder.untitledTemplate", {
     defaultValue: "Untitled Template"
   });
+
+  useEffect(() => {
+    templateRef.current = template;
+  }, [template]);
 
   const loadTemplate = useCallback(async () => {
     if (!templateId || !activeOrganizationId || restoredDraftDirtyRef.current) return;
@@ -267,12 +272,13 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
   }, [templateId, activeOrganizationId, toast, t]);
 
   useEffect(() => {
+    const currentTemplate = templateRef.current;
     const draft = loadDraftFromStorage(templateId);
     if (draft) {
       if (restoredDraftDirtyRef.current && draft.isDirty) {
         return;
       }
-      if (!template || draft.isDirty) {
+      if (!currentTemplate || draft.isDirty) {
         setTemplate(draft.template);
         setIsDirty(draft.isDirty);
         restoredDraftDirtyRef.current = draft.isDirty;
@@ -287,7 +293,8 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
     restoredDraftDirtyRef.current = false;
     restoredCleanDraftRef.current = false;
     if (!templateId) {
-      if (template) {
+      if (currentTemplate) {
+        // Navigated to a new template (no id); clear any previous template state once.
         setTemplate(null);
       }
       setIsDirty(false);
@@ -298,7 +305,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       return;
     }
 
-    if (!template || template.id !== templateId) {
+    if (!currentTemplate || currentTemplate.id !== templateId) {
       setTemplate(null);
       setIsDirty(false);
       setLastSaved(null);
@@ -306,7 +313,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       latestSavedVersionRef.current = 0;
       setDirtyVersion(0);
     }
-  }, [templateId, template]);
+  }, [templateId]);
 
   const saveTemplate = useCallback(async (
     templateData: Partial<TemplateBuilderData>, 

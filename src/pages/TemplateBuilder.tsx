@@ -131,10 +131,13 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   useEffect(() => {
     const fetchTemplateNames = async () => {
       try {
-        const { data, error } = await supabase
+        const baseQuery = supabase
           .from('message_templates')
-          .select('name')
-          .neq('id', templateId || '');
+          .select('name');
+
+        const { data, error } = templateId
+          ? await baseQuery.neq('id', templateId)
+          : await baseQuery;
         
         if (error) {
           console.error('Error fetching template names:', error);

@@ -161,7 +161,6 @@ export const SessionPlanningWizardSheet = (props: SessionPlanningWizardSheetProp
     props.entrySource ??
     (props.projectId ? "project" : props.leadId ? "lead" : undefined);
   const derivedMode = props.mode ?? (props.sessionId ? "edit" : "create");
-  const suppressSuccessToast = props.suppressSuccessToast ?? false;
 
   const entryContext = useSessionPlanningEntryContext({
     leadId: props.leadId,
@@ -199,10 +198,11 @@ const SessionPlanningWizardSheetInner = ({
   onOpenChange,
   onSessionScheduled,
   onSessionUpdated,
-  entryContext
+  entryContext,
+  suppressSuccessToast = false
 }: Pick<
   SessionPlanningWizardSheetProps,
-  "isOpen" | "onOpenChange" | "onSessionScheduled" | "onSessionUpdated"
+  "isOpen" | "onOpenChange" | "onSessionScheduled" | "onSessionUpdated" | "suppressSuccessToast"
 > & {
   entryContext: SessionPlanningEntryContext;
 }) => {

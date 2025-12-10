@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { ADMIN_USER_SOFT_DELETE_PREFIX } from "../constants";
 
 const formatDateInputValue = (value?: string | null) => {
   if (!value) return "";
@@ -76,6 +77,9 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
   const [suspendLoading, setSuspendLoading] = useState(false);
   const [liftSuspensionOpen, setLiftSuspensionOpen] = useState(false);
   const [liftSuspensionLoading, setLiftSuspensionLoading] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const isSuspended = user.status === "suspended";
   const lastSuspensionEvent = useMemo(
@@ -428,6 +432,37 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
     }
   };
 
+  const handleSoftDelete = async () => {
+    setDeleteLoading(true);
+    try {
+      const note = deleteReason.trim();
+      const manualReason = note
+        ? `${ADMIN_USER_SOFT_DELETE_PREFIX}:${note}`
+        : ADMIN_USER_SOFT_DELETE_PREFIX;
+      await handleSupabaseUpdate(
+        {
+          manual_flag: true,
+          manual_flag_reason: manualReason,
+        },
+        t("admin.users.detail.actions.membershipModals.delete.success"),
+        {
+          action: "soft_delete",
+          newStatus: user.status,
+          metadata: { note: note || null, previousStatus: user.status },
+        }
+      );
+      setDeleteOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: t("admin.users.detail.actions.membershipModals.delete.error"),
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <>
       <div className={cn("flex flex-wrap gap-2", buttonRowClassName)}>
@@ -441,13 +476,13 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
         >
           {t("admin.users.detail.actions.grantPremium")}
         </Button>
-      <Button
-        variant="surface"
-        className="btn-surface-amber"
-        onClick={() => setComplimentaryOpen(true)}
-      >
-        {t("admin.users.detail.actions.addComplimentary")}
-      </Button>
+        <Button
+          variant="surface"
+          className="btn-surface-amber"
+          onClick={() => setComplimentaryOpen(true)}
+        >
+          {t("admin.users.detail.actions.addComplimentary")}
+        </Button>
         {isSuspended ? (
           <Button
             variant="tinted"
@@ -465,6 +500,12 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
             {t("admin.users.detail.actions.suspendAccount")}
           </Button>
         )}
+        <Button
+          variant="destructive"
+          onClick={() => setDeleteOpen(true)}
+        >
+          {t("admin.users.detail.actions.deleteUser")}
+        </Button>
       </div>
 
       <Dialog open={trialModalOpen} onOpenChange={setTrialModalOpen}>
@@ -737,6 +778,53 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
               {liftSuspensionLoading
                 ? t("admin.users.detail.actions.membershipModals.saving")
                 : t("admin.users.detail.actions.membershipModals.liftSuspension.submit")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {t("admin.users.detail.actions.membershipModals.delete.title")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("admin.users.detail.actions.membershipModals.delete.description")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="rounded-2xl border border-border/60 bg-muted/30 px-3 py-2 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("admin.users.detail.actions.membershipModals.delete.emailLabel")}
+              </p>
+              <p className="mt-1 font-medium text-foreground">
+                {user.email || "—"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="delete-reason">
+                {t("admin.users.detail.actions.membershipModals.delete.reasonLabel")}
+              </Label>
+              <Textarea
+                id="delete-reason"
+                value={deleteReason}
+                onChange={(event) => setDeleteReason(event.target.value)}
+                placeholder={t("admin.users.detail.actions.membershipModals.delete.reasonPlaceholder")}
+              />
+            </div>
+            <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+              {t("admin.users.detail.actions.membershipModals.delete.warning")}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              {t("admin.users.detail.actions.membershipModals.cancel")}
+            </Button>
+            <Button variant="destructive" onClick={handleSoftDelete} disabled={deleteLoading}>
+              {deleteLoading
+                ? t("admin.users.detail.actions.membershipModals.saving")
+                : t("admin.users.detail.actions.membershipModals.delete.submit")}
             </Button>
           </DialogFooter>
         </DialogContent>

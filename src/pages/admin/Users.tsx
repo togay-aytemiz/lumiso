@@ -183,6 +183,10 @@ export default function AdminUsers() {
     const updated = users.find((candidate) => candidate.id === selectedUserId);
     if (updated) {
       setSelectedUserSnapshot(updated);
+    } else {
+      setDetailOpen(false);
+      setSelectedUserSnapshot(null);
+      setSelectedUserId(null);
     }
   }, [users, selectedUserId]);
 

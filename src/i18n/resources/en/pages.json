@@ -976,6 +976,7 @@
           "addComplimentary": "Add complimentary",
           "suspendAccount": "Suspend account",
           "removeSuspension": "Remove suspension",
+          "deleteUser": "Delete workspace",
           "contactUser": "Contact user",
           "membershipModals": {
             "cancel": "Cancel",
@@ -1033,6 +1034,17 @@
               "submit": "Restore access",
               "success": "Suspension removed",
               "error": "Could not remove the suspension."
+            },
+            "delete": {
+              "title": "Delete workspace",
+              "description": "Soft delete this workspace and hide it from the admin users list.",
+              "emailLabel": "Workspace email",
+              "reasonLabel": "Reason (optional)",
+              "reasonPlaceholder": "Internal note for why this workspace was deleted",
+              "warning": "This workspace will be hidden from /admin/users. Membership status will stay as is; suspend separately if you need to block access.",
+              "submit": "Delete workspace",
+              "success": "Workspace deleted",
+              "error": "Could not delete the workspace."
             }
           }
         },
@@ -1050,6 +1062,7 @@
             "grant_complimentary": "Complimentary premium granted",
             "suspend_account": "Account suspended",
             "lift_suspension": "Suspension removed",
+            "soft_delete": "Workspace deleted",
             "manage_trial": "Trial updated",
             "default": "Membership updated"
           },

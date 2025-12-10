@@ -991,6 +991,7 @@
           "addComplimentary": "Ücretsiz premium ver",
           "suspendAccount": "Hesabı askıya al",
           "removeSuspension": "Askıyı kaldır",
+          "deleteUser": "Workspace'i sil",
           "contactUser": "Kullanıcıyla iletişime geç",
           "membershipModals": {
             "cancel": "Vazgeç",
@@ -1048,6 +1049,17 @@
               "submit": "Erişimi aç",
               "success": "Hesap yeniden açıldı",
               "error": "Askı kaldırılamadı."
+            },
+            "delete": {
+              "title": "Workspace'i sil",
+              "description": "Bu workspace'i yumuşak şekilde sil ve admin kullanıcı listesinde gösterme.",
+              "emailLabel": "Workspace e-postası",
+              "reasonLabel": "Sebep (opsiyonel)",
+              "reasonPlaceholder": "Neden silindiğine dair iç not",
+              "warning": "Bu hesap /admin/users listesinden gizlenecek. Üyelik durumu aynı kalır; erişimi kapatmak için ayrıca askıya alın.",
+              "submit": "Workspace'i sil",
+              "success": "Workspace silindi",
+              "error": "Workspace silinemedi."
             }
           }
         },
@@ -1065,6 +1077,7 @@
             "grant_complimentary": "Ücretsiz premium tanımlandı",
             "suspend_account": "Hesap askıya alındı",
             "lift_suspension": "Askı kaldırıldı",
+            "soft_delete": "Workspace silindi",
             "manage_trial": "Deneme güncellendi",
             "default": "Üyelik güncellendi"
           },

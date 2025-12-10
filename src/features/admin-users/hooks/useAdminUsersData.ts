@@ -5,6 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { computePaymentSummaryMetrics } from "@/lib/payments/metrics";
 import { resolveMembershipStatus } from "@/lib/membershipStatus";
+import { ADMIN_USER_SOFT_DELETE_PREFIX } from "../constants";
 import type {
   AdminUserAccount,
   AdminUserLeadSummary,
@@ -193,11 +194,15 @@ const fetchAdminAccounts = async ({
   }
 
   const organizations = organizationsResult.data ?? [];
-  if (!organizations.length) {
+  const activeOrganizations = organizations.filter((organization) => {
+    const reason = organization.manual_flag_reason?.trim() ?? "";
+    return !reason.startsWith(ADMIN_USER_SOFT_DELETE_PREFIX);
+  });
+  if (!activeOrganizations.length) {
     return [];
   }
 
-  const organizationIds = organizations.map((organization) => organization.id);
+  const organizationIds = activeOrganizations.map((organization) => organization.id);
 
   const [
     profilesResult,
@@ -458,7 +463,7 @@ const fetchAdminAccounts = async ({
   };
 
 
-  return organizations.map<AdminUserAccount>((organization) => {
+  return activeOrganizations.map<AdminUserAccount>((organization) => {
     const owner = profileMap.get(organization.owner_id) as ProfileRow | undefined;
     const settings = organizationSettingsMap.get(organization.id) as OrganizationSettingsRow | undefined;
     const organizationEmail = settings?.email ?? null;

@@ -939,6 +939,7 @@ function AdminUserDetailSheetContent({
       grant_complimentary: t("admin.users.detail.membershipEvents.actions.grant_complimentary"),
       suspend_account: t("admin.users.detail.membershipEvents.actions.suspend_account"),
       lift_suspension: t("admin.users.detail.membershipEvents.actions.lift_suspension"),
+      soft_delete: t("admin.users.detail.membershipEvents.actions.soft_delete"),
     }),
     [t]
   );

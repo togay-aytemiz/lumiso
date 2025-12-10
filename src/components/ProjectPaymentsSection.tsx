@@ -776,18 +776,6 @@ export function ProjectPaymentsSection({
               {t("payments.title", { defaultValue: "Payments" })}
             </CardTitle>
             <div className="flex flex-wrap gap-2">
-              {depositConfigured && (
-                <Button
-                  size="sm"
-                  variant="pill"
-                  onClick={() => setDepositPaymentOpen(true)}
-                  disabled={financialSummary.depositRemaining <= 0}
-                >
-                  {t("payments.actions.deposit_quick", {
-                    defaultValue: "Deposit payment",
-                  })}
-                </Button>
-              )}
               <Button
                 size="sm"
                 variant="pill"
@@ -1044,39 +1032,52 @@ export function ProjectPaymentsSection({
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {financialSummary.depositStatus === "none" &&
-                          t("payments.deposit.not_configured", {
-                            defaultValue:
-                              "No deposit configured for this project.",
-                          })}
-                        {financialSummary.depositStatus === "due" &&
-                          t("payments.deposit.due", {
-                            amount: formatCurrency(
-                              financialSummary.depositAmount
-                            ),
-                            defaultValue: "{{amount}} deposit outstanding.",
-                          })}
-                        {financialSummary.depositStatus === "partial" &&
-                          t("payments.deposit.partial", {
-                            paid: formatCurrency(financialSummary.depositPaid),
-                            required: formatCurrency(
-                              financialSummary.depositAmount
-                            ),
-                            remaining: formatCurrency(
-                              financialSummary.depositRemaining
-                            ),
-                            defaultValue:
-                              "{{paid}} of {{required}} collected ({{remaining}} remaining).",
-                          })}
-                        {financialSummary.depositStatus === "paid" &&
-                          t("payments.deposit.paid", {
-                            amount: formatCurrency(
-                              financialSummary.depositAmount
-                            ),
-                            defaultValue: "Deposit collected ({{amount}}).",
-                          })}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        <span>
+                          {financialSummary.depositStatus === "none" &&
+                            t("payments.deposit.not_configured", {
+                              defaultValue:
+                                "No deposit configured for this project.",
+                            })}
+                          {financialSummary.depositStatus === "due" &&
+                            t("payments.deposit.due", {
+                              amount: formatCurrency(
+                                financialSummary.depositAmount
+                              ),
+                              defaultValue: "{{amount}} deposit outstanding.",
+                            })}
+                          {financialSummary.depositStatus === "partial" &&
+                            t("payments.deposit.partial", {
+                              paid: formatCurrency(
+                                financialSummary.depositPaid
+                              ),
+                              required: formatCurrency(
+                                financialSummary.depositAmount
+                              ),
+                              remaining: formatCurrency(
+                                financialSummary.depositRemaining
+                              ),
+                              defaultValue:
+                                "{{paid}} of {{required}} collected ({{remaining}} remaining).",
+                            })}
+                          {financialSummary.depositStatus === "paid" &&
+                            t("payments.deposit.paid", {
+                              amount: formatCurrency(
+                                financialSummary.depositAmount
+                              ),
+                              defaultValue: "Deposit collected ({{amount}}).",
+                            })}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="textGhost"
+                          size="sm"
+                          className="h-auto px-0 text-xs font-semibold text-primary"
+                          onClick={() => setDepositSetupOpen(true)}
+                        >
+                          {depositEditLabel}
+                        </Button>
+                      </div>
                       {!isDepositPaid && (
                         <>
                           <p className="text-xs text-muted-foreground">
@@ -1098,27 +1099,34 @@ export function ProjectPaymentsSection({
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="pill"
-                      onClick={() => setDepositSetupOpen(true)}
-                    >
-                      {depositEditLabel}
-                    </Button>
-                    {canLockDeposit && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleSnapshotAction("refresh")}
-                        disabled={isSnapshotUpdating}
-                      >
-                        {t("payments.deposit.actions.lock_now", {
-                          defaultValue: "Lock amount",
-                        })}
-                      </Button>
-                    )}
-                  </div>
+                  {(depositConfigured || canLockDeposit) && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {depositConfigured && (
+                        <Button
+                          size="sm"
+                          variant="pill"
+                          onClick={() => setDepositPaymentOpen(true)}
+                          disabled={financialSummary.depositRemaining <= 0}
+                        >
+                          {t("payments.actions.deposit_quick", {
+                            defaultValue: "Kapora ödemesi işle",
+                          })}
+                        </Button>
+                      )}
+                      {canLockDeposit && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleSnapshotAction("refresh")}
+                          disabled={isSnapshotUpdating}
+                        >
+                          {t("payments.deposit.actions.lock_now", {
+                            defaultValue: "Lock amount",
+                          })}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {shouldShowSnapshotBanner && (
@@ -1189,7 +1197,11 @@ export function ProjectPaymentsSection({
                         const isRefund = payment.amount < 0;
                         const depositAllocation =
                           payment.deposit_allocation ?? 0;
-                        const showDepositAllocation = depositAllocation !== 0;
+                        // Only surface deposit allocation details for general payments,
+                        // not for the dedicated "Kapora ödemesi" flow.
+                        const showDepositAllocation =
+                          depositAllocation !== 0 &&
+                          payment.type !== "deposit_payment";
                         const depositAllocationLabel =
                           depositAllocation > 0
                             ? t("payments.deposit.allocation_badge", {

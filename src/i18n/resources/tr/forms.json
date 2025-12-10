@@ -1284,7 +1284,7 @@
       "vat_breakdown_aria": "KDV dağılımını göster"
     },
     "actions": {
-      "deposit_quick": "Kapora ödemesi",
+      "deposit_quick": "Kapora ödemesi işle",
       "balance_payment": "Kalan ödemeyi kaydet",
       "full_payment": "Tamamını tahsil et",
       "refund_payment": "İade işle",

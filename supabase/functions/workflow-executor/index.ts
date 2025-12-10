@@ -202,6 +202,16 @@ interface ProjectRecord {
   [key: string]: unknown;
 }
 
+interface SessionScheduleRow {
+  session_date?: string | null;
+  session_time?: string | null;
+  organization_id?: string | null;
+}
+
+interface OrganizationTimezoneRow {
+  timezone?: string | null;
+}
+
 type EntityData = JsonRecord & {
   client_email?: string;
   customer_email?: string;
@@ -251,6 +261,84 @@ const getBoolean = (record: JsonRecord, key: string): boolean | undefined => {
   const value = record[key];
   return typeof value === 'boolean' ? value : undefined;
 };
+
+const getZonedDateParts = (timeZone: string) => {
+  const now = new Date();
+
+  return {
+    date: new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(now),
+    time: new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(now)
+  };
+};
+
+const normalizeSessionTime = (timeValue?: string | null): string | null => {
+  if (typeof timeValue !== 'string') return null;
+  const trimmed = timeValue.trim();
+  if (!trimmed) return null;
+
+  const match = trimmed.match(/^(\d{2}:\d{2})/);
+  return match ? match[1] : null;
+};
+
+async function isSessionInPast(
+  supabase: GenericSupabaseClient,
+  sessionId: string
+): Promise<boolean> {
+  try {
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select('session_date, session_time, organization_id')
+      .eq('id', sessionId)
+      .maybeSingle<SessionScheduleRow>();
+
+    if (sessionError) {
+      console.error('Error fetching session for past-date guard:', sessionError);
+      return false;
+    }
+
+    if (!session || typeof session.session_date !== 'string') {
+      console.log(`Session ${sessionId} not found or missing date; skipping past-date guard`);
+      return false;
+    }
+
+    const { data: orgSettings, error: timezoneError } = await supabase
+      .from('organization_settings')
+      .select('timezone')
+      .eq('organization_id', session.organization_id)
+      .maybeSingle<OrganizationTimezoneRow>();
+
+    if (timezoneError) {
+      console.error('Error fetching organization timezone for past-date guard:', timezoneError);
+    }
+
+    const timeZone = orgSettings?.timezone || 'UTC';
+    const { date: todayDate, time: currentTime } = getZonedDateParts(timeZone);
+    const normalizedSessionTime = normalizeSessionTime(session.session_time);
+
+    if (session.session_date < todayDate) {
+      return true;
+    }
+
+    if (session.session_date > todayDate || !normalizedSessionTime) {
+      return false;
+    }
+
+    return normalizedSessionTime < currentTime;
+  } catch (error) {
+    console.error('Failed to evaluate session schedule for past-date guard:', error);
+    return false;
+  }
+}
 
 interface WorkflowTriggerRequest {
   action: 'trigger' | 'execute';
@@ -401,6 +489,14 @@ async function triggerWorkflows(
   console.log(`Found ${workflows.length} matching workflows`);
 
   const shouldHandleSessionScheduling = trigger_type === 'session_scheduled' && trigger_entity_type === 'session';
+  if (shouldHandleSessionScheduling) {
+    const sessionIsInPast = await isSessionInPast(supabase, trigger_entity_id);
+    if (sessionIsInPast) {
+      console.log(`Skipping session_scheduled automations for past session ${trigger_entity_id}`);
+      return { triggered_workflows: 0, skipped: 'session_in_past' };
+    }
+  }
+
   const skipReminders =
     shouldHandleSessionScheduling &&
     (triggerPayload.skip_reminders === true || (isJsonRecord(triggerPayload.notifications) && triggerPayload.notifications.sendReminder === false));

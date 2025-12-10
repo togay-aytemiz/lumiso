@@ -17,6 +17,19 @@ type StatusChangeData = TriggerPayload & {
 
 const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : undefined);
 
+const isSessionInPast = (sessionDate?: string, sessionTime?: string): boolean => {
+  if (!sessionDate) return false;
+
+  const safeTime = sessionTime && sessionTime.trim() ? sessionTime : "23:59:59";
+  const sessionDateTime = new Date(`${sessionDate}T${safeTime}`);
+
+  if (Number.isNaN(sessionDateTime.getTime())) {
+    return false;
+  }
+
+  return sessionDateTime.getTime() < Date.now();
+};
+
 export function useWorkflowTriggers() {
   const { toast } = useToast();
 
@@ -96,6 +109,13 @@ export function useWorkflowTriggers() {
     sessionData?: SessionTriggerData,
     workflowIds?: string[]
   ) => {
+    if (isSessionInPast(sessionData?.session_date, sessionData?.session_time)) {
+      console.log(
+        `Skipping session_scheduled workflows for past session ${sessionId} on ${sessionData?.session_date} ${sessionData?.session_time || ""}`
+      );
+      return Promise.resolve({ skipped: "session_in_past" });
+    }
+
     const payload: Record<string, unknown> = {
       session_date: sessionData?.session_date,
       session_time: sessionData?.session_time,

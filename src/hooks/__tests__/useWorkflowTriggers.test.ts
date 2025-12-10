@@ -24,6 +24,15 @@ const VALID_SESSION_ID = "123e4567-e89b-12d3-a456-426614174000";
 const VALID_ORG_ID = "123e4567-e89b-12d3-a456-426614174001";
 const invokeMock = supabase.functions.invoke as jest.Mock;
 
+const getDateOffset = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+
+const FUTURE_SESSION_DATE = getDateOffset(2);
+const PAST_SESSION_DATE = getDateOffset(-2);
+
 beforeEach(() => {
   invokeMock.mockReset();
   toastMock.mockReset();
@@ -112,7 +121,7 @@ describe("useWorkflowTriggers", () => {
       const { triggerSessionScheduled } = useWorkflowTriggers();
 
       await triggerSessionScheduled(VALID_SESSION_ID, VALID_ORG_ID, {
-        session_date: "2024-01-01",
+        session_date: FUTURE_SESSION_DATE,
         session_time: "09:00",
         location: "Studio",
         custom: "value",
@@ -125,13 +134,25 @@ describe("useWorkflowTriggers", () => {
           trigger_entity_id: VALID_SESSION_ID,
           organization_id: VALID_ORG_ID,
           trigger_data: expect.objectContaining({
-            session_date: "2024-01-01",
+            session_date: FUTURE_SESSION_DATE,
             session_time: "09:00",
             location: "Studio",
             custom: "value",
           }),
         }),
       });
+    });
+
+    it("skips session scheduled trigger when the session is in the past", async () => {
+      const { triggerSessionScheduled } = useWorkflowTriggers();
+
+      const result = await triggerSessionScheduled(VALID_SESSION_ID, VALID_ORG_ID, {
+        session_date: PAST_SESSION_DATE,
+        session_time: "07:00",
+      });
+
+      expect(result).toEqual({ skipped: "session_in_past" });
+      expect(invokeMock).not.toHaveBeenCalled();
     });
 
     it("passes through project status change payload", async () => {

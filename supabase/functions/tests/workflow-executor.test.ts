@@ -29,11 +29,18 @@ type WorkflowExecutionInsert = Omit<WorkflowExecutionRow, "id" | "created_at"> &
   Partial<Pick<WorkflowExecutionRow, "created_at" | "execution_log" | "status">>;
 
 type NotificationInsert = Record<string, unknown>;
+type SessionRow = {
+  id: string;
+  session_date?: string;
+  session_time?: string;
+  organization_id?: string;
+};
 
 interface SupabaseStubConfig {
   workflows?: WorkflowRow[];
   workflowExecutions?: WorkflowExecutionRow[];
-  organizationSettings?: Record<string, unknown>;
+  organizationSettings?: Record<string, unknown> | Array<Record<string, unknown>>;
+  sessions?: SessionRow[];
   functionResponses?: Record<string, { data?: unknown; error?: unknown }>;
 }
 
@@ -208,12 +215,22 @@ function createSupabaseStub(config: SupabaseStubConfig = {}) {
       }
 
       if (table === "organization_settings") {
-        const rows = config.organizationSettings ? [config.organizationSettings] : [{
-          photography_business_name: "Lumiso",
-          date_format: "DD/MM/YYYY",
-          time_format: "12-hour"
-        }];
+        const rows = Array.isArray(config.organizationSettings)
+          ? config.organizationSettings
+          : config.organizationSettings
+            ? [config.organizationSettings]
+            : [{
+                organization_id: "org-1",
+                photography_business_name: "Lumiso",
+                date_format: "DD/MM/YYYY",
+                time_format: "12-hour",
+                timezone: "UTC"
+              }];
         return new SelectBuilder<Record<string, unknown>>(rows);
+      }
+
+      if (table === "sessions") {
+        return new SelectBuilder<SessionRow>(config.sessions ?? []);
       }
 
       if (table === "notifications") {
@@ -250,7 +267,14 @@ function createSupabaseStub(config: SupabaseStubConfig = {}) {
 const createClientStub: WorkflowExecutorDeps["createClient"] = () =>
   ({} as ReturnType<WorkflowExecutorDeps["createClient"]>);
 
+const formatDateOffset = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+
 Deno.test("triggerWorkflows filters to workflow_id and schedules reminders", async () => {
+  const futureSessionDate = formatDateOffset(5);
   const supabase = createSupabaseStub({
     workflows: [
       {
@@ -268,11 +292,21 @@ Deno.test("triggerWorkflows filters to workflow_id and schedules reminders", asy
         is_active: true
       }
     ],
-    organizationSettings: {
+    organizationSettings: [{
+      organization_id: "org-1",
       photography_business_name: "Studio",
       date_format: "YYYY-MM-DD",
-      time_format: "24-hour"
-    }
+      time_format: "24-hour",
+      timezone: "UTC"
+    }],
+    sessions: [
+      {
+        id: "session-1",
+        session_date: futureSessionDate,
+        session_time: "14:30",
+        organization_id: "org-1"
+      }
+    ]
   });
 
   const triggerData = {
@@ -282,7 +316,7 @@ Deno.test("triggerWorkflows filters to workflow_id and schedules reminders", asy
     trigger_data: {
       workflow_id: "wf-1",
       session_data: {
-        session_date: "2024-05-01",
+        session_date: futureSessionDate,
         session_time: "14:30",
         location: "Studio",
         notes: "Bring props"
@@ -316,6 +350,7 @@ Deno.test("triggerWorkflows filters to workflow_id and schedules reminders", asy
 });
 
 Deno.test("triggerWorkflows skips recent duplicates", async () => {
+  const futureSessionDate = formatDateOffset(4);
   const supabase = createSupabaseStub({
     workflows: [
       {
@@ -344,6 +379,14 @@ Deno.test("triggerWorkflows skips recent duplicates", async () => {
           }
         ]
       }
+    ],
+    sessions: [
+      {
+        id: "session-1",
+        session_date: futureSessionDate,
+        session_time: "14:30",
+        organization_id: "org-1"
+      }
     ]
   });
 
@@ -356,7 +399,7 @@ Deno.test("triggerWorkflows skips recent duplicates", async () => {
       status_change: null,
       date_change: null,
       session_data: {
-        session_date: "2024-05-01",
+        session_date: futureSessionDate,
         session_time: "14:30",
         location: "Studio",
         notes: ""
@@ -380,6 +423,68 @@ Deno.test("triggerWorkflows skips recent duplicates", async () => {
 
   assertEquals(result.triggered_workflows, 0);
   assertEquals(supabase._state.insertedExecutions.length, 0);
+});
+
+Deno.test("triggerWorkflows skips past sessions for session_scheduled triggers", async () => {
+  const pastSessionDate = formatDateOffset(-2);
+  const supabase = createSupabaseStub({
+    workflows: [
+      {
+        id: "wf-1",
+        trigger_type: "session_scheduled",
+        trigger_entity_type: "session",
+        organization_id: "org-1",
+        is_active: true
+      }
+    ],
+    organizationSettings: [
+      {
+        organization_id: "org-1",
+        timezone: "UTC",
+        photography_business_name: "Studio"
+      }
+    ],
+    sessions: [
+      {
+        id: "session-2",
+        session_date: pastSessionDate,
+        session_time: "08:00",
+        organization_id: "org-1"
+      }
+    ]
+  });
+
+  const triggerData = {
+    trigger_type: "session_scheduled",
+    trigger_entity_type: "session",
+    trigger_entity_id: "session-2",
+    trigger_data: {
+      session_data: {
+        session_date: pastSessionDate,
+        session_time: "08:00",
+        location: "Studio",
+        notes: ""
+      },
+      lead_data: {
+        name: "Jordan",
+        email: "client@example.com",
+        phone: "555-0000"
+      }
+    },
+    organization_id: "org-1"
+  };
+
+  const result = await triggerWorkflows(
+    supabase,
+    triggerData,
+    async () => {
+      throw new Error("should not execute steps for past sessions");
+    }
+  );
+
+  assertEquals(result.triggered_workflows, 0);
+  assertEquals(supabase._state.insertedExecutions.length, 0);
+  assertEquals(supabase._state.rpcCalls.length, 0);
 });
 
 Deno.test("createWorkflowExecutor dispatches actions", async () => {

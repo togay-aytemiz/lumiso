@@ -31,7 +31,7 @@ export function FieldNumberDisplay({
   };
 
   return (
-    <span className="text-sm font-mono">
+    <span className="text-sm">
       {formatNumber(value)}
     </span>
   );

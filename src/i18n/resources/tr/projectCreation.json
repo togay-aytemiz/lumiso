@@ -161,6 +161,10 @@
         "title": "Bu eğitim için örnek paketler",
         "description": "Kılavuzlu eğitim sırasında bu örnek/test paketlerden birini seçin. Gerçek paketlerinizi dilediğiniz zaman Ayarlar'dan yönetebilirsiniz."
       },
+      "packageEditNotice": {
+        "title": "Yalnızca bu proje için",
+        "description": "Burada yaptığın değişiklikler yalnızca bu projeyi etkiler; seçtiğin paketi değiştirmez."
+      },
       "defaultServices": "{{count}} hizmet içeriyor",
       "customSetupPrompt": "Özel bir kurulum mu tercih ediyorsunuz? Kendi fiyat ve hizmetlerinizle oluşturun.",
       "enableCustom": "Özel kurulum aç",

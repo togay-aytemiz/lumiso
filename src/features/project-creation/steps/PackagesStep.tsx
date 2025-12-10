@@ -1372,6 +1372,26 @@ export const PackagesStep = () => {
             </div>
           </div>
         )}
+
+        {state.services.packageId && showCustomSetup ? (
+          <Alert className="border-amber-200/80 bg-amber-50 text-amber-900">
+            <div className="flex gap-3">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />
+              <div className="space-y-1">
+                <AlertTitle className="text-sm font-semibold text-amber-900">
+                  {t("steps.packages.packageEditNotice.title", {
+                    defaultValue: "Project-only changes",
+                  })}
+                </AlertTitle>
+                <AlertDescription className="text-sm text-amber-900/90">
+                  {t("steps.packages.packageEditNotice.description", {
+                    defaultValue: "Changes here affect only this project and will not update the selected package.",
+                  })}
+                </AlertDescription>
+              </div>
+            </div>
+          </Alert>
+        ) : null}
       </div>
 
       {showCustomSetup && (

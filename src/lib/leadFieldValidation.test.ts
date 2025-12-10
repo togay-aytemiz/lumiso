@@ -100,6 +100,35 @@ describe("createDynamicLeadSchema", () => {
       );
     }
   });
+
+  it("accepts numeric inputs for number fields without string casting", () => {
+    const schema = createDynamicLeadSchema([
+      buildDefinition({
+        field_key: "tax_id",
+        label: "Tax ID",
+        field_type: "number",
+        is_required: true,
+      }),
+    ]);
+
+    const withNumber = schema.safeParse({
+      field_tax_id: 1234567890,
+    });
+    expect(withNumber.success).toBe(true);
+
+    const withString = schema.safeParse({
+      field_tax_id: "987654321",
+    });
+    expect(withString.success).toBe(true);
+
+    const invalid = schema.safeParse({
+      field_tax_id: "not-a-number",
+    });
+    expect(invalid.success).toBe(false);
+    if (!invalid.success) {
+      expect(invalid.error.issues[0]?.message).toBe("Please enter a valid number");
+    }
+  });
 });
 
 describe("sanitizeFieldValue", () => {

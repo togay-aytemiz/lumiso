@@ -31,6 +31,19 @@ export function createDynamicLeadSchema(fieldDefinitions: LeadFieldDefinition[])
 
 function createFieldSchema(fieldType: LeadFieldType, validationRules?: FieldValidationRules): FieldSchema {
   const rules = (validationRules ?? {}) as Record<string, unknown>;
+  const toNumericValue = (val: unknown): number | undefined => {
+    if (val === '' || val === null || val === undefined) {
+      return undefined;
+    }
+    if (typeof val === 'number' && Number.isFinite(val)) {
+      return val;
+    }
+    if (typeof val === 'string' && val.trim() !== '') {
+      const parsed = Number(val);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+  };
 
   switch (fieldType) {
     case 'text': {
@@ -80,19 +93,25 @@ function createFieldSchema(fieldType: LeadFieldType, validationRules?: FieldVali
     case 'number': {
       const numberRules = rules as Partial<{ min: number; max: number }>;
       let numberSchema = z
-        .string()
-        .refine((val) => val === '' || (!Number.isNaN(Number(val)) && val.trim() !== ''), 'Please enter a valid number');
+        .union([z.string(), z.number()])
+        .refine((val) => val === '' || toNumericValue(val) !== undefined, 'Please enter a valid number');
 
       if (typeof numberRules.min === 'number') {
         numberSchema = numberSchema.refine(
-          (val) => val === '' || Number(val) >= numberRules.min!,
+          (val) => {
+            const numeric = toNumericValue(val);
+            return numeric === undefined || numeric >= numberRules.min!;
+          },
           `Number must be at least ${numberRules.min}`
         );
       }
 
       if (typeof numberRules.max === 'number') {
         numberSchema = numberSchema.refine(
-          (val) => val === '' || Number(val) <= numberRules.max!,
+          (val) => {
+            const numeric = toNumericValue(val);
+            return numeric === undefined || numeric <= numberRules.max!;
+          },
           `Number must be at most ${numberRules.max}`
         );
       }

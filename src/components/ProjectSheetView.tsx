@@ -1059,6 +1059,7 @@ export function LegacyProjectSheetView({
                   onDeleteSession={handleDeleteSession}
                   unassignedSessionsCount={unassignedLeadSessionsCount}
                   onUnassignedSessionsClick={handleOpenLeadSessions}
+                  titleOverride={tForms("project_sheet.sessions_tab")}
                 />
               ),
             },

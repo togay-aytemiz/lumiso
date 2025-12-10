@@ -618,6 +618,7 @@ export default function ProjectDetail() {
                   projectName={project!.name} 
                   onSessionUpdated={handleSessionUpdated} 
                   onDeleteSession={handleDeleteSession} 
+                  titleOverride={t('project_sheet.sessions_tab')}
                 />
               )
             }, 

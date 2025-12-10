@@ -319,6 +319,7 @@ export default function ProjectDetailRefactored() {
                     // Handle session deletion
                     fetchProjectData();
                   }}
+                  titleOverride={t("project_sheet.sessions_tab")}
                 />
               )
             },

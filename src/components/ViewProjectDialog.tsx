@@ -629,11 +629,11 @@ export function ViewProjectDialog({
                }} />
              }, {
                id: sectionId.sessions,
-               title: tForms('projectDetails.sections.sessions'),
-               content: <SessionsSection sessions={sessions} loading={loading} leadId={project!.lead_id} projectId={project!.id} leadName={leadName} projectName={project!.name} onSessionUpdated={() => {
-                 handleSessionUpdated();
-                 onActivityUpdated?.();
-               }} onDeleteSession={handleDeleteSession} />
+              title: tForms('project_sheet.sessions_tab'),
+              content: <SessionsSection sessions={sessions} loading={loading} leadId={project!.lead_id} projectId={project!.id} leadName={leadName} projectName={project!.name} onSessionUpdated={() => {
+                handleSessionUpdated();
+                onActivityUpdated?.();
+              }} onDeleteSession={handleDeleteSession} titleOverride={tForms('project_sheet.sessions_tab')} />
              }, {
                id: sectionId.activities,
                title: tForms('projectDetails.sections.activities'),

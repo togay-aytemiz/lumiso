@@ -26,6 +26,7 @@ interface SessionsSectionProps {
   sessionPlanningLockTooltip?: string;
   unassignedSessionsCount?: number;
   onUnassignedSessionsClick?: () => void;
+  titleOverride?: string;
 }
 export function SessionsSection({
   sessions,
@@ -40,7 +41,8 @@ export function SessionsSection({
   onSessionPlanningLocked,
   sessionPlanningLockTooltip,
   unassignedSessionsCount = 0,
-  onUnassignedSessionsClick
+  onUnassignedSessionsClick,
+  titleOverride
 }: SessionsSectionProps) {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
@@ -167,7 +169,7 @@ export function SessionsSection({
   return (
     <>
       <SessionListCard
-        title={t("sessions_form.title")}
+        title={titleOverride ?? t("sessions_form.title")}
         icon={Calendar}
         sessions={sessions}
         loading={loading}

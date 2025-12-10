@@ -348,7 +348,7 @@
         "paidInFull": "Tamamı ödendi"
       },
       "sessions": {
-        "label": "Seanslar",
+        "label": "Tüm seanslar",
         "count": "{{count}} seans",
         "count_one": "{{count}} seans",
         "count_other": "{{count}} seans",

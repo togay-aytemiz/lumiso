@@ -1055,6 +1055,7 @@ export default function ProjectDetail() {
                   sessionPlanningLockTooltip={sessionPlanningLockDescription}
                   unassignedSessionsCount={unassignedLeadSessionsCount}
                   onUnassignedSessionsClick={handleOpenLeadSessions}
+                  titleOverride={t('project_sheet.sessions_tab')}
                 />
               )
             }, 

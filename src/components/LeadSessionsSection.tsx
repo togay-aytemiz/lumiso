@@ -106,7 +106,7 @@ export function LeadSessionsSection({
   return (
     <>
       <SessionListCard
-        title={tForms("sessions_form.title")}
+        title={tPages("leadDetail.header.sessions.label")}
         sessions={sessions}
         loading={loading}
         summary={summary ?? undefined}

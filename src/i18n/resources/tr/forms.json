@@ -1434,6 +1434,10 @@
     "no_records": "Henüz ödeme kaydı yok."
   },
   "kanban_settings": {
+    "project_settings_title": "Proje Ayarları",
+    "project_settings_banner_title": "Projeler için genel ayarları yönet",
+    "project_settings_banner_description": "Durumları, aşamaları ve varsayılanları düzenlemek için Proje Ayarları modülünü aç.",
+    "open_project_settings": "Proje Ayarlarını Aç",
     "title": "Pano Kart Ayarları",
     "description": "Proje kartlarınızda hangi bilgilerin görüneceğini özelleştirin. Daha temiz bir görünüm isteyen solo fotoğrafçılar için mükemmel.",
     "project_name": "Proje Adı",
@@ -1475,7 +1479,7 @@
     "todos_tab": "Yapılacaklar",
     "payments_tab": "Ödemeler",
     "services_tab": "Hizmetler",
-    "sessions_tab": "Seanslar",
+    "sessions_tab": "Proje seansları",
     "activities_tab": "Aktiviteler",
     "archived_banner_title": "Bu proje arşivlendi",
     "archived_banner_description": "Çoğu işlem devre dışı. Arşivlendiği sürece seanslar ve hatırlatmalar takvimlerden, Seanslar sayfasından ve etkinlik listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",

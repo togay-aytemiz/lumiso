@@ -162,6 +162,28 @@ const LeadDetail = () => {
       navigate("/leads");
     }
   }, [id, detailLoading, leadQuery.isError, leadQuery.error, leadQuery.isSuccess, lead, navigate, tPages]);
+
+  useEffect(() => {
+    if (!location.hash || detailLoading || !lead) {
+      return;
+    }
+
+    const targetId = location.hash.replace("#", "");
+    if (!targetId) return;
+
+    const scrollToHash = () => {
+      if (typeof document === "undefined") return;
+      const target = document.getElementById(targetId);
+      if (!target) return;
+
+      const OFFSET = 96; // roughly sticky nav + spacing
+      const top = target.getBoundingClientRect().top + window.scrollY - OFFSET;
+      window.scrollTo({ top, behavior: "smooth" });
+    };
+
+    const timer = window.setTimeout(scrollToHash, 250);
+    return () => window.clearTimeout(timer);
+  }, [location.hash, detailLoading, lead]);
   const [deleting, setDeleting] = useState(false);
 
   // User settings and status actions

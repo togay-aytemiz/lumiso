@@ -12,6 +12,7 @@ interface SessionListCardProps {
   icon?: LucideIcon;
   headerAction?: ReactNode;
   summary?: ReactNode;
+  banner?: ReactNode;
   onViewDetails?: (sessionId: string) => void;
   emptyState?: {
     icon?: LucideIcon;
@@ -31,6 +32,7 @@ export function SessionListCard({
   icon: TitleIcon,
   headerAction,
   summary,
+  banner,
   onViewDetails,
   emptyState,
   onSessionClick,
@@ -50,7 +52,8 @@ export function SessionListCard({
           {headerAction}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {banner ? <div>{banner}</div> : null}
         {loading ? (
           <div className="space-y-3">
             <div className="w-full h-4 bg-muted animate-pulse rounded" />

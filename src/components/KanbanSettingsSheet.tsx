@@ -1,4 +1,5 @@
-import { Settings, Eye, EyeOff } from "lucide-react";
+import { ArrowUpRight, Eye, FolderCog, Info, LayoutGrid, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
@@ -14,6 +15,7 @@ interface KanbanSettingsSheetProps {
 export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
   const { settings, updateSettings, isUpdating } = useKanbanSettings();
   const { t } = useFormsTranslation();
+  const navigate = useNavigate();
 
   const handleToggle = (key: keyof typeof settings) => {
     updateSettings({ [key]: !settings[key] });
@@ -63,14 +65,42 @@ export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
         )}
       </SheetTrigger>
       <SheetContent className="w-80">
-        <SheetHeader>
+        <SheetHeader className="space-y-3 text-left">
           <SheetTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            {t('kanban_settings.title')}
+            <FolderCog className="h-5 w-5" />
+            {t('kanban_settings.project_settings_title')}
           </SheetTitle>
+          <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-left">
+            <div className="flex items-start gap-3">
+              <Info className="h-4 w-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+              <div className="space-y-2">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-indigo-900">
+                    {t('kanban_settings.project_settings_banner_title')}
+                  </p>
+                  <p className="text-xs leading-relaxed text-indigo-800">
+                    {t('kanban_settings.project_settings_banner_description')}
+                  </p>
+                </div>
+                <Button
+                  variant="link"
+                  className="h-auto p-0 text-indigo-700 hover:text-indigo-800"
+                  onClick={() => navigate("/settings/projects")}
+                >
+                  {t('kanban_settings.open_project_settings')}
+                  <ArrowUpRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </SheetHeader>
 
         <div className="mt-6 space-y-1">
+          <Separator className="my-4" />
+          <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <LayoutGrid className="h-5 w-5 text-foreground" />
+            {t('kanban_settings.title')}
+          </div>
           <p className="text-sm text-muted-foreground mb-4">
             {t('kanban_settings.description')}
           </p>

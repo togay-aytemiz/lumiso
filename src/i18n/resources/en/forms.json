@@ -1503,6 +1503,10 @@
     "project": "Project"
   },
   "kanban_settings": {
+    "project_settings_title": "Project Settings",
+    "project_settings_banner_title": "Manage project settings",
+    "project_settings_banner_description": "Open the Project Settings modal to adjust statuses, workflows, and defaults without leaving your board.",
+    "open_project_settings": "Open Project Settings",
     "title": "Kanban Card Settings",
     "description": "Customize which information appears on your project cards. Perfect for solo photographers who prefer a cleaner view.",
     "project_name": "Project Name",
@@ -1551,7 +1555,7 @@
     "todos_tab": "Todos",
     "payments_tab": "Payments",
     "services_tab": "Services",
-    "sessions_tab": "Sessions",
+    "sessions_tab": "Project sessions",
     "activities_tab": "Activities",
     "archived_banner_title": "This project is archived",
     "archived_banner_description": "Most actions are disabled. While archived, sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More → Restore to enable editing and visibility again.",

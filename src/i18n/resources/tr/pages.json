@@ -606,7 +606,7 @@
         "paidInFull": "Tamamı ödendi"
       },
       "sessions": {
-        "label": "Seanslar",
+        "label": "Tüm seanslar",
         "count_one": "1 seans",
         "count_other": "{{count}} seans",
         "none": "Seans yok",
@@ -664,6 +664,11 @@
     "sessionPlanningLock": {
       "title": "Seans planlama bir sonraki görevde açılacak",
       "description": "Şimdilik projeyi keşfetmeye devam et; seans planlayıcı özel görevde açılacak."
+    },
+    "sessions": {
+      "unassignedBannerText_one": "<strong>{{leadName}}</strong> için ayarlanmış ancak herhangi bir projeye bağlı olmayan 1 seans var.",
+      "unassignedBannerText_other": "<strong>{{leadName}}</strong> için ayarlanmış ancak herhangi bir projeye bağlı olmayan {{count}} seans var.",
+      "unassignedLinkLabel": "Seansları görmek için tıklayın."
     },
     "onboardingModal": {
       "title": "Proje alanını keşfedin",

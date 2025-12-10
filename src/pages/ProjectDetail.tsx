@@ -101,6 +101,7 @@ export default function ProjectDetail() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [projectType, setProjectType] = useState<ProjectType | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [unassignedLeadSessionsCount, setUnassignedLeadSessionsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [sessionLoading, setSessionLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -285,6 +286,27 @@ export default function ProjectDetail() {
     }
   }, [project, toast]);
 
+  const fetchUnassignedLeadSessions = useCallback(async () => {
+    if (!project?.lead_id) {
+      setUnassignedLeadSessionsCount(0);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('lead_id', project.lead_id)
+        .is('project_id', null);
+
+      if (error) throw error;
+      setUnassignedLeadSessionsCount((data ?? []).length);
+    } catch (error) {
+      console.error('Error fetching unassigned lead sessions:', error);
+      setUnassignedLeadSessionsCount(0);
+    }
+  }, [project?.lead_id]);
+
   const fetchLead = useCallback(async () => {
     if (!project?.lead_id) return;
     
@@ -399,9 +421,10 @@ export default function ProjectDetail() {
       fetchProjectType();
       checkArchiveStatus();
       fetchProjectSessions();
+      fetchUnassignedLeadSessions();
       setLoading(false);
     }
-  }, [project, fetchLead, fetchProjectType, checkArchiveStatus, fetchProjectSessions]);
+  }, [project, fetchLead, fetchProjectType, checkArchiveStatus, fetchProjectSessions, fetchUnassignedLeadSessions]);
 
   const handleSaveProject = async () => {
     if (!project || !editName.trim() || !editProjectTypeId) return;
@@ -538,6 +561,7 @@ export default function ProjectDetail() {
 
   const handleSessionUpdated = () => {
     fetchProjectSessions();
+    fetchUnassignedLeadSessions();
   };
 
   const handleDeleteSession = async (sessionId: string) => {
@@ -559,6 +583,7 @@ export default function ProjectDetail() {
       });
       
       fetchProjectSessions();
+      fetchUnassignedLeadSessions();
     } catch (error: unknown) {
       toast({
         title: "Error deleting session",
@@ -586,6 +611,20 @@ export default function ProjectDetail() {
     },
     [handleSessionPlanningLocked, isSessionPlanningLocked]
   );
+
+  const handleOpenLeadSessions = useCallback(() => {
+    if (!lead?.id) return;
+    const leadSessionsUrl = `/leads/${lead.id}#lead-sessions`;
+
+    if (typeof window !== "undefined") {
+      const newTab = window.open(leadSessionsUrl, "_blank", "noopener,noreferrer");
+      if (newTab) {
+        return;
+      }
+    }
+
+    navigate(leadSessionsUrl);
+  }, [lead?.id, navigate]);
 
   const executeArchiveToggle = async () => {
     if (!project) return;
@@ -1014,6 +1053,8 @@ export default function ProjectDetail() {
                   sessionPlanningLocked={isSessionPlanningLocked}
                   onSessionPlanningLocked={handleSessionPlanningLocked}
                   sessionPlanningLockTooltip={sessionPlanningLockDescription}
+                  unassignedSessionsCount={unassignedLeadSessionsCount}
+                  onUnassignedSessionsClick={handleOpenLeadSessions}
                 />
               )
             }, 

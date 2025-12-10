@@ -333,7 +333,7 @@
         "paidInFull": "Paid in full"
       },
       "sessions": {
-        "label": "Sessions",
+        "label": "All sessions",
         "count": "{{count}} sessions",
         "count_one": "1 session",
         "count_other": "{{count}} sessions",
@@ -649,6 +649,11 @@
     "sessionPlanningLock": {
       "title": "Session planning unlocks in the next mission",
       "description": "Keep exploring this project for now—the planner opens during the dedicated Session Planning step."
+    },
+    "sessions": {
+      "unassignedBannerText_one": "<strong>{{leadName}}</strong> has 1 session scheduled that is not linked to any project.",
+      "unassignedBannerText_other": "<strong>{{leadName}}</strong> has {{count}} sessions scheduled that are not linked to any project.",
+      "unassignedLinkLabel": "Open the lead to view"
     },
     "onboardingModal": {
       "title": "Explore your project workspace",

@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -159,8 +160,11 @@ export function LegacyProjectSheetView({
   const [editWizardOpen, setEditWizardOpen] = useState(false);
   const [editWizardStartStep, setEditWizardStartStep] =
     useState<ProjectCreationStepId>("details");
+  const [unassignedLeadSessionsCount, setUnassignedLeadSessionsCount] =
+    useState(0);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { summary: headerSummary } = useProjectHeaderSummary(
     project?.id || null,
     summaryRefreshToken
@@ -311,6 +315,28 @@ export function LegacyProjectSheetView({
     }
   }, [project?.lead_id]);
 
+  const fetchUnassignedLeadSessions = useCallback(async () => {
+    const leadId = project?.lead_id;
+    if (!leadId) {
+      setUnassignedLeadSessionsCount(0);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("sessions")
+        .select("id")
+        .eq("lead_id", leadId)
+        .is("project_id", null);
+
+      if (error) throw error;
+      setUnassignedLeadSessionsCount((data ?? []).length);
+    } catch (error) {
+      console.error("Error fetching unassigned lead sessions:", error);
+      setUnassignedLeadSessionsCount(0);
+    }
+  }, [project?.lead_id]);
+
   const handleAssigneesUpdate = () => {
     onProjectUpdated();
   };
@@ -320,6 +346,7 @@ export function LegacyProjectSheetView({
       void fetchProjectSessions();
       void fetchProjectType();
       void fetchLead();
+      void fetchUnassignedLeadSessions();
       setEditName(project.name);
       setEditDescription(project.description || "");
       setEditProjectTypeId(project.project_type_id || "");
@@ -338,6 +365,7 @@ export function LegacyProjectSheetView({
     fetchLead,
     fetchProjectSessions,
     fetchProjectType,
+    fetchUnassignedLeadSessions,
     isMobile,
     mode,
     open,
@@ -523,9 +551,24 @@ export function LegacyProjectSheetView({
 
   const handleSessionUpdated = () => {
     fetchProjectSessions();
+    fetchUnassignedLeadSessions();
     setEditingSessionId(null);
     onProjectUpdated();
   };
+
+  const handleOpenLeadSessions = useCallback(() => {
+    if (!project?.lead_id) return;
+    const url = `/leads/${project.lead_id}#lead-sessions`;
+
+    if (typeof window !== "undefined") {
+      const newTab = window.open(url, "_blank", "noopener,noreferrer");
+      if (newTab) {
+        return;
+      }
+    }
+
+    navigate(url);
+  }, [navigate, project?.lead_id]);
 
   const handleDeleteSession = async (sessionId: string) => {
     try {
@@ -542,6 +585,7 @@ export function LegacyProjectSheetView({
       });
 
       fetchProjectSessions();
+      fetchUnassignedLeadSessions();
       onProjectUpdated();
     } catch (error) {
       const message = getErrorMessage(error);
@@ -1013,6 +1057,8 @@ export function LegacyProjectSheetView({
                     onActivityUpdated?.();
                   }}
                   onDeleteSession={handleDeleteSession}
+                  unassignedSessionsCount={unassignedLeadSessionsCount}
+                  onUnassignedSessionsClick={handleOpenLeadSessions}
                 />
               ),
             },

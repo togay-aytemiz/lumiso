@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, Info } from "lucide-react";
 import SessionSheetView from "./SessionSheetView";
 import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -11,6 +11,7 @@ import EditSessionDialog from "./EditSessionDialog";
 import type { SessionPlanningStepId } from "@/features/session-planning";
 import { Button } from "@/components/ui/button";
 import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
+import { Trans, useTranslation } from "react-i18next";
 interface SessionsSectionProps {
   sessions: DeadSimpleSession[];
   loading: boolean;
@@ -23,6 +24,8 @@ interface SessionsSectionProps {
   sessionPlanningLocked?: boolean;
   onSessionPlanningLocked?: () => void;
   sessionPlanningLockTooltip?: string;
+  unassignedSessionsCount?: number;
+  onUnassignedSessionsClick?: () => void;
 }
 export function SessionsSection({
   sessions,
@@ -35,7 +38,9 @@ export function SessionsSection({
   onDeleteSession,
   sessionPlanningLocked = false,
   onSessionPlanningLocked,
-  sessionPlanningLockTooltip
+  sessionPlanningLockTooltip,
+  unassignedSessionsCount = 0,
+  onUnassignedSessionsClick
 }: SessionsSectionProps) {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
@@ -45,6 +50,7 @@ export function SessionsSection({
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useFormsTranslation();
+  const { t: tPages } = useTranslation("pages");
   const isMobile = useIsMobile();
   const handleSessionSheetUpdated = () => {
     onSessionUpdated(); // Propagate updates from session sheet to parent
@@ -109,6 +115,42 @@ export function SessionsSection({
     ? (sessionInfoSectionsRaw as { title: string; description: string }[])
     : [];
   const hasSessions = sessions.length > 0;
+  const showUnassignedSessionsBanner = unassignedSessionsCount > 0;
+  const unassignedSessionsLinkLabel = tPages("projectDetail.sessions.unassignedLinkLabel", {
+    defaultValue: "See sessions on the lead",
+  });
+  const unassignedSessionsText = (
+    <Trans
+      t={tPages}
+      i18nKey="projectDetail.sessions.unassignedBannerText"
+      count={unassignedSessionsCount}
+      values={{
+        count: unassignedSessionsCount,
+        leadName
+      }}
+      components={{
+        strong: <span className="font-semibold" />
+      }}
+    />
+  );
+  const unassignedSessionsBanner = showUnassignedSessionsBanner ? (
+    <div className="flex items-start gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm leading-relaxed text-indigo-900">
+      <Info className="mt-0.5 h-4 w-4 text-indigo-500" aria-hidden="true" />
+      <p className="flex flex-wrap items-center gap-1">
+        {unassignedSessionsText}
+        <button
+          type="button"
+          className="font-normal text-indigo-800 underline decoration-indigo-300 underline-offset-4 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 cursor-pointer"
+          onClick={(event) => {
+            event.preventDefault();
+            onUnassignedSessionsClick?.();
+          }}
+        >
+          {unassignedSessionsLinkLabel}
+        </button>
+      </p>
+    </div>
+  ) : undefined;
   const renderNewSessionButton = () => (
     <NewSessionDialogForProject
       leadId={leadId}
@@ -131,9 +173,11 @@ export function SessionsSection({
         loading={loading}
         headerAction={hasSessions ? renderNewSessionButton() : undefined}
         summary={summary ?? undefined}
+        banner={unassignedSessionsBanner}
         emptyState={{
           icon: Calendar,
           title: t("sessions_form.no_sessions"),
+          description: t("sessions_form.add_sessions_hint"),
           helperAction: (
             <Button
               variant="link"

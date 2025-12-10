@@ -1590,6 +1590,7 @@ export type Database = {
           selling_price: number | null
           vat_rate: number
           price_includes_vat: boolean
+          selection_template: Json | null
           vendor_name: string | null
           updated_at: string
           user_id: string
@@ -1613,6 +1614,7 @@ export type Database = {
           selling_price?: number | null
           vat_rate?: number
           price_includes_vat?: boolean
+          selection_template?: Json | null
           vendor_name?: string | null
           updated_at?: string
           user_id: string
@@ -1636,6 +1638,7 @@ export type Database = {
           selling_price?: number | null
           vat_rate?: number
           price_includes_vat?: boolean
+          selection_template?: Json | null
           vendor_name?: string | null
           updated_at?: string
           user_id?: string

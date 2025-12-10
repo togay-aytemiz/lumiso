@@ -34,11 +34,12 @@ export function useThrottledRefetchOnFocus(
     const onFocus = () => {
       maybeRefetch();
     };
-    document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("focus", onFocus);
+    // Event listeners removed to prevent auto-refresh on tab switch
+    // document.addEventListener("visibilitychange", onVisibility);
+    // window.addEventListener("focus", onFocus);
     return () => {
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("focus", onFocus);
+      // document.removeEventListener("visibilitychange", onVisibility);
+      // window.removeEventListener("focus", onFocus);
     };
   }, [maybeRefetch]);
 }

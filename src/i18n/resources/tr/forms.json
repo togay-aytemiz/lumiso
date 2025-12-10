@@ -77,7 +77,12 @@
     "removeRecent": "Son aramayı sil",
     "clearRecentSearches": "Tümünü temizle",
     "recentEmptyTitle": "Henüz son arama yok",
-    "recentEmptyDescription": "Burada görmek için aramaya başlayın."
+    "recentEmptyDescription": "Burada görmek için aramaya başlayın.",
+    "recentlyAdded": "Son Eklenenler",
+    "quickAccess": "Hızlı Erişim",
+    "suggested": "Önerilenler",
+    "searchPromptTitle": "Ne arıyorsunuz?",
+    "searchPromptDescription": "Kişiler, projeler veya notlar arasında arama yapın."
   },
   "validation": {
     "required": "Bu alan zorunludur",

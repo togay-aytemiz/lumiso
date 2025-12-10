@@ -76,11 +76,11 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
       if (!skipLoadingState) {
         setLoading(true);
       }
-      
+
       // Use the organization utils function
       const { getUserOrganizationId } = await import('@/lib/organizationUtils');
       const orgId = await getUserOrganizationId();
-      
+
       if (!orgId) {
         setActiveOrganizationId(null);
         setActiveOrganization(null);
@@ -178,10 +178,10 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     // In single-photographer model, organization is determined by ownership
     // No need to update user settings since getUserOrganizationId handles this
     console.log('Organization switch not needed in single-photographer mode:', orgId);
-    
+
     // Just refresh the organization data
     await refreshOrganization();
-    
+
     toast({
       title: t("toast.success", { ns: "common" }),
       description: t("success.organizationRefreshed", { ns: "messages" }),
@@ -240,7 +240,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_IN' && session) {
-          fetchActiveOrganization();
+          fetchActiveOrganization({ silent: true });
         } else if (event === 'SIGNED_OUT') {
           setActiveOrganizationId(null);
           setActiveOrganization(null);

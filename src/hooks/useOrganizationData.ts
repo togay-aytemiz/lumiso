@@ -36,7 +36,7 @@ export function useOrganizationData<T>(
     staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes
     gcTime: options?.gcTime ?? 10 * 60 * 1000, // 10 minutes
     refetchInterval: options?.refetchInterval ?? 2 * 60 * 1000,
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true,
+    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
     refetchOnReconnect: true,
   });
 }
@@ -49,7 +49,7 @@ export function useProjectTypes() {
     queryKey: ['project_types', activeOrganizationId],
     queryFn: async () => {
       if (!activeOrganizationId) return [];
-      
+
       const { data, error } = await supabase
         .from('project_types')
         .select('*')
@@ -71,7 +71,7 @@ export function useLeadStatuses() {
     queryKey: ['lead_statuses', activeOrganizationId],
     queryFn: async () => {
       if (!activeOrganizationId) return [];
-      
+
       const { data, error } = await supabase
         .from<Database['public']['Tables']['lead_statuses']['Row']>('lead_statuses')
         .select('*')
@@ -84,7 +84,7 @@ export function useLeadStatuses() {
     enabled: !!activeOrganizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 60 * 1000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });
 }
@@ -96,7 +96,7 @@ export function useServices() {
     queryKey: ['services', activeOrganizationId],
     queryFn: async () => {
       if (!activeOrganizationId) return [];
-      
+
       const { data, error } = await supabase
         .from('services')
         .select('*')
@@ -118,16 +118,16 @@ export function usePackages() {
     queryKey: ['packages', activeOrganizationId],
     queryFn: async () => {
       if (!activeOrganizationId) return [];
-      
+
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return [];
 
       // Ensure default packages exist
-      await supabase.rpc('ensure_default_packages_for_org', { 
-        user_uuid: user.user.id, 
-        org_id: activeOrganizationId 
+      await supabase.rpc('ensure_default_packages_for_org', {
+        user_uuid: user.user.id,
+        org_id: activeOrganizationId
       });
-      
+
       const { data, error } = await supabase
         .from('packages')
         .select('*')
@@ -203,7 +203,7 @@ export function useProjectStatuses() {
     queryKey: ['project_statuses', activeOrganizationId],
     queryFn: async () => {
       if (!activeOrganizationId) return [];
-      
+
       const { data, error } = await supabase
         .from('project_statuses')
         .select('*')
@@ -272,7 +272,7 @@ export function useSessionStatuses() {
     queryKey: ['session_statuses', activeOrganizationId],
     queryFn: async () => {
       if (!activeOrganizationId) return [];
-      
+
       const { data, error } = await supabase
         .from('session_statuses')
         .select('*')

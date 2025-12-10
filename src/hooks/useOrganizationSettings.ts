@@ -18,14 +18,14 @@ export interface SocialChannel {
   name: string;
   url: string;
   platform:
-    | "website"
-    | "facebook"
-    | "instagram"
-    | "twitter"
-    | "linkedin"
-    | "youtube"
-    | "tiktok"
-    | "custom";
+  | "website"
+  | "facebook"
+  | "instagram"
+  | "twitter"
+  | "linkedin"
+  | "youtube"
+  | "tiktok"
+  | "custom";
   customPlatformName?: string;
   enabled: boolean;
   icon?: string;
@@ -133,7 +133,7 @@ export const useOrganizationSettings = () => {
     staleTime: ORGANIZATION_SETTINGS_CACHE_TTL,
     initialData: cachedSnapshot ?? undefined,
     refetchInterval: 90 * 1000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });
 

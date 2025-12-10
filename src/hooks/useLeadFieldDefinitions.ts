@@ -50,7 +50,7 @@ export function useLeadFieldDefinitions() {
     enabled: !!activeOrganizationId,
     staleTime: LEAD_FIELD_DEFINITIONS_STALE_TIME,
     gcTime: LEAD_FIELD_DEFINITIONS_GC_TIME,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     refetchInterval: 60 * 1000,
     initialData: () =>
@@ -287,8 +287,8 @@ export function useLeadFieldDefinitions() {
     query.error instanceof Error
       ? query.error.message
       : query.error
-      ? String(query.error)
-      : null;
+        ? String(query.error)
+        : null;
 
   const isInitialLoading = query.isLoading;
   const isRefetching = query.isRefetching;

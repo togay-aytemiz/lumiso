@@ -11,6 +11,7 @@ import {
   ChevronRight,
   X,
   FolderOpen,
+  FileQuestion,
 } from "lucide-react";
 import { SearchLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useNavigate } from "react-router-dom";
@@ -128,6 +129,7 @@ const GlobalSearch = ({
     Record<string, string>
   >({});
   const [statusesLoading, setStatusesLoading] = useState(true);
+  const [recentItems, setRecentItems] = useState<SearchResult[]>([]);
 
   const updateRecentSearches = useCallback(
     (updater: (prev: string[]) => string[]) => {
@@ -306,6 +308,93 @@ const GlobalSearch = ({
     };
   }, []);
 
+  // Fetch recently added items (leads and projects)
+  useEffect(() => {
+    const fetchRecentItems = async () => {
+      try {
+        const [leadsResponse, projectsResponse] = await Promise.all([
+          supabase
+            .from("leads")
+            .select("id, name, status, status_id, created_at")
+            .order("created_at", { ascending: false })
+            .limit(3),
+          supabase
+            .from("projects")
+            .select("id, name, description, status_id, lead_id, created_at")
+            .order("created_at", { ascending: false })
+            .limit(3),
+        ]);
+
+        const leads = leadsResponse.data || [];
+        const projects = projectsResponse.data || [];
+
+        // Fetch lead details for projects
+        const projectLeadIds = projects
+          .map((p) => p.lead_id)
+          .filter(Boolean) as string[];
+
+        let projectLeadMap = new Map<string, { name: string; status: string; status_id: string | null }>();
+
+        if (projectLeadIds.length > 0) {
+          const { data: leadData } = await supabase
+            .from("leads")
+            .select("id, name, status, status_id")
+            .in("id", projectLeadIds);
+
+          if (leadData) {
+            projectLeadMap = new Map(
+              leadData.map((l) => [l.id, l])
+            );
+          }
+        }
+
+        const formattedLeads: SearchResult[] = leads.map((lead) => ({
+          id: lead.id,
+          leadId: lead.id,
+          leadName: lead.name,
+          leadStatusId: lead.status_id,
+          type: "lead",
+          matchedContent: "", // No matched content for recent items
+          status: lead.status,
+          icon: <User className="h-4 w-4" />,
+          // @ts-ignore - adding created_at for sorting locally if needed
+          createdAt: lead.created_at,
+        }));
+
+        const formattedProjects: SearchResult[] = projects.map((project) => {
+          const lead = project.lead_id ? projectLeadMap.get(project.lead_id) : null;
+          return {
+            id: project.id,
+            projectId: project.id,
+            projectName: project.name,
+            leadId: project.lead_id,
+            leadName: lead?.name,
+            leadStatusId: lead?.status_id ?? null,
+            projectStatusId: project.status_id,
+            type: "project",
+            matchedContent: project.description || "",
+            status: lead?.status || "unknown",
+            icon: <FolderOpen className="h-4 w-4" />,
+            // @ts-ignore
+            createdAt: project.created_at,
+          };
+        });
+
+        // Combine and sort by created_at desc
+        const combined = [...formattedLeads, ...formattedProjects].sort((a, b) => {
+          // @ts-ignore
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+
+        setRecentItems(combined.slice(0, 5));
+      } catch (error) {
+        console.error("Error fetching recent items:", error);
+      }
+    };
+
+    fetchRecentItems();
+  }, []);
+
   useEffect(() => {
     if (!autoFocus) return;
     const timeout = window.setTimeout(() => {
@@ -459,20 +548,18 @@ const GlobalSearch = ({
             const lead = leadMap.get(activity.lead_id);
             if (lead) {
               const isReminder = activity.reminder_date;
-              const contentText = `${activity.content}${
-                activity.reminder_time
-                  ? `${t("search.resultFormats.contentAtTime")}${
-                      activity.reminder_time
-                    }`
-                  : ""
-              }`;
+              const contentText = `${activity.content}${activity.reminder_time
+                ? `${t("search.resultFormats.contentAtTime")}${activity.reminder_time
+                }`
+                : ""
+                }`;
               const matchedContent = isReminder
                 ? t("search.resultFormats.reminderMatch", {
-                    content: contentText,
-                  })
+                  content: contentText,
+                })
                 : t("search.resultFormats.noteMatch", {
-                    content: activity.content,
-                  });
+                  content: activity.content,
+                });
 
               searchResults.push({
                 id: activity.id,
@@ -717,7 +804,10 @@ const GlobalSearch = ({
   };
 
   const handleResultClick = (result: SearchResult) => {
-    if (result.type === "project" && result.leadId) {
+    if (result.type === "project" && result.projectId) {
+      navigate(`/projects/${result.projectId}`);
+    } else if (result.type === "project" && result.leadId) {
+      // Fallback if no project ID (shouldn't happen for valid projects)
       navigate(`/leads/${result.leadId}`);
     } else if (result.leadId) {
       navigate(`/leads/${result.leadId}`);
@@ -777,21 +867,21 @@ const GlobalSearch = ({
   const inputContainerClassName = cn(
     "relative group/search transition-[flex-basis,max-width,width] duration-300 ease-out",
     variant === "header" &&
-      "rounded-full bg-muted/50 border border-transparent shadow-sm transition-colors focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20",
+    "rounded-full bg-muted/50 border border-transparent shadow-sm transition-colors focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20",
     isPageVariant &&
-      "rounded-2xl border border-border/70 bg-white/95 shadow-sm ring-1 ring-black/[0.02] px-2 py-1.5"
+    "rounded-2xl border border-border/70 bg-white/95 shadow-sm ring-1 ring-black/[0.02] px-2 py-1.5"
   );
 
   const inputClassName = cn(
     "pl-10 pr-10 w-full truncate text-base transition-[width] duration-300 ease-out placeholder:font-light placeholder:text-muted-foreground/70",
     (variant === "header" || isPageVariant) &&
-      "h-12 border-none bg-transparent text-[0.95rem] sm:text-base lg:text-[1.05rem] lg:placeholder:text-[1.05rem] focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+    "h-12 border-none bg-transparent text-[0.95rem] sm:text-base lg:text-[1.05rem] lg:placeholder:text-[1.05rem] focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
   );
 
   const searchIconClassName = cn(
     "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70 group-focus-within/search:text-foreground z-10 pointer-events-none",
     (variant === "header" || isPageVariant) &&
-      "text-muted-foreground/60 group-focus-within/search:text-foreground"
+    "text-muted-foreground/60 group-focus-within/search:text-foreground"
   );
 
   const shouldShowResultsPanel = isPageVariant ? hasMounted : isOpen;
@@ -885,9 +975,9 @@ const GlobalSearch = ({
                 const isActive = currentIndex === activeIndex;
                 const displayMatchedContent = result.customFieldKey
                   ? buildCustomFieldMatchedContent(
-                      result.customFieldKey,
-                      result.customFieldValue
-                    )
+                    result.customFieldKey,
+                    result.customFieldValue
+                  )
                   : result.matchedContent;
                 const matchedContentToShow =
                   displayMatchedContent && displayMatchedContent.length > 80
@@ -1015,17 +1105,129 @@ const GlobalSearch = ({
     !isPendingSearch &&
     results.length === 0 &&
     !resultsSection;
-  const showRecentEmptyState =
+
+
+  const showRecentlyAdded =
     !loading &&
     !isPendingSearch &&
-    !hasRecentSearches &&
+    trimmedQuery.length === 0 &&
+    !resultsSection &&
+    (isPageVariant || hasInteracted) &&
+    recentItems.length > 0;
+
+
+  const showSearchPrompt =
+    !loading &&
+    !isPendingSearch &&
     trimmedQuery.length === 0 &&
     !resultsSection &&
     (isPageVariant || hasInteracted);
 
+  const searchPrompt = showSearchPrompt ? (
+    <div
+      className={cn(
+        "py-8 px-4 text-center border-b border-border/40",
+        isPageVariant && "py-6 px-3"
+      )}
+    >
+      <div className="relative w-12 h-12 mx-auto mb-4">
+        <div
+          className="absolute inset-0 bg-primary/5 rounded-full animate-ping"
+          style={{ animationDuration: "3s" }}
+        />
+        <div className="relative bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center">
+          <Search className="h-6 w-6 text-primary" />
+        </div>
+      </div>
+      <p className="text-sm font-medium text-foreground">
+        {t("search.searchPromptTitle")}
+      </p>
+      <p className="text-xs text-muted-foreground mt-1 px-4 text-balance">
+        {t("search.searchPromptDescription")}
+      </p>
+    </div>
+  ) : null;
+
   const resultsInner = (
     <>
+      {searchPrompt}
       {recentSearchSection}
+      {showRecentlyAdded && (
+        <div className={cn("py-3", isPageVariant && "py-2")}>
+          <div
+            className={cn(
+              "px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30",
+              isPageVariant && "px-3 py-2"
+            )}
+          >
+            {t("search.recentlyAdded")}
+          </div>
+          {recentItems.map((result) => (
+            <button
+              key={`recent-${result.type}-${result.id}`}
+              onClick={() => handleResultClick(result)}
+              className={cn(
+                "w-full text-left px-4 py-3 transition-colors group hover:bg-muted/30",
+                isPageVariant && "px-3 py-2.5"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 text-muted-foreground">
+                  {result.icon}
+                </div>
+                <div className="flex-1 min-w-0 flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-medium text-sm truncate">
+                        {result.type === "project"
+                          ? result.projectName
+                          : result.leadName}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        {result.type === "project" && result.projectId ? (
+                          statusesLoading ? (
+                            <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                          ) : (
+                            <ProjectStatusBadge
+                              projectId={result.projectId}
+                              currentStatusId={
+                                result.projectStatusId ?? undefined
+                              }
+                              editable={false}
+                              size="sm"
+                              statuses={projectStatuses}
+                            />
+                          )
+                        ) : result.leadId ? (
+                          statusesLoading ? (
+                            <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                          ) : (
+                            <LeadStatusBadge
+                              leadId={result.leadId}
+                              currentStatusId={
+                                result.leadStatusId ?? undefined
+                              }
+                              editable={false}
+                              size="sm"
+                              statuses={leadStatuses}
+                            />
+                          )
+                        ) : null}
+                        <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                    </div>
+                    {result.type === "project" && result.leadName && (
+                      <p className="text-xs text-muted-foreground mt-1 truncate">
+                        {t("search.leadLabel")} {result.leadName}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
       {loading || (isPendingSearch && hasInteracted) ? (
         <SearchLoadingSkeleton rows={3} />
       ) : (
@@ -1038,28 +1240,15 @@ const GlobalSearch = ({
                 isPageVariant && "p-4"
               )}
             >
-              <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p className="text-sm font-medium">{t("search.noResults")}</p>
-              <p className="text-xs mt-2 opacity-75">
+              <div className="bg-primary/10 w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FileQuestion className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-sm font-medium text-foreground">{t("search.noResults")}</p>
+              <p className="text-xs mt-1 opacity-75">
                 {t("search.tryDifferent")}
               </p>
             </div>
-          ) : showRecentEmptyState ? (
-            <div
-              className={cn(
-                "p-6 text-center text-muted-foreground",
-                isPageVariant && "p-4"
-              )}
-            >
-              <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p className="text-sm font-medium">
-                {t("search.recentEmptyTitle")}
-              </p>
-              <p className="text-xs mt-2 opacity-75">
-                {t("search.recentEmptyDescription")}
-              </p>
-            </div>
-          ) : !resultsSection && showInitialHint ? (
+          ) : !resultsSection && !showRecentlyAdded && showInitialHint ? (
             <div
               className={cn(
                 "p-6 text-center text-muted-foreground",
@@ -1085,9 +1274,9 @@ const GlobalSearch = ({
 
   const renderedResults = isPageVariant
     ? resultsContent &&
-      (resultsPortalElement
-        ? createPortal(resultsContent, resultsPortalElement)
-        : resultsPortalId
+    (resultsPortalElement
+      ? createPortal(resultsContent, resultsPortalElement)
+      : resultsPortalId
         ? null
         : resultsContent)
     : resultsContent;

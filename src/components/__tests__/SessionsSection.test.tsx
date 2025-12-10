@@ -14,6 +14,11 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: jest.fn(),
 }));
 
+const useIsMobileMock = jest.fn();
+jest.mock("@/hooks/use-mobile", () => ({
+  useIsMobile: () => useIsMobileMock(),
+}));
+
 const mockNavigate = jest.fn();
 
 jest.mock("react-router-dom", () => ({
@@ -117,6 +122,7 @@ const baseSession: Session = {
 describe("SessionsSection", () => {
   const onSessionUpdated = jest.fn();
   const onDeleteSession = jest.fn();
+  let mockPointerCoarse = false;
 
   beforeEach(() => {
     mockSortSessionsByLifecycle.mockReset();
@@ -130,19 +136,21 @@ describe("SessionsSection", () => {
       search: "",
       hash: "",
     });
+    useIsMobileMock.mockReturnValue(false);
     mockDeadSimpleSessionBanner.mockClear();
     mockNewSessionDialogForProject.mockClear();
     mockSessionSheetView.mockClear();
     mockNavigate.mockClear();
     onSessionUpdated.mockClear();
     onDeleteSession.mockClear();
+    mockPointerCoarse = false;
   });
 
   beforeAll(() => {
     Object.defineProperty(window, "matchMedia", {
       writable: true,
-      value: jest.fn().mockImplementation(() => ({
-        matches: false,
+      value: jest.fn().mockImplementation((query: string) => ({
+        matches: query.includes("pointer: coarse") ? mockPointerCoarse : false,
         addListener: jest.fn(),
         removeListener: jest.fn(),
         addEventListener: jest.fn(),
@@ -243,14 +251,37 @@ describe("SessionsSection", () => {
     });
 
     fireEvent.click(screen.getByTestId("session-view-session-2"));
-    expect(mockNavigate).toHaveBeenCalledWith("/sessions/session-2", {
-      state: { from: "/projects/abc" },
-    });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByText("sheet-updated"));
     expect(onSessionUpdated).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByText("close-sheet"));
     expect(onSessionUpdated).toHaveBeenCalledTimes(2);
+  });
+
+  it("navigates to page on touch/mobile interactions", () => {
+    useIsMobileMock.mockReturnValue(true);
+
+    const sessions: Session[] = [{ ...baseSession, id: "session-1", session_name: "Kickoff" }];
+    mockSortSessionsByLifecycle.mockReturnValue(sessions);
+
+    render(
+      <SessionsSection
+        sessions={sessions}
+        loading={false}
+        leadId="lead-1"
+        projectId="project-1"
+        leadName="Lead"
+        projectName="Project"
+        onSessionUpdated={onSessionUpdated}
+        onDeleteSession={onDeleteSession}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("session-view-session-1"));
+    expect(mockNavigate).toHaveBeenCalledWith("/sessions/session-1", {
+      state: { from: "/projects/abc" },
+    });
   });
 });

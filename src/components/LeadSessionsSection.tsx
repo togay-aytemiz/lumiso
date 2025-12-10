@@ -41,6 +41,29 @@ export function LeadSessionsSection({
   const { t: tForms } = useFormsTranslation();
   const { t: tPages } = useTranslation("pages");
   const isMobile = useIsMobile();
+  const shouldOpenFullPage = useMemo(() => {
+    if (isMobile) {
+      return true;
+    }
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return false;
+    }
+    return window.matchMedia("(pointer: coarse)").matches;
+  }, [isMobile]);
+
+  const navigateToSessionPage = (sessionId: string) => {
+    const currentPath = `${location.pathname}${location.search}${location.hash}`;
+    navigate(`/sessions/${sessionId}`, { state: { from: currentPath } });
+  };
+
+  const openSession = (sessionId: string) => {
+    if (shouldOpenFullPage) {
+      navigateToSessionPage(sessionId);
+      return;
+    }
+    setSelectedSessionId(sessionId);
+    setIsSessionSheetOpen(true);
+  };
   const sessionInfoSectionsRaw = tForms("sessions_form.emptyState.sections", {
     returnObjects: true,
     defaultValue: []
@@ -57,16 +80,7 @@ export function LeadSessionsSection({
   }, [loading, sessions.length, tPages]);
 
   const handleSessionClick = (sessionId: string) => {
-    const shouldOpenFullPage =
-      isMobile ||
-      (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches);
-    if (shouldOpenFullPage) {
-      const currentPath = `${location.pathname}${location.search}${location.hash}`;
-      navigate(`/sessions/${sessionId}`, { state: { from: currentPath } });
-      return;
-    }
-    setSelectedSessionId(sessionId);
-    setIsSessionSheetOpen(true);
+    openSession(sessionId);
   };
 
   const handleSessionSheetOpenChange = (open: boolean) => {
@@ -86,13 +100,12 @@ export function LeadSessionsSection({
   };
 
   const handleViewSessionDetails = (sessionId: string) => {
-    const currentPath = `${location.pathname}${location.search}${location.hash}`;
-    navigate(`/sessions/${sessionId}`, { state: { from: currentPath } });
+    openSession(sessionId);
   };
 
   const handleViewFullDetails = () => {
     if (!selectedSessionId) return;
-    handleViewSessionDetails(selectedSessionId);
+    navigateToSessionPage(selectedSessionId);
   };
 
   const handleNavigateToLead = () => {

@@ -54,6 +54,29 @@ export function SessionsSection({
   const { t } = useFormsTranslation();
   const { t: tPages } = useTranslation("pages");
   const isMobile = useIsMobile();
+  const shouldOpenFullPage = useMemo(() => {
+    if (isMobile) {
+      return true;
+    }
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return false;
+    }
+    return window.matchMedia("(pointer: coarse)").matches;
+  }, [isMobile]);
+
+  const navigateToSessionPage = (sessionId: string) => {
+    const currentPath = `${location.pathname}${location.search}${location.hash}`;
+    navigate(`/sessions/${sessionId}`, { state: { from: currentPath } });
+  };
+
+  const openSession = (sessionId: string) => {
+    if (shouldOpenFullPage) {
+      navigateToSessionPage(sessionId);
+      return;
+    }
+    setSelectedSessionId(sessionId);
+    setIsSessionSheetOpen(true);
+  };
   const handleSessionSheetUpdated = () => {
     onSessionUpdated(); // Propagate updates from session sheet to parent
   };
@@ -67,22 +90,16 @@ export function SessionsSection({
   };
 
   const handleSessionClick = (sessionId: string) => {
-    if (isMobile) {
-      navigate(`/sessions/${sessionId}`);
-      return;
-    }
-    setSelectedSessionId(sessionId);
-    setIsSessionSheetOpen(true);
+    openSession(sessionId);
   };
 
   const handleViewSessionDetails = (sessionId: string) => {
-    const currentPath = `${location.pathname}${location.search}${location.hash}`;
-    navigate(`/sessions/${sessionId}`, { state: { from: currentPath } });
+    openSession(sessionId);
   };
 
   const handleViewFullSessionDetails = () => {
     if (selectedSessionId) {
-      handleViewSessionDetails(selectedSessionId);
+      navigateToSessionPage(selectedSessionId);
     }
   };
 

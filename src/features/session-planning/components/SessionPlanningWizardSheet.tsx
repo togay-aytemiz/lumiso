@@ -245,6 +245,32 @@ const SessionPlanningWizardSheetInner = ({
   const [confettiPieces, setConfettiPieces] = useState<ConfettiPiece[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const confettiTimerRef = useRef<number | null>(null);
+  const shouldOpenFullSessionPage = useMemo(() => {
+    if (isMobile) {
+      return true;
+    }
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return false;
+    }
+    return window.matchMedia("(pointer: coarse)").matches;
+  }, [isMobile]);
+
+  const openSession = useCallback(
+    (sessionId: string) => {
+      if (!sessionId) {
+        return;
+      }
+
+      if (shouldOpenFullSessionPage) {
+        navigate(`/sessions/${sessionId}`);
+        return;
+      }
+
+      setSessionViewerId(sessionId);
+      setIsSessionViewerOpen(true);
+    },
+    [navigate, shouldOpenFullSessionPage]
+  );
 
   const launchConfetti = useCallback(() => {
     setConfettiPieces(createConfettiPieces());
@@ -1084,7 +1110,7 @@ const SessionPlanningWizardSheetInner = ({
               <button
                 type="button"
                 className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline-none"
-                onClick={() => navigate(`/sessions/${sessionId}`)}
+                onClick={() => openSession(sessionId)}
               >
                 {tCommon("buttons.view_session")}
               </button>
@@ -1192,8 +1218,7 @@ const SessionPlanningWizardSheetInner = ({
               onViewSession={
                 completionSummary.sessionId
                   ? () => {
-                      setSessionViewerId(completionSummary.sessionId);
-                      setIsSessionViewerOpen(true);
+                      openSession(completionSummary.sessionId);
                     }
                   : undefined
               }

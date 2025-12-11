@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TemplateBuilderHeader } from "@/components/template-builder/TemplateBuilderHeader";
+import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,6 +122,7 @@ export default function GalleryDetail() {
   const [orderedSets, setOrderedSets] = useState<GallerySetRow[]>([]);
   const [setName, setSetName] = useState("");
   const [setDescription, setSetDescription] = useState("");
+  const [isSetInfoSheetOpen, setIsSetInfoSheetOpen] = useState(false);
   const [baseline, setBaseline] = useState({
     title: "",
     type: "proof" as GalleryType,
@@ -201,6 +203,22 @@ export default function GalleryDetail() {
   });
 
   const defaultSetName = t("sessionDetail.gallery.sets.defaultName", { defaultValue: "Highlights" });
+  const setInfoSectionsRaw = t("sessionDetail.gallery.sets.info.sections", {
+    returnObjects: true,
+    defaultValue: [],
+  });
+  const setInfoSections = Array.isArray(setInfoSectionsRaw)
+    ? (setInfoSectionsRaw as { title: string; description: string }[])
+    : [];
+  const setInfoTitle = t("sessionDetail.gallery.sets.info.title", {
+    defaultValue: "Keep galleries easy to skim with sets",
+  });
+  const setInfoDescription = t("sessionDetail.gallery.sets.info.description", {
+    defaultValue: "Break big uploads into labeled sections so clients know where to start.",
+  });
+  const setInfoLearnMoreLabel = t("sessionDetail.gallery.sets.learnMore", {
+    defaultValue: "Set nasıl çalışır?",
+  });
 
   useEffect(() => {
     if (!id) return;
@@ -821,7 +839,7 @@ export default function GalleryDetail() {
               </div>
 
               {activeTab === "photos" ? (
-                <div className="mt-3 flex justify-end">
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                   <Button
                     size="sm"
                     variant="surface"
@@ -830,6 +848,14 @@ export default function GalleryDetail() {
                   >
                     <Plus className="h-4 w-4" />
                     {t("sessionDetail.gallery.sets.add")}
+                  </Button>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto px-0 text-sm font-medium text-primary hover:text-primary/80"
+                    onClick={() => setIsSetInfoSheetOpen(true)}
+                  >
+                    {setInfoLearnMoreLabel}
                   </Button>
                 </div>
               ) : null}
@@ -1351,6 +1377,13 @@ export default function GalleryDetail() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+      <EmptyStateInfoSheet
+        open={isSetInfoSheetOpen}
+        onOpenChange={setIsSetInfoSheetOpen}
+        title={setInfoTitle}
+        description={setInfoDescription}
+        sections={setInfoSections}
+      />
       <input
         ref={fileInputRef}
         type="file"

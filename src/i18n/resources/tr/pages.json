@@ -598,14 +598,26 @@
         "customTypeLabel": "Özel tür",
         "customTypePlaceholder": "Örn. Albüm seçimi",
         "statusLabel": "Durum",
-        "eventDateLabel": "Etkinlik tarihi",
-        "submit": "Oluştur ve galeriye git",
-        "saving": "Oluşturuluyor…",
-        "cancel": "İptal",
-        "errors": {
-          "titleRequired": "Başlık zorunlu",
-          "customTypeRequired": "Özel tür gerekli"
-        }
+      "eventDateLabel": "Etkinlik tarihi",
+      "submit": "Oluştur ve galeriye git",
+      "saving": "Oluşturuluyor…",
+      "cancel": "İptal",
+      "errors": {
+        "titleRequired": "Başlık zorunlu",
+        "customTypeRequired": "Özel tür gerekli",
+        "typeRequired": "Tür seçmeniz gerekiyor"
+      }
+      },
+      "selectionTemplate": {
+        "loading": "Seçim kuralları yükleniyor...",
+        "serviceSource": "Kaynak hizmet: {{service}}",
+        "noProject": "Seans projeye bağlı değil. Seçim kurallarını burada oluşturabilirsin.",
+        "noServices": "Projeye hizmet eklenmemiş. Seçim kurallarını elle ekleyebilirsin.",
+        "noTemplate": "Bu seansın bağlı hizmetlerinde seçim kuralı bulunamadı. Kuralları burada tanımlayabilirsin.",
+        "customLabel": "Özel seçim kuralları",
+        "billingIncluded": "Paket hizmeti",
+        "billingExtra": "Ekstra hizmet",
+        "addSource": "Kaynak ekle"
       },
       "sets": {
         "add": "Set ekle",
@@ -628,6 +640,25 @@
         "errors": {
           "nameRequired": "Ad zorunlu",
           "cannotDeleteLast": "En az bir set gerekli."
+        },
+        "learnMore": "Set nasıl çalışır?",
+        "info": {
+          "title": "Aynı çekimde bölümler aç",
+          "description": "Bir günü tek galeride tutarken bölümlere ayır: dış mekan, düğün anı, after party gibi. Tek listeyi kaydırmak yerine her bölüm net olsun.",
+          "sections": [
+            {
+              "title": "Günü akışa göre böl",
+              "description": "Dış mekan, düğün anı ve after party için ayrı setler ekle; aynı tür fotoğraflar bile karışmasın."
+            },
+            {
+              "title": "Aynı çekimde konulara ayır",
+              "description": "Yenidoğan çekimi için bir \"yenidoğan\" seti, aile kareleri için ikinci bir set aç; hepsi aynı seansa ait kalsın."
+            },
+            {
+              "title": "Müşteriye net rota ver",
+              "description": "Müşteriler doğru sete girip favori bırakabilir, seçim limitlerini tamamlayabilir; nereden başlayacaklarını tahmin etmeleri gerekmez."
+            }
+          ]
         }
       },
       "selection": {

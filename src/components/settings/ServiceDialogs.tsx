@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Users, Package, Trash2 } from "lucide-react";
+import { Plus, Users, Package } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
@@ -17,6 +17,13 @@ import { cn } from "@/lib/utils";
 import { useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 import { DEFAULT_ORGANIZATION_TAX_PROFILE } from "@/lib/organizationSettingsCache";
 import { DEFAULT_CATEGORIES, DEFAULT_CATEGORY_DEFINITIONS, ServiceType } from "@/constants/serviceCategories";
+import {
+  SelectionTemplateSection,
+  type SelectionTemplateRuleForm,
+  createRuleId,
+  deserializeSelectionTemplate,
+  normalizeSelectionTemplate,
+} from "@/components/SelectionTemplateSection";
 
 interface ServiceFormState {
   name: string;
@@ -57,60 +64,6 @@ interface ServiceRecord {
   is_people_based?: boolean | null;
   selection_template?: unknown;
 }
-
-interface SelectionTemplateRuleForm {
-  id: string;
-  part: string;
-  min: string;
-  max: string;
-  required: boolean;
-}
-
-const createRuleId = () => `rule-${Math.random().toString(16).slice(2)}`;
-
-const deserializeSelectionTemplate = (template: unknown): SelectionTemplateRuleForm[] => {
-  if (!Array.isArray(template)) return [];
-
-  return template
-    .map((item, index) => {
-      if (item && typeof item === "object") {
-        const typed = item as Record<string, unknown>;
-        return {
-          id: createRuleId() || `rule-${index}`,
-          part: typeof typed.part === "string" ? typed.part : "",
-          min: typed.min != null ? String(typed.min) : "",
-          max: typed.max != null ? String(typed.max) : "",
-          required: typeof typed.required === "boolean" ? typed.required : true,
-        };
-      }
-      return null;
-    })
-    .filter(Boolean) as SelectionTemplateRuleForm[];
-};
-
-const normalizeSelectionTemplate = (rules: SelectionTemplateRuleForm[]) => {
-  const clampNumber = (value: string) => {
-    const parsed = parseInt(value, 10);
-    return Number.isFinite(parsed) ? parsed : null;
-  };
-
-  const cleaned = rules
-    .map((rule) => {
-      const part = rule.part.trim();
-      const min = clampNumber(rule.min);
-      const max = clampNumber(rule.max);
-      const normalizedMax = max != null && min != null && max < min ? min : max;
-      return {
-        part,
-        min,
-        max: normalizedMax,
-        required: Boolean(rule.required),
-      };
-    })
-    .filter((rule) => rule.part || rule.min !== null || rule.max !== null);
-
-  return cleaned.length ? cleaned : null;
-};
 const formatVatRate = (value?: number | null) => {
   if (value == null || Number.isNaN(value)) return "";
   return String(value);
@@ -328,194 +281,6 @@ const VatSettingsSection = ({
           </Select>
         </div>
       </div>
-    </div>
-  );
-};
-
-interface SelectionTemplateEditorProps {
-  t: (key: string, options?: Record<string, unknown>) => string;
-  rules: SelectionTemplateRuleForm[];
-  onChange: (rules: SelectionTemplateRuleForm[]) => void;
-}
-
-const SelectionTemplateEditor = ({ t, rules, onChange }: SelectionTemplateEditorProps) => {
-  const handleAddRule = () => {
-    onChange([
-      ...rules,
-      {
-        id: createRuleId(),
-        part: "",
-        min: "",
-        max: "",
-        required: true,
-      },
-    ]);
-  };
-
-  const handleUpdateRule = (id: string, updates: Partial<SelectionTemplateRuleForm>) => {
-    onChange(
-      rules.map((rule) => (rule.id === id ? { ...rule, ...updates } : rule))
-    );
-  };
-
-  const handleRemoveRule = (id: string) => {
-    onChange(rules.filter((rule) => rule.id !== id));
-  };
-
-  return (
-    <div className="space-y-3">
-      {rules.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          {t("service.selection_template.empty_state")}
-        </p>
-      ) : (
-        <div className="rounded-lg border border-border/70 bg-white/80 shadow-xs divide-y divide-border/60">
-          {rules.map((rule, index) => (
-            <div
-              key={rule.id}
-              className="grid gap-2 p-3 sm:grid-cols-[70px,1fr,90px,90px,100px,40px] sm:items-center"
-            >
-              <span className="text-xs font-semibold text-muted-foreground">
-                {t("service.selection_template.rule_label", { index: index + 1 })}
-              </span>
-              <Input
-                className="w-full"
-                value={rule.part}
-                onChange={(event) =>
-                  handleUpdateRule(rule.id, { part: event.target.value })
-                }
-                placeholder={t("service.selection_template.part_placeholder")}
-                aria-label={t("service.selection_template.part_label")}
-              />
-              <Input
-                className="w-full"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                value={rule.min}
-                onChange={(event) =>
-                  handleUpdateRule(rule.id, { min: event.target.value })
-                }
-                placeholder={t("service.selection_template.min_label")}
-                aria-label={t("service.selection_template.min_label")}
-              />
-              <Input
-                className="w-full"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                value={rule.max}
-                onChange={(event) =>
-                  handleUpdateRule(rule.id, { max: event.target.value })
-                }
-                placeholder={t("service.selection_template.max_label")}
-                aria-label={t("service.selection_template.max_label")}
-              />
-              <label className="flex cursor-pointer items-center gap-1 whitespace-nowrap select-none">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-border text-emerald-600 focus:ring-emerald-500"
-                  checked={rule.required}
-                  onChange={(event) =>
-                    handleUpdateRule(rule.id, { required: event.target.checked })
-                  }
-                  aria-label={t("service.selection_template.required_label")}
-                />
-                <span className="text-xs text-muted-foreground">
-                  {rule.required
-                    ? t("service.selection_template.required_on")
-                    : t("service.selection_template.required_off")}
-                </span>
-              </label>
-              <div className="flex items-center justify-end">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={() => handleRemoveRule(rule.id)}
-                  aria-label={t("service.selection_template.remove_rule_aria")}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-interface SelectionTemplateSectionProps {
-  t: (key: string, options?: Record<string, unknown>) => string;
-  enabled: boolean;
-  onToggleRequest: (enabled: boolean) => void;
-  rules: SelectionTemplateRuleForm[];
-  onRulesChange: (rules: SelectionTemplateRuleForm[]) => void;
-}
-
-const SelectionTemplateSection = ({
-  t,
-  enabled,
-  onToggleRequest,
-  rules,
-  onRulesChange,
-}: SelectionTemplateSectionProps) => {
-  return (
-    <div className="space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/40 p-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="space-y-1 flex-1">
-          <p className="text-sm font-semibold text-slate-900">{t("service.selection_template.title")}</p>
-          <p className="text-xs text-muted-foreground">
-            {t("service.selection_template.description")}
-          </p>
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            {enabled
-              ? t("service.selection_template.toggle_on")
-              : t("service.selection_template.toggle_off")}
-          </span>
-          <Switch
-            checked={enabled}
-            onCheckedChange={onToggleRequest}
-            aria-label={t("service.selection_template.toggle_label")}
-          />
-        </div>
-      </div>
-
-      {enabled ? (
-        <div className="space-y-3 pt-1">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-[11px] text-muted-foreground">
-              {t("service.selection_template.helper")}
-            </p>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                onRulesChange([
-                  ...rules,
-                  {
-                    id: createRuleId(),
-                    part: "",
-                    min: "",
-                    max: "",
-                    required: true,
-                  },
-                ])
-              }
-              className="gap-2 border-indigo-300 text-indigo-700 hover:border-indigo-400 hover:bg-indigo-100 hover:text-indigo-800"
-            >
-              <Plus className="h-4 w-4" />
-              {t("service.selection_template.add_rule")}
-            </Button>
-          </div>
-          <SelectionTemplateEditor t={t} rules={rules} onChange={onRulesChange} />
-        </div>
-      ) : null}
     </div>
   );
 };
@@ -1059,15 +824,20 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
           )}
 
           {isDeliverable && (
-            <SelectionTemplateSection
-              t={t}
-              enabled={formData.selection_enabled}
-              onToggleRequest={handleSelectionToggleRequest}
-              rules={formData.selection_rules}
-              onRulesChange={(rules) =>
-                setFormData((prev) => ({ ...prev, selection_rules: rules }))
-              }
-            />
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-foreground">
+                {t("service.selection_template.title")}
+              </Label>
+              <SelectionTemplateSection
+                enabled={formData.selection_enabled}
+                onToggleRequest={handleSelectionToggleRequest}
+                rules={formData.selection_rules}
+                onRulesChange={(rules) =>
+                  setFormData((prev) => ({ ...prev, selection_rules: rules }))
+                }
+                showHeader={false}
+              />
+            </div>
           )}
 
           <div className="space-y-2">
@@ -1768,15 +1538,20 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           )}
 
           {isDeliverable && (
-            <SelectionTemplateSection
-              t={t}
-              enabled={formData.selection_enabled}
-              onToggleRequest={handleSelectionToggleRequest}
-              rules={formData.selection_rules}
-              onRulesChange={(rules) =>
-                setFormData((prev) => ({ ...prev, selection_rules: rules }))
-              }
-            />
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-foreground">
+                {t("service.selection_template.title")}
+              </Label>
+              <SelectionTemplateSection
+                enabled={formData.selection_enabled}
+                onToggleRequest={handleSelectionToggleRequest}
+                rules={formData.selection_rules}
+                onRulesChange={(rules) =>
+                  setFormData((prev) => ({ ...prev, selection_rules: rules }))
+                }
+                showHeader={false}
+              />
+            </div>
           )}
 
             <div className="space-y-2">

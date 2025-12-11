@@ -589,8 +589,20 @@
         "cancel": "Cancel",
         "errors": {
           "titleRequired": "Title is required",
-          "customTypeRequired": "Custom type is required"
+          "customTypeRequired": "Custom type is required",
+          "typeRequired": "Please choose a type"
         }
+      },
+      "selectionTemplate": {
+        "loading": "Loading selection rules...",
+        "serviceSource": "Loaded from service: {{service}}",
+        "noProject": "Session is not linked to a project. Add your selection rules here.",
+        "noServices": "No services on this project yet. You can create custom selection rules.",
+        "noTemplate": "No selection rules found for this session’s services. Define them here.",
+        "customLabel": "Custom selection rules",
+        "billingIncluded": "Included service",
+        "billingExtra": "Extra service",
+        "addSource": "Add source"
       },
       "sets": {
         "add": "Add set",
@@ -613,6 +625,25 @@
         "errors": {
           "nameRequired": "Name is required",
           "cannotDeleteLast": "At least one set is required."
+        },
+        "learnMore": "How sets keep one shoot tidy",
+        "info": {
+          "title": "Organize one shoot with clear sets",
+          "description": "Split a gallery into moments from the same day—outdoor portraits, ceremony, after party—so clients aren't scrolling one giant list.",
+          "sections": [
+            {
+              "title": "Follow the day's flow",
+              "description": "Add sets like outdoor portraits, the ceremony, and the after party so each part of the shoot is easy to find."
+            },
+            {
+              "title": "Separate by subject in the same session",
+              "description": "For newborn work, keep a 'newborn' set and a 'family' set instead of mixing them together."
+            },
+            {
+              "title": "Give clients a clear path",
+              "description": "Clients can jump into the right set, leave favorites, and finish selection limits without guessing where to start."
+            }
+          ]
         }
       },
       "selection": {

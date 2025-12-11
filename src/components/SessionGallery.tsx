@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,6 +18,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { LucideIcon } from "lucide-react";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import {
+  SelectionTemplateSection,
+  type SelectionTemplateRuleForm,
+  createEmptyRule,
+  deserializeSelectionTemplate,
+  normalizeSelectionTemplate,
+} from "@/components/SelectionTemplateSection";
 import {
   Plus,
   Image,
@@ -40,6 +48,7 @@ interface SessionGalleryProps {
 
 type GalleryType = "proof" | "retouch" | "final" | "other";
 type GalleryStatus = "draft" | "published" | "archived";
+type FormGalleryType = GalleryType | "";
 
 interface GalleryRow {
   id: string;
@@ -50,6 +59,17 @@ interface GalleryRow {
   created_at: string;
   updated_at: string;
   published_at: string | null;
+}
+
+interface ProjectServiceWithTemplate {
+  id: string;
+  billing_type: "included" | "extra";
+  services: {
+    id: string;
+    name: string;
+    service_type: "coverage" | "deliverable" | null;
+    selection_template: unknown;
+  } | null;
 }
 
 const typeVariant: Record<GalleryType, "default" | "secondary" | "outline"> = {
@@ -72,13 +92,30 @@ export default function SessionGallery({
   sessionLeadName,
 }: SessionGalleryProps) {
   const { t } = useTranslation("pages");
+  const { t: tForms } = useFormsTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [createOpen, setCreateOpen] = useState(false);
   const [formTitle, setFormTitle] = useState("");
-  const [formType, setFormType] = useState<GalleryType>("proof");
+  const [formType, setFormType] = useState<FormGalleryType>("");
   const [formEventDate, setFormEventDate] = useState(() => normalizeDate(defaultEventDate));
+  const [selectionEnabled, setSelectionEnabled] = useState(false);
+  const [selectionGroups, setSelectionGroups] = useState<
+    {
+      key: string;
+      serviceId?: string | null;
+      serviceName?: string | null;
+      billingType?: "included" | "extra" | null;
+      rules: SelectionTemplateRuleForm[];
+    }[]
+  >([]);
+  const [selectionLoading, setSelectionLoading] = useState(false);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectHasServices, setProjectHasServices] = useState<boolean | null>(null);
+  const selectionInitializedRef = useRef(false);
+  const hasTypeSelected = formType !== "";
 
   const typeOptions = useMemo(
     () =>
@@ -110,6 +147,159 @@ export default function SessionGallery({
   const typeCardBase =
     "group flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
+  const seedRulesIfEmpty = useCallback(
+    (rules: SelectionTemplateRuleForm[]) => (rules.length > 0 ? rules : [createEmptyRule()]),
+    []
+  );
+
+  const loadSelectionTemplate = useCallback(async () => {
+    setSelectionLoading(true);
+    setSelectionError(null);
+    try {
+      const { data: sessionRow, error: sessionError } = await supabase
+        .from("sessions")
+        .select("project_id")
+        .eq("id", sessionId)
+        .single();
+      if (sessionError) throw sessionError;
+      const resolvedProjectId = sessionRow?.project_id ?? null;
+      setProjectId(resolvedProjectId);
+      if (!resolvedProjectId) {
+        setProjectHasServices(null);
+        setSelectionGroups([
+          {
+            key: "manual",
+            serviceId: null,
+            serviceName: t("sessionDetail.gallery.selectionTemplate.customLabel", {
+              defaultValue: "Özel seçim kuralları",
+            }),
+            billingType: null,
+            rules: [createEmptyRule()],
+          },
+        ]);
+        setSelectionEnabled(true);
+        return;
+      }
+
+      const { data: projectServices, error: projectServicesError } = await supabase
+        .from<ProjectServiceWithTemplate>("project_services")
+        .select("id,billing_type,services(id,name,service_type,selection_template)")
+        .eq("project_id", resolvedProjectId);
+
+      if (projectServicesError) throw projectServicesError;
+
+      const servicesList = projectServices ?? [];
+      setProjectHasServices(servicesList.length > 0);
+
+      const templateCandidates = servicesList
+        .filter((entry) => entry.services?.service_type === "deliverable")
+        .map((entry) => ({
+          billing_type: entry.billing_type,
+          service: entry.services,
+          rules: deserializeSelectionTemplate(entry.services?.selection_template),
+        }))
+        .filter((entry) => entry.rules.length > 0);
+
+      if (templateCandidates.length === 0) {
+        setSelectionGroups([
+          {
+            key: "manual",
+            serviceId: null,
+            serviceName: t("sessionDetail.gallery.selectionTemplate.customLabel", {
+              defaultValue: "Özel seçim kuralları",
+            }),
+            billingType: null,
+            rules: [createEmptyRule()],
+          },
+        ]);
+        setSelectionEnabled(true);
+        return;
+      }
+
+      setSelectionGroups(
+        templateCandidates.map((entry, index) => ({
+          key: entry.service?.id ?? `service-${index}`,
+          serviceId: entry.service?.id ?? null,
+          serviceName: entry.service?.name ?? null,
+          billingType: entry.billing_type ?? null,
+          rules: seedRulesIfEmpty(entry.rules),
+        }))
+      );
+      setSelectionEnabled(true);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t("sessionDetail.gallery.toast.errorDesc");
+      setSelectionEnabled(false);
+      setSelectionError(message);
+    } finally {
+      setSelectionLoading(false);
+    }
+  }, [sessionId, t]);
+
+  useEffect(() => {
+    if (!createOpen) {
+      selectionInitializedRef.current = false;
+      setSelectionLoading(false);
+      setSelectionError(null);
+      setSelectionGroups([]);
+      setSelectionEnabled(false);
+      setProjectId(null);
+      setProjectHasServices(null);
+      return;
+    }
+    if (selectionInitializedRef.current) return;
+    selectionInitializedRef.current = true;
+    void loadSelectionTemplate();
+  }, [createOpen, loadSelectionTemplate]);
+
+  useEffect(() => {
+    if (formType === "proof") {
+      setSelectionEnabled(true);
+    } else {
+      setSelectionEnabled(false);
+    }
+  }, [formType]);
+
+  type SelectionInfoTone = "muted" | "success" | "destructive" | "warning";
+  const selectionInfo = useMemo<{ text: string | null; tone: SelectionInfoTone }>(() => {
+    if (selectionLoading) {
+      return {
+        text: t("sessionDetail.gallery.selectionTemplate.loading", {
+          defaultValue: "Seçim kuralları yükleniyor...",
+        }),
+        tone: "muted",
+      };
+    }
+    if (selectionError) {
+      return { text: selectionError, tone: "destructive" };
+    }
+    if (selectionGroups.length > 0 && selectionGroups.some((group) => group.serviceId)) {
+      return { text: null, tone: "success" };
+    }
+    if (!projectId) {
+      return {
+        text: t("sessionDetail.gallery.selectionTemplate.noProject", {
+          defaultValue: "Seans projeye bağlı değil. Seçim kurallarını burada oluşturabilirsin.",
+        }),
+        tone: "muted",
+      };
+    }
+    if (projectHasServices === false) {
+      return {
+        text: t("sessionDetail.gallery.selectionTemplate.noServices", {
+          defaultValue: "Projeye henüz hizmet eklenmemiş. Seçim kurallarını elle ekleyebilirsin.",
+        }),
+        tone: "muted",
+      };
+    }
+    return {
+      text: t("sessionDetail.gallery.selectionTemplate.noTemplate", {
+        defaultValue: "Hizmetlerde seçim kuralı yok. Kuralları buradan tanımlayabilirsin.",
+      }),
+      tone: "warning",
+    };
+  }, [selectionLoading, selectionError, selectionGroups, projectId, projectHasServices, t]);
+
   const { data, isLoading } = useQuery({
     queryKey: ["galleries", sessionId],
     queryFn: async (): Promise<GalleryRow[]> => {
@@ -129,8 +319,34 @@ export default function SessionGallery({
       if (!formTitle.trim()) {
         throw new Error(t("sessionDetail.gallery.form.errors.titleRequired"));
       }
+      if (!formType) {
+        throw new Error(
+          t("sessionDetail.gallery.form.errors.typeRequired", {
+            defaultValue: "Tür seçmeniz gerekiyor",
+          })
+        );
+      }
 
       const branding: Record<string, unknown> = { eventDate: formEventDate };
+      if (formType === "proof" && selectionEnabled) {
+        const normalizedGroups = selectionGroups
+          .map((group) => ({
+            ...group,
+            rules: normalizeSelectionTemplate(group.rules),
+          }))
+          .filter((group) => Array.isArray(group.rules) && group.rules.length > 0)
+          .map((group) => ({
+            serviceId: group.serviceId ?? null,
+            serviceName: group.serviceName ?? null,
+            billingType: group.billingType ?? null,
+            rules: group.rules,
+          }));
+
+        if (normalizedGroups.length > 0) {
+          branding.selectionTemplateGroups = normalizedGroups;
+          branding.selectionTemplate = normalizedGroups.flatMap((group) => group.rules);
+        }
+      }
 
       const defaultSetName = t("sessionDetail.gallery.sets.defaultName", { defaultValue: "Highlights" });
       const { data, error } = await supabase
@@ -138,7 +354,7 @@ export default function SessionGallery({
         .insert({
           session_id: sessionId,
           title: formTitle.trim(),
-          type: formType,
+          type: formType as GalleryType,
           status: "draft",
           branding,
           published_at: null,
@@ -160,8 +376,14 @@ export default function SessionGallery({
     onSuccess: (newId) => {
       setCreateOpen(false);
       setFormTitle("");
-      setFormType("proof");
+      setFormType("");
       setFormEventDate(normalizeDate(defaultEventDate));
+      setSelectionGroups([]);
+      setSelectionEnabled(false);
+      setSelectionError(null);
+      setProjectId(null);
+      setProjectHasServices(null);
+      selectionInitializedRef.current = false;
       queryClient.invalidateQueries({ queryKey: ["galleries", sessionId] });
       toast({
         title: t("sessionDetail.gallery.toast.createdTitle"),
@@ -294,6 +516,33 @@ export default function SessionGallery({
     createMutation.mutate();
   };
 
+  const handleSelectionToggle = useCallback(
+    (enabled: boolean) => {
+      if (selectionLoading) return;
+      if (enabled) {
+        setSelectionEnabled(true);
+        setSelectionGroups((prev) =>
+          prev.length > 0
+            ? prev.map((group) => ({ ...group, rules: seedRulesIfEmpty(group.rules) }))
+            : [
+                {
+                  key: "manual",
+                  serviceId: null,
+                  serviceName: t("sessionDetail.gallery.selectionTemplate.customLabel", {
+                    defaultValue: "Özel seçim kuralları",
+                  }),
+                  billingType: null,
+                  rules: [createEmptyRule()],
+                },
+              ]
+        );
+      } else {
+        setSelectionEnabled(false);
+      }
+    },
+    [selectionLoading, seedRulesIfEmpty, t]
+  );
+
   const helperText = t("sessionDetail.gallery.helper");
 
   return (
@@ -324,7 +573,7 @@ export default function SessionGallery({
       </Card>
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-        <SheetContent className="flex h-full w-full flex-col sm:max-w-lg">
+        <SheetContent className="flex h-full w-full flex-col sm:max-w-3xl">
           <SheetHeader className="border-b pb-3">
             <SheetTitle>{t("sessionDetail.gallery.form.title")}</SheetTitle>
           </SheetHeader>
@@ -339,11 +588,11 @@ export default function SessionGallery({
                   leadName:
                     sessionLeadName?.trim() ||
                     t("sessionDetail.gallery.form.leadNamePlaceholder", {
-                      defaultValue: "lead adı",
-                    }),
-                })}
-              />
-            </div>
+                  defaultValue: "lead adı",
+                }),
+              })}
+            />
+          </div>
             <div className="space-y-2">
               <Label>{t("sessionDetail.gallery.form.eventDateLabel")}</Label>
               <DateTimePicker
@@ -367,8 +616,12 @@ export default function SessionGallery({
                       onClick={() => setFormType(option.value)}
                       className={cn(
                         typeCardBase,
-                        "border-emerald-100 bg-white/80 hover:border-emerald-200",
-                        isSelected && "border-emerald-500 bg-emerald-50 shadow-sm"
+                        hasTypeSelected
+                          ? "border border-emerald-200 bg-white/80"
+                          : "border-dashed border-emerald-300/70 bg-white/60 hover:border-emerald-400",
+                        isSelected && "border-emerald-500 bg-emerald-50 shadow-sm",
+                        hasTypeSelected && !isSelected && "opacity-70 hover:opacity-100",
+                        hasTypeSelected ? "py-3" : "py-4"
                       )}
                       aria-pressed={isSelected}
                     >
@@ -391,6 +644,136 @@ export default function SessionGallery({
                 })}
               </div>
             </div>
+            {formType === "proof" && selectionGroups.length > 0 && (
+              (() => {
+                const hasServiceTemplates = selectionGroups.some((group) => group.serviceId);
+                if (!hasServiceTemplates) {
+                  return (
+                    <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+                      <Label className="text-sm font-semibold text-foreground">
+                        {tForms("service.selection_template.title")}
+                      </Label>
+                      {selectionInfo.text ? (
+                        <p
+                          className={cn(
+                            "rounded-lg border bg-muted/40 px-3 py-2 text-xs leading-relaxed",
+                            selectionInfo.tone === "destructive"
+                              ? "border-destructive/40 text-destructive"
+                              : selectionInfo.tone === "success"
+                                ? "border-emerald-200 text-emerald-700"
+                                : selectionInfo.tone === "warning"
+                                  ? "border-amber-300/70 text-amber-800 bg-amber-50/80"
+                                  : "border-border/70 text-muted-foreground"
+                          )}
+                        >
+                          {selectionInfo.text}
+                        </p>
+                      ) : null}
+                      <SelectionTemplateSection
+                        enabled={selectionEnabled}
+                        onToggleRequest={handleSelectionToggle}
+                        rules={selectionGroups[0]?.rules ?? []}
+                        onRulesChange={(rules) =>
+                          setSelectionGroups((prev) =>
+                            prev.length > 0
+                              ? prev.map((item, index) =>
+                                  index === 0 ? { ...item, rules } : item
+                                )
+                              : [
+                                  {
+                                    key: "manual",
+                                    serviceId: null,
+                                    serviceName: t(
+                                      "sessionDetail.gallery.selectionTemplate.customLabel"
+                                    ),
+                                    billingType: null,
+                                    rules,
+                                  },
+                                ]
+                          )
+                        }
+                        tone="emerald"
+                      />
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+                    <Label className="text-sm font-semibold text-foreground">
+                      {tForms("service.selection_template.title")}
+                    </Label>
+                    <div className="space-y-4">
+                      {selectionGroups.map((group) => {
+                        const billingLabel =
+                          group.billingType === "included"
+                            ? t("sessionDetail.gallery.selectionTemplate.billingIncluded", {
+                                defaultValue: "Paket hizmeti",
+                              })
+                            : group.billingType === "extra"
+                              ? t("sessionDetail.gallery.selectionTemplate.billingExtra", {
+                                  defaultValue: "Ekstra hizmet",
+                                })
+                              : null;
+                        return (
+                          <div key={group.key} className="space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <div>
+                                <p className="text-sm font-semibold text-foreground">
+                                  {group.serviceName ||
+                                    t("sessionDetail.gallery.selectionTemplate.customLabel", {
+                                      defaultValue: "Özel seçim kuralları",
+                                    })}
+                                </p>
+                                {billingLabel ? (
+                                  <p className="text-xs text-muted-foreground">{billingLabel}</p>
+                                ) : null}
+                              </div>
+                              {group.serviceId ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 gap-2 border-emerald-300 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100"
+                                  onClick={() =>
+                                    setSelectionGroups((prev) =>
+                                      prev.map((item) =>
+                                        item.key === group.key
+                                          ? { ...item, rules: [...item.rules, createEmptyRule()] }
+                                          : item
+                                      )
+                                    )
+                                  }
+                                >
+                                  <Plus className="h-4 w-4" />
+                                  {tForms("service.selection_template.add_rule")}
+                                </Button>
+                              ) : null}
+                            </div>
+                            <SelectionTemplateSection
+                              enabled={selectionEnabled}
+                              onToggleRequest={undefined}
+                              rules={group.rules}
+                              onRulesChange={(rules) =>
+                                setSelectionGroups((prev) =>
+                                  prev.map((item) =>
+                                    item.key === group.key ? { ...item, rules } : item
+                                  )
+                                )
+                              }
+                              tone="emerald"
+                              showHeader={false}
+                              showToggle={false}
+                              variant="unstyled"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()
+            )}
           </div>
           <SheetFooter className="mt-2 gap-2 border-t bg-background px-0 pt-4 [&>button]:w-full sm:[&>button]:flex-1">
             <Button
@@ -402,7 +785,7 @@ export default function SessionGallery({
             </Button>
             <Button
               onClick={handleCreate}
-              disabled={createMutation.isPending || !formTitle.trim()}
+              disabled={createMutation.isPending || !formTitle.trim() || !formType}
             >
               {createMutation.isPending ? (
                 <div className="flex items-center gap-2">

@@ -97,6 +97,8 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
             const isFirst = index === 0;
             const minLabel = t("service.selection_template.min_helper", { defaultValue: "En az" });
             const maxLabel = t("service.selection_template.max_helper", { defaultValue: "En fazla" });
+            const showMinHeader = isFirst;
+            const showMaxHeader = isFirst;
             const showMinHelper = isFirst && Boolean(rule.min);
             const showMaxHelper = isFirst && Boolean(rule.max);
 
@@ -104,13 +106,22 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
               <div
                 key={rule.id}
                 className={cn(
-                  "grid w-full gap-2 p-3 sm:grid-cols-[80px,minmax(0,1fr),90px,90px,90px,40px] sm:items-center",
+                  "grid w-full gap-2 p-3 sm:grid-cols-[120px,minmax(0,1fr),90px,90px,90px] sm:items-center",
                   isFirst && "pt-5"
                 )}
               >
-                <span className="text-xs font-semibold text-muted-foreground">
-                  {t("service.selection_template.rule_label", { index: index + 1 })}
-                </span>
+                <div className="flex flex-col items-start gap-1">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {t("service.selection_template.rule_label", { index: index + 1 })}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveRule(rule.id)}
+                    className="text-xs font-semibold text-red-600 hover:text-red-700"
+                  >
+                    {t("service.selection_template.remove_rule", { defaultValue: "Sil" })}
+                  </button>
+                </div>
                 <div className={cn("flex w-full flex-col", isFirst ? "gap-1" : "gap-0")}>
                   {isFirst ? (
                     <p className="text-[11px] leading-tight text-muted-foreground">
@@ -129,15 +140,22 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
                     aria-label={t("service.selection_template.part_label")}
                   />
                 </div>
-                <div className={cn("flex w-full flex-col", showMinHelper ? "gap-1" : "gap-0")}>
-                  {showMinHelper ? (
-                    <p className="text-[11px] leading-tight text-muted-foreground">{minLabel}</p>
+                <div className={cn("flex w-full flex-col", showMinHeader ? "gap-1" : "gap-0")}>
+                  {showMinHeader ? (
+                    <p
+                      className={cn(
+                        "text-[11px] leading-tight text-muted-foreground",
+                        !showMinHelper && "opacity-0"
+                      )}
+                      aria-hidden={!showMinHelper}
+                    >
+                      {minLabel}
+                    </p>
                   ) : null}
                   <Input
-                    className={cn("h-8 w-full text-sm", showMinHelper && "mt-1")}
-                    type="number"
+                    className={cn("h-8 w-full text-sm", showMinHeader && "mt-1")}
+                    type="text"
                     inputMode="numeric"
-                    min={0}
                     value={rule.min}
                     onChange={(event) =>
                       handleUpdateRule(rule.id, { min: event.target.value })
@@ -146,15 +164,22 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
                     aria-label={minLabel}
                   />
                 </div>
-                <div className={cn("flex w-full flex-col", showMaxHelper ? "gap-1" : "gap-0")}>
-                  {showMaxHelper ? (
-                    <p className="text-[11px] leading-tight text-muted-foreground">{maxLabel}</p>
+                <div className={cn("flex w-full flex-col", showMaxHeader ? "gap-1" : "gap-0")}>
+                  {showMaxHeader ? (
+                    <p
+                      className={cn(
+                        "text-[11px] leading-tight text-muted-foreground",
+                        !showMaxHelper && "opacity-0"
+                      )}
+                      aria-hidden={!showMaxHelper}
+                    >
+                      {maxLabel}
+                    </p>
                   ) : null}
                   <Input
-                    className={cn("h-8 w-full text-sm", showMaxHelper && "mt-1")}
-                    type="number"
+                    className={cn("h-8 w-full text-sm", showMaxHeader && "mt-1")}
+                    type="text"
                     inputMode="numeric"
-                    min={0}
                     value={rule.max}
                     onChange={(event) =>
                       handleUpdateRule(rule.id, { max: event.target.value })
@@ -184,18 +209,6 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
                       : t("service.selection_template.required_off")}
                   </span>
                 </label>
-                <div className="flex items-center justify-end">
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleRemoveRule(rule.id)}
-                    aria-label={t("service.selection_template.remove_rule_aria")}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
             );
           })}

@@ -7,6 +7,13 @@ import { useToast } from "@/hooks/use-toast";
 import { TemplateBuilderHeader } from "@/components/template-builder/TemplateBuilderHeader";
 import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
 import { SelectionDashboard, FAVORITES_FILTER_ID, type SelectionRule } from "@/components/galleries/SelectionDashboard";
+import {
+  SelectionTemplateSection,
+  type SelectionTemplateRuleForm,
+  createEmptyRule,
+  deserializeSelectionTemplate,
+  normalizeSelectionTemplate,
+} from "@/components/SelectionTemplateSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +22,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn, getUserLocale } from "@/lib/utils";
@@ -30,6 +36,15 @@ type SelectionSettings = {
   limit: number | null;
   deadline: string | null;
   allowFavorites: boolean;
+};
+
+type SelectionTemplateGroupForm = {
+  key: string;
+  serviceId: string | null;
+  serviceName: string | null;
+  billingType?: string | null;
+  disabled?: boolean;
+  rules: SelectionTemplateRuleForm[];
 };
 
 interface GalleryDetailRow {
@@ -102,6 +117,27 @@ const parseCountValue = (value: unknown): number | null => {
   return null;
 };
 
+const cloneSelectionTemplateGroups = (groups: SelectionTemplateGroupForm[]) =>
+  groups.map((group) => ({
+    ...group,
+    rules: group.rules.map((rule) => ({ ...rule })),
+  }));
+
+const fingerprintSelectionTemplateGroups = (groups: SelectionTemplateGroupForm[]) =>
+  JSON.stringify(
+    groups.map((group) => ({
+      serviceId: group.serviceId ?? null,
+      serviceName: group.serviceName ?? null,
+      billingType: group.billingType ?? null,
+      rules: group.rules.map((rule) => ({
+        part: rule.part.trim(),
+        min: rule.min,
+        max: rule.max,
+        required: Boolean(rule.required),
+      })),
+    }))
+  );
+
 export default function GalleryDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -133,6 +169,8 @@ export default function GalleryDetail() {
     deadline: null,
     allowFavorites: true,
   });
+  const [selectionTemplateGroups, setSelectionTemplateGroups] = useState<SelectionTemplateGroupForm[]>([]);
+  const [selectionTemplateDraft, setSelectionTemplateDraft] = useState<SelectionTemplateGroupForm[]>([]);
   const [activeSelectionRuleId, setActiveSelectionRuleId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pendingSetNameRef = useRef<string | null>(null);
@@ -152,9 +190,57 @@ export default function GalleryDetail() {
       deadline: null,
       allowFavorites: true,
     } as SelectionSettings,
+    selectionTemplateGroups: [] as SelectionTemplateGroupForm[],
   });
   const autoSaveTimerRef = useRef<number | null>(null);
   const attemptedDefaultSetRef = useRef(false);
+
+  const parseSelectionTemplateGroups = useCallback(
+    (branding: Record<string, unknown> | null): SelectionTemplateGroupForm[] => {
+      const groupsRaw = branding && Array.isArray((branding as Record<string, unknown>).selectionTemplateGroups)
+        ? ((branding as Record<string, unknown>).selectionTemplateGroups as Record<string, unknown>[])
+        : [];
+      if (groupsRaw.length > 0) {
+        return groupsRaw.map((group, index) => {
+          const typedGroup = group as Record<string, unknown>;
+          const serviceId = typeof typedGroup.serviceId === "string" ? typedGroup.serviceId : null;
+          const serviceName = typeof typedGroup.serviceName === "string" ? typedGroup.serviceName : null;
+          const billingType = typeof typedGroup.billingType === "string" ? typedGroup.billingType : null;
+          return {
+            key: serviceId ?? `group-${index}`,
+            serviceId,
+            serviceName,
+            billingType,
+            disabled: typedGroup.disabled === true,
+            rules: deserializeSelectionTemplate(typedGroup.rules),
+          };
+        });
+      }
+
+      const templateRaw =
+        branding && Array.isArray((branding as Record<string, unknown>).selectionTemplate)
+          ? ((branding as Record<string, unknown>).selectionTemplate as Record<string, unknown>[])
+          : [];
+
+      if (templateRaw.length > 0) {
+        return [
+          {
+            key: "manual-template",
+            serviceId: null,
+            serviceName: t("sessionDetail.gallery.selectionTemplate.manualGroupTitle", {
+              defaultValue: "İlave kurallar",
+            }),
+            billingType: null,
+            disabled: false,
+            rules: deserializeSelectionTemplate(templateRaw),
+          },
+        ];
+      }
+
+      return [];
+    },
+    [t]
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ["gallery", id],
@@ -177,6 +263,7 @@ export default function GalleryDetail() {
     const storedSelection = (branding.selectionSettings || {}) as Partial<SelectionSettings>;
     const storedDate = typeof branding.eventDate === "string" ? branding.eventDate : "";
     const storedCustomType = typeof branding.customType === "string" ? (branding.customType as string) : "";
+    const parsedTemplateGroups = parseSelectionTemplateGroups(branding);
     setTitle(data.title ?? "");
     setType(data.type);
     setStatus(data.status);
@@ -188,6 +275,8 @@ export default function GalleryDetail() {
       deadline: typeof storedSelection.deadline === "string" ? storedSelection.deadline : null,
       allowFavorites: storedSelection.allowFavorites !== false,
     });
+    setSelectionTemplateGroups(parsedTemplateGroups);
+    setSelectionTemplateDraft(cloneSelectionTemplateGroups(parsedTemplateGroups));
     setLastSavedAt(data.updated_at || data.created_at || null);
     setBaseline({
       title: data.title ?? "",
@@ -201,8 +290,9 @@ export default function GalleryDetail() {
         deadline: typeof storedSelection.deadline === "string" ? storedSelection.deadline : null,
         allowFavorites: storedSelection.allowFavorites !== false,
       },
+      selectionTemplateGroups: parsedTemplateGroups,
     });
-  }, [data]);
+  }, [data, parseSelectionTemplateGroups]);
 
   const { data: sets } = useQuery({
     queryKey: ["gallery_sets", id],
@@ -308,8 +398,9 @@ export default function GalleryDetail() {
   useEffect(() => {
     if (selectionSheetOpen) {
       setSelectionDraft(selectionSettings);
+      setSelectionTemplateDraft(cloneSelectionTemplateGroups(selectionTemplateGroups));
     }
-  }, [selectionSheetOpen, selectionSettings]);
+  }, [selectionSheetOpen, selectionSettings, selectionTemplateGroups]);
 
   useEffect(() => {
     setActiveSelectionRuleId(null);
@@ -381,14 +472,8 @@ export default function GalleryDetail() {
 
   const selectionRules = useMemo<SelectionRule[]>(() => {
     const rules: SelectionRule[] = [];
-    const groupsRaw = Array.isArray(brandingData.selectionTemplateGroups)
-      ? (brandingData.selectionTemplateGroups as Record<string, unknown>[])
-      : [];
-    const templateRaw = Array.isArray(brandingData.selectionTemplate)
-      ? (brandingData.selectionTemplate as Record<string, unknown>[])
-      : [];
 
-    const addRule = (ruleData: Record<string, unknown>, ruleId: string, serviceName: string | null) => {
+    const addRule = (ruleData: SelectionTemplateRuleForm, ruleId: string, serviceName: string | null) => {
       const part = typeof ruleData.part === "string" ? ruleData.part.trim() : "";
       const normalizedKey = normalizeSelectionPartKey(part);
       const minCount = Math.max(0, parseCountValue(ruleData.min) ?? 0);
@@ -410,33 +495,18 @@ export default function GalleryDetail() {
       });
     };
 
-    if (groupsRaw.length > 0) {
-      groupsRaw.forEach((group, groupIndex) => {
-        const typedGroup = group as Record<string, unknown>;
-        const serviceName = typeof typedGroup.serviceName === "string" ? typedGroup.serviceName : null;
-        const serviceId = typeof typedGroup.serviceId === "string" ? typedGroup.serviceId : null;
-        const rulesRaw = Array.isArray(typedGroup.rules) ? (typedGroup.rules as Record<string, unknown>[]) : [];
-
-        rulesRaw.forEach((rule, ruleIndex) => {
-          const ruleData = (rule as Record<string, unknown>) ?? {};
-          const part = typeof ruleData.part === "string" ? ruleData.part : "";
-          const normalizedKey = normalizeSelectionPartKey(part);
-          const ruleId = `${serviceId || `service-${groupIndex}`}-${normalizedKey || ruleIndex}`;
-          addRule(ruleData, ruleId, serviceName);
+    if (selectionTemplateGroups.length > 0) {
+      selectionTemplateGroups.forEach((group, groupIndex) => {
+        group.rules.forEach((rule, ruleIndex) => {
+          const normalizedKey = normalizeSelectionPartKey(rule.part);
+          const ruleId = `${group.key}-${groupIndex}-${normalizedKey || ruleIndex}`;
+          addRule(rule, ruleId, group.serviceName ?? null);
         });
-      });
-    } else if (templateRaw.length > 0) {
-      templateRaw.forEach((rule, ruleIndex) => {
-        const ruleData = (rule as Record<string, unknown>) ?? {};
-        const part = typeof ruleData.part === "string" ? ruleData.part : "";
-        const normalizedKey = normalizeSelectionPartKey(part);
-        const ruleId = `rule-${ruleIndex}-${normalizedKey || ruleIndex}`;
-        addRule(ruleData, ruleId, null);
       });
     }
 
     return rules;
-  }, [brandingData.selectionTemplateGroups, brandingData.selectionTemplate, selectionPartCounts, t]);
+  }, [selectionTemplateGroups, selectionPartCounts, t]);
 
   const totalSelectedCount = useMemo(() => {
     if (selectionStats.selected > 0) return selectionStats.selected;
@@ -449,6 +519,73 @@ export default function GalleryDetail() {
     const favoriteKey = normalizeSelectionPartKey(FAVORITES_FILTER_ID);
     return selectionPartCounts[favoriteKey] ?? 0;
   }, [selectionStats.favorites, selectionPartCounts]);
+
+  const handleSelectionTemplateRulesChange = useCallback(
+    (groupKey: string, rules: SelectionTemplateRuleForm[]) => {
+      setSelectionTemplateDraft((prev) =>
+        prev.map((group) => (group.key === groupKey ? { ...group, rules } : group))
+      );
+    },
+    []
+  );
+
+  const handleServiceNameChange = useCallback((groupKey: string, value: string) => {
+    setSelectionTemplateDraft((prev) =>
+      prev.map((group) => (group.key === groupKey ? { ...group, serviceName: value } : group))
+    );
+  }, []);
+
+  const handleAddRuleToGroup = useCallback((groupKey: string) => {
+    setSelectionTemplateDraft((prev) =>
+      prev.map((group) =>
+        group.key === groupKey ? { ...group, rules: [...group.rules, createEmptyRule()] } : group
+      )
+    );
+  }, []);
+
+  const handleToggleGroupDisabled = useCallback((groupKey: string, disabled: boolean) => {
+    setSelectionTemplateDraft((prev) =>
+      prev.map((group) => (group.key === groupKey ? { ...group, disabled } : group))
+    );
+  }, []);
+
+  const handleAddTemplateGroup = useCallback(() => {
+    setSelectionTemplateDraft((prev) => [
+      ...prev,
+      {
+        key: `manual-${prev.length}`,
+        serviceId: null,
+        serviceName: t("sessionDetail.gallery.selectionTemplate.manualGroupTitle", {
+          defaultValue: "İlave kurallar",
+        }),
+        billingType: null,
+        disabled: false,
+        rules: [createEmptyRule()],
+      },
+    ]);
+  }, [t]);
+
+  const cleanSelectionTemplateDraft = useCallback(
+    (groups: SelectionTemplateGroupForm[]) =>
+      groups
+        .map((group, index) => {
+          const rules = group.rules.filter((rule) => {
+            const partValue = typeof rule.part === "string" ? rule.part.trim() : "";
+            const minValue =
+              typeof rule.min === "string" ? rule.min.trim() : rule.min != null ? String(rule.min) : "";
+            const maxValue =
+              typeof rule.max === "string" ? rule.max.trim() : rule.max != null ? String(rule.max) : "";
+            return partValue || minValue || maxValue;
+          });
+          return {
+            ...group,
+            key: group.key || `group-${index}`,
+            rules,
+          };
+        })
+        .filter((group) => group.disabled === true || group.rules.length > 0),
+    []
+  );
 
   const totalPhotosCount = useMemo(
     () => Math.max(selectionStats.total || 0, totalSelectedCount, favoritesCount),
@@ -493,7 +630,9 @@ export default function GalleryDetail() {
       selectionSettings.enabled !== baseline.selectionSettings.enabled ||
       selectionSettings.limit !== baseline.selectionSettings.limit ||
       selectionSettings.deadline !== baseline.selectionSettings.deadline ||
-      selectionSettings.allowFavorites !== baseline.selectionSettings.allowFavorites,
+      selectionSettings.allowFavorites !== baseline.selectionSettings.allowFavorites ||
+      fingerprintSelectionTemplateGroups(selectionTemplateGroups) !==
+        fingerprintSelectionTemplateGroups(baseline.selectionTemplateGroups),
     [
       title,
       baseline.title,
@@ -513,6 +652,8 @@ export default function GalleryDetail() {
       baseline.selectionSettings.deadline,
       selectionSettings.allowFavorites,
       baseline.selectionSettings.allowFavorites,
+      selectionTemplateGroups,
+      baseline.selectionTemplateGroups,
     ]
   );
 
@@ -538,6 +679,7 @@ export default function GalleryDetail() {
       if (error) throw error;
     },
     onSuccess: (_, payload) => {
+      const parsedTemplateGroups = parseSelectionTemplateGroups(payload.branding);
       setBaseline({
         title: payload.title,
         type: payload.type,
@@ -550,7 +692,10 @@ export default function GalleryDetail() {
           deadline: null,
           allowFavorites: true,
         }) as SelectionSettings,
+        selectionTemplateGroups: parsedTemplateGroups,
       });
+      setSelectionTemplateGroups(parsedTemplateGroups);
+      setSelectionTemplateDraft(cloneSelectionTemplateGroups(parsedTemplateGroups));
       setLastSavedAt(new Date().toISOString());
       queryClient.invalidateQueries({ queryKey: ["gallery", id] });
       queryClient.invalidateQueries({ queryKey: ["galleries"] });
@@ -617,6 +762,32 @@ export default function GalleryDetail() {
         delete branding.customType;
       }
       branding.selectionSettings = selectionSettings;
+      const normalizedTemplateGroups = selectionTemplateGroups
+        .map((group) => {
+          const rules = normalizeSelectionTemplate(group.rules) ?? [];
+          return {
+            serviceId: group.serviceId ?? null,
+            serviceName: group.serviceName ?? null,
+            billingType: group.billingType ?? null,
+            disabled: group.disabled === true,
+            rules,
+          };
+        })
+        .filter((group) => group.disabled || group.rules.length > 0);
+
+      if (normalizedTemplateGroups.length > 0) {
+        branding.selectionTemplateGroups = normalizedTemplateGroups.map((group) => ({
+          serviceId: group.serviceId,
+          serviceName: group.serviceName,
+          billingType: group.billingType,
+          rules: group.rules,
+          disabled: group.disabled,
+        }));
+        branding.selectionTemplate = normalizedTemplateGroups.flatMap((group) => group.rules ?? []);
+      } else {
+        delete branding.selectionTemplateGroups;
+        delete branding.selectionTemplate;
+      }
       const payload: UpdatePayload = {
         title: title.trim(),
         type,
@@ -642,6 +813,7 @@ export default function GalleryDetail() {
     eventDate,
     customType,
     selectionSettings,
+    selectionTemplateGroups,
     saveGallery,
     isSaving,
   ]);
@@ -1196,23 +1368,14 @@ export default function GalleryDetail() {
           <div className="space-y-4">
             {type === "proof" ? (
               <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="text-base font-semibold text-foreground">
-                      {t("sessionDetail.gallery.selection.title", { defaultValue: "Selection settings" })}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {t("sessionDetail.gallery.selection.description", {
-                        defaultValue: "Manage client selections for this gallery.",
-                      })}
-                    </p>
-                  </div>
+                <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+                  <p className="text-lg font-semibold text-foreground">Seçim özeti</p>
                   <Button variant="surface" size="sm" onClick={() => setSelectionSheetOpen(true)} className="gap-2">
                     {t("sessionDetail.gallery.selection.open", { defaultValue: "Selection settings" })}
                   </Button>
                 </div>
 
-                <div className="mt-4 space-y-2">
+                <div className="mt-2 space-y-2">
                   {selectionRules.length > 0 ? (
                     <SelectionDashboard
                       rules={selectionRules}
@@ -1224,6 +1387,7 @@ export default function GalleryDetail() {
                         setActiveSelectionRuleId((prev) => (prev === ruleId ? null : ruleId))
                       }
                       onEditRules={() => setSelectionSheetOpen(true)}
+                      showHeader={false}
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground">
@@ -1395,80 +1559,231 @@ export default function GalleryDetail() {
         </SheetContent>
       </Sheet>
       <Sheet open={selectionSheetOpen} onOpenChange={setSelectionSheetOpen}>
-        <SheetContent className="flex h-full flex-col w-full sm:max-w-lg">
+        <SheetContent className="flex h-full flex-col w-full sm:max-w-3xl">
           <SheetHeader>
             <SheetTitle>
               {t("sessionDetail.gallery.selection.title", { defaultValue: "Selection settings" })}
             </SheetTitle>
           </SheetHeader>
-          <div className="space-y-4 py-4">
-            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {t("sessionDetail.gallery.selection.enableLabel", { defaultValue: "Allow selections" })}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t("sessionDetail.gallery.selection.enableHint", {
-                    defaultValue: "Clients can pick favorites for this gallery.",
-                  })}
-                </p>
-              </div>
-              <Switch
-                checked={selectionDraft.enabled}
-                onCheckedChange={(checked) => setSelectionDraft((prev) => ({ ...prev, enabled: checked }))}
-              />
-            </div>
+          <div className="flex-1 space-y-4 overflow-y-auto py-4 pr-1">
+            {(() => {
+              const serviceGroups = selectionTemplateDraft.filter((group) => group.serviceId);
+              const manualGroups = selectionTemplateDraft.filter((group) => !group.serviceId);
+              const manualGroup = manualGroups[0];
+              const manualPillLabel = t("sessionDetail.gallery.selectionTemplate.manualPill", {
+                defaultValue: "Hizmetten bağımsız",
+              });
+              const addGeneralRuleLabel = t("sessionDetail.gallery.selectionTemplate.addGeneralRule", {
+                defaultValue: "İlave kural ekle",
+              });
+              const manualGroupTitle =
+                manualGroup?.serviceName ||
+                t("sessionDetail.gallery.selectionTemplate.manualGroupTitle", {
+                  defaultValue: "İlave kurallar",
+                });
 
-            <div className="space-y-2">
-              <Label>{t("sessionDetail.gallery.selection.limitLabel", { defaultValue: "Selection limit" })}</Label>
-              <Input
-                type="number"
-                min={0}
-                value={selectionDraft.limit ?? ""}
-                onChange={(event) =>
-                  setSelectionDraft((prev) => ({
-                    ...prev,
-                    limit: event.target.value === "" ? null : Number(event.target.value),
-                  }))
+              const renderManualGroup = () => {
+                if (!manualGroup) {
+                  return (
+                    <div className="space-y-2 rounded-lg border border-dashed border-emerald-200/70 bg-white/70 p-3 w-full">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-foreground">
+                            {t("sessionDetail.gallery.selectionTemplate.manualGroupTitle", {
+                              defaultValue: "İlave kurallar",
+                            })}
+                          </p>
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-200 bg-emerald-50 text-emerald-700"
+                          >
+                            {manualPillLabel}
+                          </Badge>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-2 border-emerald-300 text-emerald-700 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 disabled:opacity-60"
+                          onClick={handleAddTemplateGroup}
+                        >
+                          <Plus className="h-4 w-4" />
+                          {addGeneralRuleLabel}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {t("sessionDetail.gallery.selectionTemplate.manualAddPrompt", {
+                          defaultValue: "İlave kural eklemek için tıklayın.",
+                        })}
+                      </p>
+                    </div>
+                  );
                 }
-                placeholder={t("sessionDetail.gallery.selection.limitPlaceholder", { defaultValue: "No limit" })}
-                disabled={!selectionDraft.enabled}
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label>{t("sessionDetail.gallery.selection.deadlineLabel", { defaultValue: "Selection deadline" })}</Label>
-              <DateTimePicker
-                mode="date"
-                value={selectionDraft.deadline ?? ""}
-                onChange={(value) => setSelectionDraft((prev) => ({ ...prev, deadline: value || null }))}
-                buttonClassName="w-full justify-between"
-                popoverModal
-                fullWidth
-                todayLabel={tForms("dateTimePicker.today")}
-                clearLabel={tForms("dateTimePicker.clear")}
-                doneLabel={tForms("dateTimePicker.done")}
-                disabled={!selectionDraft.enabled}
-              />
-            </div>
+                const hasManualRules = (manualGroup.rules?.length ?? 0) > 0;
+                return (
+                  <div className="space-y-2 rounded-lg border border-dashed border-emerald-200/70 bg-white/70 p-3 w-full">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">{manualGroupTitle}</p>
+                        <Badge
+                          variant="outline"
+                          className="border-emerald-200 bg-emerald-50 text-emerald-700"
+                        >
+                          {manualPillLabel}
+                        </Badge>
+                      </div>
+                      <Button
+                        type="button"
+                        variant={hasManualRules ? "outline" : "link"}
+                        size="sm"
+                        className={cn(
+                          "h-8 gap-2",
+                          hasManualRules
+                            ? "border-emerald-300 text-emerald-700 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 disabled:opacity-60"
+                            : "px-0 text-emerald-700 hover:text-emerald-800 disabled:opacity-60"
+                        )}
+                        onClick={() => handleAddRuleToGroup(manualGroup.key)}
+                      >
+                        <Plus className="h-4 w-4" />
+                        {addGeneralRuleLabel}
+                      </Button>
+                    </div>
+                    {hasManualRules ? (
+                      <SelectionTemplateSection
+                        enabled
+                        rules={manualGroup.rules}
+                        onRulesChange={(rules) => handleSelectionTemplateRulesChange(manualGroup.key, rules)}
+                        tone="emerald"
+                        showHeader={false}
+                        showToggle={false}
+                        variant="unstyled"
+                        showAddButton={false}
+                      />
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {t("sessionDetail.gallery.selectionTemplate.manualAddPrompt", {
+                          defaultValue: "İlave kural eklemek için tıklayın.",
+                        })}
+                      </p>
+                    )}
+                  </div>
+                );
+              };
 
-            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {t("sessionDetail.gallery.selection.favoritesLabel", { defaultValue: "Allow favorites" })}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t("sessionDetail.gallery.selection.favoritesHint", {
-                    defaultValue: "Clients can mark photos as favorites.",
-                  })}
-                </p>
-              </div>
-              <Switch
-                checked={selectionDraft.allowFavorites}
-                onCheckedChange={(checked) => setSelectionDraft((prev) => ({ ...prev, allowFavorites: checked }))}
-                disabled={!selectionDraft.enabled}
-              />
-            </div>
+              if (serviceGroups.length === 0 && !manualGroup) {
+                return (
+                  <div className="space-y-2 rounded-lg border border-dashed border-emerald-200/70 bg-white/70 p-3 w-full">
+                    <p className="text-sm text-muted-foreground">
+                      {t("sessionDetail.gallery.selectionTemplate.noTemplate", {
+                        defaultValue: "Henüz seçim kuralı eklenmedi. Kuralları buradan ekleyebilirsiniz.",
+                      })}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-2 border-emerald-300 text-emerald-700 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800"
+                        onClick={handleAddTemplateGroup}
+                      >
+                        <Plus className="h-4 w-4" />
+                        {addGeneralRuleLabel}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+                  <div className="space-y-4">
+                    {serviceGroups.map((group) => {
+                      const defaultServiceLabel = t("sessionDetail.gallery.selectionTemplate.customLabel", {
+                        defaultValue: "Özel seçim kuralları",
+                      });
+                      const serviceNameValue = group.serviceName ?? defaultServiceLabel;
+                      const isDisabled = Boolean(group.disabled);
+                      return (
+                        <div key={group.key} className="space-y-2 w-full">
+                          <div className="space-y-2 rounded-lg border border-emerald-100 bg-white/80 p-3 w-full">
+                            <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
+                              <div className="flex min-w-[220px] flex-1 flex-col gap-1">
+                                <Input
+                                  value={serviceNameValue}
+                                  onChange={(event) => handleServiceNameChange(group.key, event.target.value)}
+                                  className="h-8 text-sm"
+                                  disabled={isDisabled}
+                                  aria-label={t("sessionDetail.gallery.selectionTemplate.serviceNameInput", {
+                                    defaultValue: "Hizmet adı",
+                                  })}
+                                />
+                                {!isDisabled ? (
+                                  <p className="text-[11px] text-muted-foreground">
+                                    {t("sessionDetail.gallery.selectionTemplate.serviceNameHelper", {
+                                      defaultValue: "Müşterinin göreceği hizmet adı",
+                                    })}
+                                  </p>
+                                ) : null}
+                              </div>
+                              {group.serviceId ? (
+                                <div className="flex items-center gap-2">
+                                  {!isDisabled ? (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8 gap-2 border-emerald-300 text-emerald-700 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800"
+                                      onClick={() => handleAddRuleToGroup(group.key)}
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                      {tForms("service.selection_template.add_rule")}
+                                    </Button>
+                                  ) : null}
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 text-emerald-700 hover:text-emerald-800"
+                                    onClick={() => handleToggleGroupDisabled(group.key, !isDisabled)}
+                                  >
+                                    {isDisabled
+                                      ? t("sessionDetail.gallery.selectionTemplate.enableSelections", {
+                                          defaultValue: "Seçime aç",
+                                        })
+                                      : t("sessionDetail.gallery.selectionTemplate.disableSelections", {
+                                          defaultValue: "Seçime kapat",
+                                        })}
+                                  </Button>
+                                </div>
+                              ) : null}
+                            </div>
+                            {isDisabled ? (
+                              <p className="text-xs text-muted-foreground">
+                                {t("sessionDetail.gallery.selectionTemplate.disabledHint", {
+                                  defaultValue: "Bu hizmet için seçimler kapalı.",
+                                })}
+                              </p>
+                            ) : (
+                              <SelectionTemplateSection
+                                enabled
+                                rules={group.rules}
+                                onRulesChange={(rules) => handleSelectionTemplateRulesChange(group.key, rules)}
+                                tone="emerald"
+                                showHeader={false}
+                                showToggle={false}
+                                variant="unstyled"
+                                showAddButton={false}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {renderManualGroup()}
+                </div>
+              );
+            })()}
           </div>
           <SheetFooter className="mt-auto gap-2 border-t border-border/60 bg-background pt-4 [&>button]:w-full sm:[&>button]:flex-1">
             <Button variant="outline" onClick={() => setSelectionSheetOpen(false)}>
@@ -1477,6 +1792,9 @@ export default function GalleryDetail() {
             <Button
               onClick={() => {
                 setSelectionSettings(selectionDraft);
+                const cleanedGroups = cleanSelectionTemplateDraft(selectionTemplateDraft);
+                setSelectionTemplateGroups(cleanedGroups);
+                setSelectionTemplateDraft(cloneSelectionTemplateGroups(cleanedGroups));
                 setSelectionSheetOpen(false);
               }}
             >

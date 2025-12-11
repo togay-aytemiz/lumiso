@@ -820,42 +820,46 @@ export default function SessionGallery({
                                         handleServiceNameChange(group.key, event.target.value)
                                       }
                                       className="h-8 text-sm"
+                                      disabled={isDisabled}
                                       aria-label={t(
                                         "sessionDetail.gallery.selectionTemplate.serviceNameInput",
                                         { defaultValue: "Hizmet adı" }
                                       )}
                                     />
-                                    <p className="text-[11px] text-muted-foreground">
-                                      {t("sessionDetail.gallery.selectionTemplate.serviceNameHelper", {
-                                        defaultValue: "Müşterinin göreceği hizmet adı",
-                                      })}
-                                    </p>
+                                    {!isDisabled ? (
+                                      <p className="text-[11px] text-muted-foreground">
+                                        {t("sessionDetail.gallery.selectionTemplate.serviceNameHelper", {
+                                          defaultValue: "Müşterinin göreceği hizmet adı",
+                                        })}
+                                      </p>
+                                    ) : null}
                                   </div>
                                   {group.serviceId ? (
                                     <div className="flex items-center gap-2">
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 gap-2 border-emerald-300 text-emerald-700 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 disabled:opacity-60"
-                                        onClick={() =>
-                                          setSelectionGroups((prev) =>
-                                            prev.map((item) =>
-                                              item.key === group.key
-                                                ? {
-                                                    ...item,
-                                                    rules: [...item.rules, createEmptyRule()],
-                                                    kind: "service",
-                                                  }
-                                                : item
+                                      {!isDisabled ? (
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8 gap-2 border-emerald-300 text-emerald-700 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800"
+                                          onClick={() =>
+                                            setSelectionGroups((prev) =>
+                                              prev.map((item) =>
+                                                item.key === group.key
+                                                  ? {
+                                                      ...item,
+                                                      rules: [...item.rules, createEmptyRule()],
+                                                      kind: "service",
+                                                    }
+                                                  : item
+                                              )
                                             )
-                                          )
-                                        }
-                                        disabled={isDisabled}
-                                      >
-                                        <Plus className="h-4 w-4" />
-                                        {tForms("service.selection_template.add_rule")}
-                                      </Button>
+                                          }
+                                        >
+                                          <Plus className="h-4 w-4" />
+                                          {tForms("service.selection_template.add_rule")}
+                                        </Button>
+                                      ) : null}
                                       <Button
                                         type="button"
                                         variant="ghost"

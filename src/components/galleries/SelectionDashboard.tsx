@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Check, CheckCircle2, Heart, LayoutGrid, ListChecks } from "lucide-react";
 
@@ -21,6 +20,7 @@ interface SelectionDashboardProps {
   activeRuleId: string | null;
   onSelectRuleFilter: (id: string | null) => void;
   onEditRules?: () => void;
+  showHeader?: boolean;
 }
 
 export function SelectionDashboard({
@@ -30,7 +30,8 @@ export function SelectionDashboard({
   totalSelected,
   activeRuleId,
   onSelectRuleFilter,
-  onEditRules,
+  onEditRules: _onEditRules,
+  showHeader = true,
 }: SelectionDashboardProps) {
   const resolvedRules = rules ?? [];
 
@@ -46,21 +47,13 @@ export function SelectionDashboard({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between px-1">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-          Seçim Özeti
-        </h2>
-        {onEditRules ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-3 text-xs font-medium text-primary hover:text-primary"
-            onClick={onEditRules}
-          >
-            Seçim Kurallarını Düzenle
-          </Button>
-        ) : null}
-      </div>
+      {showHeader ? (
+        <div className="flex items-center px-1">
+          <h2 className="text-sm font-semibold text-slate-900">
+            Seçim özeti
+          </h2>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         <button
@@ -197,6 +190,9 @@ export function SelectionDashboard({
                   <p className="truncate text-xs font-semibold text-slate-900" title={rule.title}>
                     {rule.title}
                   </p>
+                  {rule.serviceName ? (
+                    <p className="truncate text-[10px] text-slate-400">{rule.serviceName}</p>
+                  ) : null}
                   <p
                     className={cn(
                       "truncate text-[10px] font-medium",
@@ -205,9 +201,6 @@ export function SelectionDashboard({
                   >
                     {ruleStatus.text}
                   </p>
-                  {rule.serviceName ? (
-                    <p className="truncate text-[10px] text-slate-400">{rule.serviceName}</p>
-                  ) : null}
                 </div>
               </div>
 

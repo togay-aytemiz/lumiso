@@ -23,7 +23,9 @@ export const createEmptyRule = (): SelectionTemplateRuleForm => ({
   required: true,
 });
 
-export const deserializeSelectionTemplate = (template: unknown): SelectionTemplateRuleForm[] => {
+export const deserializeSelectionTemplate = (
+  template: unknown
+): SelectionTemplateRuleForm[] => {
   if (!Array.isArray(template)) return [];
 
   return template
@@ -43,7 +45,9 @@ export const deserializeSelectionTemplate = (template: unknown): SelectionTempla
     .filter(Boolean) as SelectionTemplateRuleForm[];
 };
 
-export const normalizeSelectionTemplate = (rules: SelectionTemplateRuleForm[]) => {
+export const normalizeSelectionTemplate = (
+  rules: SelectionTemplateRuleForm[]
+) => {
   const clampNumber = (value: string) => {
     const parsed = parseInt(value, 10);
     return Number.isFinite(parsed) ? parsed : null;
@@ -72,10 +76,16 @@ interface SelectionTemplateEditorProps {
   onChange: (rules: SelectionTemplateRuleForm[]) => void;
 }
 
-const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorProps) => {
+const SelectionTemplateEditor = ({
+  rules,
+  onChange,
+}: SelectionTemplateEditorProps) => {
   const { t } = useFormsTranslation();
 
-  const handleUpdateRule = (id: string, updates: Partial<SelectionTemplateRuleForm>) => {
+  const handleUpdateRule = (
+    id: string,
+    updates: Partial<SelectionTemplateRuleForm>
+  ) => {
     onChange(
       rules.map((rule) => (rule.id === id ? { ...rule, ...updates } : rule))
     );
@@ -95,8 +105,12 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
         <div className="divide-y divide-border/60 rounded-lg border border-border/70 bg-white/80 shadow-xs">
           {rules.map((rule, index) => {
             const isFirst = index === 0;
-            const minLabel = t("service.selection_template.min_helper", { defaultValue: "En az" });
-            const maxLabel = t("service.selection_template.max_helper", { defaultValue: "En fazla" });
+            const minLabel = t("service.selection_template.min_helper", {
+              defaultValue: "En az",
+            });
+            const maxLabel = t("service.selection_template.max_helper", {
+              defaultValue: "En fazla",
+            });
             const showMinHeader = isFirst;
             const showMaxHeader = isFirst;
             const showMinHelper = isFirst && Boolean(rule.min);
@@ -106,23 +120,32 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
               <div
                 key={rule.id}
                 className={cn(
-                  "grid w-full gap-2 p-3 sm:grid-cols-[120px,minmax(0,1fr),90px,90px,90px] sm:items-center",
-                  isFirst && "pt-5"
+                  "grid w-full gap-2 p-3 sm:grid-cols-[70px,minmax(0,1.8fr),90px,90px,90px] sm:items-center",
+                  isFirst && "pt-3"
                 )}
               >
                 <div className="flex flex-col items-start gap-1">
                   <span className="text-xs font-semibold text-muted-foreground">
-                    {t("service.selection_template.rule_label", { index: index + 1 })}
+                    {t("service.selection_template.rule_label", {
+                      index: index + 1,
+                    })}
                   </span>
                   <button
                     type="button"
                     onClick={() => handleRemoveRule(rule.id)}
                     className="text-xs font-semibold text-red-600 hover:text-red-700"
                   >
-                    {t("service.selection_template.remove_rule", { defaultValue: "Sil" })}
+                    {t("service.selection_template.remove_rule", {
+                      defaultValue: "Sil",
+                    })}
                   </button>
                 </div>
-                <div className={cn("flex w-full flex-col", isFirst ? "gap-1" : "gap-0")}>
+                <div
+                  className={cn(
+                    "flex w-full flex-col",
+                    isFirst ? "gap-1" : "gap-0"
+                  )}
+                >
                   {isFirst ? (
                     <p className="text-[11px] leading-tight text-muted-foreground">
                       {t("service.selection_template.part_helper", {
@@ -136,11 +159,18 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
                     onChange={(event) =>
                       handleUpdateRule(rule.id, { part: event.target.value })
                     }
-                    placeholder={t("service.selection_template.part_placeholder")}
+                    placeholder={t(
+                      "service.selection_template.part_placeholder"
+                    )}
                     aria-label={t("service.selection_template.part_label")}
                   />
                 </div>
-                <div className={cn("flex w-full flex-col", showMinHeader ? "gap-1" : "gap-0")}>
+                <div
+                  className={cn(
+                    "flex w-full flex-col",
+                    showMinHeader ? "gap-1" : "gap-0"
+                  )}
+                >
                   {showMinHeader ? (
                     <p
                       className={cn(
@@ -153,7 +183,10 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
                     </p>
                   ) : null}
                   <Input
-                    className={cn("h-8 w-full text-sm", showMinHeader && "mt-1")}
+                    className={cn(
+                      "h-8 w-full text-sm",
+                      showMinHeader && "mt-1"
+                    )}
                     type="text"
                     inputMode="numeric"
                     value={rule.min}
@@ -164,7 +197,12 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
                     aria-label={minLabel}
                   />
                 </div>
-                <div className={cn("flex w-full flex-col", showMaxHeader ? "gap-1" : "gap-0")}>
+                <div
+                  className={cn(
+                    "flex w-full flex-col",
+                    showMaxHeader ? "gap-1" : "gap-0"
+                  )}
+                >
                   {showMaxHeader ? (
                     <p
                       className={cn(
@@ -177,7 +215,10 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
                     </p>
                   ) : null}
                   <Input
-                    className={cn("h-8 w-full text-sm", showMaxHeader && "mt-1")}
+                    className={cn(
+                      "h-8 w-full text-sm",
+                      showMaxHeader && "mt-1"
+                    )}
                     type="text"
                     inputMode="numeric"
                     value={rule.max}
@@ -199,7 +240,9 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
                     className="h-4 w-4 rounded border-border text-emerald-600 focus:ring-emerald-500"
                     checked={rule.required}
                     onChange={(event) =>
-                      handleUpdateRule(rule.id, { required: event.target.checked })
+                      handleUpdateRule(rule.id, {
+                        required: event.target.checked,
+                      })
                     }
                     aria-label={t("service.selection_template.required_label")}
                   />
@@ -284,7 +327,8 @@ export function SelectionTemplateSection({
               {titleOverride ?? t("service.selection_template.title")}
             </p>
             <p className="text-xs text-muted-foreground">
-              {descriptionOverride ?? t("service.selection_template.description")}
+              {descriptionOverride ??
+                t("service.selection_template.description")}
             </p>
           </div>
           {onToggleRequest && showToggle ? (

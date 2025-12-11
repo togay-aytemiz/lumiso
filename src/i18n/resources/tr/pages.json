@@ -643,8 +643,8 @@
         },
         "learnMore": "Set nasıl çalışır?",
         "info": {
-          "title": "Aynı çekimde bölümler aç",
-          "description": "Bir günü tek galeride tutarken bölümlere ayır: dış mekan, düğün anı, after party gibi. Tek listeyi kaydırmak yerine her bölüm net olsun.",
+          "title": "Set nasıl çalışır?",
+          "description": "Setleri aynı çekimdeki bölümleri ayırmak için kullan; her bölüm net kalsın.",
           "sections": [
             {
               "title": "Günü akışa göre böl",

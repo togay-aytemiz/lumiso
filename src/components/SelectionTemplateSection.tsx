@@ -182,6 +182,7 @@ interface SelectionTemplateSectionProps {
   showToggle?: boolean;
   titleOverride?: string;
   descriptionOverride?: string;
+  showAddButton?: boolean;
 }
 
 export function SelectionTemplateSection({
@@ -196,6 +197,7 @@ export function SelectionTemplateSection({
   showToggle = true,
   titleOverride,
   descriptionOverride,
+  showAddButton = true,
 }: SelectionTemplateSectionProps) {
   const { t } = useFormsTranslation();
   const palette =
@@ -203,12 +205,14 @@ export function SelectionTemplateSection({
       ? {
           border: "border-emerald-200",
           background: "bg-emerald-50/40",
-          addButton: "border-emerald-300 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100 hover:text-emerald-800",
+          addButton:
+            "border-emerald-300 text-emerald-700 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800",
         }
       : {
           border: "border-indigo-200",
           background: "bg-indigo-50/40",
-          addButton: "border-indigo-300 text-indigo-700 hover:border-indigo-400 hover:bg-indigo-100 hover:text-indigo-800",
+          addButton:
+            "border-indigo-300 text-indigo-700 bg-white hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-800",
         };
 
   const handleAddRule = () => {
@@ -254,18 +258,20 @@ export function SelectionTemplateSection({
 
       {enabled ? (
         <div className="space-y-3 pt-1">
-          <div className="flex items-center justify-end gap-3">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={handleAddRule}
-              className={cn("gap-2", palette.addButton)}
-            >
-              <Plus className="h-4 w-4" />
-              {t("service.selection_template.add_rule")}
-            </Button>
-          </div>
+          {showAddButton ? (
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleAddRule}
+                className={cn("gap-2", palette.addButton)}
+              >
+                <Plus className="h-4 w-4" />
+                {t("service.selection_template.add_rule")}
+              </Button>
+            </div>
+          ) : null}
           <SelectionTemplateEditor rules={rules} onChange={onRulesChange} />
         </div>
       ) : null}

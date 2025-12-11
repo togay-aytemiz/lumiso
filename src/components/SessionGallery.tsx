@@ -145,7 +145,7 @@ export default function SessionGallery({
     [t]
   );
   const typeCardBase =
-    "group flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+    "group flex items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
   const seedRulesIfEmpty = useCallback(
     (rules: SelectionTemplateRuleForm[]) => (rules.length > 0 ? rules : [createEmptyRule()]),
@@ -247,6 +247,7 @@ export default function SessionGallery({
       setProjectHasServices(null);
       return;
     }
+    setFormType("");
     if (selectionInitializedRef.current) return;
     selectionInitializedRef.current = true;
     void loadSelectionTemplate();
@@ -621,21 +622,21 @@ export default function SessionGallery({
                           : "border-dashed border-emerald-300/70 bg-white/60 hover:border-emerald-400",
                         isSelected && "border-emerald-500 bg-emerald-50 shadow-sm",
                         hasTypeSelected && !isSelected && "opacity-70 hover:opacity-100",
-                        hasTypeSelected ? "py-3" : "py-4"
+                        hasTypeSelected ? "py-2.5" : "py-3.5"
                       )}
                       aria-pressed={isSelected}
                     >
                       <span
                         className={cn(
-                          "flex h-10 w-10 items-center justify-center rounded-full border text-emerald-600 transition-colors",
+                          "flex h-9 w-9 items-center justify-center rounded-full border text-emerald-600 transition-colors",
                           isSelected ? "border-emerald-200 bg-white" : "border-emerald-100 bg-emerald-50"
                         )}
                       >
-                        <option.icon className="h-5 w-5" aria-hidden="true" />
+                        <option.icon className="h-4.5 w-4.5" aria-hidden="true" />
                       </span>
-                      <div className="flex flex-col items-start space-y-1 text-left">
-                        <span className="font-semibold text-foreground">{option.label}</span>
-                        <span className="text-xs leading-relaxed text-muted-foreground">
+                      <div className="flex flex-col items-start space-y-0.5 text-left">
+                        <span className="text-sm font-semibold text-foreground">{option.label}</span>
+                        <span className="text-[11px] leading-snug text-muted-foreground">
                           {option.description}
                         </span>
                       </div>
@@ -645,134 +646,134 @@ export default function SessionGallery({
               </div>
             </div>
             {formType === "proof" && selectionGroups.length > 0 && (
-              (() => {
-                const hasServiceTemplates = selectionGroups.some((group) => group.serviceId);
-                if (!hasServiceTemplates) {
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">
+                  {tForms("service.selection_template.title")}
+                </Label>
+                {(() => {
+                  const hasServiceTemplates = selectionGroups.some((group) => group.serviceId);
+                  if (!hasServiceTemplates) {
+                    return (
+                      <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+                        {selectionInfo.text ? (
+                          <p
+                            className={cn(
+                              "rounded-lg border bg-muted/40 px-3 py-2 text-xs leading-relaxed",
+                              selectionInfo.tone === "destructive"
+                                ? "border-destructive/40 text-destructive"
+                                : selectionInfo.tone === "success"
+                                  ? "border-emerald-200 text-emerald-700"
+                                  : selectionInfo.tone === "warning"
+                                    ? "border-amber-300/70 text-amber-800 bg-amber-50/80"
+                                    : "border-border/70 text-muted-foreground"
+                            )}
+                          >
+                            {selectionInfo.text}
+                          </p>
+                        ) : null}
+                        <SelectionTemplateSection
+                          enabled={selectionEnabled}
+                          onToggleRequest={handleSelectionToggle}
+                          rules={selectionGroups[0]?.rules ?? []}
+                          onRulesChange={(rules) =>
+                            setSelectionGroups((prev) =>
+                              prev.length > 0
+                                ? prev.map((item, index) =>
+                                    index === 0 ? { ...item, rules } : item
+                                  )
+                                : [
+                                    {
+                                      key: "manual",
+                                      serviceId: null,
+                                      serviceName: t(
+                                        "sessionDetail.gallery.selectionTemplate.customLabel"
+                                      ),
+                                      billingType: null,
+                                      rules,
+                                    },
+                                  ]
+                            )
+                          }
+                          tone="emerald"
+                        />
+                      </div>
+                    );
+                  }
+
                   return (
                     <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
-                      <Label className="text-sm font-semibold text-foreground">
-                        {tForms("service.selection_template.title")}
-                      </Label>
-                      {selectionInfo.text ? (
-                        <p
-                          className={cn(
-                            "rounded-lg border bg-muted/40 px-3 py-2 text-xs leading-relaxed",
-                            selectionInfo.tone === "destructive"
-                              ? "border-destructive/40 text-destructive"
-                              : selectionInfo.tone === "success"
-                                ? "border-emerald-200 text-emerald-700"
-                                : selectionInfo.tone === "warning"
-                                  ? "border-amber-300/70 text-amber-800 bg-amber-50/80"
-                                  : "border-border/70 text-muted-foreground"
-                          )}
-                        >
-                          {selectionInfo.text}
-                        </p>
-                      ) : null}
-                      <SelectionTemplateSection
-                        enabled={selectionEnabled}
-                        onToggleRequest={handleSelectionToggle}
-                        rules={selectionGroups[0]?.rules ?? []}
-                        onRulesChange={(rules) =>
-                          setSelectionGroups((prev) =>
-                            prev.length > 0
-                              ? prev.map((item, index) =>
-                                  index === 0 ? { ...item, rules } : item
-                                )
-                              : [
-                                  {
-                                    key: "manual",
-                                    serviceId: null,
-                                    serviceName: t(
-                                      "sessionDetail.gallery.selectionTemplate.customLabel"
-                                    ),
-                                    billingType: null,
-                                    rules,
-                                  },
-                                ]
-                          )
-                        }
-                        tone="emerald"
-                      />
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
-                    <Label className="text-sm font-semibold text-foreground">
-                      {tForms("service.selection_template.title")}
-                    </Label>
-                    <div className="space-y-4">
-                      {selectionGroups.map((group) => {
-                        const billingLabel =
-                          group.billingType === "included"
-                            ? t("sessionDetail.gallery.selectionTemplate.billingIncluded", {
-                                defaultValue: "Paket hizmeti",
-                              })
-                            : group.billingType === "extra"
-                              ? t("sessionDetail.gallery.selectionTemplate.billingExtra", {
-                                  defaultValue: "Ekstra hizmet",
+                      <div className="space-y-4">
+                        {selectionGroups.map((group) => {
+                          const billingLabel =
+                            group.billingType === "included"
+                              ? t("sessionDetail.gallery.selectionTemplate.billingIncluded", {
+                                  defaultValue: "Paket hizmeti",
                                 })
-                              : null;
-                        return (
-                          <div key={group.key} className="space-y-2">
-                            <div className="flex items-center justify-between gap-2">
-                              <div>
-                                <p className="text-sm font-semibold text-foreground">
-                                  {group.serviceName ||
-                                    t("sessionDetail.gallery.selectionTemplate.customLabel", {
-                                      defaultValue: "Özel seçim kuralları",
-                                    })}
-                                </p>
-                                {billingLabel ? (
-                                  <p className="text-xs text-muted-foreground">{billingLabel}</p>
-                                ) : null}
-                              </div>
+                              : group.billingType === "extra"
+                                ? t("sessionDetail.gallery.selectionTemplate.billingExtra", {
+                                    defaultValue: "Ekstra hizmet",
+                                  })
+                                : null;
+                          return (
+                            <div key={group.key} className="space-y-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <div>
+                                  <p className="text-sm font-semibold text-foreground">
+                                    {group.serviceName ||
+                                      t("sessionDetail.gallery.selectionTemplate.customLabel", {
+                                        defaultValue: "Özel seçim kuralları",
+                                      })}
+                                  </p>
+                                  {billingLabel ? (
+                                    <p className="text-xs text-muted-foreground">{billingLabel}</p>
+                                  ) : null}
+                                </div>
                               {group.serviceId ? (
                                 <Button
                                   type="button"
                                   variant="outline"
                                   size="sm"
-                                  className="h-8 gap-2 border-emerald-300 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100"
+                                  className="h-8 gap-2 border-emerald-300 text-emerald-700 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800"
                                   onClick={() =>
                                     setSelectionGroups((prev) =>
                                       prev.map((item) =>
                                         item.key === group.key
                                           ? { ...item, rules: [...item.rules, createEmptyRule()] }
-                                          : item
+                                            : item
+                                        )
                                       )
+                                    }
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                    {tForms("service.selection_template.add_rule")}
+                                  </Button>
+                                ) : null}
+                              </div>
+                              <SelectionTemplateSection
+                                enabled={selectionEnabled}
+                                onToggleRequest={undefined}
+                                rules={group.rules}
+                                onRulesChange={(rules) =>
+                                  setSelectionGroups((prev) =>
+                                    prev.map((item) =>
+                                      item.key === group.key ? { ...item, rules } : item
                                     )
-                                  }
-                                >
-                                  <Plus className="h-4 w-4" />
-                                  {tForms("service.selection_template.add_rule")}
-                                </Button>
-                              ) : null}
-                            </div>
-                            <SelectionTemplateSection
-                              enabled={selectionEnabled}
-                              onToggleRequest={undefined}
-                              rules={group.rules}
-                              onRulesChange={(rules) =>
-                                setSelectionGroups((prev) =>
-                                  prev.map((item) =>
-                                    item.key === group.key ? { ...item, rules } : item
                                   )
-                                )
-                              }
-                              tone="emerald"
-                              showHeader={false}
-                              showToggle={false}
-                              variant="unstyled"
-                            />
-                          </div>
-                        );
-                      })}
+                                }
+                                tone="emerald"
+                                showHeader={false}
+                                showToggle={false}
+                                variant="unstyled"
+                                showAddButton={false}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                );
-              })()
+                  );
+                })()}
+              </div>
             )}
           </div>
           <SheetFooter className="mt-2 gap-2 border-t bg-background px-0 pt-4 [&>button]:w-full sm:[&>button]:flex-1">

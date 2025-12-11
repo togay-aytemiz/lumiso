@@ -824,20 +824,14 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
           )}
 
           {isDeliverable && (
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-foreground">
-                {t("service.selection_template.title")}
-              </Label>
-              <SelectionTemplateSection
-                enabled={formData.selection_enabled}
-                onToggleRequest={handleSelectionToggleRequest}
-                rules={formData.selection_rules}
-                onRulesChange={(rules) =>
-                  setFormData((prev) => ({ ...prev, selection_rules: rules }))
-                }
-                showHeader={false}
-              />
-            </div>
+            <SelectionTemplateSection
+              enabled={formData.selection_enabled}
+              onToggleRequest={handleSelectionToggleRequest}
+              rules={formData.selection_rules}
+              onRulesChange={(rules) =>
+                setFormData((prev) => ({ ...prev, selection_rules: rules }))
+              }
+            />
           )}
 
           <div className="space-y-2">
@@ -1538,20 +1532,14 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           )}
 
           {isDeliverable && (
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-foreground">
-                {t("service.selection_template.title")}
-              </Label>
-              <SelectionTemplateSection
-                enabled={formData.selection_enabled}
-                onToggleRequest={handleSelectionToggleRequest}
-                rules={formData.selection_rules}
-                onRulesChange={(rules) =>
-                  setFormData((prev) => ({ ...prev, selection_rules: rules }))
-                }
-                showHeader={false}
-              />
-            </div>
+            <SelectionTemplateSection
+              enabled={formData.selection_enabled}
+              onToggleRequest={handleSelectionToggleRequest}
+              rules={formData.selection_rules}
+              onRulesChange={(rules) =>
+                setFormData((prev) => ({ ...prev, selection_rules: rules }))
+              }
+            />
           )}
 
             <div className="space-y-2">

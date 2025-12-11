@@ -86,84 +86,119 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
   };
 
   return (
-    <div className="space-y-3 w-full">
+    <div className="space-y-3">
       {rules.length === 0 ? (
         <p className="text-xs text-muted-foreground">
           {t("service.selection_template.empty_state")}
         </p>
       ) : (
         <div className="divide-y divide-border/60 rounded-lg border border-border/70 bg-white/80 shadow-xs">
-          {rules.map((rule, index) => (
-            <div
-              key={rule.id}
-              className="grid w-full gap-2 p-3 sm:grid-cols-[80px,minmax(0,1fr),90px,90px,90px,40px] sm:items-center"
-            >
-              <span className="text-xs font-semibold text-muted-foreground">
-                {t("service.selection_template.rule_label", { index: index + 1 })}
-              </span>
-              <Input
-                className="w-full"
-                value={rule.part}
-                onChange={(event) =>
-                  handleUpdateRule(rule.id, { part: event.target.value })
-                }
-                placeholder={t("service.selection_template.part_placeholder")}
-                aria-label={t("service.selection_template.part_label")}
-              />
-              <Input
-                className="w-full"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                value={rule.min}
-                onChange={(event) =>
-                  handleUpdateRule(rule.id, { min: event.target.value })
-                }
-                placeholder={t("service.selection_template.min_label")}
-                aria-label={t("service.selection_template.min_label")}
-              />
-              <Input
-                className="w-full"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                value={rule.max}
-                onChange={(event) =>
-                  handleUpdateRule(rule.id, { max: event.target.value })
-                }
-                placeholder={t("service.selection_template.max_label")}
-                aria-label={t("service.selection_template.max_label")}
-              />
-              <label className="flex cursor-pointer select-none items-center gap-1 whitespace-nowrap">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-border text-emerald-600 focus:ring-emerald-500"
-                  checked={rule.required}
-                  onChange={(event) =>
-                    handleUpdateRule(rule.id, { required: event.target.checked })
-                  }
-                  aria-label={t("service.selection_template.required_label")}
-                />
-                <span className="text-xs text-muted-foreground">
-                  {rule.required
-                    ? t("service.selection_template.required_on")
-                    : t("service.selection_template.required_off")}
+          {rules.map((rule, index) => {
+            const isFirst = index === 0;
+            const minLabel = t("service.selection_template.min_helper", { defaultValue: "En az" });
+            const maxLabel = t("service.selection_template.max_helper", { defaultValue: "En fazla" });
+            const showMinHelper = isFirst && Boolean(rule.min);
+            const showMaxHelper = isFirst && Boolean(rule.max);
+
+            return (
+              <div
+                key={rule.id}
+                className={cn(
+                  "grid w-full gap-2 p-3 sm:grid-cols-[80px,minmax(0,1fr),90px,90px,90px,40px] sm:items-center",
+                  isFirst && "pt-5"
+                )}
+              >
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {t("service.selection_template.rule_label", { index: index + 1 })}
                 </span>
-              </label>
-              <div className="flex items-center justify-end">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={() => handleRemoveRule(rule.id)}
-                  aria-label={t("service.selection_template.remove_rule_aria")}
+                <div className={cn("flex w-full flex-col", isFirst ? "gap-1" : "gap-0")}>
+                  {isFirst ? (
+                    <p className="text-[11px] leading-tight text-muted-foreground">
+                      {t("service.selection_template.part_helper", {
+                        defaultValue: "Müşterinin göreceği başlık",
+                      })}
+                    </p>
+                  ) : null}
+                  <Input
+                    className={cn("h-8 w-full text-sm", isFirst && "mt-1")}
+                    value={rule.part}
+                    onChange={(event) =>
+                      handleUpdateRule(rule.id, { part: event.target.value })
+                    }
+                    placeholder={t("service.selection_template.part_placeholder")}
+                    aria-label={t("service.selection_template.part_label")}
+                  />
+                </div>
+                <div className={cn("flex w-full flex-col", showMinHelper ? "gap-1" : "gap-0")}>
+                  {showMinHelper ? (
+                    <p className="text-[11px] leading-tight text-muted-foreground">{minLabel}</p>
+                  ) : null}
+                  <Input
+                    className={cn("h-8 w-full text-sm", showMinHelper && "mt-1")}
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    value={rule.min}
+                    onChange={(event) =>
+                      handleUpdateRule(rule.id, { min: event.target.value })
+                    }
+                    placeholder={minLabel}
+                    aria-label={minLabel}
+                  />
+                </div>
+                <div className={cn("flex w-full flex-col", showMaxHelper ? "gap-1" : "gap-0")}>
+                  {showMaxHelper ? (
+                    <p className="text-[11px] leading-tight text-muted-foreground">{maxLabel}</p>
+                  ) : null}
+                  <Input
+                    className={cn("h-8 w-full text-sm", showMaxHelper && "mt-1")}
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    value={rule.max}
+                    onChange={(event) =>
+                      handleUpdateRule(rule.id, { max: event.target.value })
+                    }
+                    placeholder={maxLabel}
+                    aria-label={maxLabel}
+                  />
+                </div>
+                <label
+                  className={cn(
+                    "flex cursor-pointer select-none items-center gap-1 whitespace-nowrap",
+                    isFirst && "mt-5"
+                  )}
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-border text-emerald-600 focus:ring-emerald-500"
+                    checked={rule.required}
+                    onChange={(event) =>
+                      handleUpdateRule(rule.id, { required: event.target.checked })
+                    }
+                    aria-label={t("service.selection_template.required_label")}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {rule.required
+                      ? t("service.selection_template.required_on")
+                      : t("service.selection_template.required_off")}
+                  </span>
+                </label>
+                <div className="flex items-center justify-end">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => handleRemoveRule(rule.id)}
+                    aria-label={t("service.selection_template.remove_rule_aria")}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

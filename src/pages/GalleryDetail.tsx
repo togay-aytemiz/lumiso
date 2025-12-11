@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TemplateBuilderHeader } from "@/components/template-builder/TemplateBuilderHeader";
 import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
+import { SelectionDashboard, FAVORITES_FILTER_ID, type SelectionRule } from "@/components/galleries/SelectionDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -51,6 +51,11 @@ interface GallerySetRow {
   order_index: number | null;
 }
 
+interface ClientSelectionRow {
+  id: string;
+  selection_part: string | null;
+}
+
 interface UpdatePayload {
   title: string;
   type: GalleryType;
@@ -85,6 +90,18 @@ const formatTimestamp = (value: string | null) => {
   }).format(parsed);
 };
 
+const normalizeSelectionPartKey = (value: unknown) =>
+  typeof value === "string" ? value.trim().toLowerCase() : "";
+
+const parseCountValue = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+};
+
 export default function GalleryDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -116,7 +133,7 @@ export default function GalleryDetail() {
     deadline: null,
     allowFavorites: true,
   });
-  const [selectionFilter, setSelectionFilter] = useState<"all" | "selected" | "favorites">("all");
+  const [activeSelectionRuleId, setActiveSelectionRuleId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pendingSetNameRef = useRef<string | null>(null);
   const [orderedSets, setOrderedSets] = useState<GallerySetRow[]>([]);
@@ -202,6 +219,20 @@ export default function GalleryDetail() {
     },
   });
 
+  const { data: clientSelections } = useQuery({
+    queryKey: ["client_selections", id],
+    enabled: Boolean(id),
+    queryFn: async (): Promise<ClientSelectionRow[]> => {
+      if (!id) return [];
+      const { data, error } = await supabase
+        .from("client_selections")
+        .select("id,selection_part")
+        .eq("gallery_id", id);
+      if (error) throw error;
+      return (data as ClientSelectionRow[]) ?? [];
+    },
+  });
+
   const defaultSetName = t("sessionDetail.gallery.sets.defaultName", { defaultValue: "Highlights" });
   const setInfoSectionsRaw = t("sessionDetail.gallery.sets.info.sections", {
     returnObjects: true,
@@ -281,6 +312,10 @@ export default function GalleryDetail() {
   }, [selectionSheetOpen, selectionSettings]);
 
   useEffect(() => {
+    setActiveSelectionRuleId(null);
+  }, [id]);
+
+  useEffect(() => {
     if (!visibleSets.length) {
       setActiveSetId(null);
       return;
@@ -333,6 +368,110 @@ export default function GalleryDetail() {
     const total = typeof stats.total === "number" ? stats.total : 0;
     return { selected, favorites, total };
   }, [brandingData.selectionStats]);
+
+  const selectionPartCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    (clientSelections ?? []).forEach((entry) => {
+      const key = normalizeSelectionPartKey(entry.selection_part);
+      if (!key) return;
+      counts[key] = (counts[key] ?? 0) + 1;
+    });
+    return counts;
+  }, [clientSelections]);
+
+  const selectionRules = useMemo<SelectionRule[]>(() => {
+    const rules: SelectionRule[] = [];
+    const groupsRaw = Array.isArray(brandingData.selectionTemplateGroups)
+      ? (brandingData.selectionTemplateGroups as Record<string, unknown>[])
+      : [];
+    const templateRaw = Array.isArray(brandingData.selectionTemplate)
+      ? (brandingData.selectionTemplate as Record<string, unknown>[])
+      : [];
+
+    const addRule = (ruleData: Record<string, unknown>, ruleId: string, serviceName: string | null) => {
+      const part = typeof ruleData.part === "string" ? ruleData.part.trim() : "";
+      const normalizedKey = normalizeSelectionPartKey(part);
+      const minCount = Math.max(0, parseCountValue(ruleData.min) ?? 0);
+      const rawMax = parseCountValue(ruleData.max);
+      const maxCount = rawMax != null ? Math.max(rawMax, minCount) : null;
+      const currentCount = normalizedKey ? selectionPartCounts[normalizedKey] ?? 0 : 0;
+      const title =
+        part ||
+        t("sessionDetail.gallery.selectionTemplate.customLabel", {
+          defaultValue: "Seçim kuralı",
+        });
+      rules.push({
+        id: ruleId,
+        title,
+        minCount,
+        maxCount,
+        currentCount,
+        serviceName,
+      });
+    };
+
+    if (groupsRaw.length > 0) {
+      groupsRaw.forEach((group, groupIndex) => {
+        const typedGroup = group as Record<string, unknown>;
+        const serviceName = typeof typedGroup.serviceName === "string" ? typedGroup.serviceName : null;
+        const serviceId = typeof typedGroup.serviceId === "string" ? typedGroup.serviceId : null;
+        const rulesRaw = Array.isArray(typedGroup.rules) ? (typedGroup.rules as Record<string, unknown>[]) : [];
+
+        rulesRaw.forEach((rule, ruleIndex) => {
+          const ruleData = (rule as Record<string, unknown>) ?? {};
+          const part = typeof ruleData.part === "string" ? ruleData.part : "";
+          const normalizedKey = normalizeSelectionPartKey(part);
+          const ruleId = `${serviceId || `service-${groupIndex}`}-${normalizedKey || ruleIndex}`;
+          addRule(ruleData, ruleId, serviceName);
+        });
+      });
+    } else if (templateRaw.length > 0) {
+      templateRaw.forEach((rule, ruleIndex) => {
+        const ruleData = (rule as Record<string, unknown>) ?? {};
+        const part = typeof ruleData.part === "string" ? ruleData.part : "";
+        const normalizedKey = normalizeSelectionPartKey(part);
+        const ruleId = `rule-${ruleIndex}-${normalizedKey || ruleIndex}`;
+        addRule(ruleData, ruleId, null);
+      });
+    }
+
+    return rules;
+  }, [brandingData.selectionTemplateGroups, brandingData.selectionTemplate, selectionPartCounts, t]);
+
+  const totalSelectedCount = useMemo(() => {
+    if (selectionStats.selected > 0) return selectionStats.selected;
+    if (clientSelections && clientSelections.length > 0) return clientSelections.length;
+    return selectionRules.reduce((sum, rule) => sum + rule.currentCount, 0);
+  }, [selectionStats.selected, clientSelections, selectionRules]);
+
+  const favoritesCount = useMemo(() => {
+    if (selectionStats.favorites > 0) return selectionStats.favorites;
+    const favoriteKey = normalizeSelectionPartKey(FAVORITES_FILTER_ID);
+    return selectionPartCounts[favoriteKey] ?? 0;
+  }, [selectionStats.favorites, selectionPartCounts]);
+
+  const totalPhotosCount = useMemo(
+    () => Math.max(selectionStats.total || 0, totalSelectedCount, favoritesCount),
+    [selectionStats.total, totalSelectedCount, favoritesCount]
+  );
+
+  const activeSelectionLabel = useMemo(() => {
+    if (activeSelectionRuleId === FAVORITES_FILTER_ID) {
+      return t("sessionDetail.gallery.selection.filterFavorites", {
+        defaultValue: "Favoriler filtrede",
+      });
+    }
+    if (activeSelectionRuleId) {
+      const targetRule = selectionRules.find((rule) => rule.id === activeSelectionRuleId);
+      if (targetRule) {
+        return t("sessionDetail.gallery.selectionTemplate.ruleFilterLabel", {
+          defaultValue: `${targetRule.title} filtresi aktif`,
+          rule: targetRule.title,
+        });
+      }
+    }
+    return t("sessionDetail.gallery.selection.filterAll", { defaultValue: "Showing all items" });
+  }, [activeSelectionRuleId, selectionRules, t]);
 
   const draftLabel =
     statusOptions.find((option) => option.value === "draft")?.label ??
@@ -1073,58 +1212,27 @@ export default function GalleryDetail() {
                   </Button>
                 </div>
 
-                <div className="mt-4 space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {(["all", "selected", "favorites"] as const).map((filter) => (
-                      <Button
-                        key={filter}
-                        size="sm"
-                        variant={selectionFilter === filter ? "surface" : "ghost"}
-                        className={cn(
-                          "rounded-full px-3",
-                          selectionFilter === filter && "btn-surface-accent"
-                        )}
-                        onClick={() => setSelectionFilter(filter)}
-                      >
-                        {filter === "all"
-                          ? t("sessionDetail.gallery.selection.filters.all", { defaultValue: "All" })
-                          : filter === "selected"
-                          ? t("sessionDetail.gallery.selection.filters.selected", { defaultValue: "Selected" })
-                          : t("sessionDetail.gallery.selection.filters.favorites", { defaultValue: "Favorites" })}
-                      </Button>
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>
-                      {t("sessionDetail.gallery.selection.summary.selected", { defaultValue: "Selected" })}:{" "}
-                      {selectionStats.selected}
-                    </span>
-                    <span>
-                      {t("sessionDetail.gallery.selection.summary.favorites", { defaultValue: "Favorites" })}:{" "}
-                      {selectionStats.favorites}
-                    </span>
-                    {selectionSettings.limit ? (
-                      <span>
-                        {t("sessionDetail.gallery.selection.summary.limit", { defaultValue: "Limit" })}:{" "}
-                        {selectionSettings.limit}
-                      </span>
-                    ) : null}
-                  </div>
-                  {selectionSettings.limit ? (
-                    <Progress
-                      value={Math.min(
-                        100,
-                        (selectionStats.selected / (selectionSettings.limit || 1)) * 100
-                      )}
+                <div className="mt-4 space-y-2">
+                  {selectionRules.length > 0 ? (
+                    <SelectionDashboard
+                      rules={selectionRules}
+                      favoritesCount={favoritesCount}
+                      totalPhotos={totalPhotosCount}
+                      totalSelected={totalSelectedCount}
+                      activeRuleId={activeSelectionRuleId}
+                      onSelectRuleFilter={(ruleId) =>
+                        setActiveSelectionRuleId((prev) => (prev === ruleId ? null : ruleId))
+                      }
+                      onEditRules={() => setSelectionSheetOpen(true)}
                     />
-                  ) : null}
-                  <p className="text-xs text-muted-foreground">
-                    {selectionFilter === "selected"
-                      ? t("sessionDetail.gallery.selection.filterSelected", { defaultValue: "Filtering selected items" })
-                      : selectionFilter === "favorites"
-                      ? t("sessionDetail.gallery.selection.filterFavorites", { defaultValue: "Filtering favorites" })
-                      : t("sessionDetail.gallery.selection.filterAll", { defaultValue: "Showing all items" })}
-                  </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {t("sessionDetail.gallery.selectionTemplate.noTemplate", {
+                        defaultValue: "Henüz seçim kuralı eklenmedi. Seçim ayarları içinden ekleyebilirsiniz.",
+                      })}
+                    </p>
+                  )}
+                  <p className="px-1 text-xs text-muted-foreground">{activeSelectionLabel}</p>
                 </div>
               </div>
             ) : null}

@@ -121,6 +121,19 @@ Templates attach to services/packages; when a session includes that deliverable,
 - ✅ Galleries list per session (fetches from Supabase); empty state CTA remains, header CTA hidden when empty to avoid duplicates.
 - ✅ Gallery detail page `/galleries/:id`: back arrow to session, editable title/type/status/event date, save action; sets sidebar with list and “Add set” sheet; media area placeholder (upload wiring pending). All backed by new Supabase tables.
 
+### Manual/general rules UI (hizmetten bağımsız)
+- Render a distinct “İlave kurallar” group below service-driven selection rows; group header shows a small `Hizmetten bağımsız` pill.
+- Place a single secondary button on that header: “+ Genel kural ekle”; only this group has an add button to avoid mixing with service templates.
+- New rows added here default `scope`/`part` to `Genel` and visually differ via a neutral left rail or background so users do not confuse them with service rules.
+- Keep the add button visible only when the “İlave kurallar” group is present; service groups remain read-only aside from per-row edit/delete.
+- Optional: make group headers sticky in long lists so it stays clear which group is being edited while scrolling.
+
+### Gallery create sheet — selection rules block
+- If the session includes services with selection templates, surface a compact rules preview inside the create sheet (after the basic fields) so the photographer sees limits before publishing.
+- Service-driven rows stay read-only; directly below them render the same “İlave kurallar” group with the `Hizmetten bağımsız` pill and a single “+ Genel kural ekle” secondary button.
+- Rows added here default to `Genel` scope and save with the new gallery so the detail page shows both service and manual rules.
+- Keep the block collapsible to avoid sheet bloat; when expanded, show min/max/required badges and inline validation on new manual rows.
+
 ## Client View (inspired by Picflow / Pixpa / ShootProof / Pixieset / SmugMug)
 - **Access & branding**: Share link + PIN gate; show studio logo/name; minimal header; optional expiry tag.
 - **Layout & performance**: Masonry/grid with responsive breakpoints; lazy load & prefetch; WebP proofs + JPEG fallback; smooth lightbox with keyboard/swipe.

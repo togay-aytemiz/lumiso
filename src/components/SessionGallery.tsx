@@ -570,6 +570,12 @@ export default function SessionGallery({
     [createManualRule]
   );
 
+  const handleServiceNameChange = useCallback((groupKey: string, value: string) => {
+    setSelectionGroups((prev) =>
+      prev.map((group) => (group.key === groupKey ? { ...group, serviceName: value } : group))
+    );
+  }, []);
+
   const handleToggleGroupDisabled = useCallback((groupKey: string, disabled: boolean) => {
     setSelectionGroups((prev) =>
       prev.map((group) => {
@@ -792,34 +798,38 @@ export default function SessionGallery({
                   }
 
                   return (
-                      <div className="space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+                    <div className="space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
                       <div className="space-y-4">
                         {serviceGroups.map((group) => {
-                          const billingLabel =
-                            group.billingType === "included"
-                              ? t("sessionDetail.gallery.selectionTemplate.billingIncluded", {
-                                  defaultValue: "Paket hizmeti",
-                                })
-                              : group.billingType === "extra"
-                                ? t("sessionDetail.gallery.selectionTemplate.billingExtra", {
-                                    defaultValue: "Ekstra hizmet",
-                                  })
-                                : null;
+                          const defaultServiceLabel = t(
+                            "sessionDetail.gallery.selectionTemplate.customLabel",
+                            {
+                              defaultValue: "Özel seçim kuralları",
+                            }
+                          );
+                          const serviceNameValue = group.serviceName ?? defaultServiceLabel;
                           const isDisabled = Boolean(group.disabled);
                           return (
                             <div key={group.key} className="space-y-2 w-full">
                               <div className="space-y-2 rounded-lg border border-emerald-100 bg-white/80 p-3 w-full">
-                                <div className="flex items-center justify-between gap-2">
-                                  <div>
-                                    <p className="text-sm font-semibold text-foreground">
-                                      {group.serviceName ||
-                                        t("sessionDetail.gallery.selectionTemplate.customLabel", {
-                                          defaultValue: "Özel seçim kuralları",
-                                        })}
+                                <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
+                                  <div className="flex min-w-[220px] flex-1 flex-col gap-1">
+                                    <Input
+                                      value={serviceNameValue}
+                                      onChange={(event) =>
+                                        handleServiceNameChange(group.key, event.target.value)
+                                      }
+                                      className="h-8 text-sm"
+                                      aria-label={t(
+                                        "sessionDetail.gallery.selectionTemplate.serviceNameInput",
+                                        { defaultValue: "Hizmet adı" }
+                                      )}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground">
+                                      {t("sessionDetail.gallery.selectionTemplate.serviceNameHelper", {
+                                        defaultValue: "Müşterinin göreceği hizmet adı",
+                                      })}
                                     </p>
-                                    {billingLabel ? (
-                                      <p className="text-xs text-muted-foreground">{billingLabel}</p>
-                                    ) : null}
                                   </div>
                                   {group.serviceId ? (
                                     <div className="flex items-center gap-2">

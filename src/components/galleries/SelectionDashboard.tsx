@@ -205,7 +205,7 @@ export function SelectionDashboard({
               </div>
 
               <div>
-                <div className="mb-1.5 flex items-end justify-between">
+                <div className="mb-1.5 flex items-center justify-between">
                   <div className="flex items-baseline gap-1">
                     <span
                       className={cn(
@@ -222,8 +222,12 @@ export function SelectionDashboard({
                     </span>
                   </div>
                   {ruleStatus.tone === "success" ? (
-                    <CheckCircle2 size={16} className="text-emerald-500" />
-                  ) : null}
+                    <CheckCircle2 size={18} className="text-emerald-500" />
+                  ) : (
+                    <span className="rounded-full bg-amber-50 px-2 py-[3px] text-[10px] font-semibold text-amber-700">
+                      Eksik
+                    </span>
+                  )}
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                   <div

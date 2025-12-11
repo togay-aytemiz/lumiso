@@ -536,14 +536,125 @@
     "unknownClient": "Bilinmeyen Kişi",
     "gallery": {
       "title": "Seans Galerisi",
+      "helper": "",
+      "actions": {
+        "create": "Galeri oluştur",
+        "share": "Paylaş",
+        "manage": "Yönet"
+      },
       "emptyState": {
         "title": "Henüz görsel yok",
-        "description": "Bu seansın fotoğraflarını yükleyerek müşteriniz için güzel bir galeri oluşturun.",
-        "button": "Görselleri Yükle",
+        "description": "Bu seansın fotoğraflarını yükleyin.\nMüşteriniz için güzel bir galeri oluşturun.",
+        "button": "Galeri oluştur",
         "comingSoon": "Çok yakında"
       },
-      "imageAlt": "Seans görseli {{index}}",
-      "addImageAriaLabel": "Yeni seans görseli ekle"
+      "types": {
+        "proof": "Seçim",
+        "retouch": "Rötuş",
+        "final": "Final",
+        "other": "Özel Tür",
+        "proofHint": "Müşterinin seçim yapacağı prova galerisi",
+        "finalHint": "Teslim için onaylanmış final seti"
+      },
+      "statuses": {
+        "draft": "Taslak",
+        "published": "Yayında",
+        "archived": "Arşivde"
+      },
+      "labels": {
+        "updated": "Güncellendi",
+        "published": "Yayında",
+        "shareSoon": "Paylaşım linki yakında",
+        "settings": "Ayarlar",
+        "media": "Medya",
+        "uploadTitle": "Fotoğraf yükle",
+        "uploadDesc": "Bu galeriye eklemek için fotoğrafları sürükleyip bırak.",
+        "uploadHint": "Proof yüklemeleri WebP olarak optimize edilir. Orijinaller korunur.",
+        "addMedia": "Medya ekle",
+        "coverSelected": "Kapak fotoğrafı",
+        "coverMissing": "Kapak fotoğrafı seç",
+        "coverEmpty": "Henüz kapak fotoğrafı yok",
+        "coverHint": "Galeriyi öne çıkarmak için bir fotoğraf seç.",
+        "coverActionHint": "Kapak için galeri içinden bir fotoğrafı işaretleyin.",
+        "chooseCover": "Kapak seç",
+        "coverAfterUpload": "Yüklenen herhangi bir fotoğrafı kapak olarak seçebilirsin.",
+        "coverEmptyHint": "Galeriye fotoğraf ekledikten sonra kapak fotoğrafını seçebilirsin."
+      },
+      "toast": {
+        "createdTitle": "Galeri oluşturuldu",
+        "createdDesc": "Yükleme ve paylaşmaya başlayabilirsin.",
+        "errorTitle": "Galeri oluşturulamadı",
+        "errorDesc": "Bir sorun oluştu. Lütfen tekrar dene.",
+        "updatedTitle": "Galeri kaydedildi",
+        "updatedDesc": "Değişiklikler uygulandı.",
+        "saveCta": "Kaydet"
+      },
+      "form": {
+        "title": "Galeri oluştur",
+        "titleLabel": "Başlık",
+        "titlePlaceholder": "ör. {{leadName}}",
+        "leadNamePlaceholder": "lead adı",
+        "typeLabel": "Tür",
+        "customTypeLabel": "Özel tür",
+        "customTypePlaceholder": "Örn. Albüm seçimi",
+        "statusLabel": "Durum",
+        "eventDateLabel": "Etkinlik tarihi",
+        "submit": "Oluştur ve galeriye git",
+        "saving": "Oluşturuluyor…",
+        "cancel": "İptal",
+        "errors": {
+          "titleRequired": "Başlık zorunlu",
+          "customTypeRequired": "Özel tür gerekli"
+        }
+      },
+      "sets": {
+        "add": "Set ekle",
+        "empty": "Henüz set yok. Yüklemeler varsayılan sete gider.",
+        "defaultName": "Öne çıkanlar",
+        "createTitle": "Foto seti oluştur",
+        "editTitle": "Foto setini düzenle",
+        "saveChanges": "Değişiklikleri kaydet",
+        "name": "Set adı",
+        "namePlaceholder": "örn. Dış çekim, Düğün, After party",
+        "description": "Açıklama",
+        "descriptionPlaceholder": "Opsiyonel",
+        "reorder": "Seti yeniden sırala",
+        "editPrompt": "Set adını düzenle",
+        "createSubmit": "Oluştur",
+        "toast": {
+          "createdTitle": "Set oluşturuldu",
+          "createdDesc": "Bu sete yükleme yapabilirsin."
+        },
+        "errors": {
+          "nameRequired": "Ad zorunlu",
+          "cannotDeleteLast": "En az bir set gerekli."
+        }
+      },
+      "selection": {
+        "title": "Seçim ayarları",
+        "description": "Bu galeri için müşteri seçimlerini yönet.",
+        "open": "Seçim ayarları",
+        "enableLabel": "Seçimlere izin ver",
+        "enableHint": "Müşteriler bu galeride favori işaretleyebilir.",
+        "limitLabel": "Seçim limiti",
+        "limitPlaceholder": "Limit yok",
+        "deadlineLabel": "Seçim son tarihi",
+        "favoritesLabel": "Favorilere izin ver",
+        "favoritesHint": "Müşteriler fotoğrafları favori olarak işaretleyebilir.",
+        "summary": {
+          "selected": "Seçildi",
+          "favorites": "Favoriler",
+          "limit": "Limit"
+        },
+        "filters": {
+          "all": "Hepsi",
+          "selected": "Seçilenler",
+          "favorites": "Favoriler"
+        },
+        "filterSelected": "Seçilenler filtreleniyor",
+        "filterFavorites": "Favoriler filtreleniyor",
+        "filterAll": "Tüm öğeler gösteriliyor"
+      }
     },
     "dangerZone": {
       "title": "Tehlikeli Alan",

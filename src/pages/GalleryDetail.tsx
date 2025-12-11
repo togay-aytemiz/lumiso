@@ -13,13 +13,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn, getUserLocale } from "@/lib/utils";
-import { CalendarRange, ImageIcon, ImageUp, Loader2, Plus, Share2, Upload } from "lucide-react";
+import { CalendarRange, Edit3, GripVertical, ImageIcon, ImageUp, Loader2, Plus, Share2, Trash2, Upload } from "lucide-react";
+import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
 
 type GalleryType = "proof" | "retouch" | "final" | "other";
 type GalleryStatus = "draft" | "published" | "archived";
+
+type SelectionSettings = {
+  enabled: boolean;
+  limit: number | null;
+  deadline: string | null;
+  allowFavorites: boolean;
+};
 
 interface GalleryDetailRow {
   id: string;
@@ -78,6 +88,7 @@ export default function GalleryDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation("pages");
+  const { t: tForms } = useTranslation("forms");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -89,6 +100,25 @@ export default function GalleryDetail() {
   const [eventDate, setEventDate] = useState<string>("");
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [isSetSheetOpen, setIsSetSheetOpen] = useState(false);
+  const [editingSetId, setEditingSetId] = useState<string | null>(null);
+  const [activeSetId, setActiveSetId] = useState<string | null>(null);
+  const [selectionSheetOpen, setSelectionSheetOpen] = useState(false);
+  const [selectionSettings, setSelectionSettings] = useState<SelectionSettings>({
+    enabled: false,
+    limit: null,
+    deadline: null,
+    allowFavorites: true,
+  });
+  const [selectionDraft, setSelectionDraft] = useState<SelectionSettings>({
+    enabled: false,
+    limit: null,
+    deadline: null,
+    allowFavorites: true,
+  });
+  const [selectionFilter, setSelectionFilter] = useState<"all" | "selected" | "favorites">("all");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const pendingSetNameRef = useRef<string | null>(null);
+  const [orderedSets, setOrderedSets] = useState<GallerySetRow[]>([]);
   const [setName, setSetName] = useState("");
   const [setDescription, setSetDescription] = useState("");
   const [baseline, setBaseline] = useState({
@@ -97,6 +127,12 @@ export default function GalleryDetail() {
     status: "draft" as GalleryStatus,
     eventDate: "",
     customType: "",
+    selectionSettings: {
+      enabled: false,
+      limit: null,
+      deadline: null,
+      allowFavorites: true,
+    } as SelectionSettings,
   });
   const autoSaveTimerRef = useRef<number | null>(null);
   const attemptedDefaultSetRef = useRef(false);
@@ -119,6 +155,7 @@ export default function GalleryDetail() {
   useEffect(() => {
     if (!data) return;
     const branding = (data.branding || {}) as Record<string, unknown>;
+    const storedSelection = (branding.selectionSettings || {}) as Partial<SelectionSettings>;
     const storedDate = typeof branding.eventDate === "string" ? branding.eventDate : "";
     const storedCustomType = typeof branding.customType === "string" ? (branding.customType as string) : "";
     setTitle(data.title ?? "");
@@ -126,6 +163,12 @@ export default function GalleryDetail() {
     setStatus(data.status);
     setEventDate(storedDate);
     setCustomType(storedCustomType);
+    setSelectionSettings({
+      enabled: Boolean(storedSelection.enabled),
+      limit: typeof storedSelection.limit === "number" ? storedSelection.limit : null,
+      deadline: typeof storedSelection.deadline === "string" ? storedSelection.deadline : null,
+      allowFavorites: storedSelection.allowFavorites !== false,
+    });
     setLastSavedAt(data.updated_at || data.created_at || null);
     setBaseline({
       title: data.title ?? "",
@@ -133,6 +176,12 @@ export default function GalleryDetail() {
       status: data.status,
       eventDate: storedDate,
       customType: storedCustomType,
+      selectionSettings: {
+        enabled: Boolean(storedSelection.enabled),
+        limit: typeof storedSelection.limit === "number" ? storedSelection.limit : null,
+        deadline: typeof storedSelection.deadline === "string" ? storedSelection.deadline : null,
+        allowFavorites: storedSelection.allowFavorites !== false,
+      },
     });
   }, [data]);
 
@@ -193,6 +242,36 @@ export default function GalleryDetail() {
     ];
   }, [sets, defaultSetName, t]);
 
+  useEffect(() => {
+    if (!sets || sets.length === 0) {
+      setOrderedSets([]);
+      setActiveSetId(null);
+      return;
+    }
+    setOrderedSets(sets);
+  }, [sets]);
+  const visibleSets = orderedSets.length > 0 ? orderedSets : resolvedSets;
+  const activeSet = useMemo(() => {
+    if (!activeSetId) return visibleSets[0];
+    return visibleSets.find((set) => set.id === activeSetId) ?? visibleSets[0];
+  }, [activeSetId, visibleSets]);
+
+  useEffect(() => {
+    if (selectionSheetOpen) {
+      setSelectionDraft(selectionSettings);
+    }
+  }, [selectionSheetOpen, selectionSettings]);
+
+  useEffect(() => {
+    if (!visibleSets.length) {
+      setActiveSetId(null);
+      return;
+    }
+    if (!activeSetId || !visibleSets.find((set) => set.id === activeSetId)) {
+      setActiveSetId(visibleSets[0]?.id ?? null);
+    }
+  }, [visibleSets, activeSetId]);
+
   const typeOptions = useMemo(() => {
     const options = [
       { value: "proof", label: t("sessionDetail.gallery.types.proof") },
@@ -226,6 +305,16 @@ export default function GalleryDetail() {
   const eventLabel =
     formattedEventDate || t("sessionDetail.gallery.labels.eventDateUnset", { defaultValue: "Event date not set" });
   const displayTitle = title.trim() || t("sessionDetail.gallery.form.titlePlaceholder", { defaultValue: "Untitled gallery" });
+  const brandingData = (data?.branding || {}) as Record<string, unknown>;
+  const coverUrl = typeof brandingData.coverUrl === "string" ? brandingData.coverUrl : "";
+  const hasMedia = Boolean(brandingData.hasMedia);
+  const selectionStats = useMemo(() => {
+    const stats = (brandingData.selectionStats || {}) as Record<string, unknown>;
+    const selected = typeof stats.selected === "number" ? stats.selected : 0;
+    const favorites = typeof stats.favorites === "number" ? stats.favorites : 0;
+    const total = typeof stats.total === "number" ? stats.total : 0;
+    return { selected, favorites, total };
+  }, [brandingData.selectionStats]);
 
   const draftLabel =
     statusOptions.find((option) => option.value === "draft")?.label ??
@@ -243,7 +332,11 @@ export default function GalleryDetail() {
       type !== baseline.type ||
       status !== baseline.status ||
       eventDate !== baseline.eventDate ||
-      customType.trim() !== baseline.customType.trim(),
+      customType.trim() !== baseline.customType.trim() ||
+      selectionSettings.enabled !== baseline.selectionSettings.enabled ||
+      selectionSettings.limit !== baseline.selectionSettings.limit ||
+      selectionSettings.deadline !== baseline.selectionSettings.deadline ||
+      selectionSettings.allowFavorites !== baseline.selectionSettings.allowFavorites,
     [
       title,
       baseline.title,
@@ -255,6 +348,14 @@ export default function GalleryDetail() {
       baseline.eventDate,
       customType,
       baseline.customType,
+      selectionSettings.enabled,
+      baseline.selectionSettings.enabled,
+      selectionSettings.limit,
+      baseline.selectionSettings.limit,
+      selectionSettings.deadline,
+      baseline.selectionSettings.deadline,
+      selectionSettings.allowFavorites,
+      baseline.selectionSettings.allowFavorites,
     ]
   );
 
@@ -286,6 +387,12 @@ export default function GalleryDetail() {
         status: payload.status,
         eventDate: typeof payload.branding.eventDate === "string" ? (payload.branding.eventDate as string) : "",
         customType: typeof payload.branding.customType === "string" ? (payload.branding.customType as string) : "",
+        selectionSettings: (payload.branding.selectionSettings || {
+          enabled: false,
+          limit: null,
+          deadline: null,
+          allowFavorites: true,
+        }) as SelectionSettings,
       });
       setLastSavedAt(new Date().toISOString());
       queryClient.invalidateQueries({ queryKey: ["gallery", id] });
@@ -310,7 +417,7 @@ export default function GalleryDetail() {
 
   const autoSaveLabel = useMemo(() => {
     if (isSaving) {
-      return t("sessionDetail.gallery.form.saving", { defaultValue: "Saving..." });
+      return t("templateBuilder.status.saving", { defaultValue: "Saving..." });
     }
     if (!title.trim()) {
       return t("sessionDetail.gallery.form.errors.titleRequired", { defaultValue: "Title is required" });
@@ -322,9 +429,9 @@ export default function GalleryDetail() {
       return t("templateBuilder.status.unsavedChanges", { defaultValue: "Unsaved changes" });
     }
     if (formattedLastSaved) {
-      return t("sessionDetail.gallery.form.savedAt", {
+      return t("templateBuilder.saved", {
         defaultValue: `Saved ${formattedLastSaved}`,
-        date: formattedLastSaved,
+        time: formattedLastSaved,
       });
     }
     return t("templateBuilder.status.notSavedYet", { defaultValue: "Not saved yet" });
@@ -341,11 +448,18 @@ export default function GalleryDetail() {
     }
 
     autoSaveTimerRef.current = window.setTimeout(() => {
-      const branding: Record<string, unknown> = {};
-      if (eventDate) branding.eventDate = eventDate;
+      const branding: Record<string, unknown> = { ...(data?.branding ?? {}) };
+      if (eventDate) {
+        branding.eventDate = eventDate;
+      } else {
+        delete branding.eventDate;
+      }
       if (type === "other" && customType.trim()) {
         branding.customType = customType.trim();
+      } else {
+        delete branding.customType;
       }
+      branding.selectionSettings = selectionSettings;
       const payload: UpdatePayload = {
         title: title.trim(),
         type,
@@ -370,6 +484,7 @@ export default function GalleryDetail() {
     status,
     eventDate,
     customType,
+    selectionSettings,
     saveGallery,
     isSaving,
   ]);
@@ -393,6 +508,7 @@ export default function GalleryDetail() {
       setIsSetSheetOpen(false);
       setSetName("");
       setSetDescription("");
+      setEditingSetId(null);
       queryClient.invalidateQueries({ queryKey: ["gallery_sets", id] });
       toast({
         title: t("sessionDetail.gallery.sets.toast.createdTitle", { defaultValue: "Set created" }),
@@ -407,6 +523,83 @@ export default function GalleryDetail() {
         description: error instanceof Error ? error.message : t("sessionDetail.gallery.toast.errorDesc"),
         variant: "destructive",
       });
+    },
+  });
+
+  const updateSetMutation = useMutation({
+    mutationFn: async ({ setId, name, description }: { setId: string; name: string; description: string | null }) => {
+      if (!id) return;
+      if (!name.trim()) {
+        throw new Error(t("sessionDetail.gallery.sets.errors.nameRequired", { defaultValue: "Name required" }));
+      }
+      const { error } = await supabase
+        .from("gallery_sets")
+        .update({ name: name.trim(), description })
+        .eq("id", setId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setIsSetSheetOpen(false);
+      setEditingSetId(null);
+      setSetName("");
+      setSetDescription("");
+      queryClient.invalidateQueries({ queryKey: ["gallery_sets", id] });
+    },
+    onError: (error) => {
+      toast({
+        title: t("sessionDetail.gallery.toast.errorTitle"),
+        description: error instanceof Error ? error.message : t("sessionDetail.gallery.toast.errorDesc"),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteSetMutation = useMutation({
+    mutationFn: async (setId: string) => {
+      if (!id) return;
+      const { error } = await supabase.from("gallery_sets").delete().eq("id", setId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery_sets", id] });
+    },
+    onError: (error) => {
+      toast({
+        title: t("sessionDetail.gallery.toast.errorTitle"),
+        description: error instanceof Error ? error.message : t("sessionDetail.gallery.toast.errorDesc"),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetSetForm = useCallback(() => {
+    setEditingSetId(null);
+    setSetName("");
+    setSetDescription("");
+  }, []);
+
+  const reorderSetsMutation = useMutation({
+    mutationFn: async (nextSets: GallerySetRow[]) => {
+      if (!id) return;
+      await Promise.all(
+        nextSets.map(async (set, index) => {
+          const { error } = await supabase
+            .from("gallery_sets")
+            .update({ order_index: index + 1 })
+            .eq("id", set.id);
+          if (error) throw error;
+        })
+      );
+    },
+    onError: (error) => {
+      toast({
+        title: t("sessionDetail.gallery.toast.errorTitle"),
+        description: error instanceof Error ? error.message : t("sessionDetail.gallery.toast.errorDesc"),
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery_sets", id] });
     },
   });
 
@@ -434,25 +627,93 @@ export default function GalleryDetail() {
     });
   }, [t, toast]);
 
-  const scrollToSet = useCallback((setId: string) => {
-    if (typeof window === "undefined") return;
-    const target = document.getElementById(`set-${setId}`);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, []);
-
   const handleAddMedia = useCallback(
     (setName?: string) => {
+      pendingSetNameRef.current = setName ?? null;
+      const target = fileInputRef.current;
+      if (target) {
+        target.click();
+        return;
+      }
+      toast({
+        title: t("sessionDetail.gallery.labels.addMedia"),
+        description: t("sessionDetail.gallery.labels.uploadDesc", {
+          defaultValue: "Select files to add to this gallery.",
+        }),
+      });
+    },
+    [t, toast]
+  );
+
+  const handleFileInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (!files || files.length === 0) {
+        pendingSetNameRef.current = null;
+        return;
+      }
+      // Placeholder: wire to upload flow when available
+      const selected = files.length;
+      const targetSet = pendingSetNameRef.current;
+      pendingSetNameRef.current = null;
       toast({
         title: t("sessionDetail.gallery.labels.addMedia"),
         description:
           t("sessionDetail.gallery.labels.uploadDesc", {
-            defaultValue: "Drag & drop photos here to add to this gallery.",
-          }) + (setName ? ` (${setName})` : ""),
+            defaultValue: "Files ready to add to this gallery.",
+          }) + (targetSet ? ` (${targetSet})` : ` (${selected})`),
+      });
+      event.target.value = "";
+    },
+    [t, toast]
+  );
+
+  const handleOpenCreateSet = useCallback(() => {
+    resetSetForm();
+    setIsSetSheetOpen(true);
+  }, [resetSetForm]);
+
+  const handleEditSet = useCallback(
+    (set: GallerySetRow) => {
+      if (typeof window === "undefined") return;
+      setEditingSetId(set.id);
+      setSetName(set.name);
+      setSetDescription(set.description ?? "");
+      setIsSetSheetOpen(true);
+    },
+    []
+  );
+
+  const handleDeleteSet = useCallback(
+    (set: GallerySetRow) => {
+      if (visibleSets.length <= 1 || set.id === "default-placeholder") {
+        toast({
+          title: t("sessionDetail.gallery.toast.errorTitle"),
+          description: t("sessionDetail.gallery.sets.errors.cannotDeleteLast", {
+            defaultValue: "At least one set is required.",
+          }),
+          variant: "destructive",
+        });
+        return;
+      }
+      deleteSetMutation.mutate(set.id);
+    },
+    [deleteSetMutation, visibleSets.length, t, toast]
+  );
+
+  const handleSetReorder = useCallback(
+    (result: DropResult) => {
+      if (!result.destination) return;
+      setOrderedSets((prev) => {
+        if (prev.length === 0) return prev;
+        const items = Array.from(prev);
+        const [moved] = items.splice(result.source.index, 1);
+        items.splice(result.destination.index, 0, moved);
+        reorderSetsMutation.mutate(items);
+        return items;
       });
     },
-    [toast, t]
+    [reorderSetsMutation]
   );
 
   if (isLoading) {
@@ -496,6 +757,13 @@ export default function GalleryDetail() {
         doneLabel={t("featurePreview.preview", { defaultValue: "Preview" })}
         onBack={handleBack}
         onPrimaryAction={handlePreview}
+        eyebrow={typeLabel}
+        subtitle={
+          <>
+            <CalendarRange className="h-4 w-4 text-muted-foreground" />
+            <span>{eventLabel}</span>
+          </>
+        }
         rightActions={
           <Button
             onClick={handleShare}
@@ -507,25 +775,41 @@ export default function GalleryDetail() {
             {t("sessionDetail.gallery.actions.share")}
           </Button>
         }
-      >
-        <div className="flex flex-wrap items-center gap-6">
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              {typeLabel}
-            </span>
-            <div className="flex items-center gap-2 text-sm text-foreground">
-              <CalendarRange className="h-4 w-4 text-muted-foreground" />
-              <span>{eventLabel}</span>
-            </div>
-          </div>
-        </div>
-      </TemplateBuilderHeader>
+      />
 
       <div className="flex flex-col gap-6 px-4 py-6 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-[360px,1fr]">
-          <div className="rounded-xl border border-border/70 bg-background/60 p-4 shadow-sm">
+          <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+            <div className="mb-4 overflow-hidden rounded-xl border border-border/70 bg-muted/20 shadow-sm transition-colors">
+              {coverUrl ? (
+                <div className="relative h-40 w-full bg-muted/40">
+                  <img src={coverUrl} alt={displayTitle} className="h-full w-full object-cover" />
+                  <div className="absolute bottom-2 left-2 rounded-full bg-background/90 px-3 py-1 text-xs font-semibold text-foreground shadow-sm">
+                    {t("sessionDetail.gallery.labels.coverSelected", { defaultValue: "Cover photo" })}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex h-40 flex-col items-center justify-center gap-2 px-4 text-center">
+                  <p className="text-sm font-semibold text-foreground">
+                    {hasMedia
+                      ? t("sessionDetail.gallery.labels.coverMissing", { defaultValue: "Select a cover photo" })
+                      : t("sessionDetail.gallery.labels.coverEmpty", { defaultValue: "Henüz kapak fotoğrafı yok" })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {hasMedia
+                      ? t("sessionDetail.gallery.labels.coverAfterUpload", {
+                          defaultValue: "Pick any uploaded photo as your cover.",
+                        })
+                      : t("sessionDetail.gallery.labels.coverEmptyHint", {
+                          defaultValue: "Galeriye fotoğraf ekledikten sonra kapak fotoğrafını seçebilirsin.",
+                        })}
+                  </p>
+                </div>
+              )}
+            </div>
+
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "photos" | "settings")}>
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="photos" className="text-sm">
                     {t("sessionDetail.gallery.labels.media", { defaultValue: "Photos" })}
@@ -534,61 +818,124 @@ export default function GalleryDetail() {
                     {t("sessionDetail.gallery.labels.settings")}
                   </TabsTrigger>
                 </TabsList>
-                <Button
-                  size="sm"
-                  variant="surface"
-                  className="btn-surface-accent gap-2"
-                  onClick={() => setIsSetSheetOpen(true)}
-                >
-                  <Plus className="h-4 w-4" />
-                  {t("sessionDetail.gallery.sets.add")}
-                </Button>
               </div>
 
-              <TabsContent value="photos" className="mt-4 space-y-3">
-                <div className="rounded-lg border border-border/60 bg-muted/10">
-                  <div className="flex items-center justify-between gap-3 px-4 py-3">
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-foreground">
-                        {t("sessionDetail.gallery.labels.media")}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("sessionDetail.gallery.labels.uploadDesc", {
-                          defaultValue: "Drag & drop photos here to add to this gallery.",
-                        })}
-                      </p>
-                    </div>
-                    <Badge variant="secondary" className="rounded-full px-3 py-1 text-[11px]">
-                      {resolvedSets.length}{" "}
-                      {t("sessionDetail.gallery.labels.sets", { defaultValue: "Sets" })}
-                    </Badge>
-                  </div>
-                  <div className="divide-y border-t border-border/60">
-                    {resolvedSets.map((set) => (
-                      <div
-                        key={set.id}
-                        className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/40"
-                      >
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium text-foreground">{set.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {set.description ||
-                              t("sessionDetail.gallery.sets.empty", { defaultValue: "Uploads land here." })}
-                          </p>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="gap-1 text-xs"
-                          onClick={() => scrollToSet(set.id)}
-                        >
-                          <ImageUp className="h-4 w-4" />
-                          {t("sessionDetail.gallery.labels.addMedia")}
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+              {activeTab === "photos" ? (
+                <div className="mt-3 flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="surface"
+                    className="gap-2"
+                    onClick={handleOpenCreateSet}
+                  >
+                    <Plus className="h-4 w-4" />
+                    {t("sessionDetail.gallery.sets.add")}
+                  </Button>
                 </div>
+              ) : null}
+
+             <TabsContent value="photos" className="mt-4 space-y-3">
+                {orderedSets.length > 0 ? (
+                  <DragDropContext onDragEnd={handleSetReorder}>
+                    <Droppable droppableId="gallery-sets">
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className="space-y-2"
+                        >
+                          {orderedSets.map((set, index) => (
+                            <Draggable key={set.id} draggableId={set.id} index={index}>
+                          {(dragProvided, snapshot) => {
+                            const isLastSet = visibleSets.length <= 1 || set.id === "default-placeholder";
+                            return (
+                            <div
+                              ref={dragProvided.innerRef}
+                                  {...dragProvided.draggableProps}
+                                  style={dragProvided.draggableProps.style}
+                                  className={cn(
+                                    "group rounded-lg border border-border/60 bg-background px-3 py-2.5 shadow-sm transition-shadow",
+                                    snapshot.isDragging && "shadow-md ring-2 ring-primary/20"
+                                  )}
+                                  onClick={() => setActiveSetId(set.id)}
+                                  role="button"
+                                  tabIndex={0}
+                                >
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <button
+                                        type="button"
+                                        className="text-muted-foreground/70 transition-colors hover:text-foreground"
+                                        {...dragProvided.dragHandleProps}
+                                        aria-label={t("sessionDetail.gallery.sets.reorder", {
+                                          defaultValue: "Reorder set",
+                                        })}
+                                      >
+                                        <GripVertical className="h-4 w-4" />
+                                      </button>
+                                      <p
+                                        className={cn(
+                                          "min-w-0 truncate text-sm font-semibold",
+                                          activeSet?.id === set.id ? "text-primary" : "text-foreground"
+                                        )}
+                                      >
+                                        {set.name}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 opacity-70 hover:opacity-100"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleEditSet(set);
+                                        }}
+                                      >
+                                        <Edit3 className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        disabled={isLastSet || deleteSetMutation.isPending}
+                                        className="h-8 w-8 opacity-70 hover:opacity-100 disabled:opacity-40"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleDeleteSet(set);
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 opacity-70 hover:opacity-100"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleAddMedia(set.name);
+                                        }}
+                                      >
+                                        <ImageUp className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                                );
+                              }}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+                ) : (
+                  <div className="rounded-lg border border-border/60 bg-background px-4 py-3 text-sm text-muted-foreground shadow-sm">
+                    {resolvedSets[0]?.id === "default-placeholder"
+                      ? t("sessionDetail.gallery.sets.empty", { defaultValue: "Uploads land here." })
+                      : null}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="settings" className="mt-4 space-y-4">
@@ -601,8 +948,8 @@ export default function GalleryDetail() {
                   />
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2 min-w-0">
                     <Label>{t("sessionDetail.gallery.form.eventDateLabel")}</Label>
                     <DateTimePicker
                       mode="date"
@@ -610,12 +957,16 @@ export default function GalleryDetail() {
                       onChange={(value) => setEventDate(value)}
                       buttonClassName="w-full justify-between"
                       popoverModal
+                      fullWidth
+                      todayLabel={tForms("dateTimePicker.today")}
+                      clearLabel={tForms("dateTimePicker.clear")}
+                      doneLabel={tForms("dateTimePicker.done")}
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 min-w-0">
                     <Label>{t("sessionDetail.gallery.form.statusLabel")}</Label>
                     <Select value={status} onValueChange={(value) => setStatus(value as GalleryStatus)}>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full justify-between">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -634,6 +985,7 @@ export default function GalleryDetail() {
                     <Label>{t("sessionDetail.gallery.form.typeLabel")}</Label>
                     <Select
                       value={type}
+                      disabled
                       onValueChange={(value) => {
                         setType(value as GalleryType);
                         if (value !== "other") {
@@ -641,7 +993,7 @@ export default function GalleryDetail() {
                         }
                       }}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full justify-between">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -664,7 +1016,7 @@ export default function GalleryDetail() {
                       placeholder={t("sessionDetail.gallery.form.customTypePlaceholder", {
                         defaultValue: "e.g., Album selection",
                       })}
-                      disabled={type !== "other"}
+                      disabled
                     />
                   </div>
                 </div>
@@ -676,88 +1028,173 @@ export default function GalleryDetail() {
             </Tabs>
           </div>
 
-          <div className="rounded-xl border border-border/70 bg-background shadow-sm">
-            <div className="flex items-center justify-between gap-3 px-6 py-4">
-              <div className="space-y-1">
-                <p className="text-base font-semibold text-foreground">
-                  {t("sessionDetail.gallery.labels.media")}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {t("sessionDetail.gallery.labels.uploadHint")}
-                </p>
-              </div>
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsSetSheetOpen(true)}>
-                <Plus className="h-4 w-4" />
-                {t("sessionDetail.gallery.sets.add")}
-              </Button>
-            </div>
+          <div className="space-y-4">
+            {type === "proof" ? (
+              <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="text-base font-semibold text-foreground">
+                      {t("sessionDetail.gallery.selection.title", { defaultValue: "Selection settings" })}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t("sessionDetail.gallery.selection.description", {
+                        defaultValue: "Manage client selections for this gallery.",
+                      })}
+                    </p>
+                  </div>
+                  <Button variant="surface" size="sm" onClick={() => setSelectionSheetOpen(true)} className="gap-2">
+                    {t("sessionDetail.gallery.selection.open", { defaultValue: "Selection settings" })}
+                  </Button>
+                </div>
 
-            <div className="space-y-4 border-t border-border/70 px-6 py-5">
-              {resolvedSets.map((set) => (
-                <div
-                  key={set.id}
-                  id={`set-${set.id}`}
-                  className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/10"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                    <div className="space-y-1">
+                <div className="mt-4 space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {(["all", "selected", "favorites"] as const).map((filter) => (
+                      <Button
+                        key={filter}
+                        size="sm"
+                        variant={selectionFilter === filter ? "surface" : "ghost"}
+                        className={cn(
+                          "rounded-full px-3",
+                          selectionFilter === filter && "btn-surface-accent"
+                        )}
+                        onClick={() => setSelectionFilter(filter)}
+                      >
+                        {filter === "all"
+                          ? t("sessionDetail.gallery.selection.filters.all", { defaultValue: "All" })
+                          : filter === "selected"
+                          ? t("sessionDetail.gallery.selection.filters.selected", { defaultValue: "Selected" })
+                          : t("sessionDetail.gallery.selection.filters.favorites", { defaultValue: "Favorites" })}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>
+                      {t("sessionDetail.gallery.selection.summary.selected", { defaultValue: "Selected" })}:{" "}
+                      {selectionStats.selected}
+                    </span>
+                    <span>
+                      {t("sessionDetail.gallery.selection.summary.favorites", { defaultValue: "Favorites" })}:{" "}
+                      {selectionStats.favorites}
+                    </span>
+                    {selectionSettings.limit ? (
+                      <span>
+                        {t("sessionDetail.gallery.selection.summary.limit", { defaultValue: "Limit" })}:{" "}
+                        {selectionSettings.limit}
+                      </span>
+                    ) : null}
+                  </div>
+                  {selectionSettings.limit ? (
+                    <Progress
+                      value={Math.min(
+                        100,
+                        (selectionStats.selected / (selectionSettings.limit || 1)) * 100
+                      )}
+                    />
+                  ) : null}
+                  <p className="text-xs text-muted-foreground">
+                    {selectionFilter === "selected"
+                      ? t("sessionDetail.gallery.selection.filterSelected", { defaultValue: "Filtering selected items" })
+                      : selectionFilter === "favorites"
+                      ? t("sessionDetail.gallery.selection.filterFavorites", { defaultValue: "Filtering favorites" })
+                      : t("sessionDetail.gallery.selection.filterAll", { defaultValue: "Showing all items" })}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+              <div className="space-y-4">
+                {activeSet ? (
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3 px-1">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-foreground">{set.name}</p>
-                        {set.id === "default-placeholder" ? (
+                        <p className="text-lg font-semibold text-foreground">{activeSet.name}</p>
+                        {activeSet.id === "default-placeholder" ? (
                           <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px] uppercase">
                             {t("sessionDetail.gallery.sets.defaultName", { defaultValue: "Default" })}
                           </Badge>
                         ) : null}
                       </div>
-                      {set.description ? (
-                        <p className="text-xs text-muted-foreground">{set.description}</p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">
-                          {t("sessionDetail.gallery.sets.empty", { defaultValue: "Uploads land here." })}
-                        </p>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9"
+                        disabled={activeSet.id === "default-placeholder"}
+                        onClick={() => handleEditSet(activeSet)}
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9"
+                        disabled={visibleSets.length <= 1 || activeSet.id === "default-placeholder" || deleteSetMutation.isPending}
+                        onClick={() => handleDeleteSet(activeSet)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="surface"
+                        size="sm"
+                        className="gap-2"
+                        disabled={activeSet.id === "default-placeholder"}
+                        onClick={() => handleAddMedia(activeSet.name)}
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                        {t("sessionDetail.gallery.labels.addMedia")}
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleAddMedia(set.name)}>
-                      <ImageUp className="h-4 w-4" />
-                      {t("sessionDetail.gallery.labels.addMedia")}
-                    </Button>
                   </div>
-
-                  <div className="border-t border-dashed border-muted-foreground/30 px-4 py-10 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-muted-foreground/50 bg-background text-muted-foreground">
-                      <Upload className="h-6 w-6" />
-                    </div>
-                    <p className="mt-3 text-sm font-medium text-foreground">
-                      {t("sessionDetail.gallery.labels.uploadTitle")}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {t("sessionDetail.gallery.labels.uploadDesc")}
-                    </p>
+                    <div className="px-6 py-12 text-center">
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-muted-foreground/50 bg-background text-muted-foreground">
+                        <Upload className="h-6 w-6" />
+                      </div>
+                      <p className="mt-3 text-sm font-medium text-foreground">
+                        {t("sessionDetail.gallery.labels.uploadTitle")}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {t("sessionDetail.gallery.labels.uploadDesc")}
+                      </p>
                     <Button
                       variant="surface"
                       size="sm"
-                      className="btn-surface-accent mt-4 gap-2"
-                      onClick={() => handleAddMedia(set.name)}
+                      className="mx-auto mt-4 gap-2"
+                      disabled={activeSet.id === "default-placeholder"}
+                      onClick={() => handleAddMedia(activeSet.name)}
                     >
                       <ImageIcon className="h-4 w-4" />
                       {t("sessionDetail.gallery.labels.addMedia")}
                     </Button>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {t("sessionDetail.gallery.labels.uploadHint")}
-                    </p>
                   </div>
                 </div>
-              ))}
+              ) : (
+                  <div className="rounded-xl bg-muted/10 px-5 py-10 text-center text-sm text-muted-foreground">
+                    {t("sessionDetail.gallery.sets.empty", { defaultValue: "Uploads land here." })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <Sheet open={isSetSheetOpen} onOpenChange={setIsSetSheetOpen}>
-        <SheetContent className="w-full sm:max-w-lg">
+      <Sheet
+        open={isSetSheetOpen}
+        onOpenChange={(open) => {
+          setIsSetSheetOpen(open);
+          if (!open) {
+            resetSetForm();
+          }
+        }}
+      >
+        <SheetContent className="flex h-full flex-col w-full sm:max-w-lg">
           <SheetHeader>
             <SheetTitle>
-              {t("sessionDetail.gallery.sets.createTitle", { defaultValue: "Create photo set" })}
+              {editingSetId
+                ? t("sessionDetail.gallery.sets.editTitle", { defaultValue: "Edit photo set" })
+                : t("sessionDetail.gallery.sets.createTitle", { defaultValue: "Create photo set" })}
             </SheetTitle>
           </SheetHeader>
           <div className="space-y-4 py-4">
@@ -781,26 +1218,147 @@ export default function GalleryDetail() {
               />
             </div>
           </div>
-          <SheetFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsSetSheetOpen(false)} disabled={createSetMutation.isPending}>
+          <SheetFooter className="mt-auto gap-2 border-t border-border/60 bg-background pt-4 [&>button]:w-full sm:[&>button]:flex-1">
+            <Button
+              variant="outline"
+              onClick={() => setIsSetSheetOpen(false)}
+              disabled={createSetMutation.isPending || updateSetMutation.isPending}
+            >
               {t("sessionDetail.gallery.form.cancel")}
             </Button>
             <Button
-              onClick={() => createSetMutation.mutate()}
-              disabled={createSetMutation.isPending || !setName.trim()}
+              onClick={() => {
+                if (editingSetId) {
+                  updateSetMutation.mutate({ setId: editingSetId, name: setName, description: setDescription.trim() || null });
+                } else {
+                  createSetMutation.mutate();
+                }
+              }}
+              disabled={
+                !setName.trim() ||
+                (editingSetId ? updateSetMutation.isPending : createSetMutation.isPending)
+              }
             >
-              {createSetMutation.isPending ? (
+              {editingSetId ? (
+                updateSetMutation.isPending ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t("sessionDetail.gallery.form.saving")}
+                  </div>
+                ) : (
+                  t("sessionDetail.gallery.sets.saveChanges", { defaultValue: "Save changes" })
+                )
+              ) : createSetMutation.isPending ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   {t("sessionDetail.gallery.form.saving")}
                 </div>
               ) : (
-                t("sessionDetail.gallery.form.submit")
+                t("sessionDetail.gallery.sets.createSubmit", { defaultValue: "Create" })
               )}
             </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
+      <Sheet open={selectionSheetOpen} onOpenChange={setSelectionSheetOpen}>
+        <SheetContent className="flex h-full flex-col w-full sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>
+              {t("sessionDetail.gallery.selection.title", { defaultValue: "Selection settings" })}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {t("sessionDetail.gallery.selection.enableLabel", { defaultValue: "Allow selections" })}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t("sessionDetail.gallery.selection.enableHint", {
+                    defaultValue: "Clients can pick favorites for this gallery.",
+                  })}
+                </p>
+              </div>
+              <Switch
+                checked={selectionDraft.enabled}
+                onCheckedChange={(checked) => setSelectionDraft((prev) => ({ ...prev, enabled: checked }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("sessionDetail.gallery.selection.limitLabel", { defaultValue: "Selection limit" })}</Label>
+              <Input
+                type="number"
+                min={0}
+                value={selectionDraft.limit ?? ""}
+                onChange={(event) =>
+                  setSelectionDraft((prev) => ({
+                    ...prev,
+                    limit: event.target.value === "" ? null : Number(event.target.value),
+                  }))
+                }
+                placeholder={t("sessionDetail.gallery.selection.limitPlaceholder", { defaultValue: "No limit" })}
+                disabled={!selectionDraft.enabled}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("sessionDetail.gallery.selection.deadlineLabel", { defaultValue: "Selection deadline" })}</Label>
+              <DateTimePicker
+                mode="date"
+                value={selectionDraft.deadline ?? ""}
+                onChange={(value) => setSelectionDraft((prev) => ({ ...prev, deadline: value || null }))}
+                buttonClassName="w-full justify-between"
+                popoverModal
+                fullWidth
+                todayLabel={tForms("dateTimePicker.today")}
+                clearLabel={tForms("dateTimePicker.clear")}
+                doneLabel={tForms("dateTimePicker.done")}
+                disabled={!selectionDraft.enabled}
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {t("sessionDetail.gallery.selection.favoritesLabel", { defaultValue: "Allow favorites" })}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t("sessionDetail.gallery.selection.favoritesHint", {
+                    defaultValue: "Clients can mark photos as favorites.",
+                  })}
+                </p>
+              </div>
+              <Switch
+                checked={selectionDraft.allowFavorites}
+                onCheckedChange={(checked) => setSelectionDraft((prev) => ({ ...prev, allowFavorites: checked }))}
+                disabled={!selectionDraft.enabled}
+              />
+            </div>
+          </div>
+          <SheetFooter className="mt-auto gap-2 border-t border-border/60 bg-background pt-4 [&>button]:w-full sm:[&>button]:flex-1">
+            <Button variant="outline" onClick={() => setSelectionSheetOpen(false)}>
+              {t("sessionDetail.gallery.form.cancel")}
+            </Button>
+            <Button
+              onClick={() => {
+                setSelectionSettings(selectionDraft);
+                setSelectionSheetOpen(false);
+              }}
+            >
+              {t("sessionDetail.gallery.sets.saveChanges", { defaultValue: "Save changes" })}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={handleFileInputChange}
+      />
     </>
   );
 }

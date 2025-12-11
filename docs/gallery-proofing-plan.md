@@ -71,15 +71,15 @@ Templates attach to services/packages; when a session includes that deliverable,
 
 ### Phase 1 — Proofing MVP (build & ship)
 - UX & flows
-  - [ ] Session detail: “Create gallery” CTA, list of galleries (type, status, last updated), link to client view.
+  - [x] Session detail/sheet: “Create gallery” sheet (title, type, status, event date defaulted from session) and list of galleries (type, status, updated).
   - [ ] Upload modal with drag/drop, async queue, per-file status; background conversion to WebP + JPEG fallback; web-size target (e.g., 2560px long edge, quality tuned).
   - [ ] Watermark settings: toggle on/off, choose source (logo/text), opacity/placement presets.
   - [ ] Share: generate public link + PIN; copy-to-clipboard; optional expiry date.
   - [ ] Client view: responsive grid, lazy load, favorite/select buttons with remaining counts, PIN gate, branding header.
 - Data & services
   - [ ] Supabase storage buckets + rules for originals vs. proofs; edge function (or worker) to transcode to WebP/JPEG and write metadata.
-  - [ ] Tables (`galleries`, `gallery_assets`, `client_selections`, `deliverable_selection_templates`) migrated and seeded with sample templates (album, prints).
-  - [ ] API endpoints/queries to fetch galleries by session/project and to persist selections/overrides.
+  - [x] Tables (`galleries`, `gallery_assets`, `client_selections`) landed; `gallery_sets` added for multiple sets within a gallery; `selection_template` nullable on services for deliverable rules.
+  - [ ] API endpoints/queries to fetch galleries by session/project and to persist selections/overrides. *(Session list + gallery detail read/write exist; uploads/selections pending.)*
 - Validation & QA
   - [ ] Component/integration tests for upload queue states, watermark toggles, PIN gate, selection limits.
   - [ ] Performance check on client view (web-size assets, lazy load).
@@ -89,7 +89,7 @@ Templates attach to services/packages; when a session includes that deliverable,
   - [ ] Help docs snippet (how to create gallery, set PIN, request selections).
 
 ### Phase 2 — Delivery & Hardening
-- [ ] Multiple rounds per session (proof -> retouch -> final) with version indicators and copy-forward selections between rounds.
+- [ ] Multiple rounds per session (e.g., Seçim → Final or custom types) with version indicators and optional copy-forward of selections between rounds.
 - [ ] Download rules per gallery (disable downloads for proofs; allow originals for finals), optional zip export for photographer.
 - [ ] Selection export (CSV/JSON + thumbnails) and “lock selections” to prevent edits post-approval.
 - [ ] Client invites/audience list (emails) with activity tracking (viewed, favorited, downloaded) and reminder emails.
@@ -117,6 +117,9 @@ Templates attach to services/packages; when a session includes that deliverable,
 - ✅ Backward-compatible: `selection_template` is nullable; existing orgs stay untouched until they enable and add rules.
 - ✅ Dirty guard: turning off the template when there are unsaved changes prompts a guard dialog.
 - ✅ Copy tightened (EN/TR); helper shows example counts; “Kural ekle” button styled to match the new card.
+- ✅ Session detail/sheet now creates galleries via a sheet (no modal); fields: title, type (Selections/Retouch/Final/Other), status, event date (defaults from session, changeable). Creation seeds a default set (Highlights/Öne çıkanlar), then redirects to `/galleries/:id`.
+- ✅ Galleries list per session (fetches from Supabase); empty state CTA remains, header CTA hidden when empty to avoid duplicates.
+- ✅ Gallery detail page `/galleries/:id`: back arrow to session, editable title/type/status/event date, save action; sets sidebar with list and “Add set” sheet; media area placeholder (upload wiring pending). All backed by new Supabase tables.
 
 ## Client View (inspired by Picflow / Pixpa / ShootProof / Pixieset / SmugMug)
 - **Access & branding**: Share link + PIN gate; show studio logo/name; minimal header; optional expiry tag.

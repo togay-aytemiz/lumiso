@@ -639,6 +639,13 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
     (!Number.isNaN(vatRateNumeric) && vatRateNumeric >= 0 && vatRateNumeric <= 99.99);
   const isSaveDisabled =
     loading || !hasSelectedCategory || !formData.name.trim() || !vatRateValid;
+  const selectionTemplateHasContent = useMemo(
+    () =>
+      formData.selection_rules.some(
+        (rule) => rule.part.trim() || rule.min.trim() || rule.max.trim()
+      ),
+    [formData.selection_rules]
+  );
 
   const typeCardBase = "group flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
 
@@ -773,14 +780,14 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
 
   const handleSelectionToggleRequest = useCallback(
     (enabled: boolean) => {
-      if (formData.selection_enabled && !enabled && isDirty) {
+      if (formData.selection_enabled && !enabled && selectionTemplateHasContent) {
         setPendingSelectionEnabled(enabled);
         setSelectionToggleGuardOpen(true);
         return;
       }
       applySelectionEnabled(enabled);
     },
-    [applySelectionEnabled, formData.selection_enabled, isDirty]
+    [applySelectionEnabled, formData.selection_enabled, selectionTemplateHasContent]
   );
 
   const handleSelectionToggleConfirm = useCallback(() => {
@@ -1256,6 +1263,13 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
     (!Number.isNaN(editVatRateNumeric) && editVatRateNumeric >= 0 && editVatRateNumeric <= 99.99);
   const isSaveDisabled =
     loading || !hasSelectedType || !hasSelectedCategory || !formData.name.trim() || !editVatRateValid;
+  const selectionTemplateHasContent = useMemo(
+    () =>
+      formData.selection_rules.some(
+        (rule) => rule.part.trim() || rule.min.trim() || rule.max.trim()
+      ),
+    [formData.selection_rules]
+  );
 
   const typeCardBase = "group flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
 
@@ -1416,14 +1430,14 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
 
   const handleSelectionToggleRequest = useCallback(
     (enabled: boolean) => {
-      if (formData.selection_enabled && !enabled && isDirty) {
+      if (formData.selection_enabled && !enabled && selectionTemplateHasContent) {
         setPendingSelectionEnabled(enabled);
         setSelectionToggleGuardOpen(true);
         return;
       }
       applySelectionEnabled(enabled);
     },
-    [applySelectionEnabled, formData.selection_enabled, isDirty]
+    [applySelectionEnabled, formData.selection_enabled, selectionTemplateHasContent]
   );
 
   const handleSelectionToggleConfirm = useCallback(() => {

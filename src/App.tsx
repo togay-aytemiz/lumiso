@@ -38,6 +38,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import Workflows from "./pages/Workflows";
 import Templates from "./pages/Templates";
 import TemplateBuilder from "./pages/TemplateBuilder";
+import GalleryDetail from "./pages/GalleryDetail";
 import SearchPage from "./pages/Search";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminLocalization from "./pages/admin/Localization";
@@ -100,6 +101,7 @@ const AppRoutes = () => {
           <Route path="projects/:id" element={<ProjectDetail />} />
           <Route path="sessions" element={<UpcomingSessions />} />
           <Route path="sessions/:id" element={<SessionDetail />} />
+          <Route path="galleries/:id" element={<GalleryDetail />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="reminders" element={<ReminderDetails />} />
           <Route path="analytics" element={<Analytics />} />

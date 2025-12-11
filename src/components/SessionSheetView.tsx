@@ -378,7 +378,13 @@ export default function SessionSheetView({
         {
           id: "session-sheet-gallery",
           title: tPages("sessionDetail.gallery.title"),
-          content: <SessionGallery sessionId={session.id} />,
+          content: (
+            <SessionGallery
+              sessionId={session.id}
+              defaultEventDate={session.session_date ?? undefined}
+              sessionLeadName={session.leads?.name ?? undefined}
+            />
+          ),
         },
       ]
     : [];

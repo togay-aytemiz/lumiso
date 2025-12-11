@@ -25,6 +25,8 @@ interface TemplateBuilderHeaderProps {
   primaryDisabled?: boolean;
   publishTooltip?: string;
   rightActions?: React.ReactNode;
+  eyebrow?: React.ReactNode;
+  subtitle?: React.ReactNode;
   children?: React.ReactNode;
 }
 
@@ -46,6 +48,8 @@ export function TemplateBuilderHeader({
   primaryDisabled,
   publishTooltip,
   rightActions,
+  eyebrow,
+  subtitle,
   children,
 }: TemplateBuilderHeaderProps) {
   const [isEditingName, setIsEditingName] = useState(false);
@@ -79,8 +83,8 @@ export function TemplateBuilderHeader({
 
   return (
     <div className="border-b bg-background px-6 py-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
           <Button
             type="button"
             variant="tinted"
@@ -92,35 +96,47 @@ export function TemplateBuilderHeader({
             <ArrowLeft className="h-4 w-4" strokeWidth={2.5} />
             <span className="sr-only">{backLabel}</span>
           </Button>
-          <div className="flex items-center gap-2">
-            {isEditingName ? (
-              <Input
-                value={localName}
-                onChange={(event) => setLocalName(event.target.value)}
-                onBlur={commitNameChange}
-                onKeyDown={handleNameKeyDown}
-                className="font-semibold text-lg border bg-background px-2 py-1 h-auto focus-visible:ring-1"
-                autoFocus
-              />
-            ) : (
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-lg">{name}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsEditingName(true)}
-                  className="h-6 w-6 p-0"
-                >
-                  <Edit className="h-3 w-3" />
-                </Button>
-                <Badge variant={isDraft ? "secondary" : "default"}>
-                  {badgeLabel}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  {statusLabel}
-                </span>
+          <div className="flex min-w-0 flex-col gap-1">
+            {eyebrow ? (
+              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                {eyebrow}
               </div>
-            )}
+            ) : null}
+            <div className="flex flex-wrap items-center gap-2">
+              {isEditingName ? (
+                <Input
+                  value={localName}
+                  onChange={(event) => setLocalName(event.target.value)}
+                  onBlur={commitNameChange}
+                  onKeyDown={handleNameKeyDown}
+                  className="h-auto w-[min(480px,100%)] min-w-[200px] border bg-background px-2 py-1 text-lg font-semibold focus-visible:ring-1"
+                  autoFocus
+                />
+              ) : (
+                <>
+                  <span className="font-semibold text-lg">{name}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditingName(true)}
+                    className="h-6 w-6 p-0"
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <Badge variant={isDraft ? "secondary" : "default"}>
+                    {badgeLabel}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {statusLabel}
+                  </span>
+                </>
+              )}
+            </div>
+            {subtitle ? (
+              <div className="flex items-center gap-2 text-sm text-foreground">
+                {subtitle}
+              </div>
+            ) : null}
           </div>
         </div>
 

@@ -27,6 +27,7 @@ interface DateTimePickerProps {
   mode?: "datetime" | "date";
   popoverModal?: boolean;
   defaultTime?: string; // HH:mm used when no time is provided
+  fullWidth?: boolean;
 }
 
 type CalendarValue = Date | Date[] | null;
@@ -97,6 +98,7 @@ export function DateTimePicker({
   mode = "datetime",
   popoverModal = false,
   defaultTime = "09:00",
+  fullWidth = false,
 }: DateTimePickerProps) {
   const { date: initialDate, hours: initialHours, minutes: initialMinutes } = useMemo(
     () => parseIsoLocal(value, mode, defaultTime),
@@ -135,7 +137,8 @@ export function DateTimePicker({
             variant="outline"
             type="button"
             className={cn(
-              "justify-start text-left font-normal w-full md:w-[260px]",
+              "justify-start text-left font-normal",
+              fullWidth ? "w-full" : "w-full md:w-[260px]",
               !value && "text-muted-foreground",
               buttonClassName
             )}

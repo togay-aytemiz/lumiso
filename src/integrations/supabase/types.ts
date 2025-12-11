@@ -70,6 +70,57 @@ export type Database = {
           },
         ]
       }
+      client_selections: {
+        Row: {
+          asset_id: string | null
+          client_email: string | null
+          client_id: string | null
+          created_at: string
+          gallery_id: string
+          id: string
+          note: string | null
+          selection_part: string | null
+          updated_at: string
+        }
+        Insert: {
+          asset_id?: string | null
+          client_email?: string | null
+          client_id?: string | null
+          created_at?: string
+          gallery_id: string
+          id?: string
+          note?: string | null
+          selection_part?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string | null
+          client_email?: string | null
+          client_id?: string | null
+          created_at?: string
+          gallery_id?: string
+          id?: string
+          note?: string | null
+          selection_part?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_selections_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_selections_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       default_service_templates: {
         Row: {
           category: string | null
@@ -213,6 +264,160 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
+      }
+      galleries: {
+        Row: {
+          branding: Json | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          pin_hash: string | null
+          project_id: string | null
+          published_at: string | null
+          session_id: string | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+          watermark_settings: Json | null
+        }
+        Insert: {
+          branding?: Json | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          pin_hash?: string | null
+          project_id?: string | null
+          published_at?: string | null
+          session_id?: string | null
+          status?: string
+          title: string
+          type?: string
+          updated_at?: string
+          watermark_settings?: Json | null
+        }
+        Update: {
+          branding?: Json | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          pin_hash?: string | null
+          project_id?: string | null
+          published_at?: string | null
+          session_id?: string | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          watermark_settings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "galleries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "galleries_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gallery_sets: {
+        Row: {
+          created_at: string
+          description: string | null
+          gallery_id: string
+          id: string
+          name: string
+          order_index: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          gallery_id: string
+          id?: string
+          name: string
+          order_index?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          gallery_id?: string
+          id?: string
+          name?: string
+          order_index?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_sets_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gallery_assets: {
+        Row: {
+          content_hash: string | null
+          created_at: string
+          gallery_id: string
+          height: number | null
+          id: string
+          metadata: Json | null
+          order_index: number | null
+          status: string
+          storage_path_original: string | null
+          storage_path_web: string | null
+          updated_at: string
+          width: number | null
+        }
+        Insert: {
+          content_hash?: string | null
+          created_at?: string
+          gallery_id: string
+          height?: number | null
+          id?: string
+          metadata?: Json | null
+          order_index?: number | null
+          status?: string
+          storage_path_original?: string | null
+          storage_path_web?: string | null
+          updated_at?: string
+          width?: number | null
+        }
+        Update: {
+          content_hash?: string | null
+          created_at?: string
+          gallery_id?: string
+          height?: number | null
+          id?: string
+          metadata?: Json | null
+          order_index?: number | null
+          status?: string
+          storage_path_original?: string | null
+          storage_path_web?: string | null
+          updated_at?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_assets_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       default_message_template_templates: {
         Row: {

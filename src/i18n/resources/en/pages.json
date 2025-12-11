@@ -521,14 +521,125 @@
     "unknownClient": "Unknown Client",
     "gallery": {
       "title": "Session Gallery",
+      "helper": "",
+      "actions": {
+        "create": "Create gallery",
+        "share": "Share",
+        "manage": "Manage"
+      },
       "emptyState": {
         "title": "No images yet",
-        "description": "Upload photos from this session to create a beautiful gallery for your client.",
-        "button": "Upload Images",
+        "description": "Upload this session’s photos.\nCreate a beautiful gallery for your client.",
+        "button": "Create gallery",
         "comingSoon": "Coming soon"
       },
-      "imageAlt": "Session image {{index}}",
-      "addImageAriaLabel": "Add new session image"
+      "types": {
+        "proof": "Selections",
+        "retouch": "Retouch",
+        "final": "Final",
+        "other": "Custom type",
+        "proofHint": "Proof gallery for client selections",
+        "finalHint": "Approved set ready for delivery"
+      },
+      "statuses": {
+        "draft": "Draft",
+        "published": "Published",
+        "archived": "Archived"
+      },
+      "labels": {
+        "updated": "Updated",
+        "published": "Published",
+        "shareSoon": "Share link coming soon",
+        "settings": "Settings",
+        "media": "Media",
+        "uploadTitle": "Upload photos",
+        "uploadDesc": "Drag & drop photos here to add to this gallery.",
+        "uploadHint": "Proof uploads will be optimized to WebP. Originals remain untouched.",
+        "addMedia": "Add media",
+        "coverSelected": "Cover photo",
+        "coverMissing": "Select a cover photo",
+        "coverEmpty": "No photos yet",
+        "coverHint": "Choose a photo to highlight your gallery.",
+        "coverActionHint": "Mark a photo as cover inside the gallery view.",
+        "chooseCover": "Choose cover",
+        "coverAfterUpload": "Pick any uploaded photo as your cover.",
+        "coverEmptyHint": "Add photos to this gallery, then pick your cover."
+      },
+      "toast": {
+        "createdTitle": "Gallery created",
+        "createdDesc": "You can start uploading and sharing.",
+        "errorTitle": "Could not create gallery",
+        "errorDesc": "Something went wrong. Try again.",
+        "updatedTitle": "Gallery saved",
+        "updatedDesc": "Changes applied.",
+        "saveCta": "Save"
+      },
+      "form": {
+        "title": "Create gallery",
+        "titleLabel": "Title",
+        "titlePlaceholder": "e.g., {{leadName}}",
+        "leadNamePlaceholder": "lead name",
+        "typeLabel": "Type",
+        "customTypeLabel": "Custom type",
+        "customTypePlaceholder": "e.g., Album selection",
+        "statusLabel": "Status",
+        "eventDateLabel": "Event date",
+        "submit": "Create and open gallery",
+        "saving": "Creating…",
+        "cancel": "Cancel",
+        "errors": {
+          "titleRequired": "Title is required",
+          "customTypeRequired": "Custom type is required"
+        }
+      },
+      "sets": {
+        "add": "Add set",
+        "empty": "No sets yet. All uploads go to the default set.",
+        "defaultName": "Highlights",
+        "createTitle": "Create photo set",
+        "editTitle": "Edit photo set",
+        "saveChanges": "Save changes",
+        "name": "Set name",
+        "namePlaceholder": "e.g., Ceremony, Reception, Getting ready",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional",
+        "reorder": "Reorder set",
+        "editPrompt": "Edit set name",
+        "createSubmit": "Create",
+        "toast": {
+          "createdTitle": "Set created",
+          "createdDesc": "You can upload into this set."
+        },
+        "errors": {
+          "nameRequired": "Name is required",
+          "cannotDeleteLast": "At least one set is required."
+        }
+      },
+      "selection": {
+        "title": "Selection settings",
+        "description": "Manage client selections for this gallery.",
+        "open": "Selection settings",
+        "enableLabel": "Allow selections",
+        "enableHint": "Clients can pick favorites for this gallery.",
+        "limitLabel": "Selection limit",
+        "limitPlaceholder": "No limit",
+        "deadlineLabel": "Selection deadline",
+        "favoritesLabel": "Allow favorites",
+        "favoritesHint": "Clients can mark photos as favorites.",
+        "summary": {
+          "selected": "Selected",
+          "favorites": "Favorites",
+          "limit": "Limit"
+        },
+        "filters": {
+          "all": "All",
+          "selected": "Selected",
+          "favorites": "Favorites"
+        },
+        "filterSelected": "Filtering selected items",
+        "filterFavorites": "Filtering favorites",
+        "filterAll": "Showing all items"
+      }
     },
     "dangerZone": {
       "title": "Danger Zone",

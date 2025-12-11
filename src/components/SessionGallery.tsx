@@ -72,6 +72,16 @@ interface ProjectServiceWithTemplate {
   } | null;
 }
 
+type SelectionTemplateGroupForm = {
+  key: string;
+  kind?: "service" | "manual";
+  serviceId?: string | null;
+  serviceName?: string | null;
+  billingType?: "included" | "extra" | null;
+  disabled?: boolean;
+  rules: SelectionTemplateRuleForm[];
+};
+
 const typeVariant: Record<GalleryType, "default" | "secondary" | "outline"> = {
   proof: "default",
   retouch: "secondary",
@@ -101,15 +111,7 @@ export default function SessionGallery({
   const [formType, setFormType] = useState<FormGalleryType>("");
   const [formEventDate, setFormEventDate] = useState(() => normalizeDate(defaultEventDate));
   const [selectionEnabled, setSelectionEnabled] = useState(false);
-  const [selectionGroups, setSelectionGroups] = useState<
-    {
-      key: string;
-      serviceId?: string | null;
-      serviceName?: string | null;
-      billingType?: "included" | "extra" | null;
-      rules: SelectionTemplateRuleForm[];
-    }[]
-  >([]);
+  const [selectionGroups, setSelectionGroups] = useState<SelectionTemplateGroupForm[]>([]);
   const [selectionLoading, setSelectionLoading] = useState(false);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -152,6 +154,29 @@ export default function SessionGallery({
     []
   );
 
+  const createManualRule = useCallback((): SelectionTemplateRuleForm => {
+    return {
+      ...createEmptyRule(),
+      part: t("sessionDetail.gallery.selectionTemplate.manualPartDefault", {
+        defaultValue: "Genel",
+      }),
+    };
+  }, [t]);
+
+  const buildManualGroup = useCallback((): SelectionTemplateGroupForm => {
+    return {
+      key: "manual",
+      kind: "manual",
+      serviceId: null,
+      serviceName: t("sessionDetail.gallery.selectionTemplate.manualGroupTitle", {
+        defaultValue: "İlave kurallar",
+      }),
+      billingType: null,
+      disabled: false,
+      rules: [],
+    };
+  }, [t]);
+
   const loadSelectionTemplate = useCallback(async () => {
     setSelectionLoading(true);
     setSelectionError(null);
@@ -166,17 +191,7 @@ export default function SessionGallery({
       setProjectId(resolvedProjectId);
       if (!resolvedProjectId) {
         setProjectHasServices(null);
-        setSelectionGroups([
-          {
-            key: "manual",
-            serviceId: null,
-            serviceName: t("sessionDetail.gallery.selectionTemplate.customLabel", {
-              defaultValue: "Özel seçim kuralları",
-            }),
-            billingType: null,
-            rules: [createEmptyRule()],
-          },
-        ]);
+        setSelectionGroups([buildManualGroup()]);
         setSelectionEnabled(true);
         return;
       }
@@ -201,17 +216,7 @@ export default function SessionGallery({
         .filter((entry) => entry.rules.length > 0);
 
       if (templateCandidates.length === 0) {
-        setSelectionGroups([
-          {
-            key: "manual",
-            serviceId: null,
-            serviceName: t("sessionDetail.gallery.selectionTemplate.customLabel", {
-              defaultValue: "Özel seçim kuralları",
-            }),
-            billingType: null,
-            rules: [createEmptyRule()],
-          },
-        ]);
+        setSelectionGroups([buildManualGroup()]);
         setSelectionEnabled(true);
         return;
       }
@@ -219,11 +224,13 @@ export default function SessionGallery({
       setSelectionGroups(
         templateCandidates.map((entry, index) => ({
           key: entry.service?.id ?? `service-${index}`,
+          kind: "service" as const,
           serviceId: entry.service?.id ?? null,
           serviceName: entry.service?.name ?? null,
           billingType: entry.billing_type ?? null,
+          disabled: false,
           rules: seedRulesIfEmpty(entry.rules),
-        }))
+        })).concat(buildManualGroup())
       );
       setSelectionEnabled(true);
     } catch (error) {
@@ -234,7 +241,7 @@ export default function SessionGallery({
     } finally {
       setSelectionLoading(false);
     }
-  }, [sessionId, t]);
+  }, [sessionId, t, seedRulesIfEmpty, buildManualGroup]);
 
   useEffect(() => {
     if (!createOpen) {
@@ -333,14 +340,20 @@ export default function SessionGallery({
         const normalizedGroups = selectionGroups
           .map((group) => ({
             ...group,
-            rules: normalizeSelectionTemplate(group.rules),
+            rules: normalizeSelectionTemplate(group.rules) ?? [],
+            disabled: Boolean(group.disabled),
           }))
-          .filter((group) => Array.isArray(group.rules) && group.rules.length > 0)
+          .filter(
+            (group) =>
+              group.disabled ||
+              (Array.isArray(group.rules) && group.rules.length > 0)
+          )
           .map((group) => ({
             serviceId: group.serviceId ?? null,
             serviceName: group.serviceName ?? null,
             billingType: group.billingType ?? null,
             rules: group.rules,
+            disabled: group.disabled,
           }));
 
         if (normalizedGroups.length > 0) {
@@ -524,27 +537,50 @@ export default function SessionGallery({
         setSelectionEnabled(true);
         setSelectionGroups((prev) =>
           prev.length > 0
-            ? prev.map((group) => ({ ...group, rules: seedRulesIfEmpty(group.rules) }))
-            : [
-                {
-                  key: "manual",
-                  serviceId: null,
-                  serviceName: t("sessionDetail.gallery.selectionTemplate.customLabel", {
-                    defaultValue: "Özel seçim kuralları",
-                  }),
-                  billingType: null,
-                  rules: [createEmptyRule()],
-                },
-              ]
+            ? prev.map((group) => {
+                const seededRules =
+                  group.rules.length > 0
+                    ? group.rules
+                    : group.kind === "service" && group.serviceId
+                      ? [createEmptyRule()]
+                      : [];
+                return { ...group, rules: seededRules };
+              })
+            : [{ ...buildManualGroup() }]
         );
       } else {
         setSelectionEnabled(false);
       }
     },
-    [selectionLoading, seedRulesIfEmpty, t]
+    [selectionLoading, buildManualGroup]
   );
 
   const helperText = t("sessionDetail.gallery.helper");
+
+  const handleAddManualRule = useCallback(
+    (groupKey: string) => {
+      setSelectionGroups((prev) =>
+        prev.map((group) =>
+          group.key === groupKey
+            ? { ...group, rules: [...group.rules, createManualRule()], kind: "manual" }
+            : group
+        )
+      );
+    },
+    [createManualRule]
+  );
+
+  const handleToggleGroupDisabled = useCallback((groupKey: string, disabled: boolean) => {
+    setSelectionGroups((prev) =>
+      prev.map((group) => {
+        if (group.key !== groupKey) return group;
+        const isService = group.kind === "service" && group.serviceId;
+        const seededRules =
+          !disabled && isService && group.rules.length === 0 ? [createEmptyRule()] : group.rules;
+        return { ...group, disabled, rules: seededRules };
+      })
+    );
+  }, []);
 
   return (
     <>
@@ -651,7 +687,86 @@ export default function SessionGallery({
                   {tForms("service.selection_template.title")}
                 </Label>
                 {(() => {
-                  const hasServiceTemplates = selectionGroups.some((group) => group.serviceId);
+                  const serviceGroups = selectionGroups.filter((group) => group.serviceId);
+                  const manualGroups = selectionGroups.filter(
+                    (group) => group.kind === "manual" || !group.serviceId
+                  );
+                  const manualGroup = manualGroups[0];
+                  const hasServiceTemplates = serviceGroups.length > 0;
+                  const manualPillLabel = t(
+                    "sessionDetail.gallery.selectionTemplate.manualPill",
+                    { defaultValue: "Hizmetten bağımsız" }
+                  );
+                  const addGeneralRuleLabel = t(
+                    "sessionDetail.gallery.selectionTemplate.addGeneralRule",
+                    { defaultValue: "İlave kural ekle" }
+                  );
+                  const manualGroupTitle = manualGroup?.serviceName
+                    || t("sessionDetail.gallery.selectionTemplate.manualGroupTitle", {
+                      defaultValue: "İlave kurallar",
+                    });
+
+                  const renderManualGroup = (withToggle: boolean) => {
+                    if (!manualGroup) return null;
+                    const hasManualRules = (manualGroup.rules?.length ?? 0) > 0;
+                    return (
+                      <div className="space-y-2 rounded-lg border border-dashed border-emerald-200/70 bg-white/70 p-3 w-full">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-foreground">{manualGroupTitle}</p>
+                            <Badge
+                              variant="outline"
+                              className="border-emerald-200 bg-emerald-50 text-emerald-700"
+                            >
+                              {manualPillLabel}
+                            </Badge>
+                          </div>
+                          <Button
+                            type="button"
+                            variant={hasManualRules ? "outline" : "link"}
+                            size="sm"
+                            className={cn(
+                              "h-8 gap-2",
+                              hasManualRules
+                                ? "border-emerald-300 text-emerald-700 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 disabled:opacity-60"
+                                : "px-0 text-emerald-700 hover:text-emerald-800 disabled:opacity-60"
+                            )}
+                            onClick={() => handleAddManualRule(manualGroup.key)}
+                            disabled={!selectionEnabled}
+                          >
+                            <Plus className="h-4 w-4" />
+                            {addGeneralRuleLabel}
+                          </Button>
+                        </div>
+                        {hasManualRules ? (
+                          <SelectionTemplateSection
+                            enabled={selectionEnabled}
+                            onToggleRequest={withToggle ? handleSelectionToggle : undefined}
+                            rules={manualGroup.rules}
+                            onRulesChange={(rules) =>
+                              setSelectionGroups((prev) =>
+                                prev.map((item) =>
+                                  item.key === manualGroup.key ? { ...item, rules, kind: "manual" } : item
+                                )
+                              )
+                            }
+                            tone="emerald"
+                            showHeader={false}
+                            showToggle={withToggle}
+                            variant="unstyled"
+                            showAddButton={false}
+                          />
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            {t("sessionDetail.gallery.selectionTemplate.manualAddPrompt", {
+                              defaultValue: "Click to add an extra rule.",
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  };
+
                   if (!hasServiceTemplates) {
                     return (
                       <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
@@ -671,39 +786,15 @@ export default function SessionGallery({
                             {selectionInfo.text}
                           </p>
                         ) : null}
-                        <SelectionTemplateSection
-                          enabled={selectionEnabled}
-                          onToggleRequest={handleSelectionToggle}
-                          rules={selectionGroups[0]?.rules ?? []}
-                          onRulesChange={(rules) =>
-                            setSelectionGroups((prev) =>
-                              prev.length > 0
-                                ? prev.map((item, index) =>
-                                    index === 0 ? { ...item, rules } : item
-                                  )
-                                : [
-                                    {
-                                      key: "manual",
-                                      serviceId: null,
-                                      serviceName: t(
-                                        "sessionDetail.gallery.selectionTemplate.customLabel"
-                                      ),
-                                      billingType: null,
-                                      rules,
-                                    },
-                                  ]
-                            )
-                          }
-                          tone="emerald"
-                        />
+                        {renderManualGroup(true)}
                       </div>
                     );
                   }
 
                   return (
-                    <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+                      <div className="space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
                       <div className="space-y-4">
-                        {selectionGroups.map((group) => {
+                        {serviceGroups.map((group) => {
                           const billingLabel =
                             group.billingType === "included"
                               ? t("sessionDetail.gallery.selectionTemplate.billingIncluded", {
@@ -714,62 +805,96 @@ export default function SessionGallery({
                                     defaultValue: "Ekstra hizmet",
                                   })
                                 : null;
+                          const isDisabled = Boolean(group.disabled);
                           return (
-                            <div key={group.key} className="space-y-2">
-                              <div className="flex items-center justify-between gap-2">
-                                <div>
-                                  <p className="text-sm font-semibold text-foreground">
-                                    {group.serviceName ||
-                                      t("sessionDetail.gallery.selectionTemplate.customLabel", {
-                                        defaultValue: "Özel seçim kuralları",
-                                      })}
-                                  </p>
-                                  {billingLabel ? (
-                                    <p className="text-xs text-muted-foreground">{billingLabel}</p>
+                            <div key={group.key} className="space-y-2 w-full">
+                              <div className="space-y-2 rounded-lg border border-emerald-100 bg-white/80 p-3 w-full">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div>
+                                    <p className="text-sm font-semibold text-foreground">
+                                      {group.serviceName ||
+                                        t("sessionDetail.gallery.selectionTemplate.customLabel", {
+                                          defaultValue: "Özel seçim kuralları",
+                                        })}
+                                    </p>
+                                    {billingLabel ? (
+                                      <p className="text-xs text-muted-foreground">{billingLabel}</p>
+                                    ) : null}
+                                  </div>
+                                  {group.serviceId ? (
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 gap-2 border-emerald-300 text-emerald-700 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 disabled:opacity-60"
+                                        onClick={() =>
+                                          setSelectionGroups((prev) =>
+                                            prev.map((item) =>
+                                              item.key === group.key
+                                                ? {
+                                                    ...item,
+                                                    rules: [...item.rules, createEmptyRule()],
+                                                    kind: "service",
+                                                  }
+                                                : item
+                                            )
+                                          )
+                                        }
+                                        disabled={isDisabled}
+                                      >
+                                        <Plus className="h-4 w-4" />
+                                        {tForms("service.selection_template.add_rule")}
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 text-emerald-700 hover:text-emerald-800"
+                                        onClick={() => handleToggleGroupDisabled(group.key, !isDisabled)}
+                                      >
+                                        {isDisabled
+                                          ? t("sessionDetail.gallery.selectionTemplate.enableSelections", {
+                                              defaultValue: "Seçime aç",
+                                            })
+                                          : t("sessionDetail.gallery.selectionTemplate.disableSelections", {
+                                              defaultValue: "Seçime kapat",
+                                            })}
+                                      </Button>
+                                    </div>
                                   ) : null}
                                 </div>
-                              {group.serviceId ? (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 gap-2 border-emerald-300 text-emerald-700 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800"
-                                  onClick={() =>
-                                    setSelectionGroups((prev) =>
-                                      prev.map((item) =>
-                                        item.key === group.key
-                                          ? { ...item, rules: [...item.rules, createEmptyRule()] }
-                                            : item
+                                {isDisabled ? (
+                                  <p className="text-xs text-muted-foreground">
+                                    {t("sessionDetail.gallery.selectionTemplate.disabledHint", {
+                                      defaultValue: "Bu hizmet için seçimler kapalı.",
+                                    })}
+                                  </p>
+                                ) : (
+                                  <SelectionTemplateSection
+                                    enabled={selectionEnabled}
+                                    onToggleRequest={undefined}
+                                    rules={group.rules}
+                                    onRulesChange={(rules) =>
+                                      setSelectionGroups((prev) =>
+                                        prev.map((item) =>
+                                          item.key === group.key ? { ...item, rules, kind: "service" } : item
                                         )
                                       )
                                     }
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                    {tForms("service.selection_template.add_rule")}
-                                  </Button>
-                                ) : null}
+                                    tone="emerald"
+                                    showHeader={false}
+                                    showToggle={false}
+                                    variant="unstyled"
+                                    showAddButton={false}
+                                  />
+                                )}
                               </div>
-                              <SelectionTemplateSection
-                                enabled={selectionEnabled}
-                                onToggleRequest={undefined}
-                                rules={group.rules}
-                                onRulesChange={(rules) =>
-                                  setSelectionGroups((prev) =>
-                                    prev.map((item) =>
-                                      item.key === group.key ? { ...item, rules } : item
-                                    )
-                                  )
-                                }
-                                tone="emerald"
-                                showHeader={false}
-                                showToggle={false}
-                                variant="unstyled"
-                                showAddButton={false}
-                              />
                             </div>
                           );
                         })}
                       </div>
+                      {renderManualGroup(false)}
                     </div>
                   );
                 })()}

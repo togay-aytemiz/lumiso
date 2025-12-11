@@ -602,7 +602,15 @@
         "customLabel": "Custom selection rules",
         "billingIncluded": "Included service",
         "billingExtra": "Extra service",
-        "addSource": "Add source"
+        "addSource": "Add source",
+        "manualGroupTitle": "Additional rules",
+        "manualPill": "Service-agnostic",
+        "addGeneralRule": "Add extra rule",
+        "manualPartDefault": "General",
+        "manualAddPrompt": "Click to add an extra rule.",
+        "disableSelections": "Turn off selections",
+        "enableSelections": "Turn on selections",
+        "disabledHint": "Selections are disabled for this service."
       },
       "sets": {
         "add": "Add set",

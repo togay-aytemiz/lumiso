@@ -86,7 +86,7 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 w-full">
       {rules.length === 0 ? (
         <p className="text-xs text-muted-foreground">
           {t("service.selection_template.empty_state")}
@@ -96,7 +96,7 @@ const SelectionTemplateEditor = ({ rules, onChange }: SelectionTemplateEditorPro
           {rules.map((rule, index) => (
             <div
               key={rule.id}
-              className="grid gap-2 p-3 sm:grid-cols-[70px,1fr,90px,90px,100px,40px] sm:items-center"
+              className="grid w-full gap-2 p-3 sm:grid-cols-[80px,minmax(0,1fr),90px,90px,90px,40px] sm:items-center"
             >
               <span className="text-xs font-semibold text-muted-foreground">
                 {t("service.selection_template.rule_label", { index: index + 1 })}

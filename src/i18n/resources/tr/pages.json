@@ -617,7 +617,15 @@
         "customLabel": "Özel seçim kuralları",
         "billingIncluded": "Paket hizmeti",
         "billingExtra": "Ekstra hizmet",
-        "addSource": "Kaynak ekle"
+        "addSource": "Kaynak ekle",
+        "manualGroupTitle": "İlave kurallar",
+        "manualPill": "Hizmetten bağımsız",
+        "addGeneralRule": "İlave kural ekle",
+        "manualPartDefault": "Genel",
+        "manualAddPrompt": "İlave kural eklemek için tıklayın.",
+        "disableSelections": "Seçime kapat",
+        "enableSelections": "Seçime aç",
+        "disabledHint": "Bu hizmet için seçimler kapalı."
       },
       "sets": {
         "add": "Set ekle",

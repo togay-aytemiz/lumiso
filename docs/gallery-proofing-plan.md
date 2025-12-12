@@ -124,13 +124,14 @@ Templates attach to services/packages; when a session includes that deliverable,
 - ✅ Session detail/sheet now creates galleries via a sheet (no modal); fields: title, type (Selections/Retouch/Final/Other), status, event date (defaults from session, changeable). Creation seeds a default set (Highlights/Öne çıkanlar), then redirects to `/galleries/:id`.
 - ✅ Galleries list per session (fetches from Supabase); empty state CTA remains, header CTA hidden when empty to avoid duplicates.
 - ✅ Gallery detail page `/galleries/:id`: back arrow to session, editable title/type/status/event date, save action; sets sidebar with list and “Add set” sheet; media area placeholder (upload wiring pending). All backed by new Supabase tables.
+- ✅ Gallery detail proofing/admin polish: per‑set upload routing + counts, set delete guard when photos exist, filter‑mode hides set actions, improved empty states, soft‑emerald dropzone highlight, batch selection in grid/list, and safer “seçimi kaldır” confirm UI.
 
 ### In-app gallery UX (current)
 - Gallery create sheet (max-w-3xl) mirrors the selection schema UI used in services: service groups show service name input, “Kural ekle” for service-scoped rules, and “Seçime aç/kapat” to disable a service; a manual “İlave kurallar” block sits underneath with a pill + add button. Saving seeds `branding.selectionTemplateGroups` and a flattened `selectionTemplate`.
-- Gallery detail page shows a “Seçim özeti” header row with the selection settings button on the right; the selection sheet reuses the same green-styled schema UI (service + manual groups, add/toggle, required per rule). Legacy toggles (allow selections/limit/deadline/favorites) were removed in favor of the schema-only editor.
-- Selection dashboard cards: filterable by overall/favorites/each rule; rule cards now honor `required` from the template (not just `min > 0`) and show top-left Zorunlu/Opsiyonel pills. Inline status shows “Eksik” badge when under min; a green check icon appears when counts meet min. Favorites/Genel Bakış remain unbadged.
-- Branding payload now carries both `selectionTemplateGroups` (with `serviceId`, `serviceName`, `disabled`, `rules`) and `selectionTemplate` (flattened). Required is persisted per rule; updates from the sheet sync back to the dashboard filters/state.
-- Default set “Öne çıkanlar” is created on gallery creation; sets UI (list, add/edit/delete) remains in the detail page beside the media area placeholder.
+- Gallery detail admin focuses on upload + per‑photo selection: grid/list views with batch select, safe two‑step deselect, and a lightbox with filename header, photographer star in right rail, and read‑only client favorite indicator.
+- Multi‑set workflow: uploads are scoped to the active set like folders; sets show per‑set photo counts; empty states are contextual; set deletion is guarded if the set contains photos.
+- Selection dashboard/filters were removed from the admin view for now; filtering will be re‑surfaced once client selections are wired.
+- Branding payload now carries both `selectionTemplateGroups` (grouped) and `selectionTemplate` (flattened). Required is persisted per rule.
 
 ### Manual/general rules UI (hizmetten bağımsız)
 - Render a distinct “İlave kurallar” group below service-driven selection rows; group header shows a small `Hizmetten bağımsız` pill.

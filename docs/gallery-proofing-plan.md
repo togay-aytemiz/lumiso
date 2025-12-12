@@ -124,7 +124,7 @@ Templates attach to services/packages; when a session includes that deliverable,
 - ✅ Session detail/sheet now creates galleries via a sheet (no modal); fields: title, type (Selections/Retouch/Final/Other), status, event date (defaults from session, changeable). Creation seeds a default set (Highlights/Öne çıkanlar), then redirects to `/galleries/:id`.
 - ✅ Galleries list per session (fetches from Supabase); empty state CTA remains, header CTA hidden when empty to avoid duplicates.
 - ✅ Gallery detail page `/galleries/:id`: back arrow to session, editable title/type/status/event date, save action; sets sidebar with list and “Add set” sheet; media area placeholder (upload wiring pending). All backed by new Supabase tables.
-- ✅ Gallery detail proofing/admin polish: per‑set upload routing + counts, set delete guard when photos exist, filter‑mode hides set actions, improved empty states, soft‑emerald dropzone highlight, batch selection in grid/list, and safer “seçimi kaldır” confirm UI.
+- ✅ Gallery detail proofing/admin polish: per‑set upload routing + counts, set delete guard when photos exist, filter‑mode hides set actions, improved empty states, soft‑emerald dropzone highlight, batch selection in grid/list, safer “seçimi kaldır” confirm UI, and image‑only uploads (mixed drops skip non‑images with a warning).
 
 ### In-app gallery UX (current)
 - Gallery create sheet (max-w-3xl) mirrors the selection schema UI used in services: service groups show service name input, “Kural ekle” for service-scoped rules, and “Seçime aç/kapat” to disable a service; a manual “İlave kurallar” block sits underneath with a pill + add button. Saving seeds `branding.selectionTemplateGroups` and a flattened `selectionTemplate`.

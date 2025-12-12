@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -115,6 +115,8 @@ type UploadItem = {
   starred?: boolean;
   error?: string | null;
   storagePathWeb?: string | null;
+  uploadBatchId?: string;
+  enqueuedAt?: number;
 };
 
 interface GalleryDetailRow {
@@ -168,6 +170,41 @@ const AUTO_SAVE_DELAY = 1200;
 const GALLERY_ASSET_SIGNED_URL_TTL_SECONDS = 60 * 60;
 const MAX_CONCURRENT_UPLOADS = 3;
 
+type UploadBatchMeta = {
+  id: string;
+  startedAt: number;
+};
+
+type UploadBatchStats = {
+  batchId: string;
+  setId: string;
+  startedAt: number;
+  total: number;
+  uploaded: number;
+  errors: number;
+  canceled: number;
+  inProgress: number;
+  completed: number;
+  percent: number;
+  estimatedRemainingMs: number | null;
+};
+
+type UploadBatchSummary = {
+  batchId: string;
+  uploaded: number;
+  total: number;
+  errors: number;
+  canceled: number;
+  completedAt: number;
+  photoCountAtCompletion: number;
+};
+
+const isUploadInProgress = (status: UploadStatus) =>
+  status === "queued" || status === "uploading" || status === "processing";
+
+const isUploadTerminal = (status: UploadStatus) =>
+  status === "done" || status === "error" || status === "canceled";
+
 const formatBytes = (bytes: number | null | undefined) => {
   if (typeof bytes !== "number" || !Number.isFinite(bytes)) return "—";
   if (bytes <= 0) return "0 B";
@@ -178,6 +215,15 @@ const formatBytes = (bytes: number | null | undefined) => {
     maximumFractionDigits: value >= 100 ? 0 : value >= 10 ? 1 : 2,
   });
   return `${formatter.format(value)} ${units[index]}`;
+};
+
+const formatDurationShortTR = (milliseconds: number) => {
+  const totalSeconds = Math.max(0, Math.round(milliseconds / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes <= 0) return `${seconds} sn`;
+  if (seconds <= 0) return `${minutes} dk`;
+  return `${minutes} dk ${seconds} sn`;
 };
 
 const formatDateForDisplay = (value: string | null) => {
@@ -208,6 +254,8 @@ const cloneSelectionTemplateGroups = (groups: SelectionTemplateGroupForm[]) =>
     ...group,
     rules: group.rules.map((rule) => ({ ...rule })),
   }));
+
+const isImageFile = (file: File) => file.type.startsWith("image/");
 
 const fingerprintSelectionTemplateGroups = (groups: SelectionTemplateGroupForm[]) =>
   JSON.stringify(
@@ -281,6 +329,9 @@ export default function GalleryDetail() {
   const pendingSetIdRef = useRef<string | null>(null);
   const dropzoneDragDepthRef = useRef(0);
   const canceledUploadIdsRef = useRef<Set<string>>(new Set());
+  const [uploadBatchBySetId, setUploadBatchBySetId] = useState<Record<string, UploadBatchMeta>>({});
+  const uploadBatchBySetIdRef = useRef<Record<string, UploadBatchMeta>>({});
+  const [uploadBatchSummaryBySetId, setUploadBatchSummaryBySetId] = useState<Record<string, UploadBatchSummary>>({});
   const [orderedSets, setOrderedSets] = useState<GallerySetRow[]>([]);
   const [setName, setSetName] = useState("");
   const [setDescription, setSetDescription] = useState("");
@@ -411,9 +462,12 @@ export default function GalleryDetail() {
     setPendingBatchDeleteIds(null);
     setBatchDeleteGuardOpen(false);
     canceledUploadIdsRef.current.clear();
+    setUploadBatchBySetId({});
+    uploadBatchBySetIdRef.current = {};
+    setUploadBatchSummaryBySetId({});
   }, [id]);
 
-  const { data: sets } = useQuery({
+  const { data: sets, isLoading: setsLoading } = useQuery({
     queryKey: ["gallery_sets", id],
     enabled: Boolean(id),
     queryFn: async (): Promise<GallerySetRow[]> => {
@@ -428,7 +482,7 @@ export default function GalleryDetail() {
     },
   });
 
-  const { data: clientSelections } = useQuery({
+  const { data: clientSelections, isLoading: clientSelectionsLoading } = useQuery({
     queryKey: ["client_selections", id],
     enabled: Boolean(id),
     queryFn: async (): Promise<ClientSelectionRow[]> => {
@@ -442,7 +496,7 @@ export default function GalleryDetail() {
     },
   });
 
-  const { data: storageUsage } = useQuery({
+  const { data: storageUsage, isLoading: storageUsageLoading } = useQuery({
     queryKey: ["gallery_storage_usage", id],
     enabled: Boolean(id),
     staleTime: 60_000,
@@ -455,7 +509,7 @@ export default function GalleryDetail() {
     },
   });
 
-  const { data: storedAssets } = useQuery({
+  const { data: storedAssets, isLoading: storedAssetsLoading } = useQuery({
     queryKey: ["gallery_assets", id],
     enabled: Boolean(id),
     queryFn: async (): Promise<UploadItem[]> => {
@@ -516,7 +570,7 @@ export default function GalleryDetail() {
     },
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!storedAssets) return;
     setUploadQueue((prev) => {
       if (prev.length === 0) return storedAssets;
@@ -1479,26 +1533,75 @@ export default function GalleryDetail() {
     (files: FileList | File[], setId?: string | null) => {
       const list = Array.from(files ?? []);
       if (list.length === 0) return;
+
+      const supportedFiles = list.filter(isImageFile);
+      const skippedFilesCount = list.length - supportedFiles.length;
+      if (skippedFilesCount > 0) {
+        toast({
+          title: t("sessionDetail.gallery.toast.unsupportedFilesTitle", {
+            defaultValue: "Some files were skipped",
+          }),
+          description: t("sessionDetail.gallery.toast.unsupportedFilesDesc", {
+            count: skippedFilesCount,
+            defaultValue: "Only images are supported right now.",
+          }),
+        });
+      }
+
+      if (supportedFiles.length === 0) return;
+      const resolvedSetId = setId ?? null;
+      const now = Date.now();
+
+      let batchId: string | null = null;
+      if (resolvedSetId) {
+        const existing = uploadBatchBySetIdRef.current[resolvedSetId] ?? null;
+        const shouldReuseExisting =
+          Boolean(existing) &&
+          uploadQueueRef.current.some(
+            (item) =>
+              item.setId === resolvedSetId &&
+              item.uploadBatchId === existing?.id &&
+              isUploadInProgress(item.status)
+          );
+
+        if (shouldReuseExisting) {
+          batchId = existing!.id;
+        } else {
+          batchId = crypto.randomUUID?.() ?? Math.random().toString(16).slice(2);
+          const meta: UploadBatchMeta = { id: batchId, startedAt: now };
+          uploadBatchBySetIdRef.current[resolvedSetId] = meta;
+          setUploadBatchBySetId((prev) => ({ ...prev, [resolvedSetId]: meta }));
+          setUploadBatchSummaryBySetId((prev) => {
+            if (!(resolvedSetId in prev)) return prev;
+            const next = { ...prev };
+            delete next[resolvedSetId];
+            return next;
+          });
+        }
+      }
+
       setUploadQueue((prev) => [
         ...prev,
-        ...list.map((file) => {
+        ...supportedFiles.map((file) => {
           const id = crypto.randomUUID?.() ?? Math.random().toString(16).slice(2);
           return {
             id,
             file,
             name: file.name,
             size: file.size,
-            setId: setId ?? null,
+            setId: resolvedSetId,
             status: "queued" as UploadStatus,
             progress: 0,
             previewUrl: URL.createObjectURL(file),
             starred: false,
             error: null,
+            uploadBatchId: batchId ?? undefined,
+            enqueuedAt: now,
           };
         }),
       ]);
     },
-    []
+    [t, toast]
   );
 
   const clearUploadTimer = useCallback((id: string) => {
@@ -1913,6 +2016,106 @@ export default function GalleryDetail() {
     return result;
   }, [uploadQueue, legacyFallbackSetId]);
 
+  const uploadBatchStatsBySetId = useMemo(() => {
+    const result: Record<string, UploadBatchStats> = {};
+    const now = Date.now();
+
+    Object.entries(uploadBatchBySetId).forEach(([setId, batch]) => {
+      const items = uploadQueue.filter((item) => item.setId === setId && item.uploadBatchId === batch.id);
+      if (items.length === 0) return;
+
+      const total = items.length;
+      let uploaded = 0;
+      let errors = 0;
+      let canceled = 0;
+      let inProgress = 0;
+      let progressSum = 0;
+
+      items.forEach((item) => {
+        if (isUploadInProgress(item.status)) {
+          inProgress += 1;
+        }
+        if (item.status === "done") uploaded += 1;
+        if (item.status === "error") errors += 1;
+        if (item.status === "canceled") canceled += 1;
+
+        const contribution = isUploadTerminal(item.status)
+          ? 100
+          : Math.max(0, Math.min(100, item.progress));
+        progressSum += contribution;
+      });
+
+      const completed = uploaded + errors + canceled;
+      const percent = total > 0 ? progressSum / total : 0;
+
+      const remaining = Math.max(0, total - completed);
+      const elapsedMs = Math.max(0, now - batch.startedAt);
+      const estimatedRemainingMs =
+        completed > 0 && remaining > 0 ? (elapsedMs / completed) * remaining : null;
+
+      result[setId] = {
+        batchId: batch.id,
+        setId,
+        startedAt: batch.startedAt,
+        total,
+        uploaded,
+        errors,
+        canceled,
+        inProgress,
+        completed,
+        percent,
+        estimatedRemainingMs,
+      };
+    });
+
+    return result;
+  }, [uploadBatchBySetId, uploadQueue]);
+
+  useEffect(() => {
+    setUploadBatchSummaryBySetId((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      Object.entries(uploadBatchStatsBySetId).forEach(([setId, stats]) => {
+        const isCompleted = stats.total > 0 && stats.inProgress === 0 && stats.completed >= stats.total;
+        if (!isCompleted) return;
+        if (prev[setId]?.batchId === stats.batchId) return;
+        next[setId] = {
+          batchId: stats.batchId,
+          uploaded: stats.uploaded,
+          total: stats.total,
+          errors: stats.errors,
+          canceled: stats.canceled,
+          completedAt: Date.now(),
+          photoCountAtCompletion: uploadsBySetId[setId] ?? 0,
+        };
+        changed = true;
+      });
+
+      return changed ? next : prev;
+    });
+  }, [uploadBatchStatsBySetId, uploadsBySetId]);
+
+  useEffect(() => {
+    setUploadBatchSummaryBySetId((prev) => {
+      const entries = Object.entries(prev);
+      if (entries.length === 0) return prev;
+
+      let changed = false;
+      const next = { ...prev };
+
+      entries.forEach(([setId, summary]) => {
+        const currentCount = uploadsBySetId[setId] ?? 0;
+        if (summary.photoCountAtCompletion !== currentCount) {
+          delete next[setId];
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [uploadsBySetId]);
+
   const uploadsForActiveSet = useMemo(() => {
     const activeSetIdValue = activeSet?.id ?? null;
     if (!activeSetIdValue) return uploadQueue;
@@ -1965,19 +2168,50 @@ export default function GalleryDetail() {
   }, [activeSelectionRuleId, selectionRules, t]);
 
   const activeHeaderCount = useMemo(() => {
-    if (!activeSelectionRuleId) return uploadsForActiveSet.length;
+    if (!activeSelectionRuleId) {
+      const setId = activeSet?.id ?? null;
+      if (setId) return uploadsBySetId[setId] ?? 0;
+      return uploadQueue.filter((item) => item.status !== "canceled").length;
+    }
     if (activeSelectionRuleId === FAVORITES_FILTER_ID) return favoritesCount;
     if (activeSelectionRuleId === STARRED_FILTER_ID) return starredUploadCount;
     const targetRule = selectionRules.find((rule) => rule.id === activeSelectionRuleId);
     return targetRule?.currentCount ?? filteredUploads.length;
   }, [
     activeSelectionRuleId,
-    uploadsForActiveSet.length,
+    activeSet?.id,
+    uploadsBySetId,
+    uploadQueue,
     favoritesCount,
     starredUploadCount,
     selectionRules,
     filteredUploads.length,
   ]);
+
+  const activeSetUploadBatch = useMemo(() => {
+    if (activeSelectionRuleId) return null;
+    const setId = activeSet?.id ?? null;
+    if (!setId) return null;
+    return uploadBatchStatsBySetId[setId] ?? null;
+  }, [activeSelectionRuleId, activeSet?.id, uploadBatchStatsBySetId]);
+
+  const activeSetUploadSummary = useMemo(() => {
+    if (activeSelectionRuleId) return null;
+    const setId = activeSet?.id ?? null;
+    if (!setId) return null;
+    return uploadBatchSummaryBySetId[setId] ?? null;
+  }, [activeSelectionRuleId, activeSet?.id, uploadBatchSummaryBySetId]);
+
+  const showActiveUploadBanner = Boolean(activeSetUploadBatch && activeSetUploadBatch.inProgress > 0);
+  const showActiveUploadSummaryChip = Boolean(
+    activeSetUploadSummary &&
+      !showActiveUploadBanner &&
+      (uploadsBySetId[activeSet?.id ?? ""] ?? 0) === activeSetUploadSummary.photoCountAtCompletion
+  );
+  const activeUploadEstimateLabel =
+    activeSetUploadBatch?.estimatedRemainingMs != null
+      ? formatDurationShortTR(activeSetUploadBatch.estimatedRemainingMs)
+      : null;
 
   const selectableDoneUploadIds = useMemo(
     () => filteredUploads.filter((item) => item.status === "done").map((item) => item.id),
@@ -2196,7 +2430,7 @@ export default function GalleryDetail() {
     [reorderSetsMutation]
   );
 
-  if (isLoading) {
+  if (isLoading || setsLoading || storedAssetsLoading) {
     return (
       <div className="space-y-6 px-6 py-8">
         <div className="flex items-center gap-4">
@@ -2281,6 +2515,8 @@ export default function GalleryDetail() {
 	                  <img
 	                    src={coverUrl}
 	                    alt={displayTitle}
+                      loading="lazy"
+                      decoding="async"
 	                    className="h-full w-full object-cover"
 	                    onError={() => {
 	                      if (coverPhotoId) refreshPreviewUrl(coverPhotoId);
@@ -2650,18 +2886,34 @@ export default function GalleryDetail() {
 	                          <p className="truncate text-lg font-semibold text-foreground">
 	                            {activeFilterMeta ? activeFilterMeta.title : activeSet.name}
 	                          </p>
-	                          <span
-	                            className={cn(
-	                              "inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-2 text-xs font-semibold",
-	                              activeFilterMeta?.kind === "favorites"
-	                                ? "bg-rose-50 text-rose-600"
-	                                : activeFilterMeta?.kind === "starred"
-	                                  ? "bg-amber-50 text-amber-700"
-	                                  : "bg-muted text-muted-foreground"
-	                            )}
-	                          >
-	                            {activeHeaderCount}
-	                          </span>
+	                            {!activeFilterMeta && showActiveUploadSummaryChip && activeSetUploadSummary ? (
+	                              <span
+	                                className={cn(
+	                                  "inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-[11px] font-semibold",
+	                                  activeSetUploadSummary.errors + activeSetUploadSummary.canceled > 0
+	                                    ? "border border-amber-200 bg-amber-50 text-amber-800"
+                                    : "border border-emerald-200 bg-emerald-50 text-emerald-800"
+                                )}
+                              >
+                                <CheckCircle2 className="h-4 w-4" />
+                                {activeSetUploadSummary.errors + activeSetUploadSummary.canceled > 0
+                                  ? `${activeSetUploadSummary.uploaded}/${activeSetUploadSummary.total} yüklendi`
+                                  : `${activeSetUploadSummary.total} fotoğraf yüklendi`}
+                              </span>
+                            ) : (
+                              <span
+                                className={cn(
+                                  "inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-2 text-xs font-semibold",
+                                  activeFilterMeta?.kind === "favorites"
+                                    ? "bg-rose-50 text-rose-600"
+                                    : activeFilterMeta?.kind === "starred"
+                                      ? "bg-amber-50 text-amber-700"
+                                      : "bg-muted text-muted-foreground"
+                                )}
+                              >
+                                {activeHeaderCount}
+                              </span>
+                            )}
 	                          {!activeFilterMeta && activeSet.id === "default-placeholder" ? (
 	                            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px] uppercase">
 	                              {t("sessionDetail.gallery.sets.defaultName", { defaultValue: "Default" })}
@@ -2734,6 +2986,42 @@ export default function GalleryDetail() {
 	                    </div>
 	                  </div>
 	
+	                  {showActiveUploadBanner ? (
+	                    <div className="animate-in fade-in slide-in-from-top-2 rounded-2xl border border-border/60 bg-muted/20 px-4 py-4 shadow-sm duration-300">
+	                      <div className="flex flex-wrap items-start justify-between gap-3">
+	                        <div className="min-w-0 space-y-0.5">
+	                          <p className="text-sm font-semibold text-foreground">
+	                            {t("sessionDetail.gallery.upload.banner.title", {
+	                              defaultValue: "Fotoğraflar yükleniyor",
+	                            })}
+	                          </p>
+	                          <p className="text-xs text-muted-foreground">
+	                            {t("sessionDetail.gallery.upload.banner.description", {
+	                              defaultValue:
+	                                "Lütfen bu sayfayı kapatmayın, farklı bir sete geçebilirsiniz.",
+	                            })}
+	                          </p>
+	                        </div>
+	                        <div className="shrink-0 text-right">
+	                          <p className="text-sm font-semibold tabular-nums text-foreground">
+	                            {activeSetUploadBatch ? `${activeSetUploadBatch.uploaded}/${activeSetUploadBatch.total}` : "0/0"}
+	                          </p>
+	                          {activeUploadEstimateLabel ? (
+	                            <p className="text-xs text-muted-foreground">
+	                              {t("sessionDetail.gallery.upload.banner.remaining", {
+	                                defaultValue: "Kalan ~{{duration}}",
+	                                duration: activeUploadEstimateLabel,
+	                              })}
+	                            </p>
+	                          ) : null}
+	                        </div>
+	                      </div>
+	                      <div className="pt-3">
+	                        <Progress value={activeSetUploadBatch?.percent ?? 0} className="h-2 bg-muted/60" />
+	                      </div>
+	                    </div>
+	                  ) : null}
+
 	                    <div
 	                      className={cn(
 	                        "relative rounded-3xl transition-colors",
@@ -2950,6 +3238,8 @@ export default function GalleryDetail() {
 	                                    <img
 	                                      src={item.previewUrl}
 	                                      alt={item.name}
+                                        loading="lazy"
+                                        decoding="async"
 	                                      className={cn(
 	                                        "h-full w-full object-cover",
 	                                        item.status !== "done" &&
@@ -3184,6 +3474,8 @@ export default function GalleryDetail() {
 	                                    src={item.previewUrl}
 	                                    alt={item.name}
 	                                    loading="lazy"
+                                      decoding="async"
+                                      fetchPriority="low"
 	                                    className={cn(
 	                                      "h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] transform-gpu will-change-transform",
 	                                      item.status !== "done" &&
@@ -3602,6 +3894,7 @@ export default function GalleryDetail() {
 	                <img
 	                  src={currentLightboxPhoto.previewUrl}
 	                  alt={currentLightboxPhoto.name}
+                    decoding="async"
 	                  className="max-h-[calc(100vh-8rem)] max-w-full object-contain shadow-2xl"
 	                  onError={() => refreshPreviewUrl(currentLightboxPhoto.id)}
 	                />

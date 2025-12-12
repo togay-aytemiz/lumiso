@@ -585,6 +585,9 @@
         "createdDesc": "Yükleme ve paylaşmaya başlayabilirsin.",
         "errorTitle": "Galeri oluşturulamadı",
         "errorDesc": "Bir sorun oluştu. Lütfen tekrar dene.",
+        "unsupportedFilesTitle": "Bazı dosyalar atlandı",
+        "unsupportedFilesDesc_one": "Sadece görseller destekleniyor. 1 dosya eklenmedi.",
+        "unsupportedFilesDesc_other": "Sadece görseller destekleniyor. {{count}} dosya eklenmedi.",
         "updatedTitle": "Galeri kaydedildi",
         "updatedDesc": "Değişiklikler uygulandı.",
         "saveCta": "Kaydet"

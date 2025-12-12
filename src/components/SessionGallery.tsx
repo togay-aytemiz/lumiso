@@ -588,6 +588,8 @@ export default function SessionGallery({
                     alt=""
                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03] transform-gpu will-change-transform"
                     loading="lazy"
+                    decoding="async"
+                    fetchPriority="low"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-muted/30">

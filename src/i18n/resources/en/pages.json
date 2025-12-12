@@ -570,6 +570,9 @@
         "createdDesc": "You can start uploading and sharing.",
         "errorTitle": "Could not create gallery",
         "errorDesc": "Something went wrong. Try again.",
+        "unsupportedFilesTitle": "Some files were skipped",
+        "unsupportedFilesDesc_one": "1 file wasn't added because only images are supported right now.",
+        "unsupportedFilesDesc_other": "{{count}} files weren't added because only images are supported right now.",
         "updatedTitle": "Gallery saved",
         "updatedDesc": "Changes applied.",
         "saveCta": "Save"

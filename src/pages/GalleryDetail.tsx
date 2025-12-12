@@ -220,6 +220,7 @@ export default function GalleryDetail() {
   const uploadQueueRef = useRef<UploadItem[]>([]);
   const [activeSelectionRuleId, setActiveSelectionRuleId] = useState<string | null>(null);
   const [photoSelections, setPhotoSelections] = useState<Record<string, string[]>>({});
+  const [pendingSelectionRemovalId, setPendingSelectionRemovalId] = useState<string | null>(null);
   const [selectedBatchIds, setSelectedBatchIds] = useState<Set<string>>(() => new Set());
   const [batchDeleteGuardOpen, setBatchDeleteGuardOpen] = useState(false);
   const [pendingBatchDeleteIds, setPendingBatchDeleteIds] = useState<Set<string> | null>(null);
@@ -459,6 +460,10 @@ export default function GalleryDetail() {
   useEffect(() => {
     setActiveSelectionRuleId(null);
   }, [id]);
+
+  useEffect(() => {
+    setPendingSelectionRemovalId(null);
+  }, [activeSelectionRuleId, activeSetId]);
 
   useEffect(() => {
     if (!visibleSets.length) {
@@ -894,19 +899,27 @@ export default function GalleryDetail() {
         throw new Error(t("sessionDetail.gallery.sets.errors.nameRequired", { defaultValue: "Name required" }));
       }
       const nextOrder = (sets?.length ?? 0) + 1;
-      const { error } = await supabase.from("gallery_sets").insert({
+      const { data: createdSet, error } = await supabase.from("gallery_sets").insert({
         gallery_id: id,
         name: setName.trim(),
         description: setDescription.trim() || null,
         order_index: nextOrder,
-      });
+      }).select("id,name,description,order_index").single();
       if (error) throw error;
+      return createdSet;
     },
-    onSuccess: () => {
+    onSuccess: (createdSet) => {
       setIsSetSheetOpen(false);
       setSetName("");
       setSetDescription("");
       setEditingSetId(null);
+      if (createdSet?.id) {
+        setOrderedSets((prev) => {
+          if (prev.some((set) => set.id === createdSet.id)) return prev;
+          return [...prev, createdSet];
+        });
+        setActiveSetId(createdSet.id);
+      }
       queryClient.invalidateQueries({ queryKey: ["gallery_sets", id] });
       toast({
         title: t("sessionDetail.gallery.sets.toast.createdTitle", { defaultValue: "Set created" }),
@@ -1168,6 +1181,16 @@ export default function GalleryDetail() {
     });
   }, []);
 
+  useEffect(() => {
+    if (
+      pendingSelectionRemovalId &&
+      activeSelectionRuleId &&
+      !(photoSelections[pendingSelectionRemovalId] ?? []).includes(activeSelectionRuleId)
+    ) {
+      setPendingSelectionRemovalId(null);
+    }
+  }, [pendingSelectionRemovalId, activeSelectionRuleId, photoSelections]);
+
   const starredUploadCount = useMemo(
     () => uploadQueue.filter((item) => item.starred && item.status === "done").length,
     [uploadQueue]
@@ -1181,16 +1204,60 @@ export default function GalleryDetail() {
 
   const filteredUploads = useMemo(() => {
     if (!activeSelectionRuleId) return uploadsForActiveSet;
+    const baseUploads = uploadQueue;
     if (activeSelectionRuleId === STARRED_FILTER_ID) {
-      return uploadsForActiveSet.filter((item) => item.starred);
+      return baseUploads.filter((item) => item.starred);
     }
     if (activeSelectionRuleId === FAVORITES_FILTER_ID) {
-      return uploadsForActiveSet;
+      return baseUploads;
     }
-    return uploadsForActiveSet.filter((item) =>
+    return baseUploads.filter((item) =>
       (photoSelections[item.id] ?? []).includes(activeSelectionRuleId)
     );
-  }, [uploadsForActiveSet, activeSelectionRuleId, photoSelections]);
+  }, [uploadsForActiveSet, uploadQueue, activeSelectionRuleId, photoSelections]);
+
+  const activeFilterMeta = useMemo(() => {
+    if (!activeSelectionRuleId) return null;
+    if (activeSelectionRuleId === FAVORITES_FILTER_ID) {
+      return {
+        serviceName: null,
+        title: t("sessionDetail.gallery.selection.favoritesHeader", {
+          defaultValue: "Müşteri Favorileri",
+        }),
+        kind: "favorites" as const,
+      };
+    }
+    if (activeSelectionRuleId === STARRED_FILTER_ID) {
+      return {
+        serviceName: null,
+        title: t("sessionDetail.gallery.selection.starredHeader", {
+          defaultValue: "Yıldızlı Fotoğraflar",
+        }),
+        kind: "starred" as const,
+      };
+    }
+    const targetRule = selectionRules.find((rule) => rule.id === activeSelectionRuleId);
+    return {
+      serviceName: targetRule?.serviceName ?? null,
+      title: targetRule?.title ?? t("sessionDetail.gallery.selection.filterHeader", { defaultValue: "Seçimler" }),
+      kind: "rule" as const,
+    };
+  }, [activeSelectionRuleId, selectionRules, t]);
+
+  const activeHeaderCount = useMemo(() => {
+    if (!activeSelectionRuleId) return uploadsForActiveSet.length;
+    if (activeSelectionRuleId === FAVORITES_FILTER_ID) return favoritesCount;
+    if (activeSelectionRuleId === STARRED_FILTER_ID) return starredUploadCount;
+    const targetRule = selectionRules.find((rule) => rule.id === activeSelectionRuleId);
+    return targetRule?.currentCount ?? filteredUploads.length;
+  }, [
+    activeSelectionRuleId,
+    uploadsForActiveSet.length,
+    favoritesCount,
+    starredUploadCount,
+    selectionRules,
+    filteredUploads.length,
+  ]);
 
   const selectableDoneUploadIds = useMemo(
     () => filteredUploads.filter((item) => item.status === "done").map((item) => item.id),
@@ -1578,6 +1645,7 @@ export default function GalleryDetail() {
                                         className="h-8 w-8 opacity-70 hover:opacity-100"
                                         onClick={(event) => {
                                           event.stopPropagation();
+                                          setActiveSetId(set.id);
                                           handleAddMedia(set.name);
                                         }}
                                       >
@@ -1744,18 +1812,48 @@ export default function GalleryDetail() {
                       }
                     }}
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-3 px-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-lg font-semibold text-foreground">{activeSet.name}</p>
-                        {activeSet.id === "default-placeholder" ? (
-                          <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px] uppercase">
-                            {t("sessionDetail.gallery.sets.defaultName", { defaultValue: "Default" })}
-                          </Badge>
-                        ) : null}
-                      </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+	                    <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+	                      <div className="min-w-0 space-y-0.5">
+	                        {activeFilterMeta?.serviceName ? (
+	                          <span
+	                            className={cn(
+	                              "text-[10px] font-bold uppercase tracking-wider",
+	                              activeFilterMeta.kind === "favorites"
+	                                ? "text-rose-600"
+	                                : activeFilterMeta.kind === "starred"
+	                                  ? "text-amber-600"
+	                                  : "text-primary"
+	                            )}
+	                          >
+	                            {activeFilterMeta.serviceName}
+	                          </span>
+	                        ) : null}
+	                        <div className="flex min-w-0 items-center gap-2">
+	                          <p className="truncate text-lg font-semibold text-foreground">
+	                            {activeFilterMeta ? activeFilterMeta.title : activeSet.name}
+	                          </p>
+	                          <span
+	                            className={cn(
+	                              "inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-2 text-xs font-semibold",
+	                              activeFilterMeta?.kind === "favorites"
+	                                ? "bg-rose-50 text-rose-600"
+	                                : activeFilterMeta?.kind === "starred"
+	                                  ? "bg-amber-50 text-amber-700"
+	                                  : "bg-muted text-muted-foreground"
+	                            )}
+	                          >
+	                            {activeHeaderCount}
+	                          </span>
+	                          {!activeFilterMeta && activeSet.id === "default-placeholder" ? (
+	                            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px] uppercase">
+	                              {t("sessionDetail.gallery.sets.defaultName", { defaultValue: "Default" })}
+	                            </Badge>
+	                          ) : null}
+	                        </div>
+	                      </div>
+	                    <div className="flex items-center gap-2">
+	                      <div className="flex items-center gap-2">
+	                        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                           {t("sessionDetail.gallery.viewMode.label", { defaultValue: "Görünüm" })}
                         </span>
                         <SegmentedControl
@@ -1809,11 +1907,11 @@ export default function GalleryDetail() {
                       </Button>
                     </div>
                   </div>
-                    {uploadQueue.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border/70 bg-muted/20 p-8 text-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                          <Upload className="h-6 w-6" />
-                        </div>
+	                    {!activeSelectionRuleId && uploadsForActiveSet.length === 0 ? (
+	                      <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border/70 bg-muted/20 p-8 text-center">
+	                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+	                          <Upload className="h-6 w-6" />
+	                        </div>
                         <div className="space-y-1">
                           <p className="text-sm font-semibold text-foreground">
                             {t("sessionDetail.gallery.labels.uploadTitle", { defaultValue: "Dosyaları bırak veya seç" })}
@@ -1997,18 +2095,45 @@ export default function GalleryDetail() {
                                   {activeSelectionRuleId &&
                                   activeSelectionRuleId !== FAVORITES_FILTER_ID &&
                                   activeSelectionRuleId !== STARRED_FILTER_ID ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => togglePhotoRuleSelection(item.id, activeSelectionRuleId)}
-                                      className={cn(
-                                        "h-9 rounded-lg border px-3 text-xs font-semibold transition-colors",
-                                        isSelectedInActiveRule
-                                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                                          : "border-border/60 bg-white text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                                      )}
-                                    >
-                                      {isSelectedInActiveRule ? "Seçildi" : "Seç"}
-                                    </button>
+                                    isSelectedInActiveRule ? (
+                                      pendingSelectionRemovalId === item.id ? (
+                                        <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
+                                          <button
+                                            type="button"
+                                            onClick={() => setPendingSelectionRemovalId(null)}
+                                            className="h-9 rounded-lg border border-border/60 bg-white px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+                                          >
+                                            İptal et
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              togglePhotoRuleSelection(item.id, activeSelectionRuleId);
+                                              setPendingSelectionRemovalId(null);
+                                            }}
+                                            className="h-9 rounded-lg bg-rose-600 px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-rose-700"
+                                          >
+                                            Kaldır
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => setPendingSelectionRemovalId(item.id)}
+                                          className="h-9 rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100"
+                                        >
+                                          Seçimi kaldır
+                                        </button>
+                                      )
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => togglePhotoRuleSelection(item.id, activeSelectionRuleId)}
+                                        className="h-9 rounded-lg border border-border/60 bg-white px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+                                      >
+                                        Seç
+                                      </button>
+                                    )
                                   ) : (
                                     <div className="flex items-center gap-2">
                                       <button
@@ -2172,21 +2297,49 @@ export default function GalleryDetail() {
                                       {activeSelectionRuleId &&
                                       activeSelectionRuleId !== FAVORITES_FILTER_ID &&
                                       activeSelectionRuleId !== STARRED_FILTER_ID ? (
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            togglePhotoRuleSelection(item.id, activeSelectionRuleId)
-                                          }
-                                          className={cn(
-                                            "flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold shadow-lg transition-colors",
-                                            isSelectedInActiveRule
-                                              ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                                              : "bg-white text-slate-900 hover:bg-slate-100"
-                                          )}
-                                        >
-                                          <Check size={16} strokeWidth={3} />
-                                          {isSelectedInActiveRule ? "SEÇİLDİ" : "SEÇ"}
-                                        </button>
+                                        isSelectedInActiveRule ? (
+                                          pendingSelectionRemovalId === item.id ? (
+                                            <div className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200">
+                                              <button
+                                                type="button"
+                                                onClick={() => setPendingSelectionRemovalId(null)}
+                                                className="flex h-10 flex-1 items-center justify-center rounded-lg bg-white/90 text-xs font-bold text-slate-900 shadow-lg backdrop-blur-md transition-colors hover:bg-white"
+                                              >
+                                                İPTAL ET
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  togglePhotoRuleSelection(item.id, activeSelectionRuleId);
+                                                  setPendingSelectionRemovalId(null);
+                                                }}
+                                                className="flex h-10 flex-1 items-center justify-center rounded-lg bg-rose-600 text-xs font-bold text-white shadow-lg transition-colors hover:bg-rose-700"
+                                              >
+                                                KALDIR
+                                              </button>
+                                            </div>
+                                          ) : (
+                                            <button
+                                              type="button"
+                                              onClick={() => setPendingSelectionRemovalId(item.id)}
+                                              className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-600 px-3 py-2.5 text-sm font-bold text-white shadow-lg transition-colors hover:bg-rose-700"
+                                            >
+                                              <X size={16} strokeWidth={3} />
+                                              SEÇİMİ KALDIR
+                                            </button>
+                                          )
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              togglePhotoRuleSelection(item.id, activeSelectionRuleId)
+                                            }
+                                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-white px-3 py-2.5 text-sm font-bold text-slate-900 shadow-lg transition-colors hover:bg-slate-100"
+                                          >
+                                            <Check size={16} strokeWidth={3} />
+                                            SEÇ
+                                          </button>
+                                        )
                                       ) : (
                                         <div className="flex items-center gap-2">
                                           <button

@@ -8,6 +8,7 @@ export interface SelectionRule {
   maxCount: number | null;
   currentCount: number;
   serviceName?: string | null;
+  required?: boolean;
 }
 
 export const FAVORITES_FILTER_ID = "favorites";
@@ -161,6 +162,7 @@ export function SelectionDashboard({
           const effectiveMax = rule.maxCount ?? rule.minCount;
           const progressPercent =
             rule.minCount > 0 ? Math.min(100, (rule.currentCount / rule.minCount) * 100) : 100;
+          const isRequired = rule.required ?? rule.minCount > 0;
 
           return (
             <button
@@ -175,6 +177,16 @@ export function SelectionDashboard({
                   : "border-border/70 bg-white hover:border-border hover:shadow-sm"
               )}
             >
+              <div className="mb-1 flex items-start">
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase",
+                    isRequired ? "bg-amber-50 text-amber-600" : "bg-slate-50 text-slate-500"
+                  )}
+                >
+                  {isRequired ? "Zorunlu" : "Opsiyonel"}
+                </span>
+              </div>
               <div className="mb-2 flex items-start gap-2">
                 <span
                   className={cn(

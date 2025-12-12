@@ -480,6 +480,7 @@ export default function GalleryDetail() {
       const rawMax = parseCountValue(ruleData.max);
       const maxCount = rawMax != null ? Math.max(rawMax, minCount) : null;
       const currentCount = normalizedKey ? selectionPartCounts[normalizedKey] ?? 0 : 0;
+      const required = ruleData.required !== false;
       const title =
         part ||
         t("sessionDetail.gallery.selectionTemplate.customLabel", {
@@ -492,6 +493,7 @@ export default function GalleryDetail() {
         maxCount,
         currentCount,
         serviceName,
+        required,
       });
     };
 

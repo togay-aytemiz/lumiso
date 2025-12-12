@@ -131,35 +131,6 @@ export function SelectionDashboard({
           </div>
         </button>
 
-        <button
-          type="button"
-          onClick={() => onSelectRuleFilter(FAVORITES_FILTER_ID)}
-          className={cn(
-            "flex min-h-[96px] flex-col justify-between rounded-xl border bg-rose-50/60 p-3 text-left transition-all duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 focus-visible:ring-offset-2",
-            activeRuleId === FAVORITES_FILTER_ID
-              ? "border-rose-300 ring-1 ring-rose-300"
-              : "border-rose-100 hover:border-rose-200"
-          )}
-        >
-          <div className="mb-2 flex items-start gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-rose-100 text-rose-600">
-              <Heart size={16} fill="currentColor" />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-xs font-semibold text-slate-900">Favoriler</p>
-              <p className="truncate text-[10px] font-medium text-slate-500">Müşteri beğenileri</p>
-            </div>
-          </div>
-
-          <div className="flex items-end justify-between">
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold leading-none text-rose-600">{favoritesCount}</span>
-              <span className="text-[11px] font-medium text-slate-400">adet</span>
-            </div>
-          </div>
-        </button>
-
         {starredCount > 0 ? (
           <button
             type="button"
@@ -190,6 +161,35 @@ export function SelectionDashboard({
             </div>
           </button>
         ) : null}
+
+        <button
+          type="button"
+          onClick={() => onSelectRuleFilter(FAVORITES_FILTER_ID)}
+          className={cn(
+            "flex min-h-[96px] flex-col justify-between rounded-xl border bg-rose-50/60 p-3 text-left transition-all duration-200",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 focus-visible:ring-offset-2",
+            activeRuleId === FAVORITES_FILTER_ID
+              ? "border-rose-300 ring-1 ring-rose-300"
+              : "border-rose-100 hover:border-rose-200"
+          )}
+        >
+          <div className="mb-2 flex items-start gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-rose-100 text-rose-600">
+              <Heart size={16} fill="currentColor" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-semibold text-slate-900">Favoriler</p>
+              <p className="truncate text-[10px] font-medium text-slate-500">Müşteri beğenileri</p>
+            </div>
+          </div>
+
+          <div className="flex items-end justify-between">
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-bold leading-none text-rose-600">{favoritesCount}</span>
+              <span className="text-[11px] font-medium text-slate-400">adet</span>
+            </div>
+          </div>
+        </button>
 
         {resolvedRules.map((rule) => {
           const ruleStatus = getRuleStatus(rule);

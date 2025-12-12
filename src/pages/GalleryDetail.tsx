@@ -32,11 +32,16 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/com
 import { cn, getUserLocale } from "@/lib/utils";
 import {
   CalendarRange,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Circle,
   Edit3,
   GripVertical,
   ImageIcon,
   ImageUp,
   Loader2,
+  Maximize2,
   MoreVertical,
   Plus,
   RotateCcw,
@@ -209,6 +214,9 @@ export default function GalleryDetail() {
   const uploadTimersRef = useRef<Record<string, number>>({});
   const uploadQueueRef = useRef<UploadItem[]>([]);
   const [activeSelectionRuleId, setActiveSelectionRuleId] = useState<string | null>(null);
+  const [photoSelections, setPhotoSelections] = useState<Record<string, string[]>>({});
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pendingSetNameRef = useRef<string | null>(null);
   const [orderedSets, setOrderedSets] = useState<GallerySetRow[]>([]);
@@ -547,6 +555,16 @@ export default function GalleryDetail() {
     return rules;
   }, [selectionTemplateGroups, selectionPartCounts, t]);
 
+  const localRuleCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    Object.values(photoSelections).forEach((ruleIds) => {
+      ruleIds.forEach((ruleId) => {
+        counts[ruleId] = (counts[ruleId] ?? 0) + 1;
+      });
+    });
+    return counts;
+  }, [photoSelections]);
+
   const totalSelectedCount = useMemo(() => {
     if (selectionStats.selected > 0) return selectionStats.selected;
     if (clientSelections && clientSelections.length > 0) return clientSelections.length;
@@ -637,6 +655,9 @@ export default function GalleryDetail() {
         defaultValue: "Favoriler filtrede",
       });
     }
+    if (activeSelectionRuleId === STARRED_FILTER_ID) {
+      return t("sessionDetail.gallery.selection.filterStarred", { defaultValue: "Yıldızlı yüklemeler" });
+    }
     if (activeSelectionRuleId) {
       const targetRule = selectionRules.find((rule) => rule.id === activeSelectionRuleId);
       if (targetRule) {
@@ -645,8 +666,6 @@ export default function GalleryDetail() {
           rule: targetRule.title,
         });
       }
-    } else if (activeSelectionRuleId === STARRED_FILTER_ID) {
-      return t("sessionDetail.gallery.selection.filterStarred", { defaultValue: "Yıldızlı yüklemeler" });
     }
     return t("sessionDetail.gallery.selection.filterAll", { defaultValue: "Showing all items" });
   }, [activeSelectionRuleId, selectionRules, t]);
@@ -1100,10 +1119,75 @@ export default function GalleryDetail() {
     );
   }, []);
 
+  const togglePhotoRuleSelection = useCallback((photoId: string, ruleId: string) => {
+    setPhotoSelections((prev) => {
+      const current = prev[photoId] ?? [];
+      if (current.includes(ruleId)) {
+        const next = current.filter((id) => id !== ruleId);
+        if (next.length === 0) {
+          const { [photoId]: _removed, ...rest } = prev;
+          return rest;
+        }
+        return { ...prev, [photoId]: next };
+      }
+      return { ...prev, [photoId]: [...current, ruleId] };
+    });
+  }, []);
+
   const starredUploadCount = useMemo(
     () => uploadQueue.filter((item) => item.starred && item.status === "done").length,
     [uploadQueue]
   );
+
+  const filteredUploads = useMemo(() => {
+    if (!activeSelectionRuleId) return uploadQueue;
+    if (activeSelectionRuleId === STARRED_FILTER_ID) {
+      return uploadQueue.filter((item) => item.starred);
+    }
+    if (activeSelectionRuleId === FAVORITES_FILTER_ID) {
+      return uploadQueue;
+    }
+    return uploadQueue.filter((item) =>
+      (photoSelections[item.id] ?? []).includes(activeSelectionRuleId)
+    );
+  }, [uploadQueue, activeSelectionRuleId, photoSelections]);
+
+  const openLightboxAt = useCallback((index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  }, []);
+
+  const lightboxPhotos = filteredUploads;
+  const currentLightboxPhoto = lightboxPhotos[lightboxIndex];
+
+  const navigateLightbox = useCallback(
+    (delta: number) => {
+      setLightboxIndex((prev) => {
+        if (lightboxPhotos.length === 0) return 0;
+        const nextIndex = prev + delta;
+        return Math.max(0, Math.min(nextIndex, lightboxPhotos.length - 1));
+      });
+    },
+    [lightboxPhotos.length]
+  );
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setLightboxOpen(false);
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        navigateLightbox(-1);
+      }
+      if (event.key === "ArrowRight") {
+        navigateLightbox(1);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxOpen, navigateLightbox]);
 
   useEffect(() => {
     uploadQueueRef.current = uploadQueue;
@@ -1622,12 +1706,16 @@ export default function GalleryDetail() {
                       </div>
                     ) : null}
 
-                    {uploadQueue.length > 0 ? (
+                    {filteredUploads.length > 0 ? (
                       <div className="grid w-full gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                        {uploadQueue.map((item) => {
+                        {filteredUploads.map((item, index) => {
                           const isDone = item.status === "done";
                           const isError = item.status === "error";
                           const isCanceled = item.status === "canceled";
+                          const selectedRuleIds = photoSelections[item.id] ?? [];
+                          const selectedRuleLabels = selectedRuleIds
+                            .map((ruleId) => selectionRules.find((rule) => rule.id === ruleId)?.title)
+                            .filter(Boolean) as string[];
                           const progressLabel =
                             item.status === "uploading"
                               ? t("sessionDetail.gallery.labels.uploading", { defaultValue: "Yükleniyor" })
@@ -1643,94 +1731,168 @@ export default function GalleryDetail() {
                           return (
                             <div
                               key={item.id}
-                              className="group relative overflow-hidden rounded-xl border border-border/70 bg-white shadow-sm transition hover:shadow-md"
+                              onClick={() => {
+                                if (isDone) openLightboxAt(index);
+                              }}
+                              className={cn(
+                                "group relative overflow-hidden rounded-xl border border-border/70 bg-white shadow-sm transition hover:shadow-md",
+                                isDone && "cursor-pointer"
+                              )}
                             >
                               <div className="relative aspect-square bg-muted/30">
                                 {item.previewUrl ? (
                                   <img
                                     src={item.previewUrl}
                                     alt={item.name}
-                                    className="h-full w-full object-cover"
+                                    className={cn(
+                                      "h-full w-full object-cover transition-transform duration-500 group-hover:scale-105",
+                                      item.status !== "done" && item.status !== "error" && item.status !== "canceled"
+                                        ? "opacity-40"
+                                        : "opacity-100"
+                                    )}
                                   />
                                 ) : (
                                   <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                                     <ImageIcon className="h-6 w-6" />
                                   </div>
                                 )}
-                                <div className="absolute inset-x-3 bottom-3 h-1.5 overflow-hidden rounded-full bg-emerald-100">
-                                  <div
-                                    className={cn(
-                                      "h-full rounded-full transition-all",
-                                      isDone ? "bg-emerald-500" : isError ? "bg-destructive" : "bg-emerald-400"
-                                    )}
-                                    style={{ width: `${item.progress}%` }}
-                                  />
-                                </div>
-                                <div className="absolute inset-x-2 top-2 flex items-center justify-between">
-                                  <button
-                                    type="button"
-                                    className="rounded-full bg-white/90 p-1 text-slate-600 shadow-sm hover:text-slate-800"
-                                  >
-                                    <MoreVertical className="h-4 w-4" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={cn(
-                                      "rounded-full bg-white/90 p-1 shadow-sm",
-                                      item.starred ? "text-amber-500" : "text-slate-600 hover:text-slate-800"
-                                    )}
-                                    onClick={() => handleToggleStar(item.id)}
-                                  >
-                                    <Star
-                                      className={cn("h-4 w-4", item.starred ? "fill-current" : "fill-none")}
+                                {selectedRuleLabels.length > 0 ? (
+                                  <div className="absolute left-2 top-2 flex flex-col gap-1">
+                                    {selectedRuleLabels.slice(0, 3).map((label) => (
+                                      <span
+                                        key={`${item.id}-${label}`}
+                                        className="rounded bg-white/90 px-1.5 py-0.5 text-[9px] font-semibold text-slate-700 shadow-sm"
+                                      >
+                                        {label}
+                                      </span>
+                                    ))}
+                                    {selectedRuleLabels.length > 3 ? (
+                                      <span className="rounded bg-white/90 px-1.5 py-0.5 text-[9px] font-semibold text-slate-700 shadow-sm">
+                                        +{selectedRuleLabels.length - 3}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                                {item.status !== "done" ? (
+                                  <div className="absolute inset-x-3 bottom-3 h-1.5 overflow-hidden rounded-full bg-emerald-100">
+                                    <div
+                                      className={cn(
+                                        "h-full rounded-full transition-all",
+                                        isError ? "bg-destructive" : "bg-emerald-400"
+                                      )}
+                                      style={{ width: `${item.progress}%` }}
                                     />
-                                  </button>
-                                </div>
+                                  </div>
+                                ) : null}
+                                {isDone ? (
+                                  <>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none">
+                                      <div className="rounded-full bg-black/30 p-3 text-white backdrop-blur-sm">
+                                        <Maximize2 className="h-6 w-6" />
+                                      </div>
+                                    </div>
+                                    <div className="absolute inset-x-3 bottom-3 flex flex-col items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                                      <span className="max-w-full truncate rounded-md bg-black/60 px-2 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                                        {item.name}
+                                      </span>
+                                      <Button
+                                        type="button"
+                                        variant="surface"
+                                        size="sm"
+                                        className="w-full"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          openLightboxAt(index);
+                                        }}
+                                      >
+                                        {t("sessionDetail.gallery.labels.inspectAndSelect", {
+                                          defaultValue: "İncele & Seç",
+                                        })}
+                                      </Button>
+                                    </div>
+                                  </>
+                                ) : null}
+                                <button
+                                  type="button"
+                                  onClick={(event) => event.stopPropagation()}
+                                  className="absolute right-2 top-2 rounded-full bg-white/90 p-1 text-slate-600 shadow-sm opacity-0 transition-opacity group-hover:opacity-100 hover:text-slate-800"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  className={cn(
+                                    "absolute right-2 top-10 rounded-full bg-white/90 p-1 shadow-sm transition-opacity",
+                                    item.starred
+                                      ? "opacity-100 text-amber-500"
+                                      : "opacity-0 text-slate-600 group-hover:opacity-100 hover:text-slate-800"
+                                  )}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleToggleStar(item.id);
+                                  }}
+                                >
+                                  <Star
+                                    className={cn("h-4 w-4", item.starred ? "fill-current" : "fill-none")}
+                                  />
+                                </button>
                               </div>
-                              <div className="space-y-1 px-3 py-2">
-                                <div className="flex items-start justify-between gap-2">
-                                  <p className="truncate text-sm font-semibold text-foreground">{item.name}</p>
-                                  <span className="whitespace-nowrap text-[11px] text-muted-foreground">
-                                    {item.setName ?? activeSet.name}
-                                  </span>
+                              {!isDone ? (
+                                <div className="space-y-1 px-3 py-2">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="truncate text-sm font-semibold text-foreground">{item.name}</p>
+                                    <span className="whitespace-nowrap text-[11px] text-muted-foreground">
+                                      {item.setName ?? activeSet.name}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                                    <span>{progressLabel}</span>
+                                    <span>{Math.round(item.progress)}%</span>
+                                  </div>
+                                  <div className="flex items-center justify-end gap-2 text-[11px] font-semibold">
+                                    {item.status === "uploading" ? (
+                                      <button
+                                        type="button"
+                                        className="text-amber-700 hover:text-amber-800"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleCancelUpload(item.id);
+                                        }}
+                                      >
+                                        {t("sessionDetail.gallery.labels.cancel", { defaultValue: "İptal" })}
+                                      </button>
+                                    ) : null}
+                                    {(isError || isCanceled) ? (
+                                      <button
+                                        type="button"
+                                        className="flex items-center gap-1 text-emerald-700 hover:text-emerald-800"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleRetryUpload(item.id);
+                                        }}
+                                      >
+                                        <RotateCcw className="h-3 w-3" />
+                                        {t("sessionDetail.gallery.labels.retry", { defaultValue: "Tekrar dene" })}
+                                      </button>
+                                    ) : null}
+                                    {(isError || isCanceled) ? (
+                                      <button
+                                        type="button"
+                                        className="text-muted-foreground hover:text-foreground"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          setUploadQueue((prev) =>
+                                            prev.filter((upload) => upload.id !== item.id)
+                                          );
+                                        }}
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </button>
+                                    ) : null}
+                                  </div>
                                 </div>
-                                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                                  <span>{progressLabel}</span>
-                                  <span>{Math.round(item.progress)}%</span>
-                                </div>
-                                <div className="flex items-center justify-end gap-2 text-[11px] font-semibold">
-                                  {item.status === "uploading" ? (
-                                    <button
-                                      type="button"
-                                      className="text-amber-700 hover:text-amber-800"
-                                      onClick={() => handleCancelUpload(item.id)}
-                                    >
-                                      {t("sessionDetail.gallery.labels.cancel", { defaultValue: "İptal" })}
-                                    </button>
-                                  ) : null}
-                                  {(isError || isCanceled) ? (
-                                    <button
-                                      type="button"
-                                      className="flex items-center gap-1 text-emerald-700 hover:text-emerald-800"
-                                      onClick={() => handleRetryUpload(item.id)}
-                                    >
-                                      <RotateCcw className="h-3 w-3" />
-                                      {t("sessionDetail.gallery.labels.retry", { defaultValue: "Tekrar dene" })}
-                                    </button>
-                                  ) : null}
-                                  {(isError || isCanceled) ? (
-                                    <button
-                                      type="button"
-                                      className="text-muted-foreground hover:text-foreground"
-                                      onClick={() =>
-                                        setUploadQueue((prev) => prev.filter((upload) => upload.id !== item.id))
-                                      }
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </button>
-                                  ) : null}
-                                </div>
-                              </div>
+                              ) : null}
                             </div>
                           );
                         })}
@@ -1747,6 +1909,139 @@ export default function GalleryDetail() {
           </div>
         </div>
       </div>
+
+      {lightboxOpen && currentLightboxPhoto ? (
+        <div className="fixed inset-0 z-[100] flex bg-black/95 text-white backdrop-blur-sm">
+          <div className="relative flex flex-1 flex-col">
+            <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent p-4">
+              <div className="text-sm font-medium opacity-80">
+                {lightboxIndex + 1} / {lightboxPhotos.length}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleToggleStar(currentLightboxPhoto.id)}
+                  className={cn(
+                    "rounded-full p-2 transition hover:bg-white/10",
+                    currentLightboxPhoto.starred ? "text-amber-400" : "text-white/70 hover:text-white"
+                  )}
+                  aria-label={t("sessionDetail.gallery.labels.star", { defaultValue: "Yıldızla" })}
+                >
+                  <Star
+                    className={cn("h-5 w-5", currentLightboxPhoto.starred ? "fill-current" : "fill-none")}
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLightboxOpen(false)}
+                  className="rounded-full p-2 hover:bg-white/10"
+                  aria-label={t("sessionDetail.gallery.labels.close", { defaultValue: "Kapat" })}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => navigateLightbox(-1)}
+              disabled={lightboxIndex === 0}
+              className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full p-3 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-20"
+              aria-label={t("sessionDetail.gallery.labels.previous", { defaultValue: "Önceki" })}
+            >
+              <ChevronLeft className="h-8 w-8" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateLightbox(1)}
+              disabled={lightboxIndex >= lightboxPhotos.length - 1}
+              className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full p-3 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-20"
+              aria-label={t("sessionDetail.gallery.labels.next", { defaultValue: "Sonraki" })}
+            >
+              <ChevronRight className="h-8 w-8" />
+            </button>
+
+            <div className="flex flex-1 items-center justify-center p-4 md:p-8">
+              {currentLightboxPhoto.previewUrl ? (
+                <img
+                  src={currentLightboxPhoto.previewUrl}
+                  alt={currentLightboxPhoto.name}
+                  className="max-h-[calc(100vh-8rem)] max-w-full object-contain shadow-2xl"
+                />
+              ) : (
+                <div className="text-sm text-white/60">
+                  {t("sessionDetail.gallery.labels.noPreview", { defaultValue: "Önizleme yok" })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex w-80 shrink-0 flex-col border-l border-white/10 bg-black/80">
+            <div className="border-b border-white/10 p-5">
+              <h3 className="text-lg font-semibold">
+                {t("sessionDetail.gallery.selection.lightboxTitle", { defaultValue: "Seçim detayları" })}
+              </h3>
+              <p className="text-xs text-white/60">
+                {t("sessionDetail.gallery.selection.lightboxDesc", {
+                  defaultValue: "Bu fotoğrafı hangi listelere eklemek istersiniz?",
+                })}
+              </p>
+            </div>
+
+            <div className="flex-1 space-y-2 overflow-y-auto p-4">
+              {selectionRules.map((rule) => {
+                const selectedForRule = (photoSelections[currentLightboxPhoto.id] ?? []).includes(rule.id);
+                const localCount = localRuleCounts[rule.id] ?? 0;
+                const maxAllowed = rule.maxCount ?? null;
+                const isFull = maxAllowed != null && localCount >= maxAllowed;
+                const isDisabled = !selectedForRule && isFull;
+                return (
+                  <button
+                    key={rule.id}
+                    type="button"
+                    onClick={() =>
+                      !isDisabled && togglePhotoRuleSelection(currentLightboxPhoto.id, rule.id)
+                    }
+                    className={cn(
+                      "group flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition",
+                      selectedForRule
+                        ? "border-emerald-400/60 bg-white/10"
+                        : "border-white/10 hover:border-white/20 hover:bg-white/5",
+                      isDisabled && "cursor-not-allowed opacity-50"
+                    )}
+                  >
+                    <div className="min-w-0 flex-1 pr-3">
+                      <div className="truncate text-[10px] font-bold uppercase tracking-wider text-white/50">
+                        {rule.serviceName || "Genel"}
+                      </div>
+                      <div className="truncate text-sm font-medium text-white">{rule.title}</div>
+                      <div className="mt-1 flex items-center gap-1 text-[11px] text-white/50">
+                        <span className={isFull && !selectedForRule ? "text-amber-400" : undefined}>
+                          {localCount} / {maxAllowed ?? "∞"}
+                        </span>
+                        <span>
+                          {rule.required === false ? "(Opsiyonel)" : "(Zorunlu)"}
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className={cn(
+                        "flex h-6 w-6 items-center justify-center rounded-full border-2 transition",
+                        selectedForRule
+                          ? "border-emerald-400 bg-emerald-400 text-white"
+                          : "border-white/30 text-transparent group-hover:border-white/60"
+                      )}
+                    >
+                      {selectedForRule ? <CheckCircle2 size={14} /> : <Circle size={12} />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <Sheet
         open={isSetSheetOpen}

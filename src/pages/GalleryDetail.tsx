@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TemplateBuilderHeader } from "@/components/template-builder/TemplateBuilderHeader";
 import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
+import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import {
   SelectionDashboard,
   FAVORITES_FILTER_ID,
@@ -29,20 +30,24 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { cn, getUserLocale } from "@/lib/utils";
 import {
   CalendarRange,
+  Check,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Circle,
   Edit3,
   GripVertical,
+  Heart,
   ImageIcon,
   ImageUp,
   Loader2,
   Maximize2,
   MoreVertical,
+  MoreHorizontal,
   Plus,
   RotateCcw,
   Share2,
@@ -215,8 +220,12 @@ export default function GalleryDetail() {
   const uploadQueueRef = useRef<UploadItem[]>([]);
   const [activeSelectionRuleId, setActiveSelectionRuleId] = useState<string | null>(null);
   const [photoSelections, setPhotoSelections] = useState<Record<string, string[]>>({});
+  const [selectedBatchIds, setSelectedBatchIds] = useState<Set<string>>(() => new Set());
+  const [batchDeleteGuardOpen, setBatchDeleteGuardOpen] = useState(false);
+  const [pendingBatchDeleteIds, setPendingBatchDeleteIds] = useState<Set<string> | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pendingSetNameRef = useRef<string | null>(null);
   const [orderedSets, setOrderedSets] = useState<GallerySetRow[]>([]);
@@ -1119,6 +1128,31 @@ export default function GalleryDetail() {
     );
   }, []);
 
+  const isBatchSelectionMode =
+    !activeSelectionRuleId || activeSelectionRuleId === FAVORITES_FILTER_ID || activeSelectionRuleId === STARRED_FILTER_ID;
+
+  const toggleBatchSelect = useCallback((id: string) => {
+    setSelectedBatchIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearBatchSelection = useCallback(() => {
+    setSelectedBatchIds(new Set());
+  }, []);
+
+  useEffect(() => {
+    if (!isBatchSelectionMode && selectedBatchIds.size > 0) {
+      setSelectedBatchIds(new Set());
+    }
+  }, [isBatchSelectionMode, selectedBatchIds.size]);
+
   const togglePhotoRuleSelection = useCallback((photoId: string, ruleId: string) => {
     setPhotoSelections((prev) => {
       const current = prev[photoId] ?? [];
@@ -1139,18 +1173,86 @@ export default function GalleryDetail() {
     [uploadQueue]
   );
 
+  const uploadsForActiveSet = useMemo(() => {
+    const activeSetName = activeSet?.name ?? null;
+    if (!activeSetName) return uploadQueue;
+    return uploadQueue.filter((item) => !item.setName || item.setName === activeSetName);
+  }, [uploadQueue, activeSet?.name]);
+
   const filteredUploads = useMemo(() => {
-    if (!activeSelectionRuleId) return uploadQueue;
+    if (!activeSelectionRuleId) return uploadsForActiveSet;
     if (activeSelectionRuleId === STARRED_FILTER_ID) {
-      return uploadQueue.filter((item) => item.starred);
+      return uploadsForActiveSet.filter((item) => item.starred);
     }
     if (activeSelectionRuleId === FAVORITES_FILTER_ID) {
-      return uploadQueue;
+      return uploadsForActiveSet;
     }
-    return uploadQueue.filter((item) =>
+    return uploadsForActiveSet.filter((item) =>
       (photoSelections[item.id] ?? []).includes(activeSelectionRuleId)
     );
-  }, [uploadQueue, activeSelectionRuleId, photoSelections]);
+  }, [uploadsForActiveSet, activeSelectionRuleId, photoSelections]);
+
+  const selectableDoneUploadIds = useMemo(
+    () => filteredUploads.filter((item) => item.status === "done").map((item) => item.id),
+    [filteredUploads]
+  );
+
+  const handleBatchSelectAll = useCallback(() => {
+    setSelectedBatchIds(new Set(selectableDoneUploadIds));
+  }, [selectableDoneUploadIds]);
+
+  const handleBatchStar = useCallback(() => {
+    if (selectedBatchIds.size === 0) return;
+    setUploadQueue((prev) =>
+      prev.map((item) => (selectedBatchIds.has(item.id) ? { ...item, starred: true } : item))
+    );
+    setSelectedBatchIds(new Set());
+  }, [selectedBatchIds]);
+
+  const requestBatchDelete = useCallback(() => {
+    if (selectedBatchIds.size === 0) return;
+    setPendingBatchDeleteIds(new Set(selectedBatchIds));
+    setBatchDeleteGuardOpen(true);
+  }, [selectedBatchIds]);
+
+  const closeBatchDeleteGuard = useCallback(() => {
+    setBatchDeleteGuardOpen(false);
+    setPendingBatchDeleteIds(null);
+  }, []);
+
+  const confirmBatchDelete = useCallback(() => {
+    if (!pendingBatchDeleteIds || pendingBatchDeleteIds.size === 0) {
+      closeBatchDeleteGuard();
+      return;
+    }
+
+    const idsToDelete = new Set(pendingBatchDeleteIds);
+    setBatchDeleteGuardOpen(false);
+    setPendingBatchDeleteIds(null);
+    setSelectedBatchIds(new Set());
+
+    window.setTimeout(() => {
+      setUploadQueue((prev) => {
+        prev.forEach((item) => {
+          if (idsToDelete.has(item.id) && item.previewUrl) {
+            URL.revokeObjectURL(item.previewUrl);
+          }
+        });
+        return prev.filter((item) => !idsToDelete.has(item.id));
+      });
+
+      setPhotoSelections((prev) => {
+        if (Object.keys(prev).length === 0) return prev;
+        const next: Record<string, string[]> = {};
+        Object.entries(prev).forEach(([photoId, ruleIds]) => {
+          if (!idsToDelete.has(photoId)) {
+            next[photoId] = ruleIds;
+          }
+        });
+        return next;
+      });
+    }, 0);
+  }, [pendingBatchDeleteIds, closeBatchDeleteGuard]);
 
   const openLightboxAt = useCallback((index: number) => {
     setLightboxIndex(index);
@@ -1159,6 +1261,10 @@ export default function GalleryDetail() {
 
   const lightboxPhotos = filteredUploads;
   const currentLightboxPhoto = lightboxPhotos[lightboxIndex];
+  const currentLightboxSelectionIds = currentLightboxPhoto
+    ? (photoSelections[currentLightboxPhoto.id] ?? [])
+    : [];
+  const isCurrentLightboxFavorite = currentLightboxSelectionIds.includes(FAVORITES_FILTER_ID);
 
   const navigateLightbox = useCallback(
     (delta: number) => {
@@ -1628,7 +1734,16 @@ export default function GalleryDetail() {
             <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
               <div className="space-y-4">
                 {activeSet ? (
-                  <div className="space-y-4">
+                  <div
+                    className="space-y-4"
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      if (event.dataTransfer.files?.length) {
+                        enqueueUploads(event.dataTransfer.files, activeSet.name);
+                      }
+                    }}
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-3 px-1">
                       <div className="flex items-center gap-2">
                         <p className="text-lg font-semibold text-foreground">{activeSet.name}</p>
@@ -1639,6 +1754,31 @@ export default function GalleryDetail() {
                         ) : null}
                       </div>
                     <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {t("sessionDetail.gallery.viewMode.label", { defaultValue: "Görünüm" })}
+                        </span>
+                        <SegmentedControl
+                          size="sm"
+                          value={viewMode}
+                          onValueChange={(value) => setViewMode(value as "grid" | "list")}
+                          options={[
+                            {
+                              value: "grid",
+                              label: t("sessionDetail.gallery.viewMode.board", { defaultValue: "Pano" }),
+                              ariaLabel: t("sessionDetail.gallery.viewMode.grid", { defaultValue: "Pano görünümü" }),
+                            },
+                            {
+                              value: "list",
+                              label: t("sessionDetail.gallery.viewMode.listLabel", { defaultValue: "Liste" }),
+                              ariaLabel: t("sessionDetail.gallery.viewMode.list", { defaultValue: "Liste görünümü" }),
+                            },
+                          ]}
+                        />
+                      </div>
+
+                      <div className="h-6 w-px bg-border/60" aria-hidden="true" />
+
                       <Button
                         variant="ghost"
                         size="icon"
@@ -1670,16 +1810,7 @@ export default function GalleryDetail() {
                     </div>
                   </div>
                     {uploadQueue.length === 0 ? (
-                      <div
-                        onDragOver={(event) => event.preventDefault()}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          if (event.dataTransfer.files?.length) {
-                            enqueueUploads(event.dataTransfer.files, activeSet.name);
-                          }
-                        }}
-                        className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border/70 bg-muted/20 p-8 text-center"
-                      >
+                      <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border/70 bg-muted/20 p-8 text-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
                           <Upload className="h-6 w-6" />
                         </div>
@@ -1707,48 +1838,258 @@ export default function GalleryDetail() {
                     ) : null}
 
                     {filteredUploads.length > 0 ? (
-                      <div className="grid w-full gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                        {filteredUploads.map((item, index) => {
-                          const isDone = item.status === "done";
-                          const isError = item.status === "error";
-                          const isCanceled = item.status === "canceled";
-                          const selectedRuleIds = photoSelections[item.id] ?? [];
-                          const selectedRuleLabels = selectedRuleIds
-                            .map((ruleId) => selectionRules.find((rule) => rule.id === ruleId)?.title)
-                            .filter(Boolean) as string[];
-                          const progressLabel =
-                            item.status === "uploading"
-                              ? t("sessionDetail.gallery.labels.uploading", { defaultValue: "Yükleniyor" })
-                              : item.status === "processing"
-                                ? t("sessionDetail.gallery.labels.processing", { defaultValue: "İşleniyor" })
-                                : item.status === "done"
-                                  ? t("sessionDetail.gallery.labels.done", { defaultValue: "Tamamlandı" })
-                                  : item.status === "error"
-                                    ? item.error ?? t("sessionDetail.gallery.labels.error", { defaultValue: "Hata" })
-                                    : item.status === "canceled"
-                                      ? t("sessionDetail.gallery.labels.canceled", { defaultValue: "İptal edildi" })
-                                      : t("sessionDetail.gallery.labels.queued", { defaultValue: "Sırada" });
-                          return (
-                            <div
-                              key={item.id}
-                              onClick={() => {
-                                if (isDone) openLightboxAt(index);
-                              }}
-                              className={cn(
-                                "group relative overflow-hidden rounded-xl border border-border/70 bg-white shadow-sm transition hover:shadow-md",
-                                isDone && "cursor-pointer"
-                              )}
-                            >
-                              <div className="relative aspect-square bg-muted/30">
+                      viewMode === "list" ? (
+                        <div className="flex flex-col overflow-hidden rounded-xl border border-border/60 bg-white">
+                          {filteredUploads.map((item, index) => {
+                            const isDone = item.status === "done";
+                            const isError = item.status === "error";
+                            const isCanceled = item.status === "canceled";
+                            const selectedRuleIds = photoSelections[item.id] ?? [];
+                            const selectedRuleLabels = selectedRuleIds
+                              .map((ruleId) => selectionRules.find((rule) => rule.id === ruleId)?.title)
+                              .filter(Boolean) as string[];
+                            const isSelectedInActiveRule =
+                              Boolean(activeSelectionRuleId) &&
+                              activeSelectionRuleId !== FAVORITES_FILTER_ID &&
+                              activeSelectionRuleId !== STARRED_FILTER_ID &&
+                              selectedRuleIds.includes(activeSelectionRuleId);
+                            const isClientFavorite = selectedRuleIds.includes(FAVORITES_FILTER_ID);
+                            const isBatchSelected = selectedBatchIds.has(item.id);
+
+                            const progressLabel =
+                              item.status === "uploading"
+                                ? t("sessionDetail.gallery.labels.uploading", { defaultValue: "Yükleniyor" })
+                                : item.status === "processing"
+                                  ? t("sessionDetail.gallery.labels.processing", { defaultValue: "İşleniyor" })
+                                  : item.status === "done"
+                                    ? t("sessionDetail.gallery.labels.done", { defaultValue: "Tamamlandı" })
+                                    : item.status === "error"
+                                      ? item.error ?? t("sessionDetail.gallery.labels.error", { defaultValue: "Hata" })
+                                      : item.status === "canceled"
+                                        ? t("sessionDetail.gallery.labels.canceled", { defaultValue: "İptal edildi" })
+                                        : t("sessionDetail.gallery.labels.queued", { defaultValue: "Sırada" });
+
+                            return (
+                              <div
+                                key={item.id}
+                                onClick={() => {
+                                  if (isDone) openLightboxAt(index);
+                                }}
+                                className={cn(
+                                  "group flex cursor-pointer items-center gap-4 border-b border-border/40 p-3 transition-colors hover:bg-muted/30 last:border-0",
+                                  isSelectedInActiveRule && "bg-emerald-50/40"
+                                )}
+                              >
+                                {isBatchSelectionMode && isDone ? (
+                                  <button
+                                    type="button"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      toggleBatchSelect(item.id);
+                                    }}
+                                    className={cn(
+                                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors",
+                                      isBatchSelected
+                                        ? "border-[hsl(var(--accent-300))] bg-[hsl(var(--accent-100))] text-[hsl(var(--accent-800))]"
+                                        : "border-border/60 bg-white text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                                    )}
+                                    title={isBatchSelected ? "Seçimi kaldır" : "Seç"}
+                                    aria-label={isBatchSelected ? "Seçimi kaldır" : "Seç"}
+                                  >
+                                    {isBatchSelected ? (
+                                      <CheckCircle2 className="h-5 w-5" />
+                                    ) : (
+                                      <Circle className="h-5 w-5" />
+                                    )}
+                                  </button>
+                                ) : null}
+
+                                <div
+                                  className={cn(
+                                    "relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted/20",
+                                    isBatchSelectionMode &&
+                                      isBatchSelected &&
+                                      "border-[hsl(var(--accent-500))] ring-1 ring-[hsl(var(--accent-500))]"
+                                  )}
+                                >
+                                  {item.previewUrl ? (
+                                    <img
+                                      src={item.previewUrl}
+                                      alt={item.name}
+                                      className={cn(
+                                        "h-full w-full object-cover",
+                                        item.status !== "done" &&
+                                          item.status !== "error" &&
+                                          item.status !== "canceled" &&
+                                          "opacity-40"
+                                      )}
+                                    />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                                      <ImageIcon className="h-5 w-5" />
+                                    </div>
+                                  )}
+                                  {!isDone ? (
+                                    <div className="absolute inset-x-1 bottom-1 h-1 overflow-hidden rounded-full bg-emerald-100">
+                                      <div
+                                        className={cn(
+                                          "h-full rounded-full transition-all",
+                                          isError ? "bg-destructive" : "bg-emerald-400"
+                                        )}
+                                        style={{ width: `${item.progress}%` }}
+                                      />
+                                    </div>
+                                  ) : null}
+                                </div>
+
+                                <div className="min-w-0 flex-1 space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="truncate text-sm font-semibold text-foreground">{item.name}</p>
+                                    {isClientFavorite ? (
+                                      <span
+                                        className="inline-flex items-center gap-1 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-600"
+                                        title="Müşteri Favorisi"
+                                      >
+                                        <Heart size={10} fill="currentColor" />
+                                        Favori
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {selectedRuleLabels.length > 0 ? (
+                                      selectedRuleLabels.map((label) => (
+                                        <span
+                                          key={`${item.id}-${label}`}
+                                          className="inline-flex items-center rounded bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                                        >
+                                          {label}
+                                        </span>
+                                      ))
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground italic">
+                                        Seçim yok
+                                      </span>
+                                    )}
+                                  </div>
+                                  {!isDone ? (
+                                    <div className="text-[11px] text-muted-foreground">{progressLabel} · {Math.round(item.progress)}%</div>
+                                  ) : null}
+                                </div>
+
+                                <div
+                                  className="flex shrink-0 items-center gap-2"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleStar(item.id)}
+                                    className={cn(
+                                      "flex h-9 w-9 items-center justify-center rounded-lg border transition-colors",
+                                      item.starred
+                                        ? "border-amber-200 bg-amber-50 text-amber-500"
+                                        : "border-border/60 bg-white text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                                    )}
+                                    title={item.starred ? "Yıldızı kaldır" : "Yıldızla"}
+                                  >
+                                    <Star size={16} fill={item.starred ? "currentColor" : "none"} />
+                                  </button>
+
+                                  {activeSelectionRuleId &&
+                                  activeSelectionRuleId !== FAVORITES_FILTER_ID &&
+                                  activeSelectionRuleId !== STARRED_FILTER_ID ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => togglePhotoRuleSelection(item.id, activeSelectionRuleId)}
+                                      className={cn(
+                                        "h-9 rounded-lg border px-3 text-xs font-semibold transition-colors",
+                                        isSelectedInActiveRule
+                                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                          : "border-border/60 bg-white text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                                      )}
+                                    >
+                                      {isSelectedInActiveRule ? "Seçildi" : "Seç"}
+                                    </button>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => openLightboxAt(index)}
+                                        className="inline-flex h-9 items-center gap-2 rounded-lg border border-border/60 bg-white px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+                                      >
+                                        <Maximize2 className="h-4 w-4" />
+                                        İncele
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+                                  >
+                                    <MoreHorizontal size={16} />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="grid w-full gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                          {filteredUploads.map((item, index) => {
+                            const isDone = item.status === "done";
+                            const isError = item.status === "error";
+                            const isCanceled = item.status === "canceled";
+                            const selectedRuleIds = photoSelections[item.id] ?? [];
+                            const selectedRuleLabels = selectedRuleIds
+                              .map((ruleId) => selectionRules.find((rule) => rule.id === ruleId)?.title)
+                              .filter(Boolean) as string[];
+                            const isClientFavorite = selectedRuleIds.includes(FAVORITES_FILTER_ID);
+                            const isSelectedInActiveRule =
+                              Boolean(activeSelectionRuleId) &&
+                              activeSelectionRuleId !== FAVORITES_FILTER_ID &&
+                              activeSelectionRuleId !== STARRED_FILTER_ID &&
+                              selectedRuleIds.includes(activeSelectionRuleId);
+                            const isBatchSelected = selectedBatchIds.has(item.id);
+
+                            const progressLabel =
+                              item.status === "uploading"
+                                ? t("sessionDetail.gallery.labels.uploading", { defaultValue: "Yükleniyor" })
+                                : item.status === "processing"
+                                  ? t("sessionDetail.gallery.labels.processing", { defaultValue: "İşleniyor" })
+                                  : item.status === "done"
+                                    ? t("sessionDetail.gallery.labels.done", { defaultValue: "Tamamlandı" })
+                                    : item.status === "error"
+                                      ? item.error ?? t("sessionDetail.gallery.labels.error", { defaultValue: "Hata" })
+                                      : item.status === "canceled"
+                                        ? t("sessionDetail.gallery.labels.canceled", { defaultValue: "İptal edildi" })
+                                        : t("sessionDetail.gallery.labels.queued", { defaultValue: "Sırada" });
+
+                            return (
+                              <div
+                                key={item.id}
+                                onClick={() => {
+                                  if (isDone) openLightboxAt(index);
+                                }}
+                                className={cn(
+                                  "group relative aspect-[3/4] overflow-hidden rounded-xl border bg-muted/20 transition-all duration-300",
+                                  isBatchSelectionMode && isBatchSelected
+                                    ? "border-[hsl(var(--accent-500))] ring-2 ring-[hsl(var(--accent-500))] shadow-md"
+                                    : isSelectedInActiveRule
+                                      ? "border-emerald-500 ring-1 ring-emerald-500 shadow-md"
+                                      : "border-transparent hover:border-border/70"
+                                )}
+                              >
                                 {item.previewUrl ? (
                                   <img
                                     src={item.previewUrl}
                                     alt={item.name}
+                                    loading="lazy"
                                     className={cn(
-                                      "h-full w-full object-cover transition-transform duration-500 group-hover:scale-105",
-                                      item.status !== "done" && item.status !== "error" && item.status !== "canceled"
-                                        ? "opacity-40"
-                                        : "opacity-100"
+                                      "h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] transform-gpu will-change-transform",
+                                      item.status !== "done" &&
+                                        item.status !== "error" &&
+                                        item.status !== "canceled" &&
+                                        "opacity-40"
                                     )}
                                   />
                                 ) : (
@@ -1756,147 +2097,148 @@ export default function GalleryDetail() {
                                     <ImageIcon className="h-6 w-6" />
                                   </div>
                                 )}
-                                {selectedRuleLabels.length > 0 ? (
-                                  <div className="absolute left-2 top-2 flex flex-col gap-1">
-                                    {selectedRuleLabels.slice(0, 3).map((label) => (
-                                      <span
-                                        key={`${item.id}-${label}`}
-                                        className="rounded bg-white/90 px-1.5 py-0.5 text-[9px] font-semibold text-slate-700 shadow-sm"
-                                      >
-                                        {label}
-                                      </span>
-                                    ))}
-                                    {selectedRuleLabels.length > 3 ? (
-                                      <span className="rounded bg-white/90 px-1.5 py-0.5 text-[9px] font-semibold text-slate-700 shadow-sm">
-                                        +{selectedRuleLabels.length - 3}
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                ) : null}
-                                {item.status !== "done" ? (
-                                  <div className="absolute inset-x-3 bottom-3 h-1.5 overflow-hidden rounded-full bg-emerald-100">
-                                    <div
-                                      className={cn(
-                                        "h-full rounded-full transition-all",
-                                        isError ? "bg-destructive" : "bg-emerald-400"
-                                      )}
-                                      style={{ width: `${item.progress}%` }}
-                                    />
-                                  </div>
-                                ) : null}
+
                                 {isDone ? (
-                                  <>
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none">
-                                      <div className="rounded-full bg-black/30 p-3 text-white backdrop-blur-sm">
-                                        <Maximize2 className="h-6 w-6" />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                                ) : null}
+
+                                {selectedRuleLabels.length > 0 ? (
+                                  <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5 max-w-[70%]">
+                                    {selectedRuleLabels.map((label) => (
+                                      <div
+                                        key={`${item.id}-${label}`}
+                                        className="flex items-center gap-1.5 rounded-md border border-gray-100 bg-white/95 px-2 py-1 shadow-sm animate-in fade-in slide-in-from-left-2 duration-200"
+                                      >
+                                        <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                                        <span className="truncate text-[10px] font-bold leading-none text-slate-800">
+                                          {label}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : null}
+
+                                {isClientFavorite ? (
+                                  <div className="absolute bottom-3 left-3 z-10" title="Müşteri Favorisi">
+                                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow-lg backdrop-blur-sm animate-in zoom-in duration-300">
+                                      <Heart size={12} fill="currentColor" />
+                                    </div>
+                                  </div>
+                                ) : null}
+
+                                <div className="absolute top-2 right-2 z-20 flex flex-col items-end gap-2">
+                                  <div onClick={(event) => event.stopPropagation()} className="relative">
+                                    {item.starred ? (
+                                      <div className="absolute right-0 top-0 rounded-full bg-amber-400 p-1.5 text-white shadow-sm transition-opacity duration-200 group-hover:opacity-0 pointer-events-none">
+                                        <Star size={12} fill="currentColor" />
+                                      </div>
+                                    ) : null}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleStar(item.id)}
+                                      className={cn(
+                                        "flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-md transition-all duration-200 ease-out opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 hover:!scale-110 shadow-lg",
+                                        item.starred
+                                          ? "bg-amber-400 text-white shadow-amber-500/30"
+                                          : "bg-black/40 text-white/70 hover:bg-white hover:text-amber-500"
+                                      )}
+                                    >
+                                      <Star size={16} fill={item.starred ? "currentColor" : "none"} />
+                                    </button>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={(event) => event.stopPropagation()}
+                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white/70 hover:bg-white hover:text-slate-900 backdrop-blur-md transition-all duration-200 ease-out opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 hover:!scale-110 shadow-lg"
+                                  >
+                                    <MoreVertical size={16} />
+                                  </button>
+                                </div>
+
+                                {isDone ? (
+                                  <div
+                                    className={cn(
+                                      "absolute bottom-0 left-0 right-0 z-20 flex flex-col gap-2 p-3 transition-transform duration-300",
+                                      isBatchSelectionMode && isBatchSelected
+                                        ? "translate-y-0"
+                                        : "translate-y-full group-hover:translate-y-0"
+                                    )}
+                                  >
+                                    <span className="truncate px-1 text-xs font-medium text-white/80">
+                                      {item.name}
+                                    </span>
+                                    <div onClick={(event) => event.stopPropagation()}>
+                                      {activeSelectionRuleId &&
+                                      activeSelectionRuleId !== FAVORITES_FILTER_ID &&
+                                      activeSelectionRuleId !== STARRED_FILTER_ID ? (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            togglePhotoRuleSelection(item.id, activeSelectionRuleId)
+                                          }
+                                          className={cn(
+                                            "flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold shadow-lg transition-colors",
+                                            isSelectedInActiveRule
+                                              ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                                              : "bg-white text-slate-900 hover:bg-slate-100"
+                                          )}
+                                        >
+                                          <Check size={16} strokeWidth={3} />
+                                          {isSelectedInActiveRule ? "SEÇİLDİ" : "SEÇ"}
+                                        </button>
+                                      ) : (
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() => toggleBatchSelect(item.id)}
+                                            className={cn(
+                                              "flex h-10 w-10 items-center justify-center rounded-lg shadow-lg backdrop-blur-md transition-colors",
+                                              isBatchSelected
+                                                ? "bg-[hsl(var(--accent-500))] text-white hover:bg-[hsl(var(--accent-600))]"
+                                                : "bg-white/90 text-muted-foreground hover:bg-white hover:text-foreground"
+                                            )}
+                                            title={isBatchSelected ? "Seçimi kaldır" : "Seç"}
+                                            aria-label={isBatchSelected ? "Seçimi kaldır" : "Seç"}
+                                          >
+                                            {isBatchSelected ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
+                                          </button>
+
+                                          <button
+                                            type="button"
+                                            onClick={() => openLightboxAt(index)}
+                                            className="flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-white/90 text-xs font-bold text-slate-900 shadow-lg backdrop-blur-md transition-colors hover:bg-white"
+                                          >
+                                            <Maximize2 className="h-4 w-4" />
+                                            İNCELE
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="absolute bottom-0 left-0 right-0 z-10 bg-black/60 px-3 py-2 text-[11px] text-white/80 backdrop-blur-sm">
+                                    <div className="flex items-center gap-2">
+                                      <span className="shrink-0">
+                                        {progressLabel} · {Math.round(item.progress)}%
+                                      </span>
+                                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/20">
+                                        <div
+                                          className={cn(
+                                            "h-full rounded-full transition-all",
+                                            isError ? "bg-destructive" : "bg-emerald-400"
+                                          )}
+                                          style={{ width: `${item.progress}%` }}
+                                        />
                                       </div>
                                     </div>
-                                    <div className="absolute inset-x-3 bottom-3 flex flex-col items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                                      <span className="max-w-full truncate rounded-md bg-black/60 px-2 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-                                        {item.name}
-                                      </span>
-                                      <Button
-                                        type="button"
-                                        variant="surface"
-                                        size="sm"
-                                        className="w-full"
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          openLightboxAt(index);
-                                        }}
-                                      >
-                                        {t("sessionDetail.gallery.labels.inspectAndSelect", {
-                                          defaultValue: "İncele & Seç",
-                                        })}
-                                      </Button>
-                                    </div>
-                                  </>
-                                ) : null}
-                                <button
-                                  type="button"
-                                  onClick={(event) => event.stopPropagation()}
-                                  className="absolute right-2 top-2 rounded-full bg-white/90 p-1 text-slate-600 shadow-sm opacity-0 transition-opacity group-hover:opacity-100 hover:text-slate-800"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  className={cn(
-                                    "absolute right-2 top-10 rounded-full bg-white/90 p-1 shadow-sm transition-opacity",
-                                    item.starred
-                                      ? "opacity-100 text-amber-500"
-                                      : "opacity-0 text-slate-600 group-hover:opacity-100 hover:text-slate-800"
-                                  )}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    handleToggleStar(item.id);
-                                  }}
-                                >
-                                  <Star
-                                    className={cn("h-4 w-4", item.starred ? "fill-current" : "fill-none")}
-                                  />
-                                </button>
+                                  </div>
+                                )}
                               </div>
-                              {!isDone ? (
-                                <div className="space-y-1 px-3 py-2">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <p className="truncate text-sm font-semibold text-foreground">{item.name}</p>
-                                    <span className="whitespace-nowrap text-[11px] text-muted-foreground">
-                                      {item.setName ?? activeSet.name}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                                    <span>{progressLabel}</span>
-                                    <span>{Math.round(item.progress)}%</span>
-                                  </div>
-                                  <div className="flex items-center justify-end gap-2 text-[11px] font-semibold">
-                                    {item.status === "uploading" ? (
-                                      <button
-                                        type="button"
-                                        className="text-amber-700 hover:text-amber-800"
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          handleCancelUpload(item.id);
-                                        }}
-                                      >
-                                        {t("sessionDetail.gallery.labels.cancel", { defaultValue: "İptal" })}
-                                      </button>
-                                    ) : null}
-                                    {(isError || isCanceled) ? (
-                                      <button
-                                        type="button"
-                                        className="flex items-center gap-1 text-emerald-700 hover:text-emerald-800"
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          handleRetryUpload(item.id);
-                                        }}
-                                      >
-                                        <RotateCcw className="h-3 w-3" />
-                                        {t("sessionDetail.gallery.labels.retry", { defaultValue: "Tekrar dene" })}
-                                      </button>
-                                    ) : null}
-                                    {(isError || isCanceled) ? (
-                                      <button
-                                        type="button"
-                                        className="text-muted-foreground hover:text-foreground"
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          setUploadQueue((prev) =>
-                                            prev.filter((upload) => upload.id !== item.id)
-                                          );
-                                        }}
-                                      >
-                                        <X className="h-4 w-4" />
-                                      </button>
-                                    ) : null}
-                                  </div>
-                                </div>
-                              ) : null}
-                            </div>
-                          );
-                        })}
-                      </div>
+                            );
+                          })}
+                        </div>
+                      )
                     ) : null}
                 </div>
               ) : (
@@ -1910,27 +2252,81 @@ export default function GalleryDetail() {
         </div>
       </div>
 
+      {activeTab === "photos" && isBatchSelectionMode && selectedBatchIds.size > 0 && !lightboxOpen ? (
+        <div className="fixed inset-x-0 bottom-6 z-40 flex justify-center px-4">
+          <div className="animate-in fade-in slide-in-from-bottom-2 flex w-full max-w-3xl items-center gap-3 rounded-full border border-white/10 bg-slate-950/90 px-4 py-3 text-white shadow-2xl shadow-black/30 backdrop-blur">
+            <div className="flex flex-1 items-center gap-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm font-semibold">
+                  {selectedBatchIds.size}
+                </span>
+                <span className="text-sm font-semibold">Seçildi</span>
+              </div>
+              <button
+                type="button"
+                onClick={clearBatchSelection}
+                className="rounded-full p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Seçimi temizle"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="h-6 w-px bg-white/15" aria-hidden="true" />
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={handleBatchSelectAll}
+                className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Tümünü Seç
+              </button>
+              <button
+                type="button"
+                onClick={handleBatchStar}
+                className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <Star className="h-4 w-4" />
+                Yıldızla
+              </button>
+              <button
+                type="button"
+                onClick={requestBatchDelete}
+                className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-white/90 transition-colors hover:bg-destructive/20 hover:text-white"
+              >
+                <Trash2 className="h-4 w-4" />
+                Sil
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <NavigationGuardDialog
+        open={batchDeleteGuardOpen}
+        onDiscard={confirmBatchDelete}
+        onStay={closeBatchDeleteGuard}
+        title="Silme onayı"
+        stayLabel="Vazgeç"
+        discardLabel="Sil"
+        message={`${pendingBatchDeleteIds?.size ?? 0} seçili görseli silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
+      />
+
       {lightboxOpen && currentLightboxPhoto ? (
         <div className="fixed inset-0 z-[100] flex bg-black/95 text-white backdrop-blur-sm">
           <div className="relative flex flex-1 flex-col">
             <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent p-4">
-              <div className="text-sm font-medium opacity-80">
-                {lightboxIndex + 1} / {lightboxPhotos.length}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium opacity-80">
+                  {lightboxIndex + 1} / {lightboxPhotos.length}
+                </span>
+                <span className="max-w-[60vw] truncate text-sm font-mono text-white/60">
+                  {currentLightboxPhoto.name}
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleToggleStar(currentLightboxPhoto.id)}
-                  className={cn(
-                    "rounded-full p-2 transition hover:bg-white/10",
-                    currentLightboxPhoto.starred ? "text-amber-400" : "text-white/70 hover:text-white"
-                  )}
-                  aria-label={t("sessionDetail.gallery.labels.star", { defaultValue: "Yıldızla" })}
-                >
-                  <Star
-                    className={cn("h-5 w-5", currentLightboxPhoto.starred ? "fill-current" : "fill-none")}
-                  />
-                </button>
                 <button
                   type="button"
                   onClick={() => setLightboxOpen(false)}
@@ -1989,55 +2385,117 @@ export default function GalleryDetail() {
               </p>
             </div>
 
-            <div className="flex-1 space-y-2 overflow-y-auto p-4">
-              {selectionRules.map((rule) => {
-                const selectedForRule = (photoSelections[currentLightboxPhoto.id] ?? []).includes(rule.id);
-                const localCount = localRuleCounts[rule.id] ?? 0;
-                const maxAllowed = rule.maxCount ?? null;
-                const isFull = maxAllowed != null && localCount >= maxAllowed;
-                const isDisabled = !selectedForRule && isFull;
-                return (
-                  <button
-                    key={rule.id}
-                    type="button"
-                    onClick={() =>
-                      !isDisabled && togglePhotoRuleSelection(currentLightboxPhoto.id, rule.id)
-                    }
-                    className={cn(
-                      "group flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition",
-                      selectedForRule
-                        ? "border-emerald-400/60 bg-white/10"
-                        : "border-white/10 hover:border-white/20 hover:bg-white/5",
-                      isDisabled && "cursor-not-allowed opacity-50"
-                    )}
-                  >
-                    <div className="min-w-0 flex-1 pr-3">
-                      <div className="truncate text-[10px] font-bold uppercase tracking-wider text-white/50">
-                        {rule.serviceName || "Genel"}
-                      </div>
-                      <div className="truncate text-sm font-medium text-white">{rule.title}</div>
-                      <div className="mt-1 flex items-center gap-1 text-[11px] text-white/50">
-                        <span className={isFull && !selectedForRule ? "text-amber-400" : undefined}>
-                          {localCount} / {maxAllowed ?? "∞"}
-                        </span>
-                        <span>
-                          {rule.required === false ? "(Opsiyonel)" : "(Zorunlu)"}
-                        </span>
-                      </div>
-                    </div>
-                    <div
+            <div className="flex-1 space-y-4 overflow-y-auto p-4">
+              <div className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="text-xs font-bold uppercase tracking-wider text-white/50">
+                  Fotoğraf Durumu
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleToggleStar(currentLightboxPhoto.id)}
+                  aria-label={t("sessionDetail.gallery.labels.star", { defaultValue: "Yıldızla" })}
+                  title={currentLightboxPhoto.starred ? "Yıldızı kaldır" : "Yıldızla"}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition",
+                    currentLightboxPhoto.starred
+                      ? "border-amber-400/60 bg-amber-500/10 text-amber-200"
+                      : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10"
+                  )}
+                >
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <Star
+                      size={16}
+                      className={cn(currentLightboxPhoto.starred ? "fill-current" : "fill-none")}
+                    />
+                    Fotoğrafçı Önerisi
+                  </span>
+                  {currentLightboxPhoto.starred ? (
+                    <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-100">
+                      Seçildi
+                    </span>
+                  ) : null}
+                </button>
+
+                <div
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg border border-dashed px-3 py-2",
+                    isCurrentLightboxFavorite
+                      ? "border-rose-400/40 bg-rose-500/10 text-rose-200"
+                      : "border-white/10 bg-transparent text-white/50 opacity-70"
+                  )}
+                >
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <Heart
+                      size={16}
+                      className={cn(isCurrentLightboxFavorite ? "fill-current" : "fill-none")}
+                    />
+                    Müşteri Favorisi
+                  </span>
+                  {isCurrentLightboxFavorite ? (
+                    <span className="rounded bg-rose-500/20 px-2 py-0.5 text-[10px] font-semibold text-rose-100">
+                      Beğendi
+                    </span>
+                  ) : (
+                    <span className="text-[10px]">Henüz yok</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="px-1 text-[10px] font-bold uppercase tracking-wider text-white/50">
+                Seçim Kuralları
+              </div>
+
+              <div className="space-y-2">
+                {selectionRules.map((rule) => {
+                  const selectedForRule = currentLightboxSelectionIds.includes(rule.id);
+                  const localCount = localRuleCounts[rule.id] ?? 0;
+                  const maxAllowed = rule.maxCount ?? null;
+                  const isFull = maxAllowed != null && localCount >= maxAllowed;
+                  const isDisabled = !selectedForRule && isFull;
+                  return (
+                    <button
+                      key={rule.id}
+                      type="button"
+                      onClick={() =>
+                        !isDisabled && togglePhotoRuleSelection(currentLightboxPhoto.id, rule.id)
+                      }
                       className={cn(
-                        "flex h-6 w-6 items-center justify-center rounded-full border-2 transition",
+                        "group flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition",
                         selectedForRule
-                          ? "border-emerald-400 bg-emerald-400 text-white"
-                          : "border-white/30 text-transparent group-hover:border-white/60"
+                          ? "border-emerald-400/60 bg-white/10"
+                          : "border-white/10 hover:border-white/20 hover:bg-white/5",
+                        isDisabled && "cursor-not-allowed opacity-50"
                       )}
                     >
-                      {selectedForRule ? <CheckCircle2 size={14} /> : <Circle size={12} />}
-                    </div>
-                  </button>
-                );
-              })}
+                      <div className="min-w-0 flex-1 pr-3">
+                        <div className="truncate text-[10px] font-bold uppercase tracking-wider text-white/50">
+                          {rule.serviceName || "Genel"}
+                        </div>
+                        <div className="truncate text-sm font-medium text-white">{rule.title}</div>
+                        <div className="mt-1 flex items-center gap-1 text-[11px] text-white/50">
+                          <span className={isFull && !selectedForRule ? "text-amber-400" : undefined}>
+                            {localCount} / {maxAllowed ?? "∞"}
+                          </span>
+                          <span>
+                            {rule.required === false ? "(Opsiyonel)" : "(Zorunlu)"}
+                          </span>
+                        </div>
+                      </div>
+                      <div
+                        className={cn(
+                          "flex h-6 w-6 items-center justify-center rounded-full border-2 transition",
+                          selectedForRule
+                            ? "border-emerald-400 bg-emerald-400 text-white"
+                            : "border-white/30 text-transparent group-hover:border-white/60"
+                        )}
+                      >
+                        {selectedForRule ? <CheckCircle2 size={14} /> : <Circle size={12} />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

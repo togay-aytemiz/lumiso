@@ -17,6 +17,9 @@ interface NavigationGuardDialogProps {
   onSaveAndExit?: () => void;
   message?: string;
   stayLabel?: string;
+  title?: string;
+  discardLabel?: string;
+  saveAndExitLabel?: string;
 }
 
 export function NavigationGuardDialog({ 
@@ -26,6 +29,9 @@ export function NavigationGuardDialog({
   onSaveAndExit,
   message,
   stayLabel,
+  title,
+  discardLabel,
+  saveAndExitLabel,
 }: NavigationGuardDialogProps) {
   const { t } = useTranslation('forms');
   
@@ -33,7 +39,7 @@ export function NavigationGuardDialog({
     <AlertDialog open={open} onOpenChange={(open) => !open && onStay()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t('navigationGuard.title')}</AlertDialogTitle>
+          <AlertDialogTitle>{title ?? t('navigationGuard.title')}</AlertDialogTitle>
           <AlertDialogDescription>
             {message || t('navigationGuard.message')}
           </AlertDialogDescription>
@@ -47,14 +53,14 @@ export function NavigationGuardDialog({
               onClick={onSaveAndExit}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {t('navigationGuard.saveAndExit')}
+              {saveAndExitLabel ?? t('navigationGuard.saveAndExit')}
             </AlertDialogAction>
           )}
           <AlertDialogAction 
             onClick={onDiscard}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {t('navigationGuard.discardChanges')}
+            {discardLabel ?? t('navigationGuard.discardChanges')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

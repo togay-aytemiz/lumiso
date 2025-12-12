@@ -7,7 +7,12 @@ import { useToast } from "@/hooks/use-toast";
 import { TemplateBuilderHeader } from "@/components/template-builder/TemplateBuilderHeader";
 import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
-import { FAVORITES_FILTER_ID, STARRED_FILTER_ID, type SelectionRule } from "@/components/galleries/SelectionDashboard";
+import {
+  FAVORITES_FILTER_ID,
+  STARRED_FILTER_ID,
+  SelectionDashboard,
+  type SelectionRule,
+} from "@/components/galleries/SelectionDashboard";
 import {
   SelectionTemplateSection,
   type SelectionTemplateRuleForm,
@@ -26,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Progress } from "@/components/ui/progress";
 import { cn, getUserLocale } from "@/lib/utils";
 import {
   CalendarRange,
@@ -514,7 +520,6 @@ export default function GalleryDetail() {
   const displayTitle = title.trim() || t("sessionDetail.gallery.form.titlePlaceholder", { defaultValue: "Untitled gallery" });
   const brandingData = (data?.branding || {}) as Record<string, unknown>;
   const coverUrl = typeof brandingData.coverUrl === "string" ? brandingData.coverUrl : "";
-  const hasMedia = Boolean(brandingData.hasMedia);
   const selectionStats = useMemo(() => {
     const stats = (brandingData.selectionStats || {}) as Record<string, unknown>;
     const selected = typeof stats.selected === "number" ? stats.selected : 0;
@@ -533,6 +538,26 @@ export default function GalleryDetail() {
     return counts;
   }, [clientSelections]);
 
+  const localRuleCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    Object.values(photoSelections).forEach((ruleIds) => {
+      ruleIds.forEach((ruleId) => {
+        counts[ruleId] = (counts[ruleId] ?? 0) + 1;
+      });
+    });
+    return counts;
+  }, [photoSelections]);
+
+  const localSelectedPhotoCount = useMemo(() => {
+    let count = 0;
+    Object.values(photoSelections).forEach((ruleIds) => {
+      if (ruleIds.some((ruleId) => ruleId !== FAVORITES_FILTER_ID)) {
+        count += 1;
+      }
+    });
+    return count;
+  }, [photoSelections]);
+
   const selectionRules = useMemo<SelectionRule[]>(() => {
     const rules: SelectionRule[] = [];
 
@@ -542,7 +567,9 @@ export default function GalleryDetail() {
       const minCount = Math.max(0, parseCountValue(ruleData.min) ?? 0);
       const rawMax = parseCountValue(ruleData.max);
       const maxCount = rawMax != null ? Math.max(rawMax, minCount) : null;
-      const currentCount = normalizedKey ? selectionPartCounts[normalizedKey] ?? 0 : 0;
+      const dbCount = normalizedKey ? selectionPartCounts[normalizedKey] ?? 0 : 0;
+      const localCount = localRuleCounts[ruleId] ?? 0;
+      const currentCount = Math.max(dbCount, localCount);
       const required = ruleData.required !== false;
       const title =
         part ||
@@ -571,29 +598,21 @@ export default function GalleryDetail() {
     }
 
     return rules;
-  }, [selectionTemplateGroups, selectionPartCounts, t]);
-
-  const localRuleCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    Object.values(photoSelections).forEach((ruleIds) => {
-      ruleIds.forEach((ruleId) => {
-        counts[ruleId] = (counts[ruleId] ?? 0) + 1;
-      });
-    });
-    return counts;
-  }, [photoSelections]);
+  }, [selectionTemplateGroups, selectionPartCounts, localRuleCounts, t]);
 
   const totalSelectedCount = useMemo(() => {
     if (selectionStats.selected > 0) return selectionStats.selected;
     if (clientSelections && clientSelections.length > 0) return clientSelections.length;
+    if (localSelectedPhotoCount > 0) return localSelectedPhotoCount;
     return selectionRules.reduce((sum, rule) => sum + rule.currentCount, 0);
-  }, [selectionStats.selected, clientSelections, selectionRules]);
+  }, [selectionStats.selected, clientSelections, localSelectedPhotoCount, selectionRules]);
 
   const favoritesCount = useMemo(() => {
-    if (selectionStats.favorites > 0) return selectionStats.favorites;
+    const localFavorites = localRuleCounts[FAVORITES_FILTER_ID] ?? 0;
+    if (selectionStats.favorites > 0) return Math.max(selectionStats.favorites, localFavorites);
     const favoriteKey = normalizeSelectionPartKey(FAVORITES_FILTER_ID);
-    return selectionPartCounts[favoriteKey] ?? 0;
-  }, [selectionStats.favorites, selectionPartCounts]);
+    return Math.max(selectionPartCounts[favoriteKey] ?? 0, localFavorites);
+  }, [selectionStats.favorites, selectionPartCounts, localRuleCounts]);
 
   const handleSelectionTemplateRulesChange = useCallback(
     (groupKey: string, rules: SelectionTemplateRuleForm[]) => {
@@ -662,10 +681,17 @@ export default function GalleryDetail() {
     []
   );
 
-  const totalPhotosCount = useMemo(
-    () => Math.max(selectionStats.total || 0, totalSelectedCount, favoritesCount),
-    [selectionStats.total, totalSelectedCount, favoritesCount]
+  const localPhotosCount = useMemo(
+    () => uploadQueue.filter((item) => item.status !== "canceled").length,
+    [uploadQueue]
   );
+
+  const totalPhotosCount = useMemo(
+    () => Math.max(selectionStats.total || 0, localPhotosCount, totalSelectedCount, favoritesCount),
+    [selectionStats.total, localPhotosCount, totalSelectedCount, favoritesCount]
+  );
+
+  const hasMedia = Boolean(brandingData.hasMedia) || localPhotosCount > 0;
 
   const activeSelectionLabel = useMemo(() => {
     if (activeSelectionRuleId === FAVORITES_FILTER_ID) {
@@ -1213,25 +1239,65 @@ export default function GalleryDetail() {
     return counts;
   }, [uploadQueue, legacyFallbackSetName]);
 
+  const uploadProgressBySetName = useMemo(() => {
+    const aggregates: Record<string, { total: number; inProgress: number; sumProgress: number }> = {};
+
+    const getAggregate = (name: string) => {
+      if (!aggregates[name]) {
+        aggregates[name] = { total: 0, inProgress: 0, sumProgress: 0 };
+      }
+      return aggregates[name];
+    };
+
+    uploadQueue.forEach((item) => {
+      if (item.status === "canceled") return;
+      const resolvedName = item.setName ?? legacyFallbackSetName;
+      if (!resolvedName) return;
+
+      const aggregate = getAggregate(resolvedName);
+      aggregate.total += 1;
+
+      const isInProgress =
+        item.status === "queued" || item.status === "uploading" || item.status === "processing";
+      if (isInProgress) {
+        aggregate.inProgress += 1;
+        aggregate.sumProgress += Math.max(0, Math.min(100, item.progress));
+        return;
+      }
+
+      aggregate.sumProgress += 100;
+    });
+
+    const result: Record<string, { percent: number; inProgress: number; total: number }> = {};
+    Object.entries(aggregates).forEach(([name, aggregate]) => {
+      result[name] = {
+        percent: aggregate.total > 0 ? aggregate.sumProgress / aggregate.total : 0,
+        inProgress: aggregate.inProgress,
+        total: aggregate.total,
+      };
+    });
+    return result;
+  }, [uploadQueue, legacyFallbackSetName]);
+
   const uploadsForActiveSet = useMemo(() => {
     const activeSetName = activeSet?.name ?? null;
     if (!activeSetName) return uploadQueue;
     return uploadQueue.filter((item) => !item.setName || item.setName === activeSetName);
   }, [uploadQueue, activeSet?.name]);
 
-  const filteredUploads = useMemo(() => {
-    if (!activeSelectionRuleId) return uploadsForActiveSet;
-    const baseUploads = uploadQueue;
-    if (activeSelectionRuleId === STARRED_FILTER_ID) {
-      return baseUploads.filter((item) => item.starred);
-    }
-    if (activeSelectionRuleId === FAVORITES_FILTER_ID) {
-      return baseUploads;
-    }
-    return baseUploads.filter((item) =>
-      (photoSelections[item.id] ?? []).includes(activeSelectionRuleId)
-    );
-  }, [uploadsForActiveSet, uploadQueue, activeSelectionRuleId, photoSelections]);
+	  const filteredUploads = useMemo(() => {
+	    if (!activeSelectionRuleId) return uploadsForActiveSet;
+	    const baseUploads = uploadQueue;
+	    if (activeSelectionRuleId === STARRED_FILTER_ID) {
+	      return baseUploads.filter((item) => item.starred);
+	    }
+	    if (activeSelectionRuleId === FAVORITES_FILTER_ID) {
+	      return baseUploads.filter((item) => (photoSelections[item.id] ?? []).includes(FAVORITES_FILTER_ID));
+	    }
+	    return baseUploads.filter((item) =>
+	      (photoSelections[item.id] ?? []).includes(activeSelectionRuleId)
+	    );
+	  }, [uploadsForActiveSet, uploadQueue, activeSelectionRuleId, photoSelections]);
 
   const activeFilterMeta = useMemo(() => {
     if (!activeSelectionRuleId) return null;
@@ -1621,13 +1687,15 @@ export default function GalleryDetail() {
                             const isFilterMode = Boolean(activeSelectionRuleId);
                             const isActiveSetVisual = !isFilterMode && activeSet?.id === set.id;
                             const setUploadCount = uploadsBySetName[set.name] ?? 0;
+                            const setUploadProgress = uploadProgressBySetName[set.name];
+                            const showSetProgress = Boolean(setUploadProgress && setUploadProgress.inProgress > 0);
                             return (
                             <div
                               ref={dragProvided.innerRef}
                                   {...dragProvided.draggableProps}
                                   style={dragProvided.draggableProps.style}
                                   className={cn(
-                                    "group rounded-lg border border-border/60 bg-background px-3 py-2.5 shadow-sm transition-shadow",
+                                    "group relative overflow-hidden rounded-lg border border-border/60 bg-background px-3 py-2.5 shadow-sm transition-shadow",
                                     snapshot.isDragging && "shadow-md ring-2 ring-primary/20"
                                   )}
                                   onClick={() => {
@@ -1704,6 +1772,11 @@ export default function GalleryDetail() {
                                       </div>
                                     ) : null}
                                   </div>
+                                  {showSetProgress ? (
+                                    <div className="pointer-events-none absolute inset-x-0 bottom-0">
+                                      <Progress value={setUploadProgress?.percent ?? 0} className="h-1 rounded-none bg-muted/50" />
+                                    </div>
+                                  ) : null}
                                 </div>
                                 );
                               }}
@@ -1813,22 +1886,31 @@ export default function GalleryDetail() {
             </Tabs>
           </div>
 
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-              <div className="space-y-4">
-                {activeSet ? (
-                  <div
-                    className={cn(
-	                      "space-y-4 rounded-xl transition-colors",
-	                      isDropzoneActive &&
-	                        !activeSelectionRuleId &&
-	                        "bg-emerald-50/40 ring-2 ring-emerald-200"
-	                    )}
-	                    onDragEnter={(event) => {
-	                      if (activeSelectionRuleId) return;
-	                      event.preventDefault();
-	                      dropzoneDragDepthRef.current += 1;
-	                      setIsDropzoneActive(true);
+	          <div className="space-y-4">
+	            {type === "proof" && totalPhotosCount > 0 ? (
+	              <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+	                <SelectionDashboard
+	                  rules={selectionRules}
+	                  favoritesCount={favoritesCount}
+	                  starredCount={starredUploadCount}
+	                  totalPhotos={totalPhotosCount}
+	                  totalSelected={totalSelectedCount}
+	                  activeRuleId={activeSelectionRuleId}
+	                  onSelectRuleFilter={setActiveSelectionRuleId}
+	                />
+	              </div>
+	            ) : null}
+
+	            <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+	              <div className="space-y-4">
+	                {activeSet ? (
+	                  <div
+	                    className="space-y-4 rounded-xl"
+		                    onDragEnter={(event) => {
+		                      if (activeSelectionRuleId) return;
+		                      event.preventDefault();
+		                      dropzoneDragDepthRef.current += 1;
+		                      setIsDropzoneActive(true);
 	                    }}
 	                    onDragLeave={(event) => {
 	                      if (activeSelectionRuleId) return;
@@ -1952,14 +2034,39 @@ export default function GalleryDetail() {
                             {t("sessionDetail.gallery.labels.addMedia")}
                           </Button>
                         </>
-                      ) : null}
-                    </div>
-                  </div>
-		                    {!activeSelectionRuleId && uploadsForActiveSet.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-24 text-center animate-in fade-in zoom-in duration-300">
-                            <div className="btn-surface-action btn-surface-accent mb-4 !rounded-full p-6">
-                              <Upload size={48} />
-                            </div>
+	                      ) : null}
+	                    </div>
+	                  </div>
+	
+	                    <div
+	                      className={cn(
+	                        "relative rounded-3xl transition-colors",
+	                        isDropzoneActive && !activeSelectionRuleId && "bg-emerald-50/40 p-1 ring-2 ring-emerald-200"
+	                      )}
+	                    >
+	                      {isDropzoneActive && !activeSelectionRuleId ? (
+	                        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-3xl bg-emerald-500/10 backdrop-blur-sm">
+	                          <div className="flex flex-col items-center gap-2 rounded-2xl border border-emerald-200 bg-white/80 px-6 py-4 text-center shadow-sm">
+	                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+	                              <Upload className="h-6 w-6" />
+	                            </div>
+	                            <p className="text-sm font-semibold text-emerald-900">
+	                              {t("sessionDetail.gallery.dropzoneOverlay.title", { defaultValue: "Buraya bırak" })}
+	                            </p>
+	                            <p className="text-xs text-emerald-900/70">
+	                              {t("sessionDetail.gallery.dropzoneOverlay.subtitle", {
+	                                defaultValue: "Fotoğraflar bu sete eklenecek",
+	                              })}
+	                            </p>
+	                          </div>
+	                        </div>
+	                      ) : null}
+	
+			                    {!activeSelectionRuleId && uploadsForActiveSet.length === 0 ? (
+	                          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-24 text-center animate-in fade-in zoom-in duration-300">
+	                            <div className="btn-surface-action btn-surface-accent mb-4 !rounded-full p-6">
+	                              <Upload size={48} />
+	                            </div>
                             <h3 className="mb-2 text-lg font-bold text-gray-800">
                               {t("sessionDetail.gallery.emptySetTitle", {
                                 defaultValue: "Henüz fotoğraf yok",
@@ -2525,15 +2632,16 @@ export default function GalleryDetail() {
                           })}
                         </div>
                       )
-                    ) : null}
-                </div>
-              ) : (
-                  <div className="rounded-xl bg-muted/10 px-5 py-10 text-center text-sm text-muted-foreground">
-                    {t("sessionDetail.gallery.sets.empty", { defaultValue: "Uploads land here." })}
-                  </div>
-                )}
-              </div>
-            </div>
+	                    ) : null}
+	                  </div>
+	                </div>
+	              ) : (
+	                  <div className="rounded-xl bg-muted/10 px-5 py-10 text-center text-sm text-muted-foreground">
+	                    {t("sessionDetail.gallery.sets.empty", { defaultValue: "Uploads land here." })}
+	                  </div>
+	                )}
+	              </div>
+	            </div>
           </div>
         </div>
       </div>

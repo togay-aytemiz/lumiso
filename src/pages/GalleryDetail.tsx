@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { TemplateBuilderHeader } from "@/components/template-builder/TemplateBuilderHeader";
 import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
@@ -40,6 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { cn, getUserLocale } from "@/lib/utils";
+import { buildGalleryProofPath, convertImageToProof, GALLERY_ASSETS_BUCKET, getStorageBasename } from "@/lib/galleryAssets";
 import {
   CalendarRange,
   Check,
@@ -90,17 +92,18 @@ type SelectionTemplateGroupForm = {
 
 type UploadStatus = "queued" | "uploading" | "processing" | "done" | "error" | "canceled";
 
-	type UploadItem = {
-	  id: string;
-	  file?: File;
-	  name: string;
-	  size: number;
-	  setName: string | null;
-	  status: UploadStatus;
-	  progress: number;
+type UploadItem = {
+  id: string;
+  file?: File;
+  name: string;
+  size: number;
+  setId: string | null;
+  status: UploadStatus;
+  progress: number;
   previewUrl?: string;
   starred?: boolean;
   error?: string | null;
+  storagePathWeb?: string | null;
 };
 
 interface GalleryDetailRow {
@@ -127,6 +130,21 @@ interface ClientSelectionRow {
   selection_part: string | null;
 }
 
+interface GalleryStorageUsageRow {
+  gallery_bytes: number;
+  org_bytes: number;
+}
+
+interface GalleryAssetRow {
+  id: string;
+  storage_path_web: string | null;
+  width: number | null;
+  height: number | null;
+  status: "processing" | "ready" | "failed";
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
 interface UpdatePayload {
   title: string;
   type: GalleryType;
@@ -136,6 +154,20 @@ interface UpdatePayload {
 }
 
 const AUTO_SAVE_DELAY = 1200;
+const GALLERY_ASSET_SIGNED_URL_TTL_SECONDS = 60 * 60;
+const MAX_CONCURRENT_UPLOADS = 3;
+
+const formatBytes = (bytes: number | null | undefined) => {
+  if (typeof bytes !== "number" || !Number.isFinite(bytes)) return "—";
+  if (bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const index = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+  const value = bytes / 1024 ** index;
+  const formatter = new Intl.NumberFormat(getUserLocale(), {
+    maximumFractionDigits: value >= 100 ? 0 : value >= 10 ? 1 : 2,
+  });
+  return `${formatter.format(value)} ${units[index]}`;
+};
 
 const formatDateForDisplay = (value: string | null) => {
   if (!value) return "";
@@ -200,6 +232,7 @@ export default function GalleryDetail() {
   const { t } = useTranslation("pages");
   const { t: tForms } = useTranslation("forms");
   const { toast } = useToast();
+  const { activeOrganizationId } = useOrganization();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<"photos" | "settings">("photos");
@@ -244,8 +277,9 @@ export default function GalleryDetail() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [coverPhotoId, setCoverPhotoId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const pendingSetNameRef = useRef<string | null>(null);
+  const pendingSetIdRef = useRef<string | null>(null);
   const dropzoneDragDepthRef = useRef(0);
+  const canceledUploadIdsRef = useRef<Set<string>>(new Set());
   const [orderedSets, setOrderedSets] = useState<GallerySetRow[]>([]);
   const [setName, setSetName] = useState("");
   const [setDescription, setSetDescription] = useState("");
@@ -368,6 +402,14 @@ export default function GalleryDetail() {
 
   useEffect(() => {
     setCoverPhotoId(null);
+    setUploadQueue([]);
+    setSelectedBatchIds(new Set());
+    setPhotoSelections({});
+    setActiveSelectionRuleId(null);
+    setPendingSelectionRemovalId(null);
+    setPendingBatchDeleteIds(null);
+    setBatchDeleteGuardOpen(false);
+    canceledUploadIdsRef.current.clear();
   }, [id]);
 
   const { data: sets } = useQuery({
@@ -398,6 +440,133 @@ export default function GalleryDetail() {
       return (data as ClientSelectionRow[]) ?? [];
     },
   });
+
+  const { data: storageUsage } = useQuery({
+    queryKey: ["gallery_storage_usage", id],
+    enabled: Boolean(id),
+    staleTime: 60_000,
+    queryFn: async (): Promise<GalleryStorageUsageRow | null> => {
+      if (!id) return null;
+      const { data, error } = await supabase.rpc("get_gallery_storage_usage", { gallery_uuid: id });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : null;
+      return row ?? null;
+    },
+  });
+
+  const { data: storedAssets } = useQuery({
+    queryKey: ["gallery_assets", id],
+    enabled: Boolean(id),
+    queryFn: async (): Promise<UploadItem[]> => {
+      if (!id) return [];
+      const { data, error } = await supabase
+        .from("gallery_assets")
+        .select("id,storage_path_web,width,height,status,metadata,created_at")
+        .eq("gallery_id", id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+
+      const rows = (data ?? []) as GalleryAssetRow[];
+      const signedUrls = await Promise.all(
+        rows.map(async (row) => {
+          if (!row.storage_path_web) return { id: row.id, signedUrl: "" };
+          const { data: urlData, error: urlError } = await supabase.storage
+            .from(GALLERY_ASSETS_BUCKET)
+            .createSignedUrl(row.storage_path_web, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
+          if (urlError) {
+            console.warn("Failed to create signed url for gallery asset", urlError);
+            return { id: row.id, signedUrl: "" };
+          }
+          return { id: row.id, signedUrl: urlData.signedUrl };
+        })
+      );
+      const signedUrlById = new Map(signedUrls.map((entry) => [entry.id, entry.signedUrl]));
+
+      return rows.map((row) => {
+        const metadata = row.metadata ?? {};
+        const originalName = typeof metadata.originalName === "string" ? metadata.originalName : null;
+        const setId = typeof metadata.setId === "string" ? metadata.setId : null;
+        const name = originalName || (row.storage_path_web ? getStorageBasename(row.storage_path_web) : "photo");
+        const size =
+          typeof metadata.proofSize === "number"
+            ? metadata.proofSize
+            : typeof metadata.originalSize === "number"
+              ? metadata.originalSize
+              : 0;
+        const starred = metadata.starred === true;
+        const status: UploadStatus =
+          row.status === "ready" ? "done" : row.status === "failed" ? "error" : "processing";
+
+        const signedUrl = signedUrlById.get(row.id);
+
+        return {
+          id: row.id,
+          name,
+          size,
+          setId,
+          status,
+          progress: status === "done" ? 100 : status === "error" ? 0 : 50,
+          previewUrl: signedUrl || undefined,
+          starred,
+          error: status === "error" ? "Upload failed" : null,
+          storagePathWeb: row.storage_path_web,
+        };
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!storedAssets) return;
+    setUploadQueue((prev) => {
+      if (prev.length === 0) return storedAssets;
+      const prevById = new Map(prev.map((item) => [item.id, item]));
+      const storedById = new Map(storedAssets.map((item) => [item.id, item]));
+
+      const merged = storedAssets.map((stored) => {
+        const local = prevById.get(stored.id);
+        if (!local) return stored;
+
+        const localInFlight =
+          Boolean(local.file) && (local.status === "queued" || local.status === "processing" || local.status === "uploading");
+        const storedTerminal = stored.status === "done" || stored.status === "error";
+
+        const status = storedTerminal ? stored.status : localInFlight ? local.status : stored.status;
+        const progress = storedTerminal ? stored.progress : localInFlight ? local.progress : stored.progress;
+        const previewUrl =
+          (local.previewUrl?.startsWith("blob:") ?? false) || !stored.previewUrl ? local.previewUrl : stored.previewUrl;
+
+        return {
+          ...stored,
+          ...local,
+          status,
+          progress,
+          previewUrl,
+          storagePathWeb: local.storagePathWeb ?? stored.storagePathWeb,
+        };
+      });
+
+      prev.forEach((item) => {
+        if (!storedById.has(item.id)) {
+          merged.push(item);
+        }
+      });
+
+      return merged;
+    });
+  }, [storedAssets]);
+
+  const galleryBytesFallback = useMemo(
+    () =>
+      uploadQueue.reduce((sum, item) => {
+        if (item.status !== "done") return sum;
+        if (!Number.isFinite(item.size) || item.size <= 0) return sum;
+        return sum + item.size;
+      }, 0),
+    [uploadQueue]
+  );
+
+  const galleryBytes = storageUsage?.gallery_bytes ?? galleryBytesFallback;
+  const orgBytes = storageUsage?.org_bytes ?? null;
 
   const defaultSetName = t("sessionDetail.gallery.sets.defaultName", { defaultValue: "Highlights" });
   const setInfoSectionsRaw = t("sessionDetail.gallery.sets.info.sections", {
@@ -1084,8 +1253,18 @@ export default function GalleryDetail() {
   }, [t, toast]);
 
   const handleAddMedia = useCallback(
-    (setName?: string) => {
-      pendingSetNameRef.current = setName ?? null;
+    (setId?: string) => {
+      if (setId === "default-placeholder") {
+        toast({
+          title: t("sessionDetail.gallery.toast.errorTitle"),
+          description: t("sessionDetail.gallery.toast.errorDesc", {
+            defaultValue: "Create a set before uploading.",
+          }),
+          variant: "destructive",
+        });
+        return;
+      }
+      pendingSetIdRef.current = setId ?? null;
       const target = fileInputRef.current;
       if (target) {
         target.click();
@@ -1102,21 +1281,21 @@ export default function GalleryDetail() {
   );
 
   const enqueueUploads = useCallback(
-    (files: FileList | File[], setName?: string | null) => {
+    (files: FileList | File[], setId?: string | null) => {
       const list = Array.from(files ?? []);
       if (list.length === 0) return;
       setUploadQueue((prev) => [
         ...prev,
-	        ...list.map((file) => {
-	          const id = `upload-${crypto.randomUUID?.() ?? Math.random().toString(16).slice(2)}`;
-	          return {
-	            id,
-	            file,
-	            name: file.name,
-	            size: file.size,
-	            setName: setName ?? null,
-	            status: "queued" as UploadStatus,
-	            progress: 0,
+        ...list.map((file) => {
+          const id = crypto.randomUUID?.() ?? Math.random().toString(16).slice(2);
+          return {
+            id,
+            file,
+            name: file.name,
+            size: file.size,
+            setId: setId ?? null,
+            status: "queued" as UploadStatus,
+            progress: 0,
             previewUrl: URL.createObjectURL(file),
             starred: false,
             error: null,
@@ -1135,35 +1314,180 @@ export default function GalleryDetail() {
     }
   }, []);
 
+  useEffect(() => {
+    Object.keys(uploadTimersRef.current).forEach((uploadId) => clearUploadTimer(uploadId));
+  }, [id, clearUploadTimer]);
+
   const startUpload = useCallback(
-    (item: UploadItem) => {
-      clearUploadTimer(item.id);
+    async (item: UploadItem) => {
+      if (!id) return;
+      if (!activeOrganizationId) {
+        setUploadQueue((prev) =>
+          prev.map((entry) =>
+            entry.id === item.id
+              ? {
+                  ...entry,
+                  status: "error",
+                  progress: 0,
+                  error: t("sessionDetail.gallery.toast.errorDesc", { defaultValue: "No active organization found." }),
+                }
+              : entry
+          )
+        );
+        return;
+      }
+
+      const current = uploadQueueRef.current.find((entry) => entry.id === item.id);
+      if (!current || current.status !== "queued") return;
+      if (!current.file) {
+        setUploadQueue((prev) =>
+          prev.map((entry) =>
+            entry.id === item.id
+              ? { ...entry, status: "error", progress: 0, error: t("sessionDetail.gallery.toast.errorDesc") }
+              : entry
+          )
+        );
+        return;
+      }
+
+      const assetId = current.id;
+      const sourceFile = current.file;
+
+      clearUploadTimer(assetId);
       setUploadQueue((prev) =>
         prev.map((entry) =>
-          entry.id === item.id ? { ...entry, status: "uploading", progress: Math.max(entry.progress, 5), error: null } : entry
+          entry.id === assetId ? { ...entry, status: "processing", progress: Math.max(entry.progress, 5), error: null } : entry
         )
       );
 
-      const timer = window.setInterval(() => {
+      try {
+        const proof = await convertImageToProof(sourceFile);
+        if (canceledUploadIdsRef.current.has(assetId)) return;
+
+        const storagePathWeb = buildGalleryProofPath({
+          organizationId: activeOrganizationId,
+          galleryId: id,
+          assetId,
+          extension: proof.extension,
+        });
+
+        setUploadQueue((prev) =>
+          prev.map((entry) =>
+            entry.id === assetId
+              ? {
+                  ...entry,
+                  status: "uploading",
+                  progress: Math.max(entry.progress, 15),
+                  error: null,
+                  storagePathWeb,
+                }
+              : entry
+          )
+        );
+
+        const timer = window.setInterval(() => {
+          setUploadQueue((prev) =>
+            prev.map((entry) => {
+              if (entry.id !== assetId) return entry;
+              if (entry.status !== "uploading") return entry;
+              const next = Math.min(95, entry.progress + Math.random() * 8 + 4);
+              return { ...entry, progress: next };
+            })
+          );
+        }, 450);
+        uploadTimersRef.current[assetId] = timer;
+
+        const { error: uploadError } = await supabase.storage
+          .from(GALLERY_ASSETS_BUCKET)
+          .upload(storagePathWeb, proof.blob, {
+            contentType: proof.contentType,
+            cacheControl: "3600",
+            upsert: true,
+          });
+        if (uploadError) throw uploadError;
+
+        if (canceledUploadIdsRef.current.has(assetId)) {
+          await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove([storagePathWeb]);
+          return;
+        }
+
+        const metadata = {
+          originalName: sourceFile.name,
+          originalSize: sourceFile.size,
+          originalType: sourceFile.type,
+          proofSize: proof.blob.size,
+          proofType: proof.contentType,
+          setId: current.setId,
+          starred: Boolean(current.starred),
+        };
+
+        const { error: upsertError } = await supabase
+          .from("gallery_assets")
+          .upsert(
+            {
+              id: assetId,
+              gallery_id: id,
+              storage_path_web: storagePathWeb,
+              width: proof.width,
+              height: proof.height,
+              status: "ready",
+              metadata,
+            },
+            { onConflict: "id" }
+          );
+        if (upsertError) {
+          await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove([storagePathWeb]);
+          throw upsertError;
+        }
+
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+          .from(GALLERY_ASSETS_BUCKET)
+          .createSignedUrl(storagePathWeb, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
+        if (signedUrlError) {
+          console.warn("Failed to create signed url for uploaded gallery asset", signedUrlError);
+        }
+
+        clearUploadTimer(assetId);
         setUploadQueue((prev) =>
           prev.map((entry) => {
-            if (entry.id !== item.id) return entry;
-            const nextProgress = Math.min(100, entry.progress + Math.random() * 15 + 5);
-            if (nextProgress >= 100) {
-              clearUploadTimer(item.id);
-              return { ...entry, progress: 100, status: "done" };
+            if (entry.id !== assetId) return entry;
+            const signedUrl = signedUrlData?.signedUrl;
+            if (signedUrl && entry.previewUrl?.startsWith("blob:")) {
+              URL.revokeObjectURL(entry.previewUrl);
             }
-            return { ...entry, progress: nextProgress, status: "uploading" };
-          })
+	            return {
+	              ...entry,
+	              status: "done",
+	              progress: 100,
+	              previewUrl: signedUrl || entry.previewUrl,
+	              size: proof.blob.size,
+	              file: undefined,
+	              storagePathWeb,
+	            };
+	          })
+	        );
+
+        queryClient.invalidateQueries({ queryKey: ["gallery_assets", id] });
+        queryClient.invalidateQueries({ queryKey: ["gallery_storage_usage", id] });
+      } catch (error: unknown) {
+        clearUploadTimer(assetId);
+        const message =
+          error instanceof Error
+            ? error.message
+            : t("sessionDetail.gallery.toast.errorDesc", { defaultValue: "Upload failed." });
+        setUploadQueue((prev) =>
+          prev.map((entry) =>
+            entry.id === assetId ? { ...entry, status: "error", progress: 0, error: message } : entry
+          )
         );
-      }, 450);
-      uploadTimersRef.current[item.id] = timer;
+      }
     },
-    [clearUploadTimer]
+    [activeOrganizationId, clearUploadTimer, id, queryClient, t]
   );
 
   const handleCancelUpload = useCallback(
     (id: string) => {
+      canceledUploadIdsRef.current.add(id);
       clearUploadTimer(id);
       setUploadQueue((prev) =>
         prev.map((entry) => (entry.id === id ? { ...entry, status: "canceled", error: "Canceled by user" } : entry))
@@ -1175,10 +1499,22 @@ export default function GalleryDetail() {
   const handleRetryUpload = useCallback(
     (id: string) => {
       const target = uploadQueue.find((item) => item.id === id);
-      if (!target) return;
-      startUpload({ ...target, progress: 0, status: "queued", error: null });
+      if (!target?.file) {
+        toast({
+          title: t("sessionDetail.gallery.toast.errorTitle"),
+          description: t("sessionDetail.gallery.toast.errorDesc", {
+            defaultValue: "Retry requires the original file. Please re-add it.",
+          }),
+          variant: "destructive",
+        });
+        return;
+      }
+      canceledUploadIdsRef.current.delete(id);
+      setUploadQueue((prev) =>
+        prev.map((entry) => (entry.id === id ? { ...entry, status: "queued", progress: 0, error: null } : entry))
+      );
     },
-    [startUpload, uploadQueue]
+    [uploadQueue, toast, t]
   );
 
   const handleToggleStar = useCallback((id: string) => {
@@ -1187,32 +1523,76 @@ export default function GalleryDetail() {
     );
   }, []);
 
+  const deleteGalleryAssets = useCallback(
+    async (assetIds: string[]) => {
+      if (!id || assetIds.length === 0) return;
+
+      const { data: rows, error: fetchError } = await supabase
+        .from("gallery_assets")
+        .select("id,storage_path_web")
+        .eq("gallery_id", id)
+        .in("id", assetIds);
+      if (fetchError) throw fetchError;
+
+      const storagePaths = (rows ?? [])
+        .map((row) => row.storage_path_web)
+        .filter((value): value is string => typeof value === "string" && value.length > 0);
+
+      if (storagePaths.length > 0) {
+        const { error: storageError } = await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove(storagePaths);
+        if (storageError) {
+          console.warn("Failed to remove gallery assets from storage", storageError);
+        }
+      }
+
+      const { error: deleteError } = await supabase
+        .from("gallery_assets")
+        .delete()
+        .eq("gallery_id", id)
+        .in("id", assetIds);
+      if (deleteError) throw deleteError;
+
+      queryClient.invalidateQueries({ queryKey: ["gallery_assets", id] });
+      queryClient.invalidateQueries({ queryKey: ["gallery_storage_usage", id] });
+    },
+    [id, queryClient]
+  );
+
   const handleDeleteUpload = useCallback(
-    (id: string) => {
-      clearUploadTimer(id);
-      setCoverPhotoId((prev) => (prev === id ? null : prev));
-      setPendingSelectionRemovalId((prev) => (prev === id ? null : prev));
+    (assetId: string) => {
+      canceledUploadIdsRef.current.add(assetId);
+      clearUploadTimer(assetId);
+      setCoverPhotoId((prev) => (prev === assetId ? null : prev));
+      setPendingSelectionRemovalId((prev) => (prev === assetId ? null : prev));
       setSelectedBatchIds((prev) => {
-        if (!prev.has(id)) return prev;
+        if (!prev.has(assetId)) return prev;
         const next = new Set(prev);
-        next.delete(id);
+        next.delete(assetId);
         return next;
       });
       setPhotoSelections((prev) => {
-        if (!(id in prev)) return prev;
-        const { [id]: _removed, ...rest } = prev;
+        if (!(assetId in prev)) return prev;
+        const { [assetId]: _removed, ...rest } = prev;
         return rest;
       });
 
       setUploadQueue((prev) => {
-        const target = prev.find((item) => item.id === id);
+        const target = prev.find((item) => item.id === assetId);
         if (target?.previewUrl?.startsWith("blob:")) {
           URL.revokeObjectURL(target.previewUrl);
         }
-        return prev.filter((item) => item.id !== id);
+        return prev.filter((item) => item.id !== assetId);
+      });
+
+      void deleteGalleryAssets([assetId]).catch((error: unknown) => {
+        toast({
+          title: t("sessionDetail.gallery.toast.errorTitle"),
+          description: error instanceof Error ? error.message : t("sessionDetail.gallery.toast.errorDesc"),
+          variant: "destructive",
+        });
       });
     },
-    [clearUploadTimer]
+    [clearUploadTimer, deleteGalleryAssets, t, toast]
   );
 
   const handleSetCover = useCallback((photoId: string) => {
@@ -1287,35 +1667,35 @@ export default function GalleryDetail() {
     [uploadQueue]
   );
 
-  const legacyFallbackSetName = visibleSets[0]?.name ?? null;
+  const legacyFallbackSetId = visibleSets[0]?.id ?? null;
 
-  const uploadsBySetName = useMemo(() => {
+  const uploadsBySetId = useMemo(() => {
     const counts: Record<string, number> = {};
     uploadQueue.forEach((item) => {
       if (item.status === "canceled") return;
-      const resolvedName = item.setName ?? legacyFallbackSetName;
-      if (!resolvedName) return;
-      counts[resolvedName] = (counts[resolvedName] ?? 0) + 1;
+      const resolvedSetId = item.setId ?? legacyFallbackSetId;
+      if (!resolvedSetId) return;
+      counts[resolvedSetId] = (counts[resolvedSetId] ?? 0) + 1;
     });
     return counts;
-  }, [uploadQueue, legacyFallbackSetName]);
+  }, [uploadQueue, legacyFallbackSetId]);
 
-  const uploadProgressBySetName = useMemo(() => {
+  const uploadProgressBySetId = useMemo(() => {
     const aggregates: Record<string, { total: number; inProgress: number; sumProgress: number }> = {};
 
-    const getAggregate = (name: string) => {
-      if (!aggregates[name]) {
-        aggregates[name] = { total: 0, inProgress: 0, sumProgress: 0 };
+    const getAggregate = (setId: string) => {
+      if (!aggregates[setId]) {
+        aggregates[setId] = { total: 0, inProgress: 0, sumProgress: 0 };
       }
-      return aggregates[name];
+      return aggregates[setId];
     };
 
     uploadQueue.forEach((item) => {
       if (item.status === "canceled") return;
-      const resolvedName = item.setName ?? legacyFallbackSetName;
-      if (!resolvedName) return;
+      const resolvedSetId = item.setId ?? legacyFallbackSetId;
+      if (!resolvedSetId) return;
 
-      const aggregate = getAggregate(resolvedName);
+      const aggregate = getAggregate(resolvedSetId);
       aggregate.total += 1;
 
       const isInProgress =
@@ -1330,21 +1710,24 @@ export default function GalleryDetail() {
     });
 
     const result: Record<string, { percent: number; inProgress: number; total: number }> = {};
-    Object.entries(aggregates).forEach(([name, aggregate]) => {
-      result[name] = {
+    Object.entries(aggregates).forEach(([setId, aggregate]) => {
+      result[setId] = {
         percent: aggregate.total > 0 ? aggregate.sumProgress / aggregate.total : 0,
         inProgress: aggregate.inProgress,
         total: aggregate.total,
       };
     });
     return result;
-  }, [uploadQueue, legacyFallbackSetName]);
+  }, [uploadQueue, legacyFallbackSetId]);
 
   const uploadsForActiveSet = useMemo(() => {
-    const activeSetName = activeSet?.name ?? null;
-    if (!activeSetName) return uploadQueue;
-    return uploadQueue.filter((item) => !item.setName || item.setName === activeSetName);
-  }, [uploadQueue, activeSet?.name]);
+    const activeSetIdValue = activeSet?.id ?? null;
+    if (!activeSetIdValue) return uploadQueue;
+    return uploadQueue.filter((item) => {
+      const resolvedSetId = item.setId ?? legacyFallbackSetId;
+      return !resolvedSetId || resolvedSetId === activeSetIdValue;
+    });
+  }, [uploadQueue, activeSet?.id, legacyFallbackSetId]);
 
 	  const filteredUploads = useMemo(() => {
 	    if (!activeSelectionRuleId) return uploadsForActiveSet;
@@ -1438,6 +1821,7 @@ export default function GalleryDetail() {
     }
 
 	    const idsToDelete = new Set(pendingBatchDeleteIds);
+      const idsArray = Array.from(idsToDelete);
 	    setBatchDeleteGuardOpen(false);
 	    setPendingBatchDeleteIds(null);
 	    setSelectedBatchIds(new Set());
@@ -1464,7 +1848,15 @@ export default function GalleryDetail() {
         return next;
       });
     }, 0);
-  }, [pendingBatchDeleteIds, closeBatchDeleteGuard]);
+
+      void deleteGalleryAssets(idsArray).catch((error: unknown) => {
+        toast({
+          title: t("sessionDetail.gallery.toast.errorTitle"),
+          description: error instanceof Error ? error.message : t("sessionDetail.gallery.toast.errorDesc"),
+          variant: "destructive",
+        });
+      });
+  }, [pendingBatchDeleteIds, closeBatchDeleteGuard, deleteGalleryAssets, t, toast]);
 
   const openLightboxAt = useCallback((index: number) => {
     setLightboxIndex(index);
@@ -1509,14 +1901,19 @@ export default function GalleryDetail() {
 
   useEffect(() => {
     uploadQueueRef.current = uploadQueue;
-    const queued = uploadQueue.filter((item) => item.status === "queued");
-    queued.forEach((item) => startUpload(item));
+    const inflightCount = uploadQueue.filter((item) => item.status === "processing" || item.status === "uploading").length;
+    const availableSlots = Math.max(0, MAX_CONCURRENT_UPLOADS - inflightCount);
+    if (availableSlots === 0) return;
+    const queued = uploadQueue.filter((item) => item.status === "queued").slice(0, availableSlots);
+    queued.forEach((item) => {
+      void startUpload(item);
+    });
   }, [startUpload, uploadQueue]);
 
   useEffect(
     () => () => {
       uploadQueueRef.current.forEach((item) => {
-        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+        if (item.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(item.previewUrl);
       });
       Object.keys(uploadTimersRef.current).forEach((id) => clearUploadTimer(id));
     },
@@ -1527,12 +1924,12 @@ export default function GalleryDetail() {
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (!files || files.length === 0) {
-        pendingSetNameRef.current = null;
+        pendingSetIdRef.current = null;
         return;
       }
-      const targetSet = pendingSetNameRef.current;
-      pendingSetNameRef.current = null;
-      enqueueUploads(files, targetSet);
+      const targetSetId = pendingSetIdRef.current;
+      pendingSetIdRef.current = null;
+      enqueueUploads(files, targetSetId);
       event.target.value = "";
     },
     [enqueueUploads]
@@ -1566,7 +1963,7 @@ export default function GalleryDetail() {
         });
         return;
       }
-      const count = uploadsBySetName[set.name] ?? 0;
+      const count = uploadsBySetId[set.id] ?? 0;
       if (count > 0) {
         setPendingDeleteSet({ set, count });
         setSetDeleteGuardOpen(true);
@@ -1574,7 +1971,7 @@ export default function GalleryDetail() {
       }
       deleteSetMutation.mutate(set.id);
     },
-    [deleteSetMutation, visibleSets.length, uploadsBySetName, t, toast]
+    [deleteSetMutation, visibleSets.length, uploadsBySetId, t, toast]
   );
 
   const closeSetDeleteGuard = useCallback(() => {
@@ -1749,30 +2146,33 @@ export default function GalleryDetail() {
                           {...provided.droppableProps}
                           className="space-y-2"
                         >
-                          {orderedSets.map((set, index) => (
-                            <Draggable key={set.id} draggableId={set.id} index={index}>
-                          {(dragProvided, snapshot) => {
+	                          {orderedSets.map((set, index) => (
+	                            <Draggable key={set.id} draggableId={set.id} index={index}>
+	                          {(dragProvided, snapshot) => {
                             const isLastSet = visibleSets.length <= 1 || set.id === "default-placeholder";
                             const isFilterMode = Boolean(activeSelectionRuleId);
                             const isActiveSetVisual = !isFilterMode && activeSet?.id === set.id;
-                            const setUploadCount = uploadsBySetName[set.name] ?? 0;
-                            const setUploadProgress = uploadProgressBySetName[set.name];
-                            const showSetProgress = Boolean(setUploadProgress && setUploadProgress.inProgress > 0);
-                            return (
-                            <div
-                              ref={dragProvided.innerRef}
-                                  {...dragProvided.draggableProps}
-                                  style={dragProvided.draggableProps.style}
-                                  className={cn(
-                                    "group relative overflow-hidden rounded-lg border border-border/60 bg-background px-3 py-2.5 shadow-sm transition-shadow",
-                                    snapshot.isDragging && "shadow-md ring-2 ring-primary/20"
-                                  )}
-                                  onClick={() => {
-                                    if (!isFilterMode) setActiveSetId(set.id);
-                                  }}
-                                  role="button"
-                                  tabIndex={0}
-                                >
+	                            const setUploadCount = uploadsBySetId[set.id] ?? 0;
+	                            const setUploadProgress = uploadProgressBySetId[set.id];
+	                            const showSetProgress = Boolean(setUploadProgress && setUploadProgress.inProgress > 0);
+	                            return (
+	                            <div
+	                              ref={dragProvided.innerRef}
+	                                  {...dragProvided.draggableProps}
+	                                  style={dragProvided.draggableProps.style}
+	                                  className={cn(
+	                                    "group relative overflow-hidden rounded-lg border border-border/60 bg-background px-3 py-2.5 shadow-sm transition-shadow",
+	                                    snapshot.isDragging && "shadow-md ring-2 ring-primary/20"
+	                                  )}
+	                                  onClick={() => {
+	                                    if (isFilterMode) {
+	                                      setActiveSelectionRuleId(null);
+	                                    }
+	                                    setActiveSetId(set.id);
+	                                  }}
+	                                  role="button"
+	                                  tabIndex={0}
+	                                >
                                   <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3 min-w-0">
                                       <button
@@ -1801,61 +2201,70 @@ export default function GalleryDetail() {
                                         ) : null}
                                       </div>
                                     </div>
-                                    {!isFilterMode ? (
-                                      <div className="flex items-center gap-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 opacity-70 hover:opacity-100"
-                                          onClick={(event) => {
-                                            event.stopPropagation();
-                                            handleEditSet(set);
-                                          }}
-                                        >
-                                          <Edit3 className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          disabled={isLastSet || deleteSetMutation.isPending}
-                                          className="h-8 w-8 opacity-70 hover:opacity-100 disabled:opacity-40"
-                                          onClick={(event) => {
-                                            event.stopPropagation();
-                                            handleDeleteSet(set);
-                                          }}
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 opacity-70 hover:opacity-100"
-                                          onClick={(event) => {
-                                            event.stopPropagation();
-                                            setActiveSetId(set.id);
-                                            handleAddMedia(set.name);
-                                          }}
-                                        >
-                                          <ImageUp className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                  {showSetProgress ? (
-                                    <div className="pointer-events-none absolute inset-x-0 bottom-0">
-                                      <Progress value={setUploadProgress?.percent ?? 0} className="h-1 rounded-none bg-muted/50" />
-                                    </div>
+	                                    <div className="flex items-center gap-1">
+	                                      <Button
+	                                        variant="ghost"
+	                                        size="icon"
+	                                        className="h-8 w-8 opacity-70 hover:opacity-100"
+	                                        onClick={(event) => {
+	                                          event.stopPropagation();
+	                                          handleEditSet(set);
+	                                        }}
+	                                      >
+	                                        <Edit3 className="h-4 w-4" />
+	                                      </Button>
+	                                      <Button
+	                                        variant="ghost"
+	                                        size="icon"
+	                                        disabled={isLastSet || deleteSetMutation.isPending}
+	                                        className="h-8 w-8 opacity-70 hover:opacity-100 disabled:opacity-40"
+	                                        onClick={(event) => {
+	                                          event.stopPropagation();
+	                                          handleDeleteSet(set);
+	                                        }}
+	                                      >
+	                                        <Trash2 className="h-4 w-4" />
+	                                      </Button>
+	                                      <Button
+	                                        variant="ghost"
+	                                        size="icon"
+	                                        className="h-8 w-8 opacity-70 hover:opacity-100"
+	                                        onClick={(event) => {
+	                                          event.stopPropagation();
+	                                          setActiveSetId(set.id);
+	                                          handleAddMedia(set.id);
+	                                        }}
+	                                      >
+	                                        <ImageUp className="h-4 w-4" />
+	                                      </Button>
+	                                    </div>
+	                                  </div>
+	                                  {showSetProgress ? (
+	                                    <div className="pointer-events-none absolute inset-x-0 bottom-0">
+	                                      <Progress value={setUploadProgress?.percent ?? 0} className="h-1 rounded-none bg-muted/50" />
+	                                    </div>
                                   ) : null}
                                 </div>
                                 );
                               }}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
-                  </DragDropContext>
+	                            </Draggable>
+	                          ))}
+                          <div className="flex items-center gap-2 px-1 pt-1 text-[11px] text-muted-foreground/70">
+                            <span className="truncate">
+                              {t("sessionDetail.gallery.storage.galleryLabel", { defaultValue: "Galeri" })}{" "}
+                              {formatBytes(galleryBytes)}
+                            </span>
+                            <span aria-hidden="true">·</span>
+                            <span className="truncate">
+                              {t("sessionDetail.gallery.storage.totalLabel", { defaultValue: "Toplam" })}{" "}
+                              {formatBytes(orgBytes)}
+                            </span>
+                          </div>
+	                          {provided.placeholder}
+	                        </div>
+	                      )}
+	                    </Droppable>
+	                  </DragDropContext>
                 ) : (
                   <div className="rounded-lg border border-border/60 bg-background px-4 py-3 text-sm text-muted-foreground shadow-sm">
                     {resolvedSets[0]?.id === "default-placeholder"
@@ -1999,7 +2408,17 @@ export default function GalleryDetail() {
 	                      setIsDropzoneActive(false);
 	                      if (activeSelectionRuleId) return;
 	                      if (event.dataTransfer.files?.length) {
-	                        enqueueUploads(event.dataTransfer.files, activeSet.name);
+                          if (activeSet.id === "default-placeholder") {
+                            toast({
+                              title: t("sessionDetail.gallery.toast.errorTitle"),
+                              description: t("sessionDetail.gallery.toast.errorDesc", {
+                                defaultValue: "Create a set before uploading.",
+                              }),
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+	                        enqueueUploads(event.dataTransfer.files, activeSet.id);
 	                      }
 	                    }}
 	                  >
@@ -2097,7 +2516,7 @@ export default function GalleryDetail() {
                             size="sm"
                             className="gap-2"
                             disabled={activeSet.id === "default-placeholder"}
-                            onClick={() => handleAddMedia(activeSet.name)}
+                            onClick={() => handleAddMedia(activeSet.id)}
                           >
                             <ImageIcon className="h-4 w-4" />
                             {t("sessionDetail.gallery.labels.addMedia")}
@@ -2152,7 +2571,7 @@ export default function GalleryDetail() {
                               size="sm"
                               className="btn-surface-accent mt-8 gap-2"
                               disabled={activeSet.id === "default-placeholder"}
-                              onClick={() => handleAddMedia(activeSet.name)}
+                              onClick={() => handleAddMedia(activeSet.id)}
                             >
                               <ImageIcon className="h-4 w-4" />
                               {t("sessionDetail.gallery.labels.addMedia")}
@@ -3394,7 +3813,7 @@ export default function GalleryDetail() {
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/*,video/*"
+        accept="image/*"
         className="hidden"
         onChange={handleFileInputChange}
       />

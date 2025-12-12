@@ -2733,6 +2733,13 @@ export type Database = {
         Args: { status_id: string }
         Returns: string
       }
+      get_gallery_storage_usage: {
+        Args: { gallery_uuid: string }
+        Returns: {
+          gallery_bytes: number
+          org_bytes: number
+        }[]
+      }
       get_session_lifecycle: {
         Args: { status_id: string }
         Returns: string

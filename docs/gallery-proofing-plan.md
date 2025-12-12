@@ -21,7 +21,7 @@
 
 ## MVP Experience (Phase 1)
 - From a session detail, photographer creates one or more galleries (proof, retouch, final) tied to that session; a Galleries page can list all galleries later.
-- Uploads run async with background conversion to WebP (with JPEG fallback) sized for proofing quality; originals stored separately for finals.
+- Uploads run async with background conversion to WebP (optional JPEG fallback) sized for proofing quality; **Phase 1 stores only converted proofs** (no originals).
 - Optional watermark (logo or business name) per gallery; toggleable before publish.
 - Client view secured by share link + PIN; lightweight branding (logo/name) and “client mode” layout.
 - Client can select/favorite photos up to configured limits per deliverable requirement (album pages, cover, back cover, prints). Counts enforced and visible.
@@ -29,7 +29,7 @@
 
 ## Data Model v1 (proposed)
 - `galleries`: `id`, `session_id`, `project_id`, `type` (`proof|retouch|final|other`), `title`, `status` (`draft|published|archived`), `pin_hash`, `expires_at?`, `watermark_settings` (logo text/url, opacity, position), `branding` (name/logo), timestamps, `published_at`.
-- `gallery_assets`: `id`, `gallery_id`, `storage_path_original`, `storage_path_web`, `width`, `height`, `content_hash`, `order_index`, `status` (`processing|ready|failed`), `metadata` (color profile, tags), timestamps.
+- `gallery_assets`: `id`, `gallery_id`, `storage_path_web`, `storage_path_original?` (Phase 2), `width`, `height`, `content_hash`, `order_index`, `status` (`processing|ready|failed`), `metadata` (color profile, tags), timestamps.
 - `gallery_clients` (optional Phase 2): `gallery_id`, `client_id|email`, `pin_hash_override?`, `access_role` (`view|download|owner`), `viewed_at`, `downloaded_at`.
 - `deliverable_selection_templates`: linked to `service_id` (or package line item), stores rows like `{part, min, max, required, notes, aspect_ratio?, output_type}` to express “Album: 30 spreads, 1 cover, 1 back cover”.
 - `client_selections`: `id`, `gallery_id`, `asset_id`, `selection_part` (e.g., `spread`, `cover`), `client_id|email`, `note?`, timestamps. Supports multiple selection rounds.
@@ -65,23 +65,23 @@ Templates attach to services/packages; when a session includes that deliverable,
 
 ### Phase 0 — Design & Contract (1 week)
 - [x] Finalize gallery types/states (proof, retouch, final) and copy (EN/TR).
-- [x] Approve data model (tables above) with Supabase; confirm storage buckets (`galleries/proof`, `galleries/originals`) and edge function for WebP.
+- [x] Approve data model (tables above) with Supabase; confirm **single private proof bucket** + PIN-gated signed URL edge function.
 - [x] Wireframes: session detail gallery block (create/list), client gallery view, selection counters, watermark toggle modal.
 - [x] Decide watermark source priority: uploaded logo vs. business name text.
 
 ### Phase 1 — Proofing MVP (build & ship)
-- UX & flows
+ - UX & flows
   - [x] Session detail/sheet: “Create gallery” sheet (title, type, status, event date defaulted from session) and list of galleries (type, status, updated).
   - [ ] Upload modal with drag/drop, async queue, per-file status; background conversion to WebP + JPEG fallback; web-size target (e.g., 2560px long edge, quality tuned). _(in progress: pipeline spec below)_
     - WebP-only storage to save space (no originals); convert at ~2560px long edge, quality ~80, strip metadata but keep color profile.
-    - Frontend pre-resize before upload when possible; hashed filenames under `galleries/proof/`; persist JSON sidecar with width/height/size/checksum.
+    - Frontend pre-resize before upload when possible; hashed filenames under `<organization_id>/galleries/<gallery_id>/proof/`; persist JSON sidecar with width/height/size/checksum.
     - Queue states: queued → uploading → processing → done/failed; drag/drop + file picker; per-file cancel/retry; show preview thumbnail from resized blob.
     - Server/edge transcode fallback to ensure WebP; on legacy browsers serve on-the-fly JPEG if needed (no persistent originals).
   - [ ] Watermark settings: toggle on/off, choose source (logo/text), opacity/placement presets.
   - [ ] Share: generate public link + PIN; copy-to-clipboard; optional expiry date.
   - [ ] Client view: responsive grid, lazy load, favorite/select buttons with remaining counts, PIN gate, branding header.
 - Data & services
-  - [ ] Supabase storage buckets + rules for originals vs. proofs; edge function (or worker) to transcode to WebP/JPEG and write metadata.
+  - [ ] Supabase Storage: **single private bucket** for proofs (Phase 1), object paths prefixed by `organization_id/` for RLS; edge function validates `share_link + PIN` and returns signed URLs (optionally also does transcode).
   - [x] Tables (`galleries`, `gallery_assets`, `client_selections`) landed; `gallery_sets` added for multiple sets within a gallery; `selection_template` nullable on services for deliverable rules.
   - [ ] API endpoints/queries to fetch galleries by session/project and to persist selections/overrides. *(Session list + gallery detail read/write exist; uploads/selections pending.)*
 - Validation & QA

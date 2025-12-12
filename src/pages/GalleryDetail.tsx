@@ -31,6 +31,13 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { cn, getUserLocale } from "@/lib/utils";
 import {
@@ -83,13 +90,14 @@ type SelectionTemplateGroupForm = {
 
 type UploadStatus = "queued" | "uploading" | "processing" | "done" | "error" | "canceled";
 
-type UploadItem = {
-  id: string;
-  name: string;
-  size: number;
-  setName: string | null;
-  status: UploadStatus;
-  progress: number;
+	type UploadItem = {
+	  id: string;
+	  file?: File;
+	  name: string;
+	  size: number;
+	  setName: string | null;
+	  status: UploadStatus;
+	  progress: number;
   previewUrl?: string;
   starred?: boolean;
   error?: string | null;
@@ -234,6 +242,7 @@ export default function GalleryDetail() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isDropzoneActive, setIsDropzoneActive] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [coverPhotoId, setCoverPhotoId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pendingSetNameRef = useRef<string | null>(null);
   const dropzoneDragDepthRef = useRef(0);
@@ -356,6 +365,10 @@ export default function GalleryDetail() {
       selectionTemplateGroups: parsedTemplateGroups,
     });
   }, [data, parseSelectionTemplateGroups]);
+
+  useEffect(() => {
+    setCoverPhotoId(null);
+  }, [id]);
 
   const { data: sets } = useQuery({
     queryKey: ["gallery_sets", id],
@@ -515,15 +528,17 @@ export default function GalleryDetail() {
   }, [type, customType, typeOptions, t]);
 
   const formattedEventDate = useMemo(() => formatDateForDisplay(eventDate), [eventDate]);
-  const eventLabel =
-    formattedEventDate || t("sessionDetail.gallery.labels.eventDateUnset", { defaultValue: "Event date not set" });
-  const displayTitle = title.trim() || t("sessionDetail.gallery.form.titlePlaceholder", { defaultValue: "Untitled gallery" });
-  const brandingData = (data?.branding || {}) as Record<string, unknown>;
-  const coverUrl = typeof brandingData.coverUrl === "string" ? brandingData.coverUrl : "";
-  const selectionStats = useMemo(() => {
-    const stats = (brandingData.selectionStats || {}) as Record<string, unknown>;
-    const selected = typeof stats.selected === "number" ? stats.selected : 0;
-    const favorites = typeof stats.favorites === "number" ? stats.favorites : 0;
+	  const eventLabel =
+	    formattedEventDate || t("sessionDetail.gallery.labels.eventDateUnset", { defaultValue: "Event date not set" });
+	  const displayTitle = title.trim() || t("sessionDetail.gallery.form.titlePlaceholder", { defaultValue: "Untitled gallery" });
+	  const brandingData = (data?.branding || {}) as Record<string, unknown>;
+	  const storedCoverUrl = typeof brandingData.coverUrl === "string" ? brandingData.coverUrl : "";
+	  const localCoverUrl = coverPhotoId ? uploadQueue.find((item) => item.id === coverPhotoId)?.previewUrl ?? "" : "";
+	  const coverUrl = localCoverUrl || storedCoverUrl;
+	  const selectionStats = useMemo(() => {
+	    const stats = (brandingData.selectionStats || {}) as Record<string, unknown>;
+	    const selected = typeof stats.selected === "number" ? stats.selected : 0;
+	    const favorites = typeof stats.favorites === "number" ? stats.favorites : 0;
     const total = typeof stats.total === "number" ? stats.total : 0;
     return { selected, favorites, total };
   }, [brandingData.selectionStats]);
@@ -1092,15 +1107,16 @@ export default function GalleryDetail() {
       if (list.length === 0) return;
       setUploadQueue((prev) => [
         ...prev,
-        ...list.map((file) => {
-          const id = `upload-${crypto.randomUUID?.() ?? Math.random().toString(16).slice(2)}`;
-          return {
-            id,
-            name: file.name,
-            size: file.size,
-            setName: setName ?? null,
-            status: "queued" as UploadStatus,
-            progress: 0,
+	        ...list.map((file) => {
+	          const id = `upload-${crypto.randomUUID?.() ?? Math.random().toString(16).slice(2)}`;
+	          return {
+	            id,
+	            file,
+	            name: file.name,
+	            size: file.size,
+	            setName: setName ?? null,
+	            status: "queued" as UploadStatus,
+	            progress: 0,
             previewUrl: URL.createObjectURL(file),
             starred: false,
             error: null,
@@ -1168,6 +1184,51 @@ export default function GalleryDetail() {
   const handleToggleStar = useCallback((id: string) => {
     setUploadQueue((prev) =>
       prev.map((item) => (item.id === id ? { ...item, starred: !item.starred } : item))
+    );
+  }, []);
+
+  const handleDeleteUpload = useCallback(
+    (id: string) => {
+      clearUploadTimer(id);
+      setCoverPhotoId((prev) => (prev === id ? null : prev));
+      setPendingSelectionRemovalId((prev) => (prev === id ? null : prev));
+      setSelectedBatchIds((prev) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      setPhotoSelections((prev) => {
+        if (!(id in prev)) return prev;
+        const { [id]: _removed, ...rest } = prev;
+        return rest;
+      });
+
+      setUploadQueue((prev) => {
+        const target = prev.find((item) => item.id === id);
+        if (target?.previewUrl?.startsWith("blob:")) {
+          URL.revokeObjectURL(target.previewUrl);
+        }
+        return prev.filter((item) => item.id !== id);
+      });
+    },
+    [clearUploadTimer]
+  );
+
+  const handleSetCover = useCallback((photoId: string) => {
+    setCoverPhotoId(photoId);
+  }, []);
+
+  const refreshPreviewUrl = useCallback((photoId: string) => {
+    setUploadQueue((prev) =>
+      prev.map((item) => {
+        if (item.id !== photoId) return item;
+        if (!item.file) return item;
+        if (item.previewUrl?.startsWith("blob:")) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+        return { ...item, previewUrl: URL.createObjectURL(item.file) };
+      })
     );
   }, []);
 
@@ -1376,20 +1437,21 @@ export default function GalleryDetail() {
       return;
     }
 
-    const idsToDelete = new Set(pendingBatchDeleteIds);
-    setBatchDeleteGuardOpen(false);
-    setPendingBatchDeleteIds(null);
-    setSelectedBatchIds(new Set());
+	    const idsToDelete = new Set(pendingBatchDeleteIds);
+	    setBatchDeleteGuardOpen(false);
+	    setPendingBatchDeleteIds(null);
+	    setSelectedBatchIds(new Set());
+	    setCoverPhotoId((prev) => (prev && idsToDelete.has(prev) ? null : prev));
 
-    window.setTimeout(() => {
-      setUploadQueue((prev) => {
-        prev.forEach((item) => {
-          if (idsToDelete.has(item.id) && item.previewUrl) {
-            URL.revokeObjectURL(item.previewUrl);
-          }
-        });
-        return prev.filter((item) => !idsToDelete.has(item.id));
-      });
+	    window.setTimeout(() => {
+	      setUploadQueue((prev) => {
+	        prev.forEach((item) => {
+	          if (idsToDelete.has(item.id) && item.previewUrl?.startsWith("blob:")) {
+	            URL.revokeObjectURL(item.previewUrl);
+	          }
+	        });
+	        return prev.filter((item) => !idsToDelete.has(item.id));
+	      });
 
       setPhotoSelections((prev) => {
         if (Object.keys(prev).length === 0) return prev;
@@ -1609,13 +1671,20 @@ export default function GalleryDetail() {
         <div className="grid gap-6 lg:grid-cols-[360px,1fr]">
           <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
             <div className="mb-4 overflow-hidden rounded-xl border border-border/70 bg-muted/20 shadow-sm transition-colors">
-              {coverUrl ? (
-                <div className="relative h-40 w-full bg-muted/40">
-                  <img src={coverUrl} alt={displayTitle} className="h-full w-full object-cover" />
-                  <div className="absolute bottom-2 left-2 rounded-full bg-background/90 px-3 py-1 text-xs font-semibold text-foreground shadow-sm">
-                    {t("sessionDetail.gallery.labels.coverSelected", { defaultValue: "Cover photo" })}
-                  </div>
-                </div>
+	              {coverUrl ? (
+	                <div className="relative h-40 w-full bg-muted/40">
+	                  <img
+	                    src={coverUrl}
+	                    alt={displayTitle}
+	                    className="h-full w-full object-cover"
+	                    onError={() => {
+	                      if (coverPhotoId) refreshPreviewUrl(coverPhotoId);
+	                    }}
+	                  />
+	                  <div className="absolute bottom-2 left-2 rounded-full bg-background/90 px-3 py-1 text-xs font-semibold text-foreground shadow-sm">
+	                    {t("sessionDetail.gallery.labels.coverSelected", { defaultValue: "Cover photo" })}
+	                  </div>
+	                </div>
               ) : (
                 <div className="flex h-40 flex-col items-center justify-center gap-2 px-4 text-center">
                   <p className="text-sm font-semibold text-foreground">
@@ -2250,19 +2319,20 @@ export default function GalleryDetail() {
                                       "border-[hsl(var(--accent-500))] ring-1 ring-[hsl(var(--accent-500))]"
                                   )}
                                 >
-                                  {item.previewUrl ? (
-                                    <img
-                                      src={item.previewUrl}
-                                      alt={item.name}
-                                      className={cn(
-                                        "h-full w-full object-cover",
-                                        item.status !== "done" &&
-                                          item.status !== "error" &&
-                                          item.status !== "canceled" &&
-                                          "opacity-40"
-                                      )}
-                                    />
-                                  ) : (
+	                                  {item.previewUrl ? (
+	                                    <img
+	                                      src={item.previewUrl}
+	                                      alt={item.name}
+	                                      className={cn(
+	                                        "h-full w-full object-cover",
+	                                        item.status !== "done" &&
+	                                          item.status !== "error" &&
+	                                          item.status !== "canceled" &&
+	                                          "opacity-40"
+	                                      )}
+	                                      onError={() => refreshPreviewUrl(item.id)}
+	                                    />
+	                                  ) : (
                                     <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                                       <ImageIcon className="h-5 w-5" />
                                     </div>
@@ -2387,14 +2457,51 @@ export default function GalleryDetail() {
                                     </div>
                                   )}
 
-                                  <button
-                                    type="button"
-                                    className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
-                                  >
-                                    <MoreHorizontal size={16} />
-                                  </button>
-                                </div>
-                              </div>
+	                                  <DropdownMenu>
+	                                    <DropdownMenuTrigger asChild>
+	                                      <button
+	                                        type="button"
+	                                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+	                                        onClick={(event) => event.stopPropagation()}
+	                                        aria-label="Fotoğraf menüsü"
+	                                      >
+	                                        <MoreHorizontal size={16} />
+	                                      </button>
+	                                    </DropdownMenuTrigger>
+		                                    <DropdownMenuContent
+		                                      align="end"
+		                                      sideOffset={8}
+		                                      className="w-52 rounded-xl border-border/60 p-1.5 shadow-xl"
+		                                      onClick={(event) => event.stopPropagation()}
+		                                    >
+		                                      <DropdownMenuItem
+		                                        className="gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:bg-muted/60 focus:text-foreground"
+		                                        disabled={!isDone}
+		                                        onSelect={() => openLightboxAt(index)}
+		                                      >
+		                                        <Maximize2 className="h-4 w-4 text-muted-foreground" />
+		                                        Aç
+		                                      </DropdownMenuItem>
+		                                      <DropdownMenuItem
+		                                        className="gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:bg-muted/60 focus:text-foreground"
+		                                        disabled={!item.previewUrl || coverPhotoId === item.id}
+		                                        onSelect={() => handleSetCover(item.id)}
+		                                      >
+		                                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+		                                        Kapak yap
+		                                      </DropdownMenuItem>
+		                                      <DropdownMenuSeparator />
+		                                      <DropdownMenuItem
+		                                        className="gap-2 rounded-lg px-3 py-2 text-sm font-medium text-destructive focus:bg-destructive/10 focus:text-destructive"
+		                                        onSelect={() => handleDeleteUpload(item.id)}
+		                                      >
+		                                        <Trash2 className="h-4 w-4" />
+		                                        Sil
+	                                      </DropdownMenuItem>
+	                                    </DropdownMenuContent>
+	                                  </DropdownMenu>
+	                                </div>
+	                              </div>
                             );
                           })}
                         </div>
@@ -2409,12 +2516,13 @@ export default function GalleryDetail() {
                               .map((ruleId) => selectionRules.find((rule) => rule.id === ruleId)?.title)
                               .filter(Boolean) as string[];
                             const isClientFavorite = selectedRuleIds.includes(FAVORITES_FILTER_ID);
-                            const isSelectedInActiveRule =
-                              Boolean(activeSelectionRuleId) &&
-                              activeSelectionRuleId !== FAVORITES_FILTER_ID &&
-                              activeSelectionRuleId !== STARRED_FILTER_ID &&
-                              selectedRuleIds.includes(activeSelectionRuleId);
-                            const isBatchSelected = selectedBatchIds.has(item.id);
+	                            const isSelectedInActiveRule =
+	                              Boolean(activeSelectionRuleId) &&
+	                              activeSelectionRuleId !== FAVORITES_FILTER_ID &&
+	                              activeSelectionRuleId !== STARRED_FILTER_ID &&
+	                              selectedRuleIds.includes(activeSelectionRuleId);
+	                            const isBatchSelected = selectedBatchIds.has(item.id);
+	                            const isCoverPhoto = coverPhotoId === item.id;
 
                             const progressLabel =
                               item.status === "uploading"
@@ -2444,20 +2552,21 @@ export default function GalleryDetail() {
                                       : "border-transparent hover:border-border/70"
                                 )}
                               >
-                                {item.previewUrl ? (
-                                  <img
-                                    src={item.previewUrl}
-                                    alt={item.name}
-                                    loading="lazy"
-                                    className={cn(
-                                      "h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] transform-gpu will-change-transform",
-                                      item.status !== "done" &&
-                                        item.status !== "error" &&
-                                        item.status !== "canceled" &&
-                                        "opacity-40"
-                                    )}
-                                  />
-                                ) : (
+	                                {item.previewUrl ? (
+	                                  <img
+	                                    src={item.previewUrl}
+	                                    alt={item.name}
+	                                    loading="lazy"
+	                                    className={cn(
+	                                      "h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] transform-gpu will-change-transform",
+	                                      item.status !== "done" &&
+	                                        item.status !== "error" &&
+	                                        item.status !== "canceled" &&
+	                                        "opacity-40"
+	                                    )}
+	                                    onError={() => refreshPreviewUrl(item.id)}
+	                                  />
+	                                ) : (
                                   <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                                     <ImageIcon className="h-6 w-6" />
                                   </div>
@@ -2467,13 +2576,20 @@ export default function GalleryDetail() {
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                                 ) : null}
 
-                                {selectedRuleLabels.length > 0 ? (
-                                  <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5 max-w-[70%]">
-                                    {selectedRuleLabels.map((label) => (
-                                      <div
-                                        key={`${item.id}-${label}`}
-                                        className="flex items-center gap-1.5 rounded-md border border-gray-100 bg-white/95 px-2 py-1 shadow-sm animate-in fade-in slide-in-from-left-2 duration-200"
-                                      >
+	                                {isCoverPhoto || selectedRuleLabels.length > 0 ? (
+	                                  <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5 max-w-[70%]">
+	                                    {isCoverPhoto ? (
+	                                      <div className="inline-flex w-fit items-center rounded-md border border-white/15 bg-slate-950/60 px-2 py-1 shadow-sm backdrop-blur-md animate-in fade-in slide-in-from-left-2 duration-200">
+	                                        <span className="text-[10px] font-extrabold uppercase tracking-wide text-white">
+	                                          Kapak
+	                                        </span>
+	                                      </div>
+	                                    ) : null}
+	                                    {selectedRuleLabels.map((label) => (
+	                                      <div
+	                                        key={`${item.id}-${label}`}
+	                                        className="flex items-center gap-1.5 rounded-md border border-gray-100 bg-white/95 px-2 py-1 shadow-sm animate-in fade-in slide-in-from-left-2 duration-200"
+	                                      >
                                         <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                                         <span className="truncate text-[10px] font-bold leading-none text-slate-800">
                                           {label}
@@ -2512,14 +2628,50 @@ export default function GalleryDetail() {
                                     </button>
                                   </div>
 
-                                  <button
-                                    type="button"
-                                    onClick={(event) => event.stopPropagation()}
-                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white/70 hover:bg-white hover:text-slate-900 backdrop-blur-md transition-all duration-200 ease-out opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 hover:!scale-110 shadow-lg"
-                                  >
-                                    <MoreVertical size={16} />
-                                  </button>
-                                </div>
+	                                  <DropdownMenu>
+	                                    <DropdownMenuTrigger asChild>
+	                                      <button
+	                                        type="button"
+	                                        onClick={(event) => event.stopPropagation()}
+	                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white/70 hover:bg-white hover:text-slate-900 backdrop-blur-md transition-all duration-200 ease-out opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 hover:!scale-110 shadow-lg"
+	                                        aria-label="Fotoğraf menüsü"
+	                                      >
+	                                        <MoreVertical size={16} />
+	                                      </button>
+	                                    </DropdownMenuTrigger>
+		                                    <DropdownMenuContent
+		                                      align="end"
+		                                      sideOffset={8}
+		                                      className="w-52 rounded-xl border-border/60 p-1.5 shadow-xl"
+		                                      onClick={(event) => event.stopPropagation()}
+		                                    >
+		                                      <DropdownMenuItem
+		                                        className="gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:bg-muted/60 focus:text-foreground"
+		                                        disabled={!isDone}
+		                                        onSelect={() => openLightboxAt(index)}
+		                                      >
+		                                        <Maximize2 className="h-4 w-4 text-muted-foreground" />
+		                                        Aç
+		                                      </DropdownMenuItem>
+		                                      <DropdownMenuItem
+		                                        className="gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:bg-muted/60 focus:text-foreground"
+		                                        disabled={!item.previewUrl || coverPhotoId === item.id}
+		                                        onSelect={() => handleSetCover(item.id)}
+		                                      >
+		                                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+		                                        Kapak yap
+		                                      </DropdownMenuItem>
+		                                      <DropdownMenuSeparator />
+		                                      <DropdownMenuItem
+		                                        className="gap-2 rounded-lg px-3 py-2 text-sm font-medium text-destructive focus:bg-destructive/10 focus:text-destructive"
+		                                        onSelect={() => handleDeleteUpload(item.id)}
+		                                      >
+		                                        <Trash2 className="h-4 w-4" />
+		                                        Sil
+	                                      </DropdownMenuItem>
+	                                    </DropdownMenuContent>
+	                                  </DropdownMenu>
+	                                </div>
 
                                 {isDone ? (
                                   <div
@@ -2763,13 +2915,14 @@ export default function GalleryDetail() {
             </button>
 
             <div className="flex flex-1 items-center justify-center p-4 md:p-8">
-              {currentLightboxPhoto.previewUrl ? (
-                <img
-                  src={currentLightboxPhoto.previewUrl}
-                  alt={currentLightboxPhoto.name}
-                  className="max-h-[calc(100vh-8rem)] max-w-full object-contain shadow-2xl"
-                />
-              ) : (
+	              {currentLightboxPhoto.previewUrl ? (
+	                <img
+	                  src={currentLightboxPhoto.previewUrl}
+	                  alt={currentLightboxPhoto.name}
+	                  className="max-h-[calc(100vh-8rem)] max-w-full object-contain shadow-2xl"
+	                  onError={() => refreshPreviewUrl(currentLightboxPhoto.id)}
+	                />
+	              ) : (
                 <div className="text-sm text-white/60">
                   {t("sessionDetail.gallery.labels.noPreview", { defaultValue: "Önizleme yok" })}
                 </div>

@@ -6,7 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TemplateBuilderHeader } from "@/components/template-builder/TemplateBuilderHeader";
 import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
-import { SelectionDashboard, FAVORITES_FILTER_ID, type SelectionRule } from "@/components/galleries/SelectionDashboard";
+import {
+  SelectionDashboard,
+  FAVORITES_FILTER_ID,
+  STARRED_FILTER_ID,
+  type SelectionRule,
+} from "@/components/galleries/SelectionDashboard";
 import {
   SelectionTemplateSection,
   type SelectionTemplateRuleForm,
@@ -25,7 +30,22 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn, getUserLocale } from "@/lib/utils";
-import { CalendarRange, Edit3, GripVertical, ImageIcon, ImageUp, Loader2, Plus, Share2, Trash2, Upload } from "lucide-react";
+import {
+  CalendarRange,
+  Edit3,
+  GripVertical,
+  ImageIcon,
+  ImageUp,
+  Loader2,
+  MoreVertical,
+  Plus,
+  RotateCcw,
+  Share2,
+  Star,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
 
 type GalleryType = "proof" | "retouch" | "final" | "other";
@@ -45,6 +65,20 @@ type SelectionTemplateGroupForm = {
   billingType?: string | null;
   disabled?: boolean;
   rules: SelectionTemplateRuleForm[];
+};
+
+type UploadStatus = "queued" | "uploading" | "processing" | "done" | "error" | "canceled";
+
+type UploadItem = {
+  id: string;
+  name: string;
+  size: number;
+  setName: string | null;
+  status: UploadStatus;
+  progress: number;
+  previewUrl?: string;
+  starred?: boolean;
+  error?: string | null;
 };
 
 interface GalleryDetailRow {
@@ -171,6 +205,9 @@ export default function GalleryDetail() {
   });
   const [selectionTemplateGroups, setSelectionTemplateGroups] = useState<SelectionTemplateGroupForm[]>([]);
   const [selectionTemplateDraft, setSelectionTemplateDraft] = useState<SelectionTemplateGroupForm[]>([]);
+  const [uploadQueue, setUploadQueue] = useState<UploadItem[]>([]);
+  const uploadTimersRef = useRef<Record<string, number>>({});
+  const uploadQueueRef = useRef<UploadItem[]>([]);
   const [activeSelectionRuleId, setActiveSelectionRuleId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pendingSetNameRef = useRef<string | null>(null);
@@ -608,6 +645,8 @@ export default function GalleryDetail() {
           rule: targetRule.title,
         });
       }
+    } else if (activeSelectionRuleId === STARRED_FILTER_ID) {
+      return t("sessionDetail.gallery.selection.filterStarred", { defaultValue: "Yıldızlı yüklemeler" });
     }
     return t("sessionDetail.gallery.selection.filterAll", { defaultValue: "Showing all items" });
   }, [activeSelectionRuleId, selectionRules, t]);
@@ -976,6 +1015,112 @@ export default function GalleryDetail() {
     [t, toast]
   );
 
+  const enqueueUploads = useCallback(
+    (files: FileList | File[], setName?: string | null) => {
+      const list = Array.from(files ?? []);
+      if (list.length === 0) return;
+      setUploadQueue((prev) => [
+        ...prev,
+        ...list.map((file) => {
+          const id = `upload-${crypto.randomUUID?.() ?? Math.random().toString(16).slice(2)}`;
+          return {
+            id,
+            name: file.name,
+            size: file.size,
+            setName: setName ?? null,
+            status: "queued" as UploadStatus,
+            progress: 0,
+            previewUrl: URL.createObjectURL(file),
+            starred: false,
+            error: null,
+          };
+        }),
+      ]);
+    },
+    []
+  );
+
+  const clearUploadTimer = useCallback((id: string) => {
+    const timer = uploadTimersRef.current[id];
+    if (timer) {
+      window.clearInterval(timer);
+      delete uploadTimersRef.current[id];
+    }
+  }, []);
+
+  const startUpload = useCallback(
+    (item: UploadItem) => {
+      clearUploadTimer(item.id);
+      setUploadQueue((prev) =>
+        prev.map((entry) =>
+          entry.id === item.id ? { ...entry, status: "uploading", progress: Math.max(entry.progress, 5), error: null } : entry
+        )
+      );
+
+      const timer = window.setInterval(() => {
+        setUploadQueue((prev) =>
+          prev.map((entry) => {
+            if (entry.id !== item.id) return entry;
+            const nextProgress = Math.min(100, entry.progress + Math.random() * 15 + 5);
+            if (nextProgress >= 100) {
+              clearUploadTimer(item.id);
+              return { ...entry, progress: 100, status: "done" };
+            }
+            return { ...entry, progress: nextProgress, status: "uploading" };
+          })
+        );
+      }, 450);
+      uploadTimersRef.current[item.id] = timer;
+    },
+    [clearUploadTimer]
+  );
+
+  const handleCancelUpload = useCallback(
+    (id: string) => {
+      clearUploadTimer(id);
+      setUploadQueue((prev) =>
+        prev.map((entry) => (entry.id === id ? { ...entry, status: "canceled", error: "Canceled by user" } : entry))
+      );
+    },
+    [clearUploadTimer]
+  );
+
+  const handleRetryUpload = useCallback(
+    (id: string) => {
+      const target = uploadQueue.find((item) => item.id === id);
+      if (!target) return;
+      startUpload({ ...target, progress: 0, status: "queued", error: null });
+    },
+    [startUpload, uploadQueue]
+  );
+
+  const handleToggleStar = useCallback((id: string) => {
+    setUploadQueue((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, starred: !item.starred } : item))
+    );
+  }, []);
+
+  const starredUploadCount = useMemo(
+    () => uploadQueue.filter((item) => item.starred && item.status === "done").length,
+    [uploadQueue]
+  );
+
+  useEffect(() => {
+    uploadQueueRef.current = uploadQueue;
+    const queued = uploadQueue.filter((item) => item.status === "queued");
+    queued.forEach((item) => startUpload(item));
+  }, [startUpload, uploadQueue]);
+
+  useEffect(
+    () => () => {
+      uploadQueueRef.current.forEach((item) => {
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      });
+      Object.keys(uploadTimersRef.current).forEach((id) => clearUploadTimer(id));
+    },
+    [clearUploadTimer]
+  );
+
   const handleFileInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
@@ -983,20 +1128,12 @@ export default function GalleryDetail() {
         pendingSetNameRef.current = null;
         return;
       }
-      // Placeholder: wire to upload flow when available
-      const selected = files.length;
       const targetSet = pendingSetNameRef.current;
       pendingSetNameRef.current = null;
-      toast({
-        title: t("sessionDetail.gallery.labels.addMedia"),
-        description:
-          t("sessionDetail.gallery.labels.uploadDesc", {
-            defaultValue: "Files ready to add to this gallery.",
-          }) + (targetSet ? ` (${targetSet})` : ` (${selected})`),
-      });
+      enqueueUploads(files, targetSet);
       event.target.value = "";
     },
-    [t, toast]
+    [enqueueUploads]
   );
 
   const handleOpenCreateSet = useCallback(() => {
@@ -1382,6 +1519,7 @@ export default function GalleryDetail() {
                     <SelectionDashboard
                       rules={selectionRules}
                       favoritesCount={favoritesCount}
+                      starredCount={starredUploadCount}
                       totalPhotos={totalPhotosCount}
                       totalSelected={totalSelectedCount}
                       activeRuleId={activeSelectionRuleId}
@@ -1447,27 +1585,157 @@ export default function GalleryDetail() {
                       </Button>
                     </div>
                   </div>
-                    <div className="px-6 py-12 text-center">
-                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-muted-foreground/50 bg-background text-muted-foreground">
-                        <Upload className="h-6 w-6" />
+                    {uploadQueue.length === 0 ? (
+                      <div
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          if (event.dataTransfer.files?.length) {
+                            enqueueUploads(event.dataTransfer.files, activeSet.name);
+                          }
+                        }}
+                        className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border/70 bg-muted/20 p-8 text-center"
+                      >
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                          <Upload className="h-6 w-6" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-foreground">
+                            {t("sessionDetail.gallery.labels.uploadTitle", { defaultValue: "Dosyaları bırak veya seç" })}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {t("sessionDetail.gallery.labels.uploadDesc", {
+                              defaultValue: "2560px uzun kenar WebP; sürükleyip bırak ya da dosya seç.",
+                            })}
+                          </p>
+                        </div>
+                        <Button
+                          variant="surface"
+                          size="sm"
+                          className="gap-2"
+                          disabled={activeSet.id === "default-placeholder"}
+                          onClick={() => handleAddMedia(activeSet.name)}
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                          {t("sessionDetail.gallery.labels.addMedia")}
+                        </Button>
                       </div>
-                      <p className="mt-3 text-sm font-medium text-foreground">
-                        {t("sessionDetail.gallery.labels.uploadTitle")}
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {t("sessionDetail.gallery.labels.uploadDesc")}
-                      </p>
-                    <Button
-                      variant="surface"
-                      size="sm"
-                      className="mx-auto mt-4 gap-2"
-                      disabled={activeSet.id === "default-placeholder"}
-                      onClick={() => handleAddMedia(activeSet.name)}
-                    >
-                      <ImageIcon className="h-4 w-4" />
-                      {t("sessionDetail.gallery.labels.addMedia")}
-                    </Button>
-                  </div>
+                    ) : null}
+
+                    {uploadQueue.length > 0 ? (
+                      <div className="grid w-full gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        {uploadQueue.map((item) => {
+                          const isDone = item.status === "done";
+                          const isError = item.status === "error";
+                          const isCanceled = item.status === "canceled";
+                          const progressLabel =
+                            item.status === "uploading"
+                              ? t("sessionDetail.gallery.labels.uploading", { defaultValue: "Yükleniyor" })
+                              : item.status === "processing"
+                                ? t("sessionDetail.gallery.labels.processing", { defaultValue: "İşleniyor" })
+                                : item.status === "done"
+                                  ? t("sessionDetail.gallery.labels.done", { defaultValue: "Tamamlandı" })
+                                  : item.status === "error"
+                                    ? item.error ?? t("sessionDetail.gallery.labels.error", { defaultValue: "Hata" })
+                                    : item.status === "canceled"
+                                      ? t("sessionDetail.gallery.labels.canceled", { defaultValue: "İptal edildi" })
+                                      : t("sessionDetail.gallery.labels.queued", { defaultValue: "Sırada" });
+                          return (
+                            <div
+                              key={item.id}
+                              className="group relative overflow-hidden rounded-xl border border-border/70 bg-white shadow-sm transition hover:shadow-md"
+                            >
+                              <div className="relative aspect-square bg-muted/30">
+                                {item.previewUrl ? (
+                                  <img
+                                    src={item.previewUrl}
+                                    alt={item.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                                    <ImageIcon className="h-6 w-6" />
+                                  </div>
+                                )}
+                                <div className="absolute inset-x-3 bottom-3 h-1.5 overflow-hidden rounded-full bg-emerald-100">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-full transition-all",
+                                      isDone ? "bg-emerald-500" : isError ? "bg-destructive" : "bg-emerald-400"
+                                    )}
+                                    style={{ width: `${item.progress}%` }}
+                                  />
+                                </div>
+                                <div className="absolute inset-x-2 top-2 flex items-center justify-between">
+                                  <button
+                                    type="button"
+                                    className="rounded-full bg-white/90 p-1 text-slate-600 shadow-sm hover:text-slate-800"
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={cn(
+                                      "rounded-full bg-white/90 p-1 shadow-sm",
+                                      item.starred ? "text-amber-500" : "text-slate-600 hover:text-slate-800"
+                                    )}
+                                    onClick={() => handleToggleStar(item.id)}
+                                  >
+                                    <Star
+                                      className={cn("h-4 w-4", item.starred ? "fill-current" : "fill-none")}
+                                    />
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="space-y-1 px-3 py-2">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="truncate text-sm font-semibold text-foreground">{item.name}</p>
+                                  <span className="whitespace-nowrap text-[11px] text-muted-foreground">
+                                    {item.setName ?? activeSet.name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                                  <span>{progressLabel}</span>
+                                  <span>{Math.round(item.progress)}%</span>
+                                </div>
+                                <div className="flex items-center justify-end gap-2 text-[11px] font-semibold">
+                                  {item.status === "uploading" ? (
+                                    <button
+                                      type="button"
+                                      className="text-amber-700 hover:text-amber-800"
+                                      onClick={() => handleCancelUpload(item.id)}
+                                    >
+                                      {t("sessionDetail.gallery.labels.cancel", { defaultValue: "İptal" })}
+                                    </button>
+                                  ) : null}
+                                  {(isError || isCanceled) ? (
+                                    <button
+                                      type="button"
+                                      className="flex items-center gap-1 text-emerald-700 hover:text-emerald-800"
+                                      onClick={() => handleRetryUpload(item.id)}
+                                    >
+                                      <RotateCcw className="h-3 w-3" />
+                                      {t("sessionDetail.gallery.labels.retry", { defaultValue: "Tekrar dene" })}
+                                    </button>
+                                  ) : null}
+                                  {(isError || isCanceled) ? (
+                                    <button
+                                      type="button"
+                                      className="text-muted-foreground hover:text-foreground"
+                                      onClick={() =>
+                                        setUploadQueue((prev) => prev.filter((upload) => upload.id !== item.id))
+                                      }
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </button>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : null}
                 </div>
               ) : (
                   <div className="rounded-xl bg-muted/10 px-5 py-10 text-center text-sm text-muted-foreground">

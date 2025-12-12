@@ -64,15 +64,19 @@ Templates attach to services/packages; when a session includes that deliverable,
 ## Phase Breakdown & Checklists
 
 ### Phase 0 — Design & Contract (1 week)
-- [ ] Finalize gallery types/states (proof, retouch, final) and copy (EN/TR).
-- [ ] Approve data model (tables above) with Supabase; confirm storage buckets (`galleries/proof`, `galleries/originals`) and edge function for WebP.
-- [ ] Wireframes: session detail gallery block (create/list), client gallery view, selection counters, watermark toggle modal.
-- [ ] Decide watermark source priority: uploaded logo vs. business name text.
+- [x] Finalize gallery types/states (proof, retouch, final) and copy (EN/TR).
+- [x] Approve data model (tables above) with Supabase; confirm storage buckets (`galleries/proof`, `galleries/originals`) and edge function for WebP.
+- [x] Wireframes: session detail gallery block (create/list), client gallery view, selection counters, watermark toggle modal.
+- [x] Decide watermark source priority: uploaded logo vs. business name text.
 
 ### Phase 1 — Proofing MVP (build & ship)
 - UX & flows
   - [x] Session detail/sheet: “Create gallery” sheet (title, type, status, event date defaulted from session) and list of galleries (type, status, updated).
-  - [ ] Upload modal with drag/drop, async queue, per-file status; background conversion to WebP + JPEG fallback; web-size target (e.g., 2560px long edge, quality tuned).
+  - [ ] Upload modal with drag/drop, async queue, per-file status; background conversion to WebP + JPEG fallback; web-size target (e.g., 2560px long edge, quality tuned). _(in progress: pipeline spec below)_
+    - WebP-only storage to save space (no originals); convert at ~2560px long edge, quality ~80, strip metadata but keep color profile.
+    - Frontend pre-resize before upload when possible; hashed filenames under `galleries/proof/`; persist JSON sidecar with width/height/size/checksum.
+    - Queue states: queued → uploading → processing → done/failed; drag/drop + file picker; per-file cancel/retry; show preview thumbnail from resized blob.
+    - Server/edge transcode fallback to ensure WebP; on legacy browsers serve on-the-fly JPEG if needed (no persistent originals).
   - [ ] Watermark settings: toggle on/off, choose source (logo/text), opacity/placement presets.
   - [ ] Share: generate public link + PIN; copy-to-clipboard; optional expiry date.
   - [ ] Client view: responsive grid, lazy load, favorite/select buttons with remaining counts, PIN gate, branding header.
@@ -120,6 +124,13 @@ Templates attach to services/packages; when a session includes that deliverable,
 - ✅ Session detail/sheet now creates galleries via a sheet (no modal); fields: title, type (Selections/Retouch/Final/Other), status, event date (defaults from session, changeable). Creation seeds a default set (Highlights/Öne çıkanlar), then redirects to `/galleries/:id`.
 - ✅ Galleries list per session (fetches from Supabase); empty state CTA remains, header CTA hidden when empty to avoid duplicates.
 - ✅ Gallery detail page `/galleries/:id`: back arrow to session, editable title/type/status/event date, save action; sets sidebar with list and “Add set” sheet; media area placeholder (upload wiring pending). All backed by new Supabase tables.
+
+### In-app gallery UX (current)
+- Gallery create sheet (max-w-3xl) mirrors the selection schema UI used in services: service groups show service name input, “Kural ekle” for service-scoped rules, and “Seçime aç/kapat” to disable a service; a manual “İlave kurallar” block sits underneath with a pill + add button. Saving seeds `branding.selectionTemplateGroups` and a flattened `selectionTemplate`.
+- Gallery detail page shows a “Seçim özeti” header row with the selection settings button on the right; the selection sheet reuses the same green-styled schema UI (service + manual groups, add/toggle, required per rule). Legacy toggles (allow selections/limit/deadline/favorites) were removed in favor of the schema-only editor.
+- Selection dashboard cards: filterable by overall/favorites/each rule; rule cards now honor `required` from the template (not just `min > 0`) and show top-left Zorunlu/Opsiyonel pills. Inline status shows “Eksik” badge when under min; a green check icon appears when counts meet min. Favorites/Genel Bakış remain unbadged.
+- Branding payload now carries both `selectionTemplateGroups` (with `serviceId`, `serviceName`, `disabled`, `rules`) and `selectionTemplate` (flattened). Required is persisted per rule; updates from the sheet sync back to the dashboard filters/state.
+- Default set “Öne çıkanlar” is created on gallery creation; sets UI (list, add/edit/delete) remains in the detail page beside the media area placeholder.
 
 ### Manual/general rules UI (hizmetten bağımsız)
 - Render a distinct “İlave kurallar” group below service-driven selection rows; group header shows a small `Hizmetten bağımsız` pill.

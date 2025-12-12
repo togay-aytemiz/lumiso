@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Check, CheckCircle2, Heart, LayoutGrid, ListChecks } from "lucide-react";
+import { Check, CheckCircle2, Heart, LayoutGrid, ListChecks, Star } from "lucide-react";
 
 export interface SelectionRule {
   id: string;
@@ -12,10 +12,12 @@ export interface SelectionRule {
 }
 
 export const FAVORITES_FILTER_ID = "favorites";
+export const STARRED_FILTER_ID = "starred-uploads";
 
 interface SelectionDashboardProps {
   rules: SelectionRule[];
   favoritesCount: number;
+  starredCount?: number;
   totalPhotos: number;
   totalSelected: number;
   activeRuleId: string | null;
@@ -27,6 +29,7 @@ interface SelectionDashboardProps {
 export function SelectionDashboard({
   rules,
   favoritesCount,
+  starredCount = 0,
   totalPhotos,
   totalSelected,
   activeRuleId,
@@ -156,6 +159,37 @@ export function SelectionDashboard({
             </div>
           </div>
         </button>
+
+        {starredCount > 0 ? (
+          <button
+            type="button"
+            onClick={() => onSelectRuleFilter(STARRED_FILTER_ID)}
+            className={cn(
+              "flex min-h-[96px] flex-col justify-between rounded-xl border bg-amber-50/60 p-3 text-left transition-all duration-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 focus-visible:ring-offset-2",
+              activeRuleId === STARRED_FILTER_ID
+                ? "border-amber-300 ring-1 ring-amber-300"
+                : "border-amber-100 hover:border-amber-200"
+            )}
+          >
+            <div className="mb-2 flex items-start gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-amber-100 text-amber-600">
+                <Star size={16} fill="currentColor" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-semibold text-slate-900">Yıldızlı</p>
+                <p className="truncate text-[10px] font-medium text-slate-500">Sana göre önemli</p>
+              </div>
+            </div>
+
+            <div className="flex items-end justify-between">
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-bold leading-none text-amber-700">{starredCount}</span>
+                <span className="text-[11px] text-slate-400 font-medium">adet</span>
+              </div>
+            </div>
+          </button>
+        ) : null}
 
         {resolvedRules.map((rule) => {
           const ruleStatus = getRuleStatus(rule);

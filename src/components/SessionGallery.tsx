@@ -28,13 +28,11 @@ import {
 } from "@/components/SelectionTemplateSection";
 import {
   Plus,
-  Image,
+  Image as ImageIcon,
   Loader2,
-  Link as LinkIcon,
-  Check,
-  AlertCircle,
   CheckCircle2,
   Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { cn } from "@/lib/utils";
@@ -82,18 +80,25 @@ type SelectionTemplateGroupForm = {
   rules: SelectionTemplateRuleForm[];
 };
 
-const typeVariant: Record<GalleryType, "default" | "secondary" | "outline"> = {
-  proof: "default",
-  retouch: "secondary",
-  final: "outline",
-  other: "outline",
-};
-
 const normalizeDate = (value?: string) => {
   if (!value) return new Date().toISOString().slice(0, 10);
   const dateOnly = value.split("T")[0] ?? value;
   return dateOnly;
 };
+
+const formatCardDate = (value?: string | null) => {
+  if (!value) return "";
+  const dateOnly = value.split("T")[0] ?? value;
+  const [year, month, day] = dateOnly.split("-");
+  if (year && month && day) {
+    return `${day}/${month}/${year}`;
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toLocaleDateString("tr-TR").replaceAll(".", "/");
+};
+
+const formatCount = (value: number) => new Intl.NumberFormat("tr-TR").format(value);
 
 export default function SessionGallery({
   sessionId,
@@ -101,7 +106,7 @@ export default function SessionGallery({
   defaultEventDate,
   sessionLeadName,
 }: SessionGalleryProps) {
-  const { t } = useTranslation("pages");
+  const { t, i18n } = useTranslation("pages");
   const { t: tForms } = useFormsTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -118,6 +123,9 @@ export default function SessionGallery({
   const [projectHasServices, setProjectHasServices] = useState<boolean | null>(null);
   const selectionInitializedRef = useRef(false);
   const hasTypeSelected = formType !== "";
+  const isTurkish = (i18n.resolvedLanguage ?? i18n.language ?? "").startsWith("tr");
+  const upperLabel = (value: string) =>
+    isTurkish ? value.toLocaleUpperCase("tr-TR") : value.toUpperCase();
 
   const typeOptions = useMemo(
     () =>
@@ -420,6 +428,44 @@ export default function SessionGallery({
 
   const galleries = data ?? [];
   const hasGalleries = galleries.length > 0;
+  const galleryIds = useMemo(() => galleries.map((gallery) => gallery.id), [galleries]);
+
+  const { data: galleryAssetCounts, isLoading: galleryAssetCountsLoading } = useQuery({
+    queryKey: ["gallery_asset_counts", sessionId, galleryIds],
+    enabled: galleryIds.length > 0,
+    queryFn: async () => {
+      const entries = await Promise.all(
+        galleryIds.map(async (galleryId) => {
+          try {
+            const { count, error } = await supabase
+              .from("gallery_assets")
+              .select("id", { count: "exact", head: true })
+              .eq("gallery_id", galleryId);
+
+            if (error) {
+              console.warn("SessionGallery: Failed to fetch asset count", {
+                galleryId,
+                error,
+              });
+              return [galleryId, 0] as const;
+            }
+
+            return [galleryId, count ?? 0] as const;
+          } catch (error) {
+            console.warn("SessionGallery: Failed to fetch asset count", {
+              galleryId,
+              error,
+            });
+            return [galleryId, 0] as const;
+          }
+        })
+      );
+
+      return Object.fromEntries(entries) as Record<string, number>;
+    },
+    staleTime: 30_000,
+  });
+
   const emptyDescriptionLines = t("sessionDetail.gallery.emptyState.description").split("\n");
   const getTypeLabel = (gallery: GalleryRow) => {
     if (gallery.type === "other") {
@@ -434,12 +480,38 @@ export default function SessionGallery({
     return t(`sessionDetail.gallery.types.${gallery.type}`);
   };
 
+  const getCoverUrl = (gallery: GalleryRow) => {
+    const coverUrl = gallery.branding?.["coverUrl"];
+    return typeof coverUrl === "string" ? coverUrl : "";
+  };
+
+  const getEventDate = (gallery: GalleryRow) => {
+    const eventDate = gallery.branding?.["eventDate"];
+    return typeof eventDate === "string" ? eventDate : gallery.created_at;
+  };
+
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="space-y-3">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-[340px] overflow-hidden rounded-3xl border border-border/60 bg-background"
+            >
+              <Skeleton className="h-[165px] w-full" />
+              <div className="space-y-4 p-6">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <Skeleton className="h-8 w-3/4" />
+                <div className="pt-4">
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       );
     }
@@ -448,7 +520,7 @@ export default function SessionGallery({
       return (
         <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-muted-foreground/30 bg-background px-6 py-10 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted/40">
-            <Image className="h-7 w-7 text-muted-foreground/80" />
+            <ImageIcon className="h-7 w-7 text-muted-foreground/80" />
           </div>
           <div className="space-y-1">
             <p className="text-base font-semibold text-foreground">
@@ -476,52 +548,96 @@ export default function SessionGallery({
     }
 
     return (
-      <div className="space-y-2 rounded-lg border border-border/70 bg-white/80">
-        {galleries.map((gallery) => (
-          <div
-            key={gallery.id}
-            className="grid gap-2 p-3 sm:grid-cols-[1fr,140px,140px,120px] sm:items-center border-b last:border-b-0 border-border/50"
-          >
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-foreground">{gallery.title}</p>
-                <Badge variant={typeVariant[gallery.type]}>
-                  {getTypeLabel(gallery)}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("sessionDetail.gallery.labels.updated")}{" "}
-                {new Date(gallery.updated_at || gallery.created_at).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">
-                {t(`sessionDetail.gallery.statuses.${gallery.status}`)}
-              </Badge>
-              {gallery.status === "published" && (
-                <div className="flex items-center gap-1 text-xs text-emerald-700">
-                  <Check className="h-3.5 w-3.5" />
-                  {t("sessionDetail.gallery.labels.published")}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {galleries.map((gallery) => {
+          const statusLabel = upperLabel(
+            t(`sessionDetail.gallery.statuses.${gallery.status}`)
+          );
+
+          const statusClasses =
+            gallery.status === "published"
+              ? "border-emerald-100 bg-white/90 text-emerald-700"
+              : gallery.status === "draft"
+                ? "border-white/10 bg-zinc-900/85 text-white"
+                : "border-border/40 bg-white/80 text-foreground";
+
+          const typeLabel = upperLabel(getTypeLabel(gallery));
+          const typeClasses =
+            gallery.type === "proof"
+              ? "bg-indigo-50 text-indigo-700"
+              : gallery.type === "final"
+                ? "bg-amber-50 text-amber-800"
+                : gallery.type === "retouch"
+                  ? "bg-slate-100 text-slate-700"
+                  : "bg-muted text-muted-foreground";
+
+          const coverUrl = getCoverUrl(gallery);
+          const photoCount = galleryAssetCounts?.[gallery.id] ?? 0;
+
+          return (
+            <button
+              key={gallery.id}
+              type="button"
+              onClick={() => navigate(`/galleries/${gallery.id}`)}
+              className="group flex h-[340px] flex-col overflow-hidden rounded-3xl border border-border/60 bg-white text-left shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              <div className="relative h-[165px] w-full overflow-hidden bg-muted/40">
+                {coverUrl ? (
+                  <img
+                    src={coverUrl}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03] transform-gpu will-change-transform"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-muted/30">
+                    <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
+                  </div>
+                )}
+
+                <div className="absolute left-4 top-4">
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold tracking-wide shadow-sm backdrop-blur-md",
+                      statusClasses
+                    )}
+                  >
+                    {statusLabel}
+                  </span>
                 </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <LinkIcon className="h-4 w-4" />
-              {t("sessionDetail.gallery.labels.shareSoon")}
-            </div>
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => navigate(`/galleries/${gallery.id}`)}
-              >
-                <AlertCircle className="h-4 w-4" />
-                {t("sessionDetail.gallery.actions.manage", { defaultValue: "Manage" })}
-              </Button>
-            </div>
-          </div>
-        ))}
+              </div>
+
+              <div className="flex flex-1 flex-col p-6">
+                <div className="flex items-center gap-3">
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-lg px-3 py-1 text-xs font-bold tracking-wide",
+                      typeClasses
+                    )}
+                  >
+                    {typeLabel}
+                  </span>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {formatCardDate(getEventDate(gallery))}
+                  </span>
+                </div>
+
+                <h4 className="mt-2 min-h-[3.25rem] text-2xl font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-emerald-700">
+                  {gallery.title}
+                </h4>
+
+                <div className="mt-auto flex items-center justify-between border-t border-border/40 pt-4">
+                  <div className="text-sm font-semibold text-muted-foreground">
+                    {galleryAssetCountsLoading ? "…" : formatCount(photoCount)} Fotoğraf
+                  </div>
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted/40 text-muted-foreground transition-colors group-hover:bg-emerald-600 group-hover:text-white">
+                    <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
     );
   };

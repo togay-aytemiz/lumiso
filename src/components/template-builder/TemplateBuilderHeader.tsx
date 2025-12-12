@@ -13,7 +13,7 @@ import {
 interface TemplateBuilderHeaderProps {
   name: string;
   onNameChange: (name: string) => void;
-  statusLabel: string;
+  statusLabel?: string;
   isDraft: boolean;
   draftLabel: string;
   publishedLabel: string;
@@ -24,6 +24,8 @@ interface TemplateBuilderHeaderProps {
   onPrimaryAction: () => void;
   primaryDisabled?: boolean;
   publishTooltip?: string;
+  primaryClassName?: string;
+  primaryLeftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
   eyebrow?: React.ReactNode;
   subtitle?: React.ReactNode;
@@ -47,6 +49,8 @@ export function TemplateBuilderHeader({
   onPrimaryAction,
   primaryDisabled,
   publishTooltip,
+  primaryClassName,
+  primaryLeftActions,
   rightActions,
   eyebrow,
   subtitle,
@@ -63,6 +67,7 @@ export function TemplateBuilderHeader({
   }, [name, isEditingName]);
 
   const badgeLabel = useMemo(() => (isDraft ? draftLabel : publishedLabel), [draftLabel, isDraft, publishedLabel]);
+  const resolvedPrimaryClassName = useMemo(() => primaryClassName ?? "btn-surface-accent", [primaryClassName]);
 
   const commitNameChange = useCallback(() => {
     setIsEditingName(false);
@@ -126,9 +131,7 @@ export function TemplateBuilderHeader({
                   <Badge variant={isDraft ? "secondary" : "default"}>
                     {badgeLabel}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {statusLabel}
-                  </span>
+                  {statusLabel ? <span className="text-xs text-muted-foreground">{statusLabel}</span> : null}
                 </>
               )}
             </div>
@@ -141,6 +144,7 @@ export function TemplateBuilderHeader({
         </div>
 
         <div className="flex items-center gap-2">
+          {primaryLeftActions}
           {primaryDisabled ? (
             <TooltipProvider delayDuration={0}>
               <Tooltip
@@ -155,7 +159,7 @@ export function TemplateBuilderHeader({
                       disabled
                       variant="surface"
                       size="sm"
-                      className="btn-surface-accent"
+                      className={resolvedPrimaryClassName}
                     >
                       <Eye className="h-4 w-4" />
                       {isDraft ? publishLabel : doneLabel}
@@ -177,7 +181,7 @@ export function TemplateBuilderHeader({
               disabled={primaryDisabled}
               variant="surface"
               size="sm"
-              className="btn-surface-accent"
+              className={resolvedPrimaryClassName}
             >
               <Eye className="h-4 w-4" />
               {isDraft ? publishLabel : doneLabel}

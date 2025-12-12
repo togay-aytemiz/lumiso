@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
 import { TemplateBuilderHeader } from "@/components/template-builder/TemplateBuilderHeader";
 import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
@@ -30,6 +31,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import {
@@ -180,19 +191,6 @@ const formatDateForDisplay = (value: string | null) => {
   }).format(parsed);
 };
 
-const formatTimestamp = (value: string | null) => {
-  if (!value) return "";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "";
-  return new Intl.DateTimeFormat(getUserLocale(), {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(parsed);
-};
-
 const normalizeSelectionPartKey = (value: unknown) =>
   typeof value === "string" ? value.trim().toLowerCase() : "";
 
@@ -233,6 +231,7 @@ export default function GalleryDetail() {
   const { t: tForms } = useTranslation("forms");
   const { toast } = useToast();
   const { activeOrganizationId } = useOrganization();
+  const { timezone, timeFormat } = useOrganizationTimezone();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<"photos" | "settings">("photos");
@@ -271,6 +270,8 @@ export default function GalleryDetail() {
   const [pendingBatchDeleteIds, setPendingBatchDeleteIds] = useState<Set<string> | null>(null);
   const [setDeleteGuardOpen, setSetDeleteGuardOpen] = useState(false);
   const [pendingDeleteSet, setPendingDeleteSet] = useState<{ set: GallerySetRow; count: number } | null>(null);
+  const [galleryDeleteGuardOpen, setGalleryDeleteGuardOpen] = useState(false);
+  const [galleryDeleteConfirmText, setGalleryDeleteConfirmText] = useState("");
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isDropzoneActive, setIsDropzoneActive] = useState(false);
@@ -697,20 +698,14 @@ export default function GalleryDetail() {
   }, [type, customType, typeOptions, t]);
 
   const formattedEventDate = useMemo(() => formatDateForDisplay(eventDate), [eventDate]);
-	  const eventLabel =
-	    formattedEventDate || t("sessionDetail.gallery.labels.eventDateUnset", { defaultValue: "Event date not set" });
-	  const displayTitle = title.trim() || t("sessionDetail.gallery.form.titlePlaceholder", { defaultValue: "Untitled gallery" });
-	  const brandingData = (data?.branding || {}) as Record<string, unknown>;
-	  const storedCoverUrl = typeof brandingData.coverUrl === "string" ? brandingData.coverUrl : "";
-	  const localCoverUrl = coverPhotoId ? uploadQueue.find((item) => item.id === coverPhotoId)?.previewUrl ?? "" : "";
-	  const coverUrl = localCoverUrl || storedCoverUrl;
-	  const selectionStats = useMemo(() => {
-	    const stats = (brandingData.selectionStats || {}) as Record<string, unknown>;
-	    const selected = typeof stats.selected === "number" ? stats.selected : 0;
-	    const favorites = typeof stats.favorites === "number" ? stats.favorites : 0;
-    const total = typeof stats.total === "number" ? stats.total : 0;
-    return { selected, favorites, total };
-  }, [brandingData.selectionStats]);
+  const eventLabel =
+    formattedEventDate || t("sessionDetail.gallery.labels.eventDateUnset", { defaultValue: "Event date not set" });
+  const displayTitle =
+    title.trim() || t("sessionDetail.gallery.form.titlePlaceholder", { defaultValue: "Untitled gallery" });
+  const brandingData = (data?.branding || {}) as Record<string, unknown>;
+  const storedCoverUrl = typeof brandingData.coverUrl === "string" ? brandingData.coverUrl : "";
+  const localCoverUrl = coverPhotoId ? uploadQueue.find((item) => item.id === coverPhotoId)?.previewUrl ?? "" : "";
+  const coverUrl = localCoverUrl || storedCoverUrl;
 
   const selectionPartCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -785,18 +780,16 @@ export default function GalleryDetail() {
   }, [selectionTemplateGroups, selectionPartCounts, localRuleCounts, t]);
 
   const totalSelectedCount = useMemo(() => {
-    if (selectionStats.selected > 0) return selectionStats.selected;
     if (clientSelections && clientSelections.length > 0) return clientSelections.length;
     if (localSelectedPhotoCount > 0) return localSelectedPhotoCount;
     return selectionRules.reduce((sum, rule) => sum + rule.currentCount, 0);
-  }, [selectionStats.selected, clientSelections, localSelectedPhotoCount, selectionRules]);
+  }, [clientSelections, localSelectedPhotoCount, selectionRules]);
 
   const favoritesCount = useMemo(() => {
     const localFavorites = localRuleCounts[FAVORITES_FILTER_ID] ?? 0;
-    if (selectionStats.favorites > 0) return Math.max(selectionStats.favorites, localFavorites);
     const favoriteKey = normalizeSelectionPartKey(FAVORITES_FILTER_ID);
     return Math.max(selectionPartCounts[favoriteKey] ?? 0, localFavorites);
-  }, [selectionStats.favorites, selectionPartCounts, localRuleCounts]);
+  }, [selectionPartCounts, localRuleCounts]);
 
   const handleSelectionTemplateRulesChange = useCallback(
     (groupKey: string, rules: SelectionTemplateRuleForm[]) => {
@@ -870,12 +863,9 @@ export default function GalleryDetail() {
     [uploadQueue]
   );
 
-  const totalPhotosCount = useMemo(
-    () => Math.max(selectionStats.total || 0, localPhotosCount, totalSelectedCount, favoritesCount),
-    [selectionStats.total, localPhotosCount, totalSelectedCount, favoritesCount]
-  );
+  const totalPhotosCount = localPhotosCount;
 
-  const hasMedia = Boolean(brandingData.hasMedia) || localPhotosCount > 0;
+  const hasMedia = localPhotosCount > 0;
 
   const activeSelectionLabel = useMemo(() => {
     if (activeSelectionRuleId === FAVORITES_FILTER_ID) {
@@ -954,12 +944,13 @@ export default function GalleryDetail() {
   const updateMutation = useMutation<unknown, unknown, UpdatePayload>({
     mutationFn: async (payload) => {
       if (!id) return;
-      const updateBody: Partial<GalleryDetailRow> & { branding: Record<string, unknown> } = {
-        title: payload.title,
-        type: payload.type,
-        status: payload.status,
-        branding: payload.branding,
-      };
+	      const updateBody: Partial<GalleryDetailRow> & { branding: Record<string, unknown> } = {
+	        title: payload.title,
+	        type: payload.type,
+	        status: payload.status,
+	        branding: payload.branding,
+	        updated_at: new Date().toISOString(),
+	      };
       if (payload.publishedAt) {
         updateBody.published_at = payload.publishedAt;
       }
@@ -1003,7 +994,34 @@ export default function GalleryDetail() {
   const isSaving = updateMutation.isPending;
   const saveGallery = updateMutation.mutate;
 
-  const formattedLastSaved = useMemo(() => formatTimestamp(lastSavedAt), [lastSavedAt]);
+  const formattedLastSaved = useMemo(() => {
+    if (!lastSavedAt) return "";
+    const parsed = new Date(lastSavedAt);
+    if (Number.isNaN(parsed.getTime())) return "";
+    const locale = getUserLocale();
+    const hour12 = timeFormat === "12-hour";
+
+    try {
+      return new Intl.DateTimeFormat(locale, {
+        timeZone: timezone,
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12,
+      }).format(parsed);
+    } catch {
+      return new Intl.DateTimeFormat(locale, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12,
+      }).format(parsed);
+    }
+  }, [lastSavedAt, timeFormat, timezone]);
 
   const autoSaveLabel = useMemo(() => {
     if (isSaving) {
@@ -1182,11 +1200,64 @@ export default function GalleryDetail() {
   const deleteSetMutation = useMutation({
     mutationFn: async (setId: string) => {
       if (!id) return;
+      const isFallbackSet = setId === legacyFallbackSetId;
+      const idsToDelete = uploadQueueRef.current
+        .filter((item) => item.status !== "canceled")
+        .filter((item) => item.setId === setId || (isFallbackSet && !item.setId))
+        .map((item) => item.id);
+
+      idsToDelete.forEach((assetId) => {
+        canceledUploadIdsRef.current.add(assetId);
+        clearUploadTimer(assetId);
+      });
+
+      if (idsToDelete.length > 0) {
+        await deleteGalleryAssets(idsToDelete);
+      }
+
       const { error } = await supabase.from("gallery_sets").delete().eq("id", setId);
       if (error) throw error;
+      return idsToDelete;
     },
-    onSuccess: () => {
+    onSuccess: (idsToDelete: string[] | undefined, setId: string) => {
+      const idsToRemove = new Set(idsToDelete ?? []);
+
+      setCoverPhotoId((prev) => (prev && idsToRemove.has(prev) ? null : prev));
+      setPendingSelectionRemovalId((prev) => (prev && idsToRemove.has(prev) ? null : prev));
+      setSelectedBatchIds((prev) => {
+        if (idsToRemove.size === 0 || prev.size === 0) return prev;
+        const next = new Set(prev);
+        idsToRemove.forEach((id) => next.delete(id));
+        return next;
+      });
+      setPhotoSelections((prev) => {
+        if (idsToRemove.size === 0 || Object.keys(prev).length === 0) return prev;
+        const next: Record<string, string[]> = {};
+        Object.entries(prev).forEach(([photoId, ruleIds]) => {
+          if (!idsToRemove.has(photoId)) {
+            next[photoId] = ruleIds;
+          }
+        });
+        return next;
+      });
+      setUploadQueue((prev) => {
+        if (idsToRemove.size === 0) return prev;
+        const next: UploadItem[] = [];
+        prev.forEach((item) => {
+          if (idsToRemove.has(item.id)) {
+            if (item.previewUrl?.startsWith("blob:")) {
+              URL.revokeObjectURL(item.previewUrl);
+            }
+            return;
+          }
+          next.push(item);
+        });
+        return next;
+      });
+
       queryClient.invalidateQueries({ queryKey: ["gallery_sets", id] });
+      queryClient.invalidateQueries({ queryKey: ["gallery_assets", id] });
+      queryClient.invalidateQueries({ queryKey: ["gallery_storage_usage", id] });
     },
     onError: (error) => {
       toast({
@@ -1245,12 +1316,136 @@ export default function GalleryDetail() {
     });
   }, [t, toast]);
 
+  const previewLabel = useMemo(
+    () => t("sessionDetail.gallery.actions.preview", { defaultValue: "Önizle" }),
+    [t]
+  );
+
   const handlePreview = useCallback(() => {
     toast({
-      title: t("featurePreview.preview", { defaultValue: "Preview" }),
-      description: t("featurePreview.noPreview", { defaultValue: "Preview is coming soon for galleries." }),
+      title: previewLabel,
+      description: t("sessionDetail.gallery.labels.previewSoon", { defaultValue: "Galeri önizlemesi yakında." }),
     });
-  }, [t, toast]);
+  }, [previewLabel, t, toast]);
+
+  const expectedGalleryNameForDelete = useMemo(() => title.trim(), [title]);
+  const canConfirmGalleryDelete =
+    expectedGalleryNameForDelete.length > 0 && galleryDeleteConfirmText.trim() === expectedGalleryNameForDelete;
+
+  const openGalleryDeleteGuard = useCallback(() => {
+    setGalleryDeleteConfirmText("");
+    setGalleryDeleteGuardOpen(true);
+  }, []);
+
+  const closeGalleryDeleteGuard = useCallback(() => {
+    setGalleryDeleteGuardOpen(false);
+    setGalleryDeleteConfirmText("");
+  }, []);
+
+  const listStorageFilesInFolder = useCallback(async (folder: string) => {
+    const files: string[] = [];
+    let offset = 0;
+    const limit = 1000;
+
+    while (true) {
+      const { data, error } = await supabase.storage
+        .from(GALLERY_ASSETS_BUCKET)
+        .list(folder, { limit, offset, sortBy: { column: "name", order: "asc" } });
+      if (error) throw error;
+      const rows = data ?? [];
+      rows.forEach((entry) => {
+        if (entry.id) {
+          files.push(`${folder}/${entry.name}`);
+        }
+      });
+      if (rows.length < limit) break;
+      offset += limit;
+    }
+
+    return files;
+  }, []);
+
+  const deleteGalleryMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) return;
+
+      const sessionId = data?.session_id ?? null;
+      let organizationId = activeOrganizationId ?? null;
+      if (sessionId) {
+        const { data: sessionRow, error: sessionError } = await supabase
+          .from("sessions")
+          .select("organization_id")
+          .eq("id", sessionId)
+          .single();
+        if (sessionError) throw sessionError;
+        organizationId = sessionRow?.organization_id ?? organizationId;
+      }
+
+      if (!organizationId) {
+        throw new Error("No organization found for this gallery.");
+      }
+
+      const basePrefix = `${organizationId}/galleries/${id}`;
+      const storagePaths = new Set<string>();
+
+      const { data: assetRows, error: assetError } = await supabase
+        .from("gallery_assets")
+        .select("storage_path_web,storage_path_original")
+        .eq("gallery_id", id);
+      if (assetError) throw assetError;
+
+      (assetRows ?? []).forEach((row) => {
+        const typedRow = row as { storage_path_web: string | null; storage_path_original: string | null };
+        if (typedRow.storage_path_web) storagePaths.add(typedRow.storage_path_web);
+        if (typedRow.storage_path_original) storagePaths.add(typedRow.storage_path_original);
+      });
+
+      const folderCandidates = [
+        basePrefix,
+        `${basePrefix}/proof`,
+        `${basePrefix}/original`,
+      ];
+
+      await Promise.all(
+        folderCandidates.map(async (folder) => {
+          const files = await listStorageFilesInFolder(folder);
+          files.forEach((path) => storagePaths.add(path));
+        })
+      );
+
+      const pathsToRemove = Array.from(storagePaths);
+      const chunkSize = 100;
+      for (let index = 0; index < pathsToRemove.length; index += chunkSize) {
+        const chunk = pathsToRemove.slice(index, index + chunkSize);
+        const { error: removeError } = await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove(chunk);
+        if (removeError) throw removeError;
+      }
+
+      const { error: deleteError } = await supabase.from("galleries").delete().eq("id", id);
+      if (deleteError) throw deleteError;
+    },
+    onSuccess: () => {
+      closeGalleryDeleteGuard();
+      queryClient.invalidateQueries({ queryKey: ["galleries"] });
+      if (data?.session_id) {
+        queryClient.invalidateQueries({ queryKey: ["galleries", data.session_id] });
+        navigate(`/sessions/${data.session_id}`);
+      } else {
+        navigate("/sessions");
+      }
+      toast({
+        title: t("sessionDetail.gallery.toast.deletedTitle", { defaultValue: "Galeri silindi" }),
+        description: t("sessionDetail.gallery.toast.deletedDesc", { defaultValue: "Galeri ve tüm medya kalıcı olarak silindi." }),
+      });
+    },
+    onError: (error: unknown) => {
+      toast({
+        title: t("sessionDetail.gallery.toast.errorTitle"),
+        description: error instanceof Error ? error.message : t("sessionDetail.gallery.toast.errorDesc"),
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleAddMedia = useCallback(
     (setId?: string) => {
@@ -1529,20 +1724,18 @@ export default function GalleryDetail() {
 
       const { data: rows, error: fetchError } = await supabase
         .from("gallery_assets")
-        .select("id,storage_path_web")
+        .select("id,storage_path_web,storage_path_original")
         .eq("gallery_id", id)
         .in("id", assetIds);
       if (fetchError) throw fetchError;
 
       const storagePaths = (rows ?? [])
-        .map((row) => row.storage_path_web)
+        .flatMap((row) => [row.storage_path_web, row.storage_path_original])
         .filter((value): value is string => typeof value === "string" && value.length > 0);
 
       if (storagePaths.length > 0) {
         const { error: storageError } = await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove(storagePaths);
-        if (storageError) {
-          console.warn("Failed to remove gallery assets from storage", storageError);
-        }
+        if (storageError) throw storageError;
       }
 
       const { error: deleteError } = await supabase
@@ -2032,18 +2225,32 @@ export default function GalleryDetail() {
 
   return (
     <>
-      <TemplateBuilderHeader
-        name={displayTitle}
-        onNameChange={(value) => setTitle(value)}
-        statusLabel={autoSaveLabel}
-        isDraft={status === "draft"}
-        draftLabel={draftLabel}
-        publishedLabel={publishedOrArchivedLabel}
+	      <TemplateBuilderHeader
+	        name={displayTitle}
+	        onNameChange={(value) => setTitle(value)}
+	        isDraft={status === "draft"}
+	        draftLabel={draftLabel}
+	        publishedLabel={publishedOrArchivedLabel}
         backLabel={backLabel}
-        publishLabel={t("featurePreview.preview", { defaultValue: "Preview" })}
-        doneLabel={t("featurePreview.preview", { defaultValue: "Preview" })}
+        publishLabel={previewLabel}
+        doneLabel={previewLabel}
         onBack={handleBack}
         onPrimaryAction={handlePreview}
+        primaryDisabled={deleteGalleryMutation.isPending}
+        primaryClassName="hover:!bg-muted/80 hover:!text-foreground"
+        primaryLeftActions={
+          <Button
+            type="button"
+            onClick={openGalleryDeleteGuard}
+            variant="surface"
+            size="sm"
+            className="btn-surface-destructive"
+            disabled={deleteGalleryMutation.isPending}
+          >
+            <Trash2 className="h-4 w-4" />
+            {t("sessionDetail.gallery.actions.delete", { defaultValue: "Galeriyi sil" })}
+          </Button>
+        }
         eyebrow={typeLabel}
         subtitle={
           <>
@@ -2057,6 +2264,7 @@ export default function GalleryDetail() {
             variant="surface"
             size="sm"
             className="btn-surface-accent gap-2"
+            disabled={deleteGalleryMutation.isPending}
           >
             <Share2 className="h-4 w-4" />
             {t("sessionDetail.gallery.actions.share")}
@@ -3288,6 +3496,62 @@ export default function GalleryDetail() {
         discardLabel="Sil"
         message={`${pendingDeleteSet?.set.name ?? ""} setinde ${pendingDeleteSet?.count ?? 0} fotoğraf var. Seti silerseniz bu fotoğrafların hepsi silinecek. Devam etmek istiyor musunuz?`}
       />
+
+      <AlertDialog open={galleryDeleteGuardOpen} onOpenChange={(open) => !open && closeGalleryDeleteGuard()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("sessionDetail.gallery.delete.title", { defaultValue: "Galeriyi sil" })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("sessionDetail.gallery.delete.description", {
+                defaultValue:
+                  "Bu işlem geri alınamaz. Galeriye ait tüm fotoğraflar, setler ve müşteri seçimleri kalıcı olarak silinecek.",
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="gallery-delete-confirm">
+              {t("sessionDetail.gallery.delete.confirmLabel", { defaultValue: "Silmek için galeri adını yazın" })}
+            </Label>
+            <Input
+              id="gallery-delete-confirm"
+              value={galleryDeleteConfirmText}
+              onChange={(event) => setGalleryDeleteConfirmText(event.target.value)}
+              placeholder={expectedGalleryNameForDelete}
+              autoFocus
+              disabled={deleteGalleryMutation.isPending}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("sessionDetail.gallery.delete.confirmHint", {
+                defaultValue: `Galeri adı: ${expectedGalleryNameForDelete}`,
+                name: expectedGalleryNameForDelete,
+              })}
+            </p>
+          </div>
+
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel onClick={closeGalleryDeleteGuard} disabled={deleteGalleryMutation.isPending}>
+              {t("buttons.cancel", { defaultValue: "İptal" })}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteGalleryMutation.mutate()}
+              disabled={!canConfirmGalleryDelete || deleteGalleryMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteGalleryMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("sessionDetail.gallery.delete.deleting", { defaultValue: "Siliniyor..." })}
+                </>
+              ) : (
+                t("sessionDetail.gallery.delete.confirmButton", { defaultValue: "Galeriyi sil" })
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {lightboxOpen && currentLightboxPhoto ? (
         <div className="fixed inset-0 z-[100] flex bg-black/95 text-white backdrop-blur-sm">

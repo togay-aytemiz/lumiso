@@ -547,11 +547,11 @@
         "published": "Published",
         "archived": "Archived"
       },
-      "labels": {
-        "updated": "Updated",
-        "published": "Published",
-	        "shareSoon": "Share link coming soon",
-	        "settings": "Settings",
+	      "labels": {
+	        "updated": "Updated",
+	        "published": "Published",
+		        "shareSoon": "Share link coming soon",
+		        "settings": "Settings",
 	        "media": "Photos",
 	        "uploadTitle": "Upload photos",
 	        "uploadDesc": "Drag & drop photos here to add to this gallery.",
@@ -563,12 +563,110 @@
 	        "coverHint": "Choose a photo to highlight your gallery.",
 	        "coverActionHint": "Mark a photo as cover inside the gallery view.",
         "chooseCover": "Choose cover",
-        "coverAfterUpload": "Pick any uploaded photo as your cover.",
-        "coverEmptyHint": "Add photos to this gallery, then pick your cover."
-      },
-      "toast": {
-        "createdTitle": "Gallery created",
-        "createdDesc": "You can start uploading and sharing.",
+	        "coverAfterUpload": "Pick any uploaded photo as your cover.",
+	        "coverEmptyHint": "Add photos to this gallery, then pick your cover."
+	      },
+	      "settings": {
+	        "header": {
+	          "eyebrow": "Gallery Settings"
+	        },
+	        "rail": {
+	          "sectionLabel": "Gallery Management",
+	          "general": "General",
+	          "watermark": "Watermark",
+	          "privacy": "Privacy"
+	        },
+	        "general": {
+	          "header": {
+	            "title": "General settings",
+	            "description": "Manage the gallery’s basic info."
+	          },
+	          "basics": {
+	            "title": "Gallery info",
+	            "description": "Title, date, and status."
+	          }
+	        },
+	        "watermark": {
+	          "header": {
+	            "title": "Watermark settings",
+	            "description": "Protect proofs and reinforce your brand."
+	          },
+	          "preview": {
+	            "title": "Live preview",
+	            "description": "Quickly check how it will look.",
+	            "disabled": "Watermark off"
+	          },
+	          "toggle": {
+	            "title": "Watermark",
+	            "description": "Apply a watermark to photos in this gallery."
+	          },
+	          "appearance": {
+	            "title": "Appearance",
+	            "description": "Use text or your logo."
+	          },
+	          "type": {
+	            "label": "Watermark type",
+	            "text": "Text",
+	            "logo": "Logo"
+	          },
+	          "text": {
+	            "label": "Text",
+	            "placeholder": "e.g., Studio Name",
+	            "fallback": "Studio name"
+	          },
+	          "logo": {
+	            "alt": "Watermark logo",
+	            "missingInline": "No logo",
+	            "detectedTitle": "Brand logo",
+	            "detectedDescription": "Pulled from your account settings.",
+	            "manage": "Open account settings",
+	            "missingTitle": "Logo not found",
+	            "missingDescription": "Add a logo in account settings to use it as a watermark."
+	          },
+	          "layout": {
+	            "title": "Placement & style",
+	            "description": "Adjust placement, opacity, and size."
+	          },
+	          "placement": {
+	            "label": "Placement",
+	            "grid": "Tiled",
+	            "center": "Center",
+	            "corner": "Corner"
+	          },
+	          "opacity": {
+	            "label": "Opacity",
+	            "faint": "Faint",
+	            "strong": "Strong"
+	          },
+	          "size": {
+	            "label": "Size",
+	            "small": "Small",
+	            "large": "Large"
+	          }
+	        },
+	        "privacy": {
+	          "header": {
+	            "title": "Privacy settings",
+	            "description": "Control access to this gallery."
+	          },
+	          "access": {
+	            "title": "Access protection",
+	            "description": "Limit access with a password when needed."
+	          },
+	          "password": {
+	            "toggleTitle": "Gallery password",
+	            "toggleDescription": "Visitors must enter a password to view the gallery.",
+	            "formTitle": "Password",
+	            "formDescription": "Set a password for this gallery before sharing.",
+	            "label": "Password",
+	            "placeholder": "Enter a password",
+	            "generate": "Generate"
+	          }
+	        }
+	      },
+	      "toast": {
+	        "createdTitle": "Gallery created",
+	        "createdDesc": "You can start uploading and sharing.",
         "errorTitle": "Could not create gallery",
         "errorDesc": "Something went wrong. Try again.",
         "unsupportedFilesTitle": "Some files were skipped",
@@ -704,6 +802,7 @@
         "filters": {
           "all": "All",
           "starred": "Photographer's choice",
+          "starredShort": "Pick",
           "favorites": "Favorites",
           "unselected": "Unselected"
         },
@@ -713,6 +812,14 @@
           "addToLists": "Add to lists",
           "limitFull": "Limit full",
           "added": "Added"
+        },
+        "floatingSelections": {
+          "kicker": "In this set",
+          "title": "Selected photos"
+        },
+        "toast": {
+          "favoritesAdded": "Added to favorites",
+          "favoritesRemoved": "Removed from favorites"
         },
         "empty": {
           "noPhotos": {
@@ -734,6 +841,11 @@
             "title": "Great! All sorted",
             "description": "You've assigned every photo in this set to a list.",
             "action": "View full gallery"
+          },
+          "selected": {
+            "title": "No selected photos yet",
+            "description": "Add photos to a list to see them here.",
+            "action": "View all photos"
           },
           "rule": {
             "title": "No selections for {{rule}}",
@@ -760,6 +872,11 @@
         "showSelectionsTitle": "Show selections",
         "collapse": "Collapse",
         "collapseTitle": "Collapse panel",
+        "mobileActions": {
+          "favorite": "Favorite",
+          "add": "Add",
+          "share": "Share"
+        },
         "sidebar": {
           "client": {
             "title": "Selections",
@@ -774,6 +891,7 @@
           "favoriteAdded": "Favorited",
           "favoriteAdd": "Add to favorites",
           "photographerPickTitle": "Photographer's choice",
+          "photographerPickTitleShort": "Pick",
           "photographerPickDescription": "We recommend this shot for you"
         },
         "admin": {

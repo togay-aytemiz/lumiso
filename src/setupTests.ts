@@ -155,6 +155,13 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   unobserve: jest.fn(),
 }));
 
+// Mock ResizeObserver (used by Radix primitives)
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 // Mock matchMedia for components relying on it (e.g., ThemeProvider)
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

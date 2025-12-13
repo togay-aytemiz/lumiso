@@ -109,7 +109,9 @@ describe("GalleryClientPreview", () => {
     const thumbnail = await screen.findByAltText("a.jpg");
     expect(thumbnail).toBeInTheDocument();
 
-    const addButton = await screen.findByRole("button", { name: /^(add|ekle)$/i });
+    const addButtons = await screen.findAllByRole("button", { name: /^(add|ekle)$/i });
+    const addButton =
+      addButtons.find((button) => /add|ekle/i.test(button.textContent ?? "")) ?? addButtons[0];
     fireEvent.click(addButton);
 
     const menuTitle = await screen.findByText(/add to lists|listelere ekle/i);
@@ -130,7 +132,9 @@ describe("GalleryClientPreview", () => {
       expect(screen.getByAltText("a.jpg")).toBeInTheDocument();
     });
 
-    const closeButton = await screen.findByRole("button", { name: /close|kapat/i });
+    const closeButtons = await screen.findAllByRole("button", { name: /close|kapat/i });
+    const closeButton =
+      closeButtons.find((button) => /close|kapat/i.test(button.textContent ?? "")) ?? closeButtons[0];
     fireEvent.click(closeButton);
     expect(mockNavigate).toHaveBeenCalledWith("/galleries/gallery-123");
   });

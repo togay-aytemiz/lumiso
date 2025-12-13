@@ -1,14 +1,22 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { TemplateBuilderHeader } from "@/components/template-builder/TemplateBuilderHeader";
 import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
+import {
+  GallerySettingsContent,
+  GallerySettingsRail,
+  type GalleryPrivacySettings,
+  type GallerySettingsTab,
+  type GalleryWatermarkSettings,
+} from "@/components/galleries/GalleryDetailSettings";
 import {
   FAVORITES_FILTER_ID,
   STARRED_FILTER_ID,
@@ -282,23 +290,43 @@ const fingerprintSelectionTemplateGroups = (groups: SelectionTemplateGroupForm[]
 
 export default function GalleryDetail() {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation("pages");
   const { t: tForms } = useTranslation("forms");
   const { toast } = useToast();
   const { activeOrganizationId } = useOrganization();
   const { timezone, timeFormat } = useOrganizationTimezone();
+  const { settings: organizationSettings } = useOrganizationSettings();
   const queryClient = useQueryClient();
 
   const signedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
   const signedUrlRefreshInFlightRef = useRef<Set<string>>(new Set());
 
   const [activeTab, setActiveTab] = useState<"photos" | "settings">("photos");
+  const [activeSettingsTab, setActiveSettingsTab] = useState<GallerySettingsTab>("general");
   const [title, setTitle] = useState("");
   const [type, setType] = useState<GalleryType>("proof");
   const [status, setStatus] = useState<GalleryStatus>("draft");
   const [customType, setCustomType] = useState("");
   const [eventDate, setEventDate] = useState<string>("");
+  const [watermarkSettings, setWatermarkSettings] = useState<GalleryWatermarkSettings>({
+    enabled: false,
+    type: "text",
+    placement: "grid",
+    opacity: 60,
+    scale: 100,
+  });
+  const [watermarkTextSaved, setWatermarkTextSaved] = useState("");
+  const [watermarkTextDraft, setWatermarkTextDraft] = useState("");
+  const [privacySettings, setPrivacySettings] = useState<GalleryPrivacySettings>({
+    passwordEnabled: false,
+  });
+  const [privacyPasswordSaved, setPrivacyPasswordSaved] = useState("");
+  const [privacyPasswordDraft, setPrivacyPasswordDraft] = useState("");
+  const [gallerySettingsSaving, setGallerySettingsSaving] = useState(false);
+  const [gallerySettingsSaveSuccess, setGallerySettingsSaveSuccess] = useState(false);
+  const gallerySettingsSuccessTimerRef = useRef<number | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [isSetSheetOpen, setIsSetSheetOpen] = useState(false);
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
@@ -364,6 +392,88 @@ export default function GalleryDetail() {
   });
   const autoSaveTimerRef = useRef<number | null>(null);
   const attemptedDefaultSetRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (gallerySettingsSuccessTimerRef.current) {
+        window.clearTimeout(gallerySettingsSuccessTimerRef.current);
+      }
+    };
+  }, []);
+
+  const organizationBusinessName = organizationSettings?.photography_business_name ?? null;
+  const organizationLogoUrl = organizationSettings?.logo_url ?? null;
+
+  const handleOpenOrganizationBrandingSettings = useCallback(() => {
+    const shouldAttachBackground = !location.pathname.startsWith("/settings");
+    const state = shouldAttachBackground ? { backgroundLocation: location } : undefined;
+    navigate("/settings/general", state ? { state } : undefined);
+  }, [location, navigate]);
+
+  const updateWatermarkSettings = useCallback((updates: Partial<GalleryWatermarkSettings>) => {
+    setWatermarkSettings((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  const updatePrivacySettings = useCallback(
+    (updates: Partial<GalleryPrivacySettings>) => {
+      setPrivacySettings((prev) => ({ ...prev, ...updates }));
+      if (updates.passwordEnabled === false) {
+        setPrivacyPasswordDraft(privacyPasswordSaved);
+      }
+    },
+    [privacyPasswordSaved]
+  );
+
+  const hasGallerySettingsUnsavedChanges = useMemo(() => {
+    const watermarkDirty =
+      watermarkSettings.type === "text" && watermarkTextDraft !== watermarkTextSaved;
+    const passwordDirty =
+      privacySettings.passwordEnabled && privacyPasswordDraft !== privacyPasswordSaved;
+    return watermarkDirty || passwordDirty;
+  }, [
+    watermarkSettings.type,
+    watermarkTextDraft,
+    watermarkTextSaved,
+    privacySettings.passwordEnabled,
+    privacyPasswordDraft,
+    privacyPasswordSaved,
+  ]);
+
+  const handleSaveGallerySettings = useCallback(async () => {
+    setGallerySettingsSaving(true);
+    try {
+      if (watermarkSettings.type === "text") {
+        setWatermarkTextSaved(watermarkTextDraft);
+      }
+      if (privacySettings.passwordEnabled) {
+        setPrivacyPasswordSaved(privacyPasswordDraft);
+      }
+      setGallerySettingsSaveSuccess(true);
+      if (gallerySettingsSuccessTimerRef.current) {
+        window.clearTimeout(gallerySettingsSuccessTimerRef.current);
+      }
+      gallerySettingsSuccessTimerRef.current = window.setTimeout(() => {
+        setGallerySettingsSaveSuccess(false);
+      }, 1500);
+    } finally {
+      setGallerySettingsSaving(false);
+    }
+  }, [
+    watermarkSettings.type,
+    watermarkTextDraft,
+    privacySettings.passwordEnabled,
+    privacyPasswordDraft,
+  ]);
+
+  const handleCancelGallerySettings = useCallback(() => {
+    setWatermarkTextDraft(watermarkTextSaved);
+    setPrivacyPasswordDraft(privacyPasswordSaved);
+    setGallerySettingsSaveSuccess(false);
+  }, [privacyPasswordSaved, watermarkTextSaved]);
+
+  const handleGenerateGalleryPassword = useCallback(() => {
+    setPrivacyPasswordDraft(Math.random().toString(36).slice(-6).toUpperCase());
+  }, []);
 
   const parseSelectionTemplateGroups = useCallback(
     (branding: Record<string, unknown> | null): SelectionTemplateGroupForm[] => {
@@ -2623,8 +2733,9 @@ export default function GalleryDetail() {
       />
 
       <div className="flex flex-col gap-6 px-4 py-6 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[360px,1fr]">
-          <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "photos" | "settings")}>
+          <div className="grid gap-6 lg:grid-cols-[360px,1fr]">
+            <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
             <div className="mb-4 overflow-hidden rounded-xl border border-border/70 bg-muted/20 shadow-sm transition-colors">
 	              {coverUrl ? (
 	                <div className="relative h-40 w-full bg-muted/40">
@@ -2662,7 +2773,6 @@ export default function GalleryDetail() {
               )}
             </div>
 
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "photos" | "settings")}>
               <div className="flex items-center gap-2">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="photos" className="text-sm">
@@ -2685,16 +2795,16 @@ export default function GalleryDetail() {
                     <Plus className="h-4 w-4" />
                     {t("sessionDetail.gallery.sets.add")}
                   </Button>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="h-auto px-0 text-sm font-medium text-primary hover:text-primary/80"
-                    onClick={() => setIsSetInfoSheetOpen(true)}
-                  >
-                    {setInfoLearnMoreLabel}
-                  </Button>
-                </div>
-              ) : null}
+	                  <Button
+	                    variant="link"
+	                    size="sm"
+	                    className="h-auto px-0 text-sm font-medium text-primary hover:text-primary/80"
+	                    onClick={() => setIsSetInfoSheetOpen(true)}
+	                  >
+	                    {setInfoLearnMoreLabel}
+	                  </Button>
+	                </div>
+	              ) : null}
 
              <TabsContent value="photos" className="mt-4 space-y-3">
                 {orderedSets.length > 0 ? (
@@ -2834,156 +2944,119 @@ export default function GalleryDetail() {
                 )}
               </TabsContent>
 
-              <TabsContent value="settings" className="mt-4 space-y-4">
-                <div className="space-y-2">
-                  <Label>{t("sessionDetail.gallery.form.titleLabel", { defaultValue: "Gallery name" })}</Label>
-                  <Input
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    placeholder={t("sessionDetail.gallery.form.titlePlaceholder")}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2 min-w-0">
-                    <Label>{t("sessionDetail.gallery.form.eventDateLabel")}</Label>
-                    <DateTimePicker
-                      mode="date"
-                      value={eventDate}
-                      onChange={(value) => setEventDate(value)}
-                      buttonClassName="w-full justify-between"
-                      popoverModal
-                      fullWidth
-                      todayLabel={tForms("dateTimePicker.today")}
-                      clearLabel={tForms("dateTimePicker.clear")}
-                      doneLabel={tForms("dateTimePicker.done")}
-                    />
-                  </div>
-                  <div className="space-y-2 min-w-0">
-                    <Label>{t("sessionDetail.gallery.form.statusLabel")}</Label>
-                    <Select value={status} onValueChange={(value) => setStatus(value as GalleryStatus)}>
-                      <SelectTrigger className="w-full justify-between">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>{t("sessionDetail.gallery.form.typeLabel")}</Label>
-                    <Select
-                      value={type}
-                      disabled
-                      onValueChange={(value) => {
-                        setType(value as GalleryType);
-                        if (value !== "other") {
-                          setCustomType("");
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full justify-between">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {typeOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className={cn("space-y-2 transition-all", type === "other" ? "opacity-100" : "opacity-0")}>
-                    <Label htmlFor="gallery-custom-type">
-                      {t("sessionDetail.gallery.form.customTypeLabel", { defaultValue: "Custom type" })}
-                    </Label>
-                    <Input
-                      id="gallery-custom-type"
-                      value={customType}
-                      onChange={(event) => setCustomType(event.target.value)}
-                      placeholder={t("sessionDetail.gallery.form.customTypePlaceholder", {
-                        defaultValue: "e.g., Album selection",
-                      })}
-                      disabled
-                    />
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-3 text-xs text-muted-foreground">
-                  {autoSaveLabel}
-                </div>
+              <TabsContent value="settings" className="mt-4">
+                <GallerySettingsRail activeTab={activeSettingsTab} onTabChange={setActiveSettingsTab} />
               </TabsContent>
-            </Tabs>
-          </div>
+            </div>
 
 	          <div className="space-y-4">
-	            {type === "proof" && totalPhotosCount > 0 ? (
-	              <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-	                <SelectionDashboard
-	                  rules={selectionRules}
-	                  favoritesCount={favoritesCount}
-	                  starredCount={starredUploadCount}
-	                  totalPhotos={totalPhotosCount}
-	                  totalSelected={totalSelectedCount}
-	                  activeRuleId={activeSelectionRuleId}
-	                  onSelectRuleFilter={setActiveSelectionRuleId}
-	                />
-	              </div>
-	            ) : null}
+              <TabsContent value="settings" className="mt-0">
+	              <GallerySettingsContent
+	                activeTab={activeSettingsTab}
+	                general={{
+	                  title,
+	                  onTitleChange: setTitle,
+	                  eventDate,
+	                  onEventDateChange: setEventDate,
+	                  status,
+	                  onStatusChange: (value) => setStatus(value as GalleryStatus),
+	                  statusOptions,
+	                  type,
+	                  onTypeChange: (value) => setType(value as GalleryType),
+	                  typeOptions,
+	                  customType,
+	                  onCustomTypeChange: setCustomType,
+	                  autoSaveLabel,
+	                  disableTypeEditing: true,
+	                }}
+	                watermark={{
+	                  settings: watermarkSettings,
+	                  onSettingsChange: updateWatermarkSettings,
+	                  textDraft: watermarkTextDraft,
+	                  onTextDraftChange: setWatermarkTextDraft,
+	                  businessName: organizationBusinessName,
+	                  logoUrl: organizationLogoUrl,
+	                  coverUrl,
+	                  onOpenOrganizationBranding: handleOpenOrganizationBrandingSettings,
+	                }}
+	                privacy={{
+	                  settings: privacySettings,
+	                  onSettingsChange: updatePrivacySettings,
+	                  passwordDraft: privacyPasswordDraft,
+	                  onPasswordDraftChange: setPrivacyPasswordDraft,
+	                  onGeneratePassword: handleGenerateGalleryPassword,
+	                }}
+	                saveBar={{
+	                  show: hasGallerySettingsUnsavedChanges,
+	                  isSaving: gallerySettingsSaving,
+	                  showSuccess: gallerySettingsSaveSuccess,
+	                  onSave: handleSaveGallerySettings,
+	                  onCancel: handleCancelGallerySettings,
+	                }}
+	              />
+              </TabsContent>
 
-	            <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-	              <div className="space-y-4">
-	                {activeSet ? (
-	                  <div
-	                    className="space-y-4 rounded-xl"
-		                    onDragEnter={(event) => {
-		                      if (activeSelectionRuleId) return;
-		                      event.preventDefault();
-		                      dropzoneDragDepthRef.current += 1;
-		                      setIsDropzoneActive(true);
-	                    }}
-	                    onDragLeave={(event) => {
-	                      if (activeSelectionRuleId) return;
-	                      event.preventDefault();
-	                      dropzoneDragDepthRef.current = Math.max(0, dropzoneDragDepthRef.current - 1);
-	                      if (dropzoneDragDepthRef.current === 0) {
-	                        setIsDropzoneActive(false);
-	                      }
-	                    }}
-	                    onDragOver={(event) => {
-	                      if (activeSelectionRuleId) return;
-	                      event.preventDefault();
-	                    }}
-	                    onDrop={(event) => {
-	                      event.preventDefault();
-	                      dropzoneDragDepthRef.current = 0;
-	                      setIsDropzoneActive(false);
-	                      if (activeSelectionRuleId) return;
-	                      if (event.dataTransfer.files?.length) {
-                          if (activeSet.id === "default-placeholder") {
-                            toast({
-                              title: t("sessionDetail.gallery.toast.errorTitle"),
-                              description: t("sessionDetail.gallery.toast.errorDesc", {
-                                defaultValue: "Create a set before uploading.",
-                              }),
-                              variant: "destructive",
-                            });
-                            return;
-                          }
-	                        enqueueUploads(event.dataTransfer.files, activeSet.id);
-	                      }
-	                    }}
-	                  >
-	                    <div className="flex flex-wrap items-center justify-between gap-3 px-1">
-	                      <div className="min-w-0 space-y-0.5">
+              <TabsContent value="photos" className="mt-0">
+                <>
+                  {type === "proof" && totalPhotosCount > 0 ? (
+                    <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+                      <SelectionDashboard
+                        rules={selectionRules}
+                        favoritesCount={favoritesCount}
+                        starredCount={starredUploadCount}
+                        totalPhotos={totalPhotosCount}
+                        totalSelected={totalSelectedCount}
+                        activeRuleId={activeSelectionRuleId}
+                        onSelectRuleFilter={setActiveSelectionRuleId}
+                      />
+                    </div>
+                  ) : null}
+
+                  <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+                    <div className="space-y-4">
+                      {activeSet ? (
+                        <div
+                          className="space-y-4 rounded-xl"
+                          onDragEnter={(event) => {
+                            if (activeSelectionRuleId) return;
+                            event.preventDefault();
+                            dropzoneDragDepthRef.current += 1;
+                            setIsDropzoneActive(true);
+                          }}
+                          onDragLeave={(event) => {
+                            if (activeSelectionRuleId) return;
+                            event.preventDefault();
+                            dropzoneDragDepthRef.current = Math.max(0, dropzoneDragDepthRef.current - 1);
+                            if (dropzoneDragDepthRef.current === 0) {
+                              setIsDropzoneActive(false);
+                            }
+                          }}
+                          onDragOver={(event) => {
+                            if (activeSelectionRuleId) return;
+                            event.preventDefault();
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            dropzoneDragDepthRef.current = 0;
+                            setIsDropzoneActive(false);
+                            if (activeSelectionRuleId) return;
+                            if (event.dataTransfer.files?.length) {
+                              if (activeSet.id === "default-placeholder") {
+                                toast({
+                                  title: t("sessionDetail.gallery.toast.errorTitle"),
+                                  description: t("sessionDetail.gallery.toast.errorDesc", {
+                                    defaultValue: "Create a set before uploading.",
+                                  }),
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+                              enqueueUploads(event.dataTransfer.files, activeSet.id);
+                            }
+                          }}
+                        >
+		                    <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+		                      <div className="min-w-0 space-y-0.5">
 	                        {activeFilterMeta?.serviceName ? (
 	                          <span
 	                            className={cn(
@@ -3827,10 +3900,22 @@ export default function GalleryDetail() {
 	                    {t("sessionDetail.gallery.sets.empty", { defaultValue: "Uploads land here." })}
 	                  </div>
 	                )}
-	              </div>
-	            </div>
+	                      </div>
+	                    ) : (
+	                      <div className="rounded-xl bg-muted/10 px-5 py-10 text-center text-sm text-muted-foreground">
+	                        {t("sessionDetail.gallery.sets.empty", { defaultValue: "Uploads land here." })}
+	                      </div>
+	                    )}
+		                  </div>
+		                </div>
+		              </>
+		            )}
+                </>
+              </TabsContent>
+	          </div>
+            </div>
           </div>
-        </div>
+        </Tabs>
       </div>
 
       {activeTab === "photos" && isBatchSelectionMode && selectedBatchIds.size > 0 && !lightboxOpen ? (

@@ -101,5 +101,51 @@ describe("Lightbox", () => {
     fireEvent.keyDown(window, { key: " ", code: "Space" });
     expect(onToggleRule).not.toHaveBeenCalled();
   });
-});
 
+  it("navigates with swipe gestures", () => {
+    const onNavigate = jest.fn();
+
+    render(
+      <Lightbox
+        isOpen
+        onClose={jest.fn()}
+        photos={[
+          {
+            id: "photo-1",
+            url: "https://example.com/1.jpg",
+            filename: "1.jpg",
+            isFavorite: false,
+            isStarred: false,
+            selections: [],
+          },
+          {
+            id: "photo-2",
+            url: "https://example.com/2.jpg",
+            filename: "2.jpg",
+            isFavorite: false,
+            isStarred: false,
+            selections: [],
+          },
+        ]}
+        currentIndex={0}
+        onNavigate={onNavigate}
+        rules={[]}
+        onToggleRule={jest.fn()}
+        onToggleStar={jest.fn()}
+        mode="client"
+      />
+    );
+
+    const image = screen.getAllByAltText("1.jpg")[0];
+
+    fireEvent.touchStart(image, {
+      targetTouches: [{ clientX: 100, clientY: 0 }],
+    });
+    fireEvent.touchMove(image, {
+      targetTouches: [{ clientX: 0, clientY: 0 }],
+    });
+    fireEvent.touchEnd(image);
+
+    expect(onNavigate).toHaveBeenCalledWith(1);
+  });
+});

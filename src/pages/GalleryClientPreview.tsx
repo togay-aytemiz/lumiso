@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/components/SelectionTemplateSection";
 import { Lightbox } from "@/components/galleries/Lightbox";
 import { GALLERY_ASSETS_BUCKET, getStorageBasename, isSupabaseStorageObjectMissingError } from "@/lib/galleryAssets";
+import { useI18nToast } from "@/lib/toastHelpers";
 import {
   ArrowDown,
   ArrowRight,
@@ -27,7 +28,7 @@ import {
 } from "lucide-react";
 
 type GridSize = "small" | "medium" | "large";
-type FilterType = "all" | "favorites" | "starred" | "unselected" | string;
+type FilterType = "all" | "favorites" | "starred" | "unselected" | "selected" | string;
 
 type GalleryDetailRow = {
   id: string;
@@ -103,6 +104,8 @@ export default function GalleryClientPreview() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation("pages");
+  const { t: tCommon } = useTranslation("common");
+  const i18nToast = useI18nToast();
 
   const galleryRef = useRef<HTMLDivElement>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -112,6 +115,7 @@ export default function GalleryClientPreview() {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [activeSetId, setActiveSetId] = useState<string>("");
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [sheetPhotoId, setSheetPhotoId] = useState<string | null>(null);
 
   const [favoritePhotoIds, setFavoritePhotoIds] = useState<Set<string>>(() => new Set());
   const [photoSelectionsById, setPhotoSelectionsById] = useState<Record<string, string[]>>({});
@@ -406,6 +410,8 @@ export default function GalleryClientPreview() {
         return setPhotos.filter((photo) => photo.isStarred);
       case "unselected":
         return setPhotos.filter((photo) => photo.selections.length === 0);
+      case "selected":
+        return setPhotos.filter((photo) => photo.selections.length > 0);
       default:
         return setPhotos.filter((photo) => photo.selections.includes(activeFilter));
     }
@@ -455,7 +461,13 @@ export default function GalleryClientPreview() {
   };
 
   const activeLightboxRuleId = useMemo(() => {
-    if (activeFilter === "all" || activeFilter === "favorites" || activeFilter === "starred" || activeFilter === "unselected") {
+    if (
+      activeFilter === "all" ||
+      activeFilter === "favorites" ||
+      activeFilter === "starred" ||
+      activeFilter === "unselected" ||
+      activeFilter === "selected"
+    ) {
       return null;
     }
     return selectionRules.some((rule) => rule.id === activeFilter) ? activeFilter : null;
@@ -492,6 +504,21 @@ export default function GalleryClientPreview() {
       });
     },
     [favoritesEnabled]
+  );
+
+  const handleToggleFavorite = useCallback(
+    (photoId: string) => {
+      if (!favoritesEnabled) return;
+      const wasFavorite = favoritePhotoIds.has(photoId);
+      toggleFavorite(photoId);
+      i18nToast.success(
+        wasFavorite
+          ? t("sessionDetail.gallery.clientPreview.toast.favoritesRemoved")
+          : t("sessionDetail.gallery.clientPreview.toast.favoritesAdded"),
+        { duration: 2000 }
+      );
+    },
+    [favoritePhotoIds, favoritesEnabled, i18nToast, t, toggleFavorite]
   );
 
   const toggleRuleSelect = useCallback((photoId: string, ruleId: string) => {
@@ -557,6 +584,15 @@ export default function GalleryClientPreview() {
         action: () => setActiveFilter("all"),
         color: "text-green-500",
       };
+    } else if (activeFilter === "selected") {
+      content = {
+        icon: CheckCircle2,
+        title: t("sessionDetail.gallery.clientPreview.empty.selected.title"),
+        desc: t("sessionDetail.gallery.clientPreview.empty.selected.description"),
+        actionLabel: t("sessionDetail.gallery.clientPreview.empty.selected.action"),
+        action: () => setActiveFilter("all"),
+        color: "text-brand-500",
+      };
     } else if (activeFilter !== "all") {
       const rule = selectionRules.find((rule) => rule.id === activeFilter);
       if (rule) {
@@ -594,9 +630,113 @@ export default function GalleryClientPreview() {
     );
   };
 
+  const renderSelectionSheet = () => {
+    if (!sheetPhotoId) return null;
+    const photo = resolvedPhotos.find((candidate) => candidate.id === sheetPhotoId);
+    if (!photo) return null;
+
+    const closeSheet = () => setSheetPhotoId(null);
+
+    return (
+      <div className="fixed inset-0 z-[200] flex flex-col justify-end md:hidden">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeSheet} />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="client-preview-selection-sheet-title"
+          className="relative bg-white rounded-t-3xl shadow-2xl p-6 pb-10 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
+        >
+          <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
+
+          <div className="flex items-start gap-4 mb-6 border-b border-gray-100 pb-6">
+            {photo.url ? (
+              <img
+                src={photo.url}
+                className="w-16 h-16 rounded-lg object-cover bg-gray-100"
+                alt={photo.filename}
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
+                <ImageIcon size={20} />
+              </div>
+            )}
+            <div className="min-w-0">
+              <h3 id="client-preview-selection-sheet-title" className="font-bold text-lg text-gray-900">
+                {t("sessionDetail.gallery.clientPreview.labels.addToLists")}
+              </h3>
+              <p className="text-sm text-gray-500">{t("sessionDetail.gallery.lightbox.sidebar.client.description")}</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {selectionRules.map((rule) => {
+              const selectionIds = photo.selections;
+              const isSelected = selectionIds.includes(rule.id);
+              const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
+              const isDisabled = !isSelected && isFull;
+
+              return (
+                <button
+                  key={rule.id}
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={() => {
+                    if (!isDisabled) toggleRuleSelect(photo.id, rule.id);
+                  }}
+                  className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left
+                    ${isSelected ? "bg-brand-50 border-brand-200 shadow-sm" : "bg-white border-gray-100 active:bg-gray-50"}
+                    ${isDisabled ? "opacity-50 grayscale cursor-not-allowed" : ""}
+                  `}
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors
+                        ${isSelected ? "bg-brand-500 text-white" : "bg-gray-100 text-gray-400"}
+                      `}
+                    >
+                      {isSelected ? <Check size={18} strokeWidth={3} /> : <ListPlus size={18} />}
+                    </div>
+                    <div className="min-w-0">
+                      <div className={`font-bold text-sm truncate ${isSelected ? "text-brand-900" : "text-gray-900"}`}>
+                        {rule.title}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {rule.currentCount} / {rule.maxCount || "∞"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {isDisabled && !isSelected ? (
+                    <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-1 rounded">
+                      {t("sessionDetail.gallery.clientPreview.labels.limitFull")}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={closeSheet}
+            className="w-full mt-6 bg-gray-900 text-white py-4 rounded-xl font-bold text-sm"
+          >
+            {tCommon("buttons.close")}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const currentSetStarredCount = useMemo(() => {
     if (!activeSetId) return 0;
     return resolvedPhotos.filter((photo) => photo.setId === activeSetId && photo.isStarred).length;
+  }, [activeSetId, resolvedPhotos]);
+
+  const totalSelectedInSet = useMemo(() => {
+    if (!activeSetId) return 0;
+    return resolvedPhotos.filter((photo) => photo.setId === activeSetId && photo.selections.length > 0).length;
   }, [activeSetId, resolvedPhotos]);
 
   const isLoading = galleryLoading || setsLoading || photosLoading;
@@ -658,29 +798,29 @@ export default function GalleryClientPreview() {
             ? "bg-white/95 backdrop-blur-md border-gray-100 shadow-sm"
             : "bg-white border-transparent"
         }`}
-      >
-        {/* ROW 1: Branding, Sets & Main Actions */}
-        <div
-          className={`w-full px-6 md:px-12 flex items-center justify-between transition-all duration-300 ${
-            scrolled ? "h-20" : "h-32"
-          }`}
-        >
-          {/* Left: Branding & Sets */}
-          <div className="flex items-center gap-12 min-w-0">
-            <div
-              className={`font-serif font-bold tracking-tight text-gray-900 transition-all duration-300 truncate ${
-                scrolled ? "text-xl" : "text-3xl"
-              }`}
-              title={heroTitle}
-            >
-              {heroTitle}
-            </div>
+	      >
+	        {/* ROW 1: Branding, Sets & Main Actions */}
+	        <div
+	          className={`w-full px-4 md:px-12 flex items-center justify-between transition-all duration-300 ${
+	            scrolled ? "h-16 md:h-20" : "h-16 md:h-32"
+	          }`}
+	        >
+	          {/* Left: Branding & Sets */}
+	          <div className="flex items-center gap-12 min-w-0">
+	            <div
+	              className={`font-serif font-bold tracking-tight text-gray-900 transition-all duration-300 truncate ${
+	                scrolled ? "text-lg md:text-xl" : "text-lg md:text-3xl"
+	              }`}
+	              title={heroTitle}
+	            >
+	              {heroTitle}
+	            </div>
 
-            <div className="flex items-center gap-8 overflow-x-auto no-scrollbar">
-              {resolvedSets.map((set) => (
-                <button
-                  key={set.id}
-                  type="button"
+	            <div className="hidden md:flex items-center gap-8 overflow-x-auto no-scrollbar">
+	              {resolvedSets.map((set) => (
+	                <button
+	                  key={set.id}
+	                  type="button"
                   onClick={() => setActiveSetId(set.id)}
                   className={`text-sm font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${
                     activeSetId === set.id
@@ -736,22 +876,48 @@ export default function GalleryClientPreview() {
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={handleExit}
-              className="bg-black text-white px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors"
-            >
-              {t("sessionDetail.gallery.clientPreview.actions.close")}
-            </button>
-          </div>
-        </div>
+	            <button
+	              type="button"
+	              onClick={handleExit}
+	              className="hidden md:inline-flex bg-black text-white px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors"
+	            >
+	              {t("sessionDetail.gallery.clientPreview.actions.close")}
+	            </button>
+	            <button
+	              type="button"
+	              onClick={handleExit}
+	              className="md:hidden w-11 h-11 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-sm active:scale-95"
+	              aria-label={t("sessionDetail.gallery.clientPreview.actions.close")}
+	            >
+	              <X size={18} />
+	            </button>
+	          </div>
+	        </div>
 
-        {/* ROW 2: Filters & Selection Tasks */}
-        <div className="w-full border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm overflow-x-auto no-scrollbar py-3 px-6 md:px-12 flex items-center justify-between gap-6">
-          {/* Left: Quick Filters */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
+	        {/* ROW 2: Sets (Mobile Only) */}
+	        <div className="md:hidden w-full overflow-x-auto no-scrollbar border-t border-gray-100 bg-white">
+	          <div className="flex items-center px-4 min-w-max h-12 gap-8">
+	            {resolvedSets.map((set) => (
+	              <button
+	                key={set.id}
+	                type="button"
+	                onClick={() => setActiveSetId(set.id)}
+	                className={`text-sm font-bold uppercase tracking-widest transition-all h-full border-b-2 ${
+	                  activeSetId === set.id ? "text-gray-900 border-black" : "text-gray-400 border-transparent"
+	                }`}
+	              >
+	                {set.name}
+	              </button>
+	            ))}
+	          </div>
+	        </div>
+
+	        {/* ROW 3: Filters & Selection Tasks */}
+	        <div className="w-full border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm overflow-x-auto no-scrollbar py-3 px-4 md:px-12 flex items-center justify-between gap-6">
+	          {/* Left: Quick Filters */}
+	          <div className="flex items-center gap-2">
+	            <button
+	              type="button"
               onClick={() => setActiveFilter("all")}
               className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
                 activeFilter === "all"
@@ -762,25 +928,26 @@ export default function GalleryClientPreview() {
               {t("sessionDetail.gallery.clientPreview.filters.all")}
             </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveFilter("starred")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all border ${
-                activeFilter === "starred"
-                  ? "bg-amber-100 text-amber-700 border-amber-200 shadow-sm"
-                  : "bg-white border-transparent text-gray-500 hover:text-amber-600 hover:bg-amber-50"
-              }`}
-            >
-              <Star
-                size={12}
-                fill="currentColor"
-                className={activeFilter === "starred" ? "text-amber-700" : "text-amber-400"}
-              />
-              {t("sessionDetail.gallery.clientPreview.filters.starred")}
-              {currentSetStarredCount > 0 ? (
-                <span className="ml-0.5 opacity-60">({currentSetStarredCount})</span>
-              ) : null}
-            </button>
+	            <button
+	              type="button"
+	              onClick={() => setActiveFilter("starred")}
+	              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all border ${
+	                activeFilter === "starred"
+	                  ? "bg-amber-100 text-amber-700 border-amber-200 shadow-sm"
+	                  : "bg-white border-transparent text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+	              }`}
+	            >
+	              <Star
+	                size={12}
+	                fill="currentColor"
+	                className={activeFilter === "starred" ? "text-amber-700" : "text-amber-400"}
+	              />
+	              <span className="md:hidden">{t("sessionDetail.gallery.clientPreview.filters.starredShort")}</span>
+	              <span className="hidden md:inline">{t("sessionDetail.gallery.clientPreview.filters.starred")}</span>
+	              {currentSetStarredCount > 0 ? (
+	                <span className="ml-0.5 opacity-60">({currentSetStarredCount})</span>
+	              ) : null}
+	            </button>
 
             {favoritesEnabled ? (
               <>
@@ -855,8 +1022,8 @@ export default function GalleryClientPreview() {
         </div>
       </nav>
 
-      {/* --- GALLERY SECTION --- */}
-      <div ref={galleryRef} className="bg-white min-h-screen py-12 px-4 md:px-8">
+	      {/* --- GALLERY SECTION --- */}
+	      <div ref={galleryRef} className="bg-white min-h-screen py-12 px-4 md:px-8 pb-32 md:pb-12">
         <div className="w-full">
           {visiblePhotos.length === 0 ? (
             renderEmptyState()
@@ -892,36 +1059,54 @@ export default function GalleryClientPreview() {
                           </div>
                         )}
 
-                        <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-2 max-w-[70%]">
-                          {selectionRules.length > 0 ? (
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveMenuId(isMenuOpen ? null : photo.id);
-                                }}
-                                className={`h-8 px-3 rounded-full flex items-center gap-2 shadow-sm transition-all duration-200 backdrop-blur-md border border-white/20
-                                  ${
-                                    isMenuOpen
-                                      ? "bg-white text-gray-900 shadow-xl"
-                                      : "bg-black/40 text-white hover:bg-white hover:text-gray-900"
-                                  }
-                                  ${hasSelections ? "bg-brand-500 text-white !border-brand-400" : ""}
-                                `}
-                              >
-                                {hasSelections ? <Check size={14} strokeWidth={3} /> : <ListPlus size={14} />}
-                                <span className="text-[10px] font-bold uppercase tracking-wide">
-                                  {hasSelections
-                                    ? t("sessionDetail.gallery.clientPreview.labels.selected")
-                                    : t("sessionDetail.gallery.clientPreview.labels.add")}
-                                </span>
-                              </button>
+	                        <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-2 max-w-[70%]">
+	                          {selectionRules.length > 0 ? (
+	                            <div className="relative">
+	                              <button
+	                                type="button"
+	                                onClick={(e) => {
+	                                  e.stopPropagation();
+	                                  setSheetPhotoId((prev) => (prev === photo.id ? null : photo.id));
+	                                }}
+	                                aria-label={
+	                                  hasSelections
+	                                    ? t("sessionDetail.gallery.clientPreview.labels.selected")
+	                                    : t("sessionDetail.gallery.clientPreview.labels.add")
+	                                }
+	                                className={`md:hidden w-11 h-11 rounded-full flex items-center justify-center shadow-md backdrop-blur-md transition-all duration-200 active:scale-95
+	                                  ${hasSelections ? "bg-brand-500 text-white" : "bg-white/90 text-gray-900"}
+	                                `}
+	                              >
+	                                {hasSelections ? <Check size={16} strokeWidth={3} /> : <ListPlus size={18} />}
+	                              </button>
+
+	                              <button
+	                                type="button"
+	                                onClick={(e) => {
+	                                  e.stopPropagation();
+	                                  setActiveMenuId(isMenuOpen ? null : photo.id);
+	                                }}
+	                                className={`hidden md:flex h-8 px-3 rounded-full items-center gap-2 shadow-sm transition-all duration-200 backdrop-blur-md border border-white/20
+	                                  ${
+	                                    isMenuOpen
+	                                      ? "bg-white text-gray-900 shadow-xl"
+	                                      : "bg-black/40 text-white hover:bg-white hover:text-gray-900"
+	                                  }
+	                                  ${hasSelections ? "bg-brand-500 text-white !border-brand-400" : ""}
+	                                `}
+	                              >
+	                                {hasSelections ? <Check size={14} strokeWidth={3} /> : <ListPlus size={14} />}
+	                                <span className="text-[10px] font-bold uppercase tracking-wide">
+	                                  {hasSelections
+	                                    ? t("sessionDetail.gallery.clientPreview.labels.selected")
+	                                    : t("sessionDetail.gallery.clientPreview.labels.add")}
+	                                </span>
+	                              </button>
 
                               {isMenuOpen ? (
                                 <div
                                   onClick={(e) => e.stopPropagation()}
-                                  className="absolute left-0 top-10 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-[100] animate-in fade-in zoom-in-95 duration-150 origin-top-left cursor-default"
+                                  className="hidden md:block absolute left-0 top-10 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-[100] animate-in fade-in zoom-in-95 duration-150 origin-top-left cursor-default"
                                 >
                                   <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-50">
                                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
@@ -1010,11 +1195,11 @@ export default function GalleryClientPreview() {
                             </div>
                           ) : null}
 
-                          <div className="flex flex-col gap-1.5 items-start">
-                            {selectionIds.map((selectionId) => {
-                              const rule = selectionRules.find((rule) => rule.id === selectionId);
-                              if (!rule) return null;
-                              return (
+	                          <div className="hidden md:flex flex-col gap-1.5 items-start">
+	                            {selectionIds.map((selectionId) => {
+	                              const rule = selectionRules.find((rule) => rule.id === selectionId);
+	                              if (!rule) return null;
+	                              return (
                                 <div
                                   key={selectionId}
                                   className="bg-white/90 backdrop-blur-md text-gray-800 text-[9px] font-bold px-2 py-1 rounded-md shadow-sm border border-white/50 animate-in slide-in-from-left-2 duration-300"
@@ -1033,34 +1218,36 @@ export default function GalleryClientPreview() {
                             </div>
                           ) : null}
 
-                          {favoritesEnabled ? (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleFavorite(photo.id);
-                              }}
-                              className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-all duration-200 pointer-events-auto
-                                ${
-                                  photo.isFavorite
-                                    ? "bg-red-500 text-white scale-100"
-                                    : "bg-black/40 text-white hover:bg-white hover:text-red-500 backdrop-blur-sm"
-                                }`}
+		                          {favoritesEnabled ? (
+		                            <button
+		                              type="button"
+		                              onClick={(e) => {
+		                                e.stopPropagation();
+		                                handleToggleFavorite(photo.id);
+		                              }}
+		                              className={`w-11 h-11 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-md transition-all duration-200 pointer-events-auto active:scale-95
+		                                ${
+		                                  photo.isFavorite
+		                                    ? "bg-red-500 text-white scale-100"
+		                                    : "bg-black/40 text-white hover:bg-white hover:text-red-500 backdrop-blur-sm"
+		                                }`}
                               title={
                                 photo.isFavorite
                                   ? t("sessionDetail.gallery.clientPreview.actions.removeFromFavorites")
                                   : t("sessionDetail.gallery.clientPreview.actions.addToFavorites")
                               }
-                              aria-label={
-                                photo.isFavorite
-                                  ? t("sessionDetail.gallery.clientPreview.actions.removeFromFavorites")
-                                  : t("sessionDetail.gallery.clientPreview.actions.addToFavorites")
-                              }
-                            >
-                              <Heart size={14} fill={photo.isFavorite ? "currentColor" : "none"} />
-                            </button>
-                          ) : null}
-                        </div>
+		                              aria-label={
+		                                photo.isFavorite
+		                                  ? t("sessionDetail.gallery.clientPreview.actions.removeFromFavorites")
+		                                  : t("sessionDetail.gallery.clientPreview.actions.addToFavorites")
+		                              }
+		                            >
+		                              <span className="scale-110 md:scale-100">
+		                                <Heart size={14} fill={photo.isFavorite ? "currentColor" : "none"} />
+		                              </span>
+		                            </button>
+		                          ) : null}
+	                        </div>
                       </div>
 
                       {!isMenuOpen ? (
@@ -1092,28 +1279,53 @@ export default function GalleryClientPreview() {
       </div>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-white py-12 border-t border-gray-100 text-center">
-        <div className="flex items-center justify-center gap-2 text-xl font-bold font-serif mb-4 text-gray-900">
-          {t("sessionDetail.gallery.clientPreview.footer.brand")}
-        </div>
-        <p className="text-gray-400 text-xs uppercase tracking-widest">
-          {t("sessionDetail.gallery.clientPreview.footer.copyright")}
-        </p>
-      </footer>
+	      <footer className="bg-white py-12 border-t border-gray-100 text-center">
+	        <div className="flex items-center justify-center gap-2 text-xl font-bold font-serif mb-4 text-gray-900">
+	          {t("sessionDetail.gallery.clientPreview.footer.brand")}
+	        </div>
+	        <p className="text-gray-400 text-xs uppercase tracking-widest">
+	          {t("sessionDetail.gallery.clientPreview.footer.copyright")}
+	        </p>
+	      </footer>
 
-      <Lightbox
-        isOpen={lightboxOpen}
-        onClose={() => setLightboxOpen(false)}
-        photos={filteredPhotos}
-        currentIndex={lightboxIndex}
-        onNavigate={handleLightboxNavigate}
-        rules={selectionRules}
-        onToggleRule={toggleRuleSelect}
-        onToggleStar={toggleFavorite}
-        mode="client"
-        activeRuleId={activeLightboxRuleId}
-        favoritesEnabled={favoritesEnabled}
-      />
+	      {totalSelectedInSet > 0 && activeFilter !== "selected" ? (
+	        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-6 duration-500">
+	          <button
+	            type="button"
+	            onClick={() => setActiveFilter("selected")}
+	            className="bg-gray-900 text-white pl-4 pr-6 py-3 rounded-full shadow-2xl flex items-center gap-3 hover:scale-105 transition-transform"
+	          >
+	            <div className="w-8 h-8 rounded-full bg-white text-gray-900 flex items-center justify-center text-sm font-bold">
+	              {totalSelectedInSet}
+	            </div>
+	            <div className="text-left">
+	              <div className="text-[10px] opacity-70 uppercase tracking-wider font-medium">
+	                {t("sessionDetail.gallery.clientPreview.floatingSelections.kicker")}
+	              </div>
+	              <div className="text-xs font-bold uppercase tracking-wider">
+	                {t("sessionDetail.gallery.clientPreview.floatingSelections.title")}
+	              </div>
+	            </div>
+	            <ArrowRight size={16} className="ml-2" />
+	          </button>
+	        </div>
+	      ) : null}
+
+	      <Lightbox
+	        isOpen={lightboxOpen}
+	        onClose={() => setLightboxOpen(false)}
+	        photos={filteredPhotos}
+	        currentIndex={lightboxIndex}
+	        onNavigate={handleLightboxNavigate}
+	        rules={selectionRules}
+	        onToggleRule={toggleRuleSelect}
+	        onToggleStar={handleToggleFavorite}
+	        mode="client"
+	        activeRuleId={activeLightboxRuleId}
+	        favoritesEnabled={favoritesEnabled}
+	      />
+
+      {renderSelectionSheet()}
     </div>
   );
 }

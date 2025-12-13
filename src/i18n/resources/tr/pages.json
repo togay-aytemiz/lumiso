@@ -562,11 +562,11 @@
         "published": "Paylaşıldı",
         "archived": "Arşivde"
       },
-      "labels": {
-        "updated": "Güncellendi",
-        "published": "Yayında",
-	        "shareSoon": "Paylaşım linki yakında",
-	        "settings": "Ayarlar",
+	      "labels": {
+	        "updated": "Güncellendi",
+	        "published": "Yayında",
+		        "shareSoon": "Paylaşım linki yakında",
+		        "settings": "Ayarlar",
 	        "media": "Fotoğraflar",
 	        "uploadTitle": "Fotoğraf yükle",
 	        "uploadDesc": "Bu galeriye eklemek için fotoğrafları sürükleyip bırak.",
@@ -578,12 +578,110 @@
 	        "coverHint": "Galeriyi öne çıkarmak için bir fotoğraf seç.",
 	        "coverActionHint": "Kapak için galeri içinden bir fotoğrafı işaretleyin.",
         "chooseCover": "Kapak seç",
-        "coverAfterUpload": "Yüklenen herhangi bir fotoğrafı kapak olarak seçebilirsin.",
-        "coverEmptyHint": "Galeriye fotoğraf ekledikten sonra kapak fotoğrafını seçebilirsin."
-      },
-      "toast": {
-        "createdTitle": "Galeri oluşturuldu",
-        "createdDesc": "Yükleme ve paylaşmaya başlayabilirsin.",
+	        "coverAfterUpload": "Yüklenen herhangi bir fotoğrafı kapak olarak seçebilirsin.",
+	        "coverEmptyHint": "Galeriye fotoğraf ekledikten sonra kapak fotoğrafını seçebilirsin."
+	      },
+	      "settings": {
+	        "header": {
+	          "eyebrow": "Galeri Ayarları"
+	        },
+	        "rail": {
+	          "sectionLabel": "Galeri Yönetimi",
+	          "general": "Genel",
+	          "watermark": "Filigran",
+	          "privacy": "Gizlilik"
+	        },
+	        "general": {
+	          "header": {
+	            "title": "Genel Ayarlar",
+	            "description": "Galerinin temel bilgilerini yönetin."
+	          },
+	          "basics": {
+	            "title": "Galeri Bilgileri",
+	            "description": "Başlık, tarih ve durum ayarları."
+	          }
+	        },
+	        "watermark": {
+	          "header": {
+	            "title": "Filigran Ayarları",
+	            "description": "Fotoğraf güvenliği ve marka bilinirliği."
+	          },
+	          "preview": {
+	            "title": "Canlı Önizleme",
+	            "description": "Filigran görünümünü hızlıca kontrol edin.",
+	            "disabled": "Filigran kapalı"
+	          },
+	          "toggle": {
+	            "title": "Filigran Kullanımı",
+	            "description": "Bu galerideki fotoğraflara filigran uygula."
+	          },
+	          "appearance": {
+	            "title": "Görünüm",
+	            "description": "Metin veya logo ile filigranı özelleştirin."
+	          },
+	          "type": {
+	            "label": "Filigran Tipi",
+	            "text": "Metin",
+	            "logo": "Logo"
+	          },
+	          "text": {
+	            "label": "Metin İçeriği",
+	            "placeholder": "Örn: Stüdyo Adı",
+	            "fallback": "Stüdyo Adı"
+	          },
+	          "logo": {
+	            "alt": "Filigran logosu",
+	            "missingInline": "Logo yok",
+	            "detectedTitle": "Marka Logosu",
+	            "detectedDescription": "Hesap ayarlarından otomatik alındı.",
+	            "manage": "Hesap ayarlarına git",
+	            "missingTitle": "Logo bulunamadı",
+	            "missingDescription": "Logo yüklemek için hesap ayarlarından marka logonuzu ekleyin."
+	          },
+	          "layout": {
+	            "title": "Yerleşim ve Stil",
+	            "description": "Konum, opaklık ve boyutu ayarlayın."
+	          },
+	          "placement": {
+	            "label": "Yerleşim",
+	            "grid": "Döşeme",
+	            "center": "Orta",
+	            "corner": "Köşe"
+	          },
+	          "opacity": {
+	            "label": "Opaklık",
+	            "faint": "Silik",
+	            "strong": "Belirgin"
+	          },
+	          "size": {
+	            "label": "Boyut",
+	            "small": "Küçük",
+	            "large": "Büyük"
+	          }
+	        },
+	        "privacy": {
+	          "header": {
+	            "title": "Gizlilik Ayarları",
+	            "description": "Galeri erişimini kontrol edin."
+	          },
+	          "access": {
+	            "title": "Erişim Koruması",
+	            "description": "Gerektiğinde şifreyle erişimi sınırlandırın."
+	          },
+	          "password": {
+	            "toggleTitle": "Galeri Şifresi",
+	            "toggleDescription": "Ziyaretçiler galeriyi görüntülemek için şifre girer.",
+	            "formTitle": "Şifre",
+	            "formDescription": "Paylaşmadan önce galeriniz için bir şifre belirleyin.",
+	            "label": "Şifre",
+	            "placeholder": "Şifre belirleyin",
+	            "generate": "Oluştur"
+	          }
+	        }
+	      },
+	      "toast": {
+	        "createdTitle": "Galeri oluşturuldu",
+	        "createdDesc": "Yükleme ve paylaşmaya başlayabilirsin.",
         "errorTitle": "Galeri oluşturulamadı",
         "errorDesc": "Bir sorun oluştu. Lütfen tekrar dene.",
         "unsupportedFilesTitle": "Bazı dosyalar atlandı",
@@ -719,6 +817,7 @@
         "filters": {
           "all": "Tümü",
           "starred": "Fotoğrafçı Önerisi",
+          "starredShort": "Öneri",
           "favorites": "Favoriler",
           "unselected": "Seçilmeyenler"
         },
@@ -728,6 +827,14 @@
           "addToLists": "Listelere ekle",
           "limitFull": "Limit dolu",
           "added": "Eklendi"
+        },
+        "floatingSelections": {
+          "kicker": "Bu sette",
+          "title": "Fotoğraf seçildi"
+        },
+        "toast": {
+          "favoritesAdded": "Favorilere eklendi",
+          "favoritesRemoved": "Favorilerden çıkarıldı"
         },
         "empty": {
           "noPhotos": {
@@ -749,6 +856,11 @@
             "title": "Harika! Hepsi Düzenlendi",
             "description": "Bu setteki tüm fotoğrafları bir kategoriye veya listeye atadınız.",
             "action": "Tüm Galeriyi Gör"
+          },
+          "selected": {
+            "title": "Henüz seçilen fotoğraf yok",
+            "description": "Fotoğrafları bir listeye ekleyerek burada görebilirsiniz.",
+            "action": "Tüm Fotoğrafları Gör"
           },
           "rule": {
             "title": "{{rule}} İçin Seçim Yok",
@@ -775,6 +887,11 @@
         "showSelectionsTitle": "Listeleri göster",
         "collapse": "Daralt",
         "collapseTitle": "Paneli daralt",
+        "mobileActions": {
+          "favorite": "Favori",
+          "add": "Ekle",
+          "share": "Paylaş"
+        },
         "sidebar": {
           "client": {
             "title": "Seçimler",
@@ -789,6 +906,7 @@
           "favoriteAdded": "Favorilendi",
           "favoriteAdd": "Favorilere Ekle",
           "photographerPickTitle": "Fotoğrafçı Önerisi",
+          "photographerPickTitleShort": "Öneri",
           "photographerPickDescription": "Sizin için bu kareyi öneriyoruz"
         },
         "admin": {

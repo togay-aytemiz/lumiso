@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Check,
@@ -7,8 +7,10 @@ import {
   ChevronRight,
   Heart,
   ListChecks,
+  ListPlus,
   PanelRightClose,
   PlusCircle,
+  Share2,
   Star,
   X,
 } from "lucide-react";
@@ -63,7 +65,10 @@ export function Lightbox({
 }: LightboxProps) {
   const { t } = useTranslation("pages");
   const currentPhoto = photos[currentIndex];
-  const [showClientSelectionPanel, setShowClientSelectionPanel] = useState(mode === "client");
+  const [showClientSelectionPanel, setShowClientSelectionPanel] = useState(false);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchEndRef = useRef<{ x: number; y: number } | null>(null);
+  const minSwipeDistance = 50;
 
   const activeRule = useMemo(
     () => (activeRuleId ? rules.find((rule) => rule.id === activeRuleId) ?? null : null),
@@ -76,7 +81,7 @@ export function Lightbox({
 
   useEffect(() => {
     if (isOpen) {
-      setShowClientSelectionPanel(mode === "client");
+      setShowClientSelectionPanel(false);
     }
   }, [isOpen, mode]);
 
@@ -117,124 +122,366 @@ export function Lightbox({
 
   if (!isOpen || !currentPhoto) return null;
 
+  const desktopContainerClassName = `fixed inset-0 z-[200] ${
+    mode === "client" ? "hidden md:flex" : "flex"
+  } bg-black/95 backdrop-blur-sm text-white`;
+
+  const handleShare = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (!url) return;
+
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ url });
+        return;
+      } catch {
+        // ignore share cancellations
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // ignore clipboard failures
+    }
+  };
+
+  const shouldRenderMobileAddButton = rules.length > 0;
+  const addButtonActive = shouldRenderMobileAddButton && (showClientSelectionPanel || currentPhoto.selections.length > 0);
+
   return (
-    <div className="fixed inset-0 z-[200] flex bg-black/95 backdrop-blur-sm text-white" role="dialog" aria-modal="true">
-      <div
-        className={`relative flex flex-col h-full flex-1 transition-all duration-300 ${
-          showClientSelectionPanel && mode === "client" ? "mr-80" : ""
-        }`}
-      >
-        <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent z-10">
-          <div className="flex items-center gap-4 min-w-0">
-            <span className="text-sm font-medium opacity-80 shrink-0">
-              {currentIndex + 1} / {photos.length}
-            </span>
-            <span className="text-sm opacity-60 font-mono truncate">{currentPhoto.filename}</span>
-          </div>
+    <>
+      {mode === "client" ? (
+        <div className="fixed inset-0 z-[200] flex bg-black text-white md:hidden" role="dialog" aria-modal="true">
+          <div className="relative flex-1 flex flex-col h-full overflow-hidden bg-black">
+            <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent">
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center active:scale-95"
+                aria-label={t("sessionDetail.gallery.lightbox.close")}
+              >
+                <X size={24} />
+              </button>
+              <div className="text-sm font-medium text-white/80">
+                {currentIndex + 1} / {photos.length}
+              </div>
+              <div className="w-11" />
+            </div>
 
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white"
-            >
-              <span className="text-sm font-medium hidden sm:inline uppercase tracking-wide">
-                {t("sessionDetail.gallery.lightbox.close")}
-              </span>
-              <X size={24} />
-            </button>
-
-            {mode === "client" && !showClientSelectionPanel ? (
-              <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4">
-                {activeRule ? (
-                  <button
-                    type="button"
-                    onClick={() => !isActiveRuleDisabled && onToggleRule(currentPhoto.id, activeRule.id)}
-                    disabled={isActiveRuleDisabled}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-full font-bold text-sm transition-all shadow-lg hidden sm:flex disabled:opacity-50 disabled:cursor-not-allowed ${
-                      isSelectedForActiveRule
-                        ? "bg-brand-500 text-white hover:bg-red-500 hover:shadow-red-500/30"
-                        : "bg-white text-gray-900 hover:bg-brand-50 hover:text-brand-600"
-                    }`}
-                    title={isActiveRuleDisabled ? t("sessionDetail.gallery.lightbox.limitFull") : undefined}
-                  >
-                    {isSelectedForActiveRule ? (
-                      <>
-                        <CheckCircle2 size={18} />
-                        <span>{t("sessionDetail.gallery.lightbox.quickAdd.added", { rule: activeRule.title })}</span>
-                      </>
-                    ) : (
-                      <>
-                        <PlusCircle size={18} />
-                        <span>{t("sessionDetail.gallery.lightbox.quickAdd.add", { rule: activeRule.title })}</span>
-                      </>
-                    )}
-                  </button>
-                ) : null}
-
-                <button
-                  type="button"
-                  onClick={() => setShowClientSelectionPanel(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-all bg-white/10 text-white hover:bg-white hover:text-brand-600 backdrop-blur-md border border-white/10"
-                  title={t("sessionDetail.gallery.lightbox.showSelectionsTitle")}
-                >
-                  <ListChecks size={18} />
-                  <span className="hidden sm:inline">{t("sessionDetail.gallery.lightbox.showSelections")}</span>
-                  {hasSelections ? (
-                    <span className="ml-1 bg-white text-brand-600 text-[10px] px-1.5 rounded-full min-w-[1.5rem] text-center">
-                      {currentPhoto.selections.length}
-                    </span>
-                  ) : null}
-                </button>
+            {currentPhoto.isStarred ? (
+              <div className="absolute top-20 left-4 z-10 bg-amber-400 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-lg animate-in fade-in zoom-in duration-300">
+                <Star size={14} fill="currentColor" />
+                <span className="text-xs font-bold uppercase tracking-wide">
+                  {t("sessionDetail.gallery.lightbox.client.photographerPickTitleShort")}
+                </span>
               </div>
             ) : null}
+
+            <div
+              className="flex-1 flex items-center justify-center w-full h-full overflow-hidden"
+              onTouchStart={(event) => {
+                const touch = event.targetTouches[0];
+                if (!touch) return;
+                touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+                touchEndRef.current = null;
+              }}
+              onTouchMove={(event) => {
+                const touch = event.targetTouches[0];
+                if (!touch) return;
+                touchEndRef.current = { x: touch.clientX, y: touch.clientY };
+              }}
+              onTouchEnd={() => {
+                const start = touchStartRef.current;
+                const end = touchEndRef.current;
+                if (!start || !end) return;
+
+                const deltaX = start.x - end.x;
+                const deltaY = start.y - end.y;
+                if (Math.abs(deltaX) < minSwipeDistance) return;
+                if (Math.abs(deltaY) > Math.abs(deltaX)) return;
+
+                if (deltaX > 0 && currentIndex < photos.length - 1) onNavigate(currentIndex + 1);
+                if (deltaX < 0 && currentIndex > 0) onNavigate(currentIndex - 1);
+              }}
+            >
+              {currentPhoto.url ? (
+                <img
+                  src={currentPhoto.url}
+                  alt={currentPhoto.filename}
+                  className="max-w-full max-h-full object-contain"
+                  onError={() => onImageError?.(currentPhoto.id)}
+                />
+              ) : (
+                <div className="text-sm text-white/60">{t("sessionDetail.gallery.lightbox.noPreview")}</div>
+              )}
+            </div>
+
+            <div className="absolute bottom-0 left-0 right-0 p-6 pb-10 bg-gradient-to-t from-black/90 via-black/70 to-transparent flex items-end justify-center gap-10">
+              {favoritesEnabled ? (
+                <button
+                  type="button"
+                  onClick={() => onToggleStar(currentPhoto.id)}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div
+                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 ${
+                      currentPhoto.isFavorite
+                        ? "bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.45)]"
+                        : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                  >
+                    <Heart size={26} fill={currentPhoto.isFavorite ? "currentColor" : "none"} />
+                  </div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
+                    {t("sessionDetail.gallery.lightbox.mobileActions.favorite")}
+                  </span>
+                </button>
+              ) : null}
+
+              {shouldRenderMobileAddButton ? (
+                <button
+                  type="button"
+                  onClick={() => setShowClientSelectionPanel((prev) => !prev)}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div
+                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 relative ${
+                      addButtonActive ? "bg-brand-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.35)]" : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                  >
+                    <ListPlus size={26} />
+                    {currentPhoto.selections.length > 0 ? (
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-white text-brand-700 rounded-full text-[11px] font-bold flex items-center justify-center shadow">
+                        {currentPhoto.selections.length}
+                      </div>
+                    ) : null}
+                  </div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
+                    {t("sessionDetail.gallery.lightbox.mobileActions.add")}
+                  </span>
+                </button>
+              ) : null}
+
+              <button type="button" onClick={handleShare} className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-full bg-white/10 text-white hover:bg-white/20 flex items-center justify-center transition-all active:scale-95">
+                  <Share2 size={26} />
+                </div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
+                  {t("sessionDetail.gallery.lightbox.mobileActions.share")}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {mode === "client" && showClientSelectionPanel ? (
+        <div className="fixed inset-0 z-[210] md:hidden">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowClientSelectionPanel(false)}
+          />
+          <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.3)] max-h-[80vh] flex flex-col text-gray-900 animate-in slide-in-from-bottom duration-300">
+            <div className="w-full flex justify-center pt-3 pb-1">
+              <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
+            </div>
+
+            <div className="px-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="font-bold text-lg text-gray-900">{t("sessionDetail.gallery.lightbox.lists.clientTitle")}</h3>
+              <button
+                type="button"
+                onClick={() => setShowClientSelectionPanel(false)}
+                className="w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center active:scale-95"
+                aria-label={t("sessionDetail.gallery.lightbox.close")}
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {rules.map((rule) => {
+                const isSelected = currentPhoto.selections.includes(rule.id);
+                const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
+                const isDisabled = !isSelected && isFull;
+
+                return (
+                  <button
+                    key={rule.id}
+                    type="button"
+                    onClick={() => !isDisabled && onToggleRule(currentPhoto.id, rule.id)}
+                    disabled={isDisabled}
+                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left
+                      ${isSelected ? "bg-brand-500 text-white border-brand-500" : "bg-white border-gray-200 text-gray-700 active:bg-gray-50"}
+                      ${isDisabled ? "opacity-50" : ""}
+                    `}
+                  >
+                    <div className="min-w-0">
+                      <div className="font-bold text-sm truncate">{rule.title}</div>
+                      <div className={`text-xs ${isSelected ? "text-white/80" : "text-gray-400"}`}>
+                        {rule.currentCount} / {rule.maxCount || "∞"}
+                      </div>
+                    </div>
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                        isSelected ? "bg-white text-brand-600" : "bg-gray-100"
+                      }`}
+                    >
+                      {isSelected ? <Check size={14} strokeWidth={3} /> : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className={desktopContainerClassName} role="dialog" aria-modal="true">
+        <div
+          className={`relative flex flex-col h-full flex-1 transition-all duration-300 ${
+            showClientSelectionPanel && mode === "client" ? "md:mr-80" : ""
+          }`}
+        >
+          <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent z-10">
+            <div className="flex items-center gap-4 min-w-0">
+              <span className="text-sm font-medium opacity-80 shrink-0">
+                {currentIndex + 1} / {photos.length}
+              </span>
+              <span className="text-sm opacity-60 font-mono truncate">{currentPhoto.filename}</span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white"
+              >
+                <span className="text-sm font-medium hidden sm:inline uppercase tracking-wide">
+                  {t("sessionDetail.gallery.lightbox.close")}
+                </span>
+                <X size={24} />
+              </button>
+
+              {mode === "client" && !showClientSelectionPanel ? (
+                <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4">
+                  {activeRule ? (
+                    <button
+                      type="button"
+                      onClick={() => !isActiveRuleDisabled && onToggleRule(currentPhoto.id, activeRule.id)}
+                      disabled={isActiveRuleDisabled}
+                      className={`flex items-center gap-2 px-5 py-2 rounded-full font-bold text-sm transition-all shadow-lg hidden sm:flex disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isSelectedForActiveRule
+                          ? "bg-brand-500 text-white hover:bg-red-500 hover:shadow-red-500/30"
+                          : "bg-white text-gray-900 hover:bg-brand-50 hover:text-brand-600"
+                      }`}
+                      title={isActiveRuleDisabled ? t("sessionDetail.gallery.lightbox.limitFull") : undefined}
+                    >
+                      {isSelectedForActiveRule ? (
+                        <>
+                          <CheckCircle2 size={18} />
+                          <span>{t("sessionDetail.gallery.lightbox.quickAdd.added", { rule: activeRule.title })}</span>
+                        </>
+                      ) : (
+                        <>
+                          <PlusCircle size={18} />
+                          <span>{t("sessionDetail.gallery.lightbox.quickAdd.add", { rule: activeRule.title })}</span>
+                        </>
+                      )}
+                    </button>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => setShowClientSelectionPanel(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-all bg-white/10 text-white hover:bg-white hover:text-brand-600 backdrop-blur-md border border-white/10"
+                    title={t("sessionDetail.gallery.lightbox.showSelectionsTitle")}
+                  >
+                    <ListChecks size={18} />
+                    <span className="hidden sm:inline">{t("sessionDetail.gallery.lightbox.showSelections")}</span>
+                    {hasSelections ? (
+                      <span className="ml-1 bg-white text-brand-600 text-[10px] px-1.5 rounded-full min-w-[1.5rem] text-center">
+                        {currentPhoto.selections.length}
+                      </span>
+                    ) : null}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onNavigate(currentIndex - 1)}
+            disabled={currentIndex === 0}
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 hover:bg-white/10 rounded-full transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-10"
+            aria-label={t("sessionDetail.gallery.lightbox.previous")}
+          >
+            <ChevronLeft size={32} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate(currentIndex + 1)}
+            disabled={currentIndex === photos.length - 1}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 hover:bg-white/10 rounded-full transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-10"
+            aria-label={t("sessionDetail.gallery.lightbox.next")}
+          >
+            <ChevronRight size={32} />
+          </button>
+
+          <div
+            className="flex-1 flex items-center justify-center p-4 md:p-8 overflow-hidden"
+            onTouchStart={(event) => {
+              const touch = event.targetTouches[0];
+              if (!touch) return;
+              touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+              touchEndRef.current = null;
+            }}
+            onTouchMove={(event) => {
+              const touch = event.targetTouches[0];
+              if (!touch) return;
+              touchEndRef.current = { x: touch.clientX, y: touch.clientY };
+            }}
+            onTouchEnd={() => {
+              const start = touchStartRef.current;
+              const end = touchEndRef.current;
+              if (!start || !end) return;
+
+              const deltaX = start.x - end.x;
+              const deltaY = start.y - end.y;
+              if (Math.abs(deltaX) < minSwipeDistance) return;
+              if (Math.abs(deltaY) > Math.abs(deltaX)) return;
+
+              if (deltaX > 0 && currentIndex < photos.length - 1) onNavigate(currentIndex + 1);
+              if (deltaX < 0 && currentIndex > 0) onNavigate(currentIndex - 1);
+            }}
+          >
+            {currentPhoto.url ? (
+              <img
+                src={currentPhoto.url}
+                alt={currentPhoto.filename}
+                className="max-w-full max-h-full object-contain shadow-2xl"
+                onError={() => onImageError?.(currentPhoto.id)}
+              />
+            ) : (
+              <div className="text-sm text-white/60">{t("sessionDetail.gallery.lightbox.noPreview")}</div>
+            )}
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onNavigate(currentIndex - 1)}
-          disabled={currentIndex === 0}
-          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 hover:bg-white/10 rounded-full transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-10"
-          aria-label={t("sessionDetail.gallery.lightbox.previous")}
-        >
-          <ChevronLeft size={32} />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onNavigate(currentIndex + 1)}
-          disabled={currentIndex === photos.length - 1}
-          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 hover:bg-white/10 rounded-full transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-10"
-          aria-label={t("sessionDetail.gallery.lightbox.next")}
-        >
-          <ChevronRight size={32} />
-        </button>
-
-        <div className="flex-1 flex items-center justify-center p-4 md:p-8 overflow-hidden">
-          {currentPhoto.url ? (
-            <img
-              src={currentPhoto.url}
-              alt={currentPhoto.filename}
-              className="max-w-full max-h-full object-contain shadow-2xl"
-              onError={() => onImageError?.(currentPhoto.id)}
-            />
-          ) : (
-            <div className="text-sm text-white/60">{t("sessionDetail.gallery.lightbox.noPreview")}</div>
-          )}
-        </div>
-      </div>
-
-      {mode === "admin" || (mode === "client" && showClientSelectionPanel) ? (
-        <div
-          className={`fixed right-0 top-0 bottom-0 w-80 bg-gray-900 border-l border-gray-800 flex flex-col shrink-0 transition-transform duration-300 z-20 shadow-2xl ${
-            showClientSelectionPanel && mode === "client"
-              ? "translate-x-0"
-              : mode === "admin"
+        {mode === "admin" || (mode === "client" && showClientSelectionPanel) ? (
+          <div
+            className={`fixed right-0 top-0 bottom-0 w-80 bg-gray-900 border-l border-gray-800 ${
+              mode === "client" ? "hidden md:flex" : "flex"
+            } flex-col shrink-0 transition-transform duration-300 z-20 shadow-2xl ${
+              showClientSelectionPanel && mode === "client"
                 ? "translate-x-0"
-                : "translate-x-full"
-          }`}
-        >
+                : mode === "admin"
+                  ? "translate-x-0"
+                  : "translate-x-full"
+            }`}
+          >
           <div className="p-6 border-b border-gray-800 flex justify-between items-center gap-3">
             <div className="min-w-0">
               <h3 className="font-semibold text-lg mb-1 truncate">
@@ -418,6 +665,7 @@ export function Lightbox({
           </div>
         </div>
       ) : null}
-    </div>
+      </div>
+    </>
   );
 }

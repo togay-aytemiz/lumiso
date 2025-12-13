@@ -3900,20 +3900,11 @@ export default function GalleryDetail() {
 	                    {t("sessionDetail.gallery.sets.empty", { defaultValue: "Uploads land here." })}
 	                  </div>
 	                )}
-	                      </div>
-	                    ) : (
-	                      <div className="rounded-xl bg-muted/10 px-5 py-10 text-center text-sm text-muted-foreground">
-	                        {t("sessionDetail.gallery.sets.empty", { defaultValue: "Uploads land here." })}
-	                      </div>
-	                    )}
 		                  </div>
 		                </div>
-		              </>
-		            )}
                 </>
               </TabsContent>
 	          </div>
-            </div>
           </div>
         </Tabs>
       </div>

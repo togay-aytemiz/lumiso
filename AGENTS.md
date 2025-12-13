@@ -26,6 +26,7 @@ Always review these before making any changes.
 ## Task Completion
 
 - At the end of every task that alters the repository, reply with a single-line commit message summarizing the change.
+- Additional to single-line commit message, also share (aka add your reply message) a plain Turkish summary what you did, what is left (if exists) and maybe possible suggestions for next steps
 
 ## Guiding Principles
 

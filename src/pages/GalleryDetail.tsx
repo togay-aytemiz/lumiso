@@ -1397,11 +1397,9 @@ export default function GalleryDetail() {
   );
 
   const handlePreview = useCallback(() => {
-    toast({
-      title: previewLabel,
-      description: t("sessionDetail.gallery.labels.previewSoon", { defaultValue: "Galeri önizlemesi yakında." }),
-    });
-  }, [previewLabel, t, toast]);
+    if (!id) return;
+    navigate(`/galleries/${id}/preview`);
+  }, [id, navigate]);
 
   const expectedGalleryNameForDelete = useMemo(() => title.trim(), [title]);
   const canConfirmGalleryDelete =

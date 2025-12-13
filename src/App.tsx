@@ -39,6 +39,7 @@ import Workflows from "./pages/Workflows";
 import Templates from "./pages/Templates";
 import TemplateBuilder from "./pages/TemplateBuilder";
 import GalleryDetail from "./pages/GalleryDetail";
+import GalleryClientPreview from "./pages/GalleryClientPreview";
 import SearchPage from "./pages/Search";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminLocalization from "./pages/admin/Localization";
@@ -92,6 +93,9 @@ const AppRoutes = () => {
         <Route path="/auth/recovery" element={<Auth />} />
         <Route path="/auth/signup" element={<Auth />} />
         <Route path="/auth/sign-up" element={<Auth />} />
+        <Route path="/" element={<ProtectedRoute disableLayout />}>
+          <Route path="galleries/:id/preview" element={<GalleryClientPreview />} />
+        </Route>
         <Route path="/" element={<ProtectedRoute />}>
           <Route index element={<Index />} />
           <Route path="getting-started" element={<GettingStarted />} />

@@ -525,7 +525,8 @@
       "actions": {
         "create": "Create gallery",
         "share": "Share",
-        "manage": "Manage"
+        "manage": "Manage",
+        "preview": "Preview"
       },
       "emptyState": {
         "title": "No images yet",
@@ -681,6 +682,69 @@
         "filterSelected": "Filtering selected items",
         "filterFavorites": "Filtering favorites",
         "filterAll": "Showing all items"
+      },
+      "clientPreview": {
+        "hero": {
+          "kicker": "Private collection",
+          "scrollCta": "View gallery",
+          "coverAlt": "Cover photo",
+          "untitled": "Untitled gallery"
+        },
+        "actions": {
+          "close": "Close",
+          "inspect": "Inspect",
+          "closeMenu": "Close menu",
+          "closeViewer": "Close photo",
+          "addToFavorites": "Add to favorites",
+          "removeFromFavorites": "Remove from favorites",
+          "gridLarge": "Large grid",
+          "gridMedium": "Medium grid",
+          "gridSmall": "Small grid"
+        },
+        "filters": {
+          "all": "All",
+          "starred": "Photographer's choice",
+          "favorites": "Favorites",
+          "unselected": "Unselected"
+        },
+        "labels": {
+          "add": "Add",
+          "selected": "Selected",
+          "addToLists": "Add to lists",
+          "limitFull": "Limit full",
+          "added": "Added"
+        },
+        "empty": {
+          "noPhotos": {
+            "title": "No photos in this set",
+            "description": "Try choosing a different set or clearing filters.",
+            "action": "Clear filters"
+          },
+          "favorites": {
+            "title": "No favorites yet",
+            "description": "You can favorite photos by tapping the heart icon.",
+            "action": "View all photos"
+          },
+          "starred": {
+            "title": "No photographer picks",
+            "description": "Your photographer hasn't highlighted any photos in this set.",
+            "action": "Browse all photos"
+          },
+          "unselected": {
+            "title": "Great! All sorted",
+            "description": "You've assigned every photo in this set to a list.",
+            "action": "View full gallery"
+          },
+          "rule": {
+            "title": "No selections for {{rule}}",
+            "description": "You haven't added any photos to \"{{rule}}\" yet.",
+            "action": "Back to photos"
+          }
+        },
+        "footer": {
+          "brand": "Lumiso Select",
+          "copyright": "© 2025 All Rights Reserved"
+        }
       }
     },
     "dangerZone": {

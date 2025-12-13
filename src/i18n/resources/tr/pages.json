@@ -540,7 +540,8 @@
       "actions": {
         "create": "Galeri oluştur",
         "share": "Paylaş",
-        "manage": "Yönet"
+        "manage": "Yönet",
+        "preview": "Önizle"
       },
       "emptyState": {
         "title": "Henüz görsel yok",
@@ -696,6 +697,69 @@
         "filterSelected": "Seçilenler filtreleniyor",
         "filterFavorites": "Favoriler filtreleniyor",
         "filterAll": "Tüm öğeler gösteriliyor"
+      },
+      "clientPreview": {
+        "hero": {
+          "kicker": "Özel Koleksiyon",
+          "scrollCta": "Galeriyi Görüntüle",
+          "coverAlt": "Kapak fotoğrafı",
+          "untitled": "Başlıksız galeri"
+        },
+        "actions": {
+          "close": "Kapat",
+          "inspect": "İncele",
+          "closeMenu": "Menüyü kapat",
+          "closeViewer": "Fotoğrafı kapat",
+          "addToFavorites": "Favorilere Ekle",
+          "removeFromFavorites": "Favorilerden Çıkar",
+          "gridLarge": "Büyük grid",
+          "gridMedium": "Orta grid",
+          "gridSmall": "Küçük grid"
+        },
+        "filters": {
+          "all": "Tümü",
+          "starred": "Fotoğrafçı Önerisi",
+          "favorites": "Favoriler",
+          "unselected": "Seçilmeyenler"
+        },
+        "labels": {
+          "add": "Ekle",
+          "selected": "Seçildi",
+          "addToLists": "Listelere ekle",
+          "limitFull": "Limit dolu",
+          "added": "Eklendi"
+        },
+        "empty": {
+          "noPhotos": {
+            "title": "Bu Klasörde Fotoğraf Yok",
+            "description": "Farklı bir set seçmeyi veya filtreleri temizlemeyi deneyin.",
+            "action": "Filtreleri Temizle"
+          },
+          "favorites": {
+            "title": "Henüz Favoriniz Yok",
+            "description": "Beğendiğiniz fotoğrafların üzerindeki kalp ikonuna tıklayarak favorilerinizi oluşturabilirsiniz.",
+            "action": "Tüm Fotoğrafları Gör"
+          },
+          "starred": {
+            "title": "Fotoğrafçı Önerisi Yok",
+            "description": "Fotoğrafçınız bu set için özel bir öneri listesi oluşturmamış.",
+            "action": "Tüm Fotoğrafları İncele"
+          },
+          "unselected": {
+            "title": "Harika! Hepsi Düzenlendi",
+            "description": "Bu setteki tüm fotoğrafları bir kategoriye veya listeye atadınız.",
+            "action": "Tüm Galeriyi Gör"
+          },
+          "rule": {
+            "title": "{{rule}} İçin Seçim Yok",
+            "description": "Henüz \"{{rule}}\" kategorisine fotoğraf eklemediniz.",
+            "action": "Fotoğraflara Dön"
+          }
+        },
+        "footer": {
+          "brand": "Lumiso Select",
+          "copyright": "© 2025 Tüm Hakları Saklıdır"
+        }
       }
     },
     "dangerZone": {

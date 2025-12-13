@@ -88,6 +88,7 @@ const createStorageBucket = () => ({
   remove: jest.fn().mockResolvedValue(createQueryResult()),
   list: jest.fn().mockResolvedValue(createQueryResult({ data: [] })),
   download: jest.fn().mockResolvedValue(createQueryResult()),
+  createSignedUrl: jest.fn().mockResolvedValue(createQueryResult({ data: { signedUrl: 'https://example.com/signed-url' } })),
 });
 
 const createSupabaseMock = () => {
@@ -140,6 +141,11 @@ Object.defineProperty(window, 'performance', {
       jsHeapSizeLimit: 4000000,
     }
   }
+});
+
+Object.defineProperty(window, 'scrollTo', {
+  writable: true,
+  value: jest.fn(),
 });
 
 // Mock IntersectionObserver

@@ -15,6 +15,7 @@ import {
   SelectionDashboard,
   type SelectionRule,
 } from "@/components/galleries/SelectionDashboard";
+import { Lightbox } from "@/components/galleries/Lightbox";
 import {
   SelectionTemplateSection,
   type SelectionTemplateRuleForm,
@@ -53,6 +54,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { cn, getUserLocale } from "@/lib/utils";
 import { buildGalleryProofPath, convertImageToProof, GALLERY_ASSETS_BUCKET, getStorageBasename } from "@/lib/galleryAssets";
+import { shouldKeepLocalUploadItem } from "@/lib/galleryUploadQueue";
 import {
   CalendarRange,
   Check,
@@ -345,6 +347,7 @@ export default function GalleryDetail() {
     status: "draft" as GalleryStatus,
     eventDate: "",
     customType: "",
+    coverAssetId: null as string | null,
     selectionSettings: {
       enabled: false,
       limit: null,
@@ -424,12 +427,14 @@ export default function GalleryDetail() {
     const storedSelection = (branding.selectionSettings || {}) as Partial<SelectionSettings>;
     const storedDate = typeof branding.eventDate === "string" ? branding.eventDate : "";
     const storedCustomType = typeof branding.customType === "string" ? (branding.customType as string) : "";
+    const storedCoverAssetId = typeof branding.coverAssetId === "string" ? branding.coverAssetId : null;
     const parsedTemplateGroups = parseSelectionTemplateGroups(branding);
     setTitle(data.title ?? "");
     setType(data.type);
     setStatus(data.status);
     setEventDate(storedDate);
     setCustomType(storedCustomType);
+    setCoverPhotoId((prev) => prev ?? storedCoverAssetId);
     setSelectionSettings({
       enabled: Boolean(storedSelection.enabled),
       limit: typeof storedSelection.limit === "number" ? storedSelection.limit : null,
@@ -445,6 +450,7 @@ export default function GalleryDetail() {
       status: data.status,
       eventDate: storedDate,
       customType: storedCustomType,
+      coverAssetId: storedCoverAssetId,
       selectionSettings: {
         enabled: Boolean(storedSelection.enabled),
         limit: typeof storedSelection.limit === "number" ? storedSelection.limit : null,
@@ -622,8 +628,17 @@ export default function GalleryDetail() {
       });
 
       prev.forEach((item) => {
-        if (!storedById.has(item.id)) {
+        if (storedById.has(item.id)) return;
+
+        const shouldKeepLocal = shouldKeepLocalUploadItem(item);
+
+        if (shouldKeepLocal) {
           merged.push(item);
+          return;
+        }
+
+        if (item.previewUrl?.startsWith("blob:")) {
+          URL.revokeObjectURL(item.previewUrl);
         }
       });
 
@@ -779,7 +794,11 @@ export default function GalleryDetail() {
     title.trim() || t("sessionDetail.gallery.form.titlePlaceholder", { defaultValue: "Untitled gallery" });
   const brandingData = (data?.branding || {}) as Record<string, unknown>;
   const storedCoverUrl = typeof brandingData.coverUrl === "string" ? brandingData.coverUrl : "";
-  const localCoverUrl = coverPhotoId ? uploadQueue.find((item) => item.id === coverPhotoId)?.previewUrl ?? "" : "";
+  const storedCoverAssetId = typeof brandingData.coverAssetId === "string" ? brandingData.coverAssetId : null;
+  const resolvedCoverAssetId = coverPhotoId ?? storedCoverAssetId;
+  const localCoverUrl = resolvedCoverAssetId
+    ? uploadQueue.find((item) => item.id === resolvedCoverAssetId)?.previewUrl ?? ""
+    : "";
   const coverUrl = localCoverUrl || storedCoverUrl;
 
   const selectionPartCounts = useMemo(() => {
@@ -980,6 +999,7 @@ export default function GalleryDetail() {
       status !== baseline.status ||
       eventDate !== baseline.eventDate ||
       customType.trim() !== baseline.customType.trim() ||
+      coverPhotoId !== baseline.coverAssetId ||
       selectionSettings.enabled !== baseline.selectionSettings.enabled ||
       selectionSettings.limit !== baseline.selectionSettings.limit ||
       selectionSettings.deadline !== baseline.selectionSettings.deadline ||
@@ -997,6 +1017,8 @@ export default function GalleryDetail() {
       baseline.eventDate,
       customType,
       baseline.customType,
+      coverPhotoId,
+      baseline.coverAssetId,
       selectionSettings.enabled,
       baseline.selectionSettings.enabled,
       selectionSettings.limit,
@@ -1040,6 +1062,7 @@ export default function GalleryDetail() {
         status: payload.status,
         eventDate: typeof payload.branding.eventDate === "string" ? (payload.branding.eventDate as string) : "",
         customType: typeof payload.branding.customType === "string" ? (payload.branding.customType as string) : "",
+        coverAssetId: typeof payload.branding.coverAssetId === "string" ? (payload.branding.coverAssetId as string) : null,
         selectionSettings: (payload.branding.selectionSettings || {
           enabled: false,
           limit: null,
@@ -1169,6 +1192,11 @@ export default function GalleryDetail() {
         delete branding.selectionTemplateGroups;
         delete branding.selectionTemplate;
       }
+      if (coverPhotoId) {
+        branding.coverAssetId = coverPhotoId;
+      } else {
+        delete branding.coverAssetId;
+      }
       const payload: UpdatePayload = {
         title: title.trim(),
         type,
@@ -1193,6 +1221,7 @@ export default function GalleryDetail() {
     status,
     eventDate,
     customType,
+    coverPhotoId,
     selectionSettings,
     selectionTemplateGroups,
     saveGallery,
@@ -1398,8 +1427,10 @@ export default function GalleryDetail() {
 
   const handlePreview = useCallback(() => {
     if (!id) return;
-    navigate(`/galleries/${id}/preview`);
-  }, [id, navigate]);
+    const previewPath = `/galleries/${id}/preview`;
+    const win = window.open(previewPath, "_blank", "noopener,noreferrer");
+    win?.focus?.();
+  }, [id]);
 
   const expectedGalleryNameForDelete = useMemo(() => title.trim(), [title]);
   const canConfirmGalleryDelete =
@@ -2323,18 +2354,26 @@ export default function GalleryDetail() {
     setLightboxOpen(true);
   }, []);
 
-  const lightboxPhotos = filteredUploads;
-  const currentLightboxPhoto = lightboxPhotos[lightboxIndex];
-  const currentLightboxSelectionIds = currentLightboxPhoto
-    ? (photoSelections[currentLightboxPhoto.id] ?? [])
-    : [];
-  const isCurrentLightboxFavorite = currentLightboxSelectionIds.includes(FAVORITES_FILTER_ID);
+  const lightboxPhotos = useMemo(
+    () =>
+      filteredUploads.map((item) => {
+        const selectedRuleIds = photoSelections[item.id] ?? [];
+        return {
+          id: item.id,
+          url: item.previewUrl ?? "",
+          filename: item.name,
+          isFavorite: selectedRuleIds.includes(FAVORITES_FILTER_ID),
+          isStarred: Boolean(item.starred),
+          selections: selectedRuleIds.filter((ruleId) => ruleId !== FAVORITES_FILTER_ID),
+        };
+      }),
+    [filteredUploads, photoSelections]
+  );
 
-  const navigateLightbox = useCallback(
-    (delta: number) => {
-      setLightboxIndex((prev) => {
+  const handleLightboxNavigate = useCallback(
+    (nextIndex: number) => {
+      setLightboxIndex(() => {
         if (lightboxPhotos.length === 0) return 0;
-        const nextIndex = prev + delta;
         return Math.max(0, Math.min(nextIndex, lightboxPhotos.length - 1));
       });
     },
@@ -2343,21 +2382,13 @@ export default function GalleryDetail() {
 
   useEffect(() => {
     if (!lightboxOpen) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setLightboxOpen(false);
-        return;
-      }
-      if (event.key === "ArrowLeft") {
-        navigateLightbox(-1);
-      }
-      if (event.key === "ArrowRight") {
-        navigateLightbox(1);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightboxOpen, navigateLightbox]);
+    if (lightboxPhotos.length === 0) {
+      setLightboxOpen(false);
+      setLightboxIndex(0);
+      return;
+    }
+    setLightboxIndex((prev) => Math.min(prev, lightboxPhotos.length - 1));
+  }, [lightboxOpen, lightboxPhotos.length]);
 
   useEffect(() => {
     uploadQueueRef.current = uploadQueue;
@@ -3878,194 +3909,18 @@ export default function GalleryDetail() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {lightboxOpen && currentLightboxPhoto ? (
-        <div className="fixed inset-0 z-[100] flex bg-black/95 text-white backdrop-blur-sm">
-          <div className="relative flex flex-1 flex-col">
-            <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent p-4">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium opacity-80">
-                  {lightboxIndex + 1} / {lightboxPhotos.length}
-                </span>
-                <span className="max-w-[60vw] truncate text-sm font-mono text-white/60">
-                  {currentLightboxPhoto.name}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setLightboxOpen(false)}
-                  className="rounded-full p-2 hover:bg-white/10"
-                  aria-label={t("sessionDetail.gallery.labels.close", { defaultValue: "Kapat" })}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => navigateLightbox(-1)}
-              disabled={lightboxIndex === 0}
-              className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full p-3 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-20"
-              aria-label={t("sessionDetail.gallery.labels.previous", { defaultValue: "Önceki" })}
-            >
-              <ChevronLeft className="h-8 w-8" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigateLightbox(1)}
-              disabled={lightboxIndex >= lightboxPhotos.length - 1}
-              className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full p-3 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-20"
-              aria-label={t("sessionDetail.gallery.labels.next", { defaultValue: "Sonraki" })}
-            >
-              <ChevronRight className="h-8 w-8" />
-            </button>
-
-            <div className="flex flex-1 items-center justify-center p-4 md:p-8">
-	              {currentLightboxPhoto.previewUrl ? (
-	                <img
-	                  src={currentLightboxPhoto.previewUrl}
-	                  alt={currentLightboxPhoto.name}
-                    decoding="async"
-	                  className="max-h-[calc(100vh-8rem)] max-w-full object-contain shadow-2xl"
-	                  onError={() => refreshPreviewUrl(currentLightboxPhoto.id)}
-	                />
-	              ) : (
-                <div className="text-sm text-white/60">
-                  {t("sessionDetail.gallery.labels.noPreview", { defaultValue: "Önizleme yok" })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex w-80 shrink-0 flex-col border-l border-white/10 bg-black/80">
-            <div className="border-b border-white/10 p-5">
-              <h3 className="text-lg font-semibold">
-                {t("sessionDetail.gallery.selection.lightboxTitle", { defaultValue: "Seçim detayları" })}
-              </h3>
-              <p className="text-xs text-white/60">
-                {t("sessionDetail.gallery.selection.lightboxDesc", {
-                  defaultValue: "Bu fotoğrafı hangi listelere eklemek istersiniz?",
-                })}
-              </p>
-            </div>
-
-            <div className="flex-1 space-y-4 overflow-y-auto p-4">
-              <div className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
-                <div className="text-xs font-bold uppercase tracking-wider text-white/50">
-                  Fotoğraf Durumu
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleToggleStar(currentLightboxPhoto.id)}
-                  aria-label={t("sessionDetail.gallery.labels.star", { defaultValue: "Yıldızla" })}
-                  title={currentLightboxPhoto.starred ? "Yıldızı kaldır" : "Yıldızla"}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition",
-                    currentLightboxPhoto.starred
-                      ? "border-amber-400/60 bg-amber-500/10 text-amber-200"
-                      : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10"
-                  )}
-                >
-                  <span className="flex items-center gap-2 text-sm font-medium">
-                    <Star
-                      size={16}
-                      className={cn(currentLightboxPhoto.starred ? "fill-current" : "fill-none")}
-                    />
-                    Fotoğrafçı Önerisi
-                  </span>
-                  {currentLightboxPhoto.starred ? (
-                    <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-100">
-                      Seçildi
-                    </span>
-                  ) : null}
-                </button>
-
-                <div
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-lg border border-dashed px-3 py-2",
-                    isCurrentLightboxFavorite
-                      ? "border-rose-400/40 bg-rose-500/10 text-rose-200"
-                      : "border-white/10 bg-transparent text-white/50 opacity-70"
-                  )}
-                >
-                  <span className="flex items-center gap-2 text-sm font-medium">
-                    <Heart
-                      size={16}
-                      className={cn(isCurrentLightboxFavorite ? "fill-current" : "fill-none")}
-                    />
-                    Müşteri Favorisi
-                  </span>
-                  {isCurrentLightboxFavorite ? (
-                    <span className="rounded bg-rose-500/20 px-2 py-0.5 text-[10px] font-semibold text-rose-100">
-                      Beğendi
-                    </span>
-                  ) : (
-                    <span className="text-[10px]">Henüz yok</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="px-1 text-[10px] font-bold uppercase tracking-wider text-white/50">
-                Seçim Kuralları
-              </div>
-
-              <div className="space-y-2">
-                {selectionRules.map((rule) => {
-                  const selectedForRule = currentLightboxSelectionIds.includes(rule.id);
-                  const localCount = localRuleCounts[rule.id] ?? 0;
-                  const maxAllowed = rule.maxCount ?? null;
-                  const isFull = maxAllowed != null && localCount >= maxAllowed;
-                  const isDisabled = !selectedForRule && isFull;
-                  return (
-                    <button
-                      key={rule.id}
-                      type="button"
-                      onClick={() =>
-                        !isDisabled && togglePhotoRuleSelection(currentLightboxPhoto.id, rule.id)
-                      }
-                      className={cn(
-                        "group flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition",
-                        selectedForRule
-                          ? "border-emerald-400/60 bg-white/10"
-                          : "border-white/10 hover:border-white/20 hover:bg-white/5",
-                        isDisabled && "cursor-not-allowed opacity-50"
-                      )}
-                    >
-                      <div className="min-w-0 flex-1 pr-3">
-                        <div className="truncate text-[10px] font-bold uppercase tracking-wider text-white/50">
-                          {rule.serviceName || "Genel"}
-                        </div>
-                        <div className="truncate text-sm font-medium text-white">{rule.title}</div>
-                        <div className="mt-1 flex items-center gap-1 text-[11px] text-white/50">
-                          <span className={isFull && !selectedForRule ? "text-amber-400" : undefined}>
-                            {localCount} / {maxAllowed ?? "∞"}
-                          </span>
-                          <span>
-                            {rule.required === false ? "(Opsiyonel)" : "(Zorunlu)"}
-                          </span>
-                        </div>
-                      </div>
-                      <div
-                        className={cn(
-                          "flex h-6 w-6 items-center justify-center rounded-full border-2 transition",
-                          selectedForRule
-                            ? "border-emerald-400 bg-emerald-400 text-white"
-                            : "border-white/30 text-transparent group-hover:border-white/60"
-                        )}
-                      >
-                        {selectedForRule ? <CheckCircle2 size={14} /> : <Circle size={12} />}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <Lightbox
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        photos={lightboxPhotos}
+        currentIndex={lightboxIndex}
+        onNavigate={handleLightboxNavigate}
+        rules={selectionRules}
+        onToggleRule={togglePhotoRuleSelection}
+        onToggleStar={handleToggleStar}
+        mode="admin"
+        onImageError={refreshPreviewUrl}
+      />
 
       <Sheet
         open={isSetSheetOpen}

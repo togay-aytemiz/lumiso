@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/components/SelectionTemplateSection";
+import { Lightbox } from "@/components/galleries/Lightbox";
 import { GALLERY_ASSETS_BUCKET, getStorageBasename } from "@/lib/galleryAssets";
 import {
   ArrowDown,
@@ -115,8 +116,8 @@ export default function GalleryClientPreview() {
   const [favoritePhotoIds, setFavoritePhotoIds] = useState<Set<string>>(() => new Set());
   const [photoSelectionsById, setPhotoSelectionsById] = useState<Record<string, string[]>>({});
 
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerIndex, setViewerIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
@@ -344,11 +345,19 @@ export default function GalleryClientPreview() {
   }, [favoritePhotoIds, favoritesEnabled, photoSelectionsById, photosBase, resolvedSets]);
 
   const coverUrl = useMemo(() => {
+    const coverAssetId = typeof brandingData.coverAssetId === "string" ? brandingData.coverAssetId : "";
+    if (coverAssetId) {
+      const match = resolvedPhotos.find((photo) => photo.id === coverAssetId && photo.url);
+      if (match?.url) return match.url;
+      const first = resolvedPhotos.find((photo) => Boolean(photo.url));
+      return first?.url ?? "";
+    }
+
     const storedCoverUrl = typeof brandingData.coverUrl === "string" ? brandingData.coverUrl : "";
     if (storedCoverUrl) return storedCoverUrl;
     const first = resolvedPhotos.find((photo) => Boolean(photo.url));
     return first?.url ?? "";
-  }, [brandingData.coverUrl, resolvedPhotos]);
+  }, [brandingData.coverAssetId, brandingData.coverUrl, resolvedPhotos]);
 
   // Scroll to top on mount
   useEffect(() => {
@@ -428,9 +437,36 @@ export default function GalleryClientPreview() {
   };
 
   const openViewer = (index: number) => {
-    setViewerIndex(index);
-    setViewerOpen(true);
+    setLightboxIndex(index);
+    setLightboxOpen(true);
   };
+
+  const activeLightboxRuleId = useMemo(() => {
+    if (activeFilter === "all" || activeFilter === "favorites" || activeFilter === "starred" || activeFilter === "unselected") {
+      return null;
+    }
+    return selectionRules.some((rule) => rule.id === activeFilter) ? activeFilter : null;
+  }, [activeFilter, selectionRules]);
+
+  const handleLightboxNavigate = useCallback(
+    (nextIndex: number) => {
+      setLightboxIndex(() => {
+        if (filteredPhotos.length === 0) return 0;
+        return Math.max(0, Math.min(nextIndex, filteredPhotos.length - 1));
+      });
+    },
+    [filteredPhotos.length]
+  );
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    if (filteredPhotos.length === 0) {
+      setLightboxOpen(false);
+      setLightboxIndex(0);
+      return;
+    }
+    setLightboxIndex((prev) => Math.min(prev, filteredPhotos.length - 1));
+  }, [filteredPhotos.length, lightboxOpen]);
 
   const toggleFavorite = useCallback(
     (photoId: string) => {
@@ -1052,30 +1088,19 @@ export default function GalleryClientPreview() {
         </p>
       </footer>
 
-      {/* --- BASIC PHOTO VIEWER (LIGHTBOX LATER) --- */}
-      {viewerOpen && filteredPhotos[viewerIndex] ? (
-        <div
-          className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setViewerOpen(false)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <button
-            type="button"
-            onClick={() => setViewerOpen(false)}
-            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center"
-            aria-label={t("sessionDetail.gallery.clientPreview.actions.closeViewer")}
-          >
-            <X size={18} />
-          </button>
-          <img
-            src={filteredPhotos[viewerIndex].url}
-            alt={filteredPhotos[viewerIndex].filename}
-            className="max-h-[85vh] max-w-[95vw] object-contain rounded-md shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      ) : null}
+      <Lightbox
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        photos={filteredPhotos}
+        currentIndex={lightboxIndex}
+        onNavigate={handleLightboxNavigate}
+        rules={selectionRules}
+        onToggleRule={toggleRuleSelect}
+        onToggleStar={toggleFavorite}
+        mode="client"
+        activeRuleId={activeLightboxRuleId}
+        favoritesEnabled={favoritesEnabled}
+      />
     </div>
   );
 }

@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { cn } from "@/lib/utils";
+import { GALLERY_ASSETS_BUCKET } from "@/lib/galleryAssets";
 
 interface SessionGalleryProps {
   sessionId: string;
@@ -99,6 +100,8 @@ const formatCardDate = (value?: string | null) => {
 };
 
 const formatCount = (value: number) => new Intl.NumberFormat("tr-TR").format(value);
+
+const GALLERY_COVER_SIGNED_URL_TTL_SECONDS = 60 * 60;
 
 export default function SessionGallery({
   sessionId,
@@ -466,6 +469,69 @@ export default function SessionGallery({
     staleTime: 30_000,
   });
 
+  const coverAssetIds = useMemo(() => {
+    const ids = new Set<string>();
+    galleries.forEach((gallery) => {
+      const coverAssetId = gallery.branding?.["coverAssetId"];
+      if (typeof coverAssetId === "string" && coverAssetId.length > 0) {
+        ids.add(coverAssetId);
+      }
+    });
+    return Array.from(ids).sort();
+  }, [galleries]);
+
+  const { data: galleryCoverUrls } = useQuery({
+    queryKey: ["gallery_cover_urls", sessionId, coverAssetIds],
+    enabled: coverAssetIds.length > 0,
+    queryFn: async (): Promise<Record<string, string>> => {
+      const { data, error } = await supabase
+        .from("gallery_assets")
+        .select("id,gallery_id,storage_path_web")
+        .in("id", coverAssetIds);
+
+      if (error) throw error;
+
+      const rows = (data ?? []) as Array<{
+        id: string;
+        gallery_id: string;
+        storage_path_web: string | null;
+      }>;
+
+      const signedUrls = await Promise.all(
+        rows.map(async (row) => {
+          if (!row.storage_path_web) return { id: row.id, signedUrl: "" };
+
+          const { data: urlData, error: urlError } = await supabase.storage
+            .from(GALLERY_ASSETS_BUCKET)
+            .createSignedUrl(row.storage_path_web, GALLERY_COVER_SIGNED_URL_TTL_SECONDS);
+
+          if (urlError) {
+            console.warn("SessionGallery: Failed to create signed url for cover asset", {
+              assetId: row.id,
+              error: urlError,
+            });
+            return { id: row.id, signedUrl: "" };
+          }
+
+          return { id: row.id, signedUrl: urlData?.signedUrl ?? "" };
+        })
+      );
+
+      const signedUrlByAssetId = new Map(signedUrls.map((entry) => [entry.id, entry.signedUrl]));
+      const coverUrlByGalleryId: Record<string, string> = {};
+
+      rows.forEach((row) => {
+        const signedUrl = signedUrlByAssetId.get(row.id) ?? "";
+        if (signedUrl) {
+          coverUrlByGalleryId[row.gallery_id] = signedUrl;
+        }
+      });
+
+      return coverUrlByGalleryId;
+    },
+    staleTime: 30_000,
+  });
+
   const emptyDescriptionLines = t("sessionDetail.gallery.emptyState.description").split("\n");
   const getTypeLabel = (gallery: GalleryRow) => {
     if (gallery.type === "other") {
@@ -481,8 +547,11 @@ export default function SessionGallery({
   };
 
   const getCoverUrl = (gallery: GalleryRow) => {
-    const coverUrl = gallery.branding?.["coverUrl"];
-    return typeof coverUrl === "string" ? coverUrl : "";
+    const coverUrl = galleryCoverUrls?.[gallery.id] ?? null;
+    if (coverUrl) return coverUrl;
+
+    const legacyCoverUrl = gallery.branding?.["coverUrl"];
+    return typeof legacyCoverUrl === "string" ? legacyCoverUrl : "";
   };
 
   const getEventDate = (gallery: GalleryRow) => {

@@ -760,6 +760,50 @@
           "brand": "Lumiso Select",
           "copyright": "© 2025 Tüm Hakları Saklıdır"
         }
+      },
+      "lightbox": {
+        "close": "Kapat",
+        "previous": "Önceki",
+        "next": "Sonraki",
+        "noPreview": "Önizleme yok",
+        "limitFull": "Limit dolu",
+        "quickAdd": {
+          "add": "{{rule}}'e Ekle",
+          "added": "{{rule}}'e Eklendi"
+        },
+        "showSelections": "Seçimler",
+        "showSelectionsTitle": "Listeleri göster",
+        "collapse": "Daralt",
+        "collapseTitle": "Paneli daralt",
+        "sidebar": {
+          "client": {
+            "title": "Seçimler",
+            "description": "Fotoğrafı listelerinize ekleyin"
+          },
+          "admin": {
+            "title": "Seçim Detayları",
+            "description": "Detaylı seçim yönetimi"
+          }
+        },
+        "client": {
+          "favoriteAdded": "Favorilendi",
+          "favoriteAdd": "Favorilere Ekle",
+          "photographerPickTitle": "Fotoğrafçı Önerisi",
+          "photographerPickDescription": "Sizin için bu kareyi öneriyoruz"
+        },
+        "admin": {
+          "photoStatusTitle": "Fotoğraf Durumu",
+          "starLabel": "Fotoğrafçı Önerisi",
+          "starSelected": "Seçildi",
+          "clientFavoriteLabel": "Müşteri Favorisi",
+          "clientFavoriteYes": "Beğendi",
+          "clientFavoriteNo": "Henüz yok"
+        },
+        "lists": {
+          "clientTitle": "Listelere Ekle",
+          "adminTitle": "Mevcut Listeler",
+          "generalService": "Genel"
+        }
       }
     },
     "dangerZone": {

@@ -17,6 +17,9 @@ const mockUseParams = useParams as unknown as jest.Mock;
 
 const supabaseMock = supabase as unknown as {
   from: jest.Mock;
+  storage: {
+    from: jest.Mock;
+  };
   __createQueryBuilder: (initial?: { data?: unknown; error?: unknown }) => {
     __setResponse: (result: { data?: unknown; error?: unknown }) => unknown;
   };
@@ -130,5 +133,61 @@ describe("GalleryClientPreview", () => {
     const closeButton = await screen.findByRole("button", { name: /close|kapat/i });
     fireEvent.click(closeButton);
     expect(mockNavigate).toHaveBeenCalledWith("/galleries/gallery-123");
+  });
+
+  it("prefers coverAssetId for the hero cover image", async () => {
+    supabaseMock.storage.from.mockImplementation(() => ({
+      createSignedUrl: jest.fn().mockImplementation((path: string) => {
+        const url = path.includes("asset-2")
+          ? "https://example.com/asset-2"
+          : "https://example.com/asset-1";
+        return Promise.resolve({ data: { signedUrl: url }, error: null });
+      }),
+    }));
+
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: { id: "gallery-123", title: "My Gallery", branding: { coverAssetId: "asset-2" } },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              status: "ready",
+              metadata: { originalName: "a.jpg", setId: "set-1", starred: false },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+            {
+              id: "asset-2",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-2.webp",
+              status: "ready",
+              metadata: { originalName: "b.jpg", setId: "set-1", starred: false },
+              created_at: "2025-01-02T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+
+    const coverImage = await screen.findByAltText(/cover photo|kapak fotoğrafı/i);
+    expect(coverImage).toHaveAttribute("src", "https://example.com/asset-2");
   });
 });

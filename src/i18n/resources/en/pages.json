@@ -745,6 +745,50 @@
           "brand": "Lumiso Select",
           "copyright": "© 2025 All Rights Reserved"
         }
+      },
+      "lightbox": {
+        "close": "Close",
+        "previous": "Previous",
+        "next": "Next",
+        "noPreview": "No preview available",
+        "limitFull": "Limit full",
+        "quickAdd": {
+          "add": "Add to {{rule}}",
+          "added": "Added to {{rule}}"
+        },
+        "showSelections": "Selections",
+        "showSelectionsTitle": "Show selections",
+        "collapse": "Collapse",
+        "collapseTitle": "Collapse panel",
+        "sidebar": {
+          "client": {
+            "title": "Selections",
+            "description": "Add this photo to your lists"
+          },
+          "admin": {
+            "title": "Selection details",
+            "description": "Manage detailed selections"
+          }
+        },
+        "client": {
+          "favoriteAdded": "Favorited",
+          "favoriteAdd": "Add to favorites",
+          "photographerPickTitle": "Photographer's choice",
+          "photographerPickDescription": "We recommend this shot for you"
+        },
+        "admin": {
+          "photoStatusTitle": "Photo status",
+          "starLabel": "Photographer's choice",
+          "starSelected": "Selected",
+          "clientFavoriteLabel": "Client favorite",
+          "clientFavoriteYes": "Liked",
+          "clientFavoriteNo": "Not yet"
+        },
+        "lists": {
+          "clientTitle": "Add to lists",
+          "adminTitle": "Existing lists",
+          "generalService": "General"
+        }
       }
     },
     "dangerZone": {

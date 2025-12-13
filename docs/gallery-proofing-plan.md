@@ -5,9 +5,9 @@
 - Keep scope lean but production-ready: async uploads, web-friendly proofs, PIN-protected client view, and a selection table photographers can configure or override.
 
 ## Current Snapshot (Lumiso)
-- Session detail shows a placeholder gallery component (`SessionGallery.tsx`), no storage/upload or client-facing gallery yet.
-- Services/packages already include an “Online gallery” delivery method; sessions live under projects and can have multiple sessions (engagement, wedding, newborn, etc.).
-- No schema defined for galleries, proof assets, or per-deliverable selection requirements; project/session detail is the natural home for upload in Phase 1, with a future standalone Galleries index requested.
+- Session detail: gallery create sheet + per-session gallery list shipped; gallery detail supports uploads into sets (Supabase Storage proofs).
+- Services: deliverable selection template UI shipped (EN/TR).
+- Supabase: tables + private `gallery-assets` bucket with org-scoped RLS shipped; client share/PIN + client view still pending.
 
 ## Competitive Notes (Picflow, Pixpa, CloudSpot, ShootProof, Pixieset, SmugMug, Zenfolio, Lightfolio, N-Vu, Online Picture Proof)
 - Client galleries with proof/final states, password/PIN, optional expiration, and share links per gallery.
@@ -72,18 +72,20 @@ Templates attach to services/packages; when a session includes that deliverable,
 ### Phase 1 — Proofing MVP (build & ship)
  - UX & flows
   - [x] Session detail/sheet: “Create gallery” sheet (title, type, status, event date defaulted from session) and list of galleries (type, status, updated).
-  - [ ] Upload modal with drag/drop, async queue, per-file status; background conversion to WebP + JPEG fallback; web-size target (e.g., 2560px long edge, quality tuned). _(in progress: pipeline spec below)_
-    - WebP-only storage to save space (no originals); convert at ~2560px long edge, quality ~80, strip metadata but keep color profile.
-    - Frontend pre-resize before upload when possible; hashed filenames under `<organization_id>/galleries/<gallery_id>/proof/`; persist JSON sidecar with width/height/size/checksum.
-    - Queue states: queued → uploading → processing → done/failed; drag/drop + file picker; per-file cancel/retry; show preview thumbnail from resized blob.
-    - Server/edge transcode fallback to ensure WebP; on legacy browsers serve on-the-fly JPEG if needed (no persistent originals).
+  - [x] Gallery detail uploads: drag/drop + picker, async queue, client-side WebP conversion (JPEG fallback), per-file cancel/retry, previews; per-set upload routing.
+    - [x] Proof-only storage (no originals): convert ~2560px long edge; store under `<org_id>/galleries/<gallery_id>/proof/<asset_id>.<ext>` and persist metadata in `gallery_assets.metadata`.
+    - [x] Queue states: queued → processing → uploading → done/failed/canceled; per-file cancel/retry; preview thumbnails from resized blobs.
+    - [x] Progress UX: per-set progress bar (sidebar) + active-set banner in right panel (`uploaded/total` + ETA); completion chip shown only until set content changes.
+    - [ ] Server/edge transcode fallback (if needed for legacy browsers / hardening).
+  - [x] Destructive deletes: set delete confirms and deletes assets (DB + storage) without fallback; gallery delete button (typed-name) fully removes sets/assets/client selections + storage objects.
   - [ ] Watermark settings: toggle on/off, choose source (logo/text), opacity/placement presets.
   - [ ] Share: generate public link + PIN; copy-to-clipboard; optional expiry date.
   - [ ] Client view: responsive grid, lazy load, favorite/select buttons with remaining counts, PIN gate, branding header.
 - Data & services
-  - [ ] Supabase Storage: **single private bucket** for proofs (Phase 1), object paths prefixed by `organization_id/` for RLS; edge function validates `share_link + PIN` and returns signed URLs (optionally also does transcode).
+  - [x] Supabase Storage: **single private bucket** for proofs (Phase 1), object paths prefixed by `organization_id/` for RLS.
+  - [ ] Edge function: validate `share_link + PIN` and return signed URLs (optionally also does transcode).
   - [x] Tables (`galleries`, `gallery_assets`, `client_selections`) landed; `gallery_sets` added for multiple sets within a gallery; `selection_template` nullable on services for deliverable rules.
-  - [ ] API endpoints/queries to fetch galleries by session/project and to persist selections/overrides. *(Session list + gallery detail read/write exist; uploads/selections pending.)*
+  - [ ] API endpoints/queries to persist client selections/overrides + share/PIN fields. *(Session list + gallery detail CRUD + uploads exist; client selections + client view pending.)*
 - Validation & QA
   - [ ] Component/integration tests for upload queue states, watermark toggles, PIN gate, selection limits.
   - [ ] Performance check on client view (web-size assets, lazy load).
@@ -112,9 +114,10 @@ Templates attach to services/packages; when a session includes that deliverable,
 - Should selection templates live on services or packages (line items) given the new services revamp? Recommendation: store on services and copy onto package line items during package creation.
 
 ## Immediate Next Steps
-1) Confirm data model + storage approach with backend/Supabase.
-2) Approve wireframes for session detail gallery block and client view (EN/TR copy).
-3) Create migrations + feature flag, then start Phase 1 build (upload/processing, PIN gate, selection counters).
+1) Implement share link + PIN + edge function (signed URLs).
+2) Build client view (PIN gate + selection counters/limits + submit).
+3) Add watermark controls + publish flow.
+4) Add feature flag `galleries.m1` + help docs + basic QA.
 
 ## Phase 1 UI status (services/settings)
 - ✅ Optional selection template UI shipped in Services (deliverable-only): indigo-styled card, toggle off by default, single-line rule rows (Part, Min, Max, Required checkbox, Delete).
@@ -123,14 +126,15 @@ Templates attach to services/packages; when a session includes that deliverable,
 - ✅ Copy tightened (EN/TR); helper shows example counts; “Kural ekle” button styled to match the new card.
 - ✅ Session detail/sheet now creates galleries via a sheet (no modal); fields: title, type (Selections/Retouch/Final/Other), status, event date (defaults from session, changeable). Creation seeds a default set (Highlights/Öne çıkanlar), then redirects to `/galleries/:id`.
 - ✅ Galleries list per session (fetches from Supabase); empty state CTA remains, header CTA hidden when empty to avoid duplicates.
-- ✅ Gallery detail page `/galleries/:id`: back arrow to session, editable title/type/status/event date, save action; sets sidebar with list and “Add set” sheet; media area placeholder (upload wiring pending). All backed by new Supabase tables.
-- ✅ Gallery detail proofing/admin polish: per‑set upload routing + counts, set delete guard when photos exist, filter‑mode hides set actions, improved empty states, soft‑emerald dropzone highlight, batch selection in grid/list, safer “seçimi kaldır” confirm UI, and image‑only uploads (mixed drops skip non‑images with a warning).
+- ✅ Gallery detail page `/galleries/:id`: back arrow to session, editable title/type/status/event date, save action; sets sidebar with list and “Add set” sheet; upload flow wired to Supabase Storage. All backed by new Supabase tables.
+- ✅ Gallery detail proofing/admin polish: per-set upload routing + counts, right-panel upload progress banner + completion chip, set delete (with DB+storage cleanup, no fallback), gallery delete (typed-name, full cascade), filter-mode hides set actions, improved empty states, soft-emerald dropzone highlight, batch selection in grid/list, safer “seçimi kaldır” confirm UI, and image-only uploads (mixed drops skip non-images with a warning).
 
 ### In-app gallery UX (current)
 - Gallery create sheet (max-w-3xl) mirrors the selection schema UI used in services: service groups show service name input, “Kural ekle” for service-scoped rules, and “Seçime aç/kapat” to disable a service; a manual “İlave kurallar” block sits underneath with a pill + add button. Saving seeds `branding.selectionTemplateGroups` and a flattened `selectionTemplate`.
 - Gallery detail admin focuses on upload + per‑photo selection: grid/list views with batch select, safe two‑step deselect, and a lightbox with filename header, photographer star in right rail, and read‑only client favorite indicator.
-- Multi‑set workflow: uploads are scoped to the active set like folders; sets show per‑set photo counts; empty states are contextual; set deletion is guarded if the set contains photos.
-- Selection dashboard/filters were removed from the admin view for now; filtering will be re‑surfaced once client selections are wired.
+- Multi-set workflow: uploads are scoped to the active set like folders; sets show per-set photo counts + upload progress; empty states are contextual; set deletion is guarded and deletes all contained media (DB + storage) without fallback.
+- Gallery header: “Önizle” + “Galeriyi sil” (typed-name confirm).
+- Selection dashboard/filters: visible on proof galleries; filter-mode hides set actions. Client selections wiring is still pending.
 - Branding payload now carries both `selectionTemplateGroups` (grouped) and `selectionTemplate` (flattened). Required is persisted per rule.
 
 ### Manual/general rules UI (hizmetten bağımsız)

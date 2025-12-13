@@ -606,7 +606,7 @@ export default function GalleryDetail() {
         const hasLocalPreview = typeof localPreviewUrl === "string" && localPreviewUrl.length > 0;
         const hasStoredPreview = typeof storedPreviewUrl === "string" && storedPreviewUrl.length > 0;
         const localPreviewIsBlob = hasLocalPreview && localPreviewUrl.startsWith("blob:");
-        const keepBlobPreview = localPreviewIsBlob && Boolean(local.file);
+        const keepBlobPreview = localPreviewIsBlob && (Boolean(local.file) || localTerminal);
         const previewUrl = hasLocalPreview && (!localPreviewIsBlob || keepBlobPreview || !hasStoredPreview)
           ? localPreviewUrl
           : storedPreviewUrl;
@@ -1759,41 +1759,20 @@ export default function GalleryDetail() {
           throw upsertError;
         }
 
-        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-          .from(GALLERY_ASSETS_BUCKET)
-          .createSignedUrl(storagePathWeb, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
-        if (signedUrlError) {
-          console.warn("Failed to create signed url for uploaded gallery asset", signedUrlError);
-        }
-        if (signedUrlData?.signedUrl) {
-          signedUrlCacheRef.current.set(assetId, {
-            url: signedUrlData.signedUrl,
-            expiresAt: Date.now() + GALLERY_ASSET_SIGNED_URL_TTL_SECONDS * 1000 - 15_000,
-          });
-        }
-
         clearUploadTimer(assetId);
         setUploadQueue((prev) =>
           prev.map((entry) => {
             if (entry.id !== assetId) return entry;
-            const signedUrl = signedUrlData?.signedUrl;
-            if (signedUrl && entry.previewUrl?.startsWith("blob:")) {
-              URL.revokeObjectURL(entry.previewUrl);
-            }
-	            return {
-	              ...entry,
-	              status: "done",
-	              progress: 100,
-	              previewUrl: signedUrl || entry.previewUrl,
-	              size: proof.blob.size,
-	              file: undefined,
-	              storagePathWeb,
-	            };
-	          })
-	        );
-
-        queryClient.invalidateQueries({ queryKey: ["gallery_assets", id] });
-        queryClient.invalidateQueries({ queryKey: ["gallery_storage_usage", id] });
+            return {
+              ...entry,
+              status: "done",
+              progress: 100,
+              size: proof.blob.size,
+              file: undefined,
+              storagePathWeb,
+            };
+          })
+        );
       } catch (error: unknown) {
         clearUploadTimer(assetId);
         const message =
@@ -1807,7 +1786,7 @@ export default function GalleryDetail() {
         );
       }
     },
-    [activeOrganizationId, clearUploadTimer, id, queryClient, t]
+    [activeOrganizationId, clearUploadTimer, id, t]
   );
 
   const handleCancelUpload = useCallback(

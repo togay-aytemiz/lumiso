@@ -282,6 +282,9 @@ export default function GalleryDetail() {
   const { timezone, timeFormat } = useOrganizationTimezone();
   const queryClient = useQueryClient();
 
+  const signedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
+  const signedUrlRefreshInFlightRef = useRef<Set<string>>(new Set());
+
   const [activeTab, setActiveTab] = useState<"photos" | "settings">("photos");
   const [title, setTitle] = useState("");
   const [type, setType] = useState<GalleryType>("proof");
@@ -522,15 +525,24 @@ export default function GalleryDetail() {
       if (error) throw error;
 
       const rows = (data ?? []) as GalleryAssetRow[];
+      const now = Date.now();
+      const signedUrlExpiresAt = now + GALLERY_ASSET_SIGNED_URL_TTL_SECONDS * 1000 - 15_000;
       const signedUrls = await Promise.all(
         rows.map(async (row) => {
           if (!row.storage_path_web) return { id: row.id, signedUrl: "" };
+          const cached = signedUrlCacheRef.current.get(row.id);
+          if (cached && cached.expiresAt > now) {
+            return { id: row.id, signedUrl: cached.url };
+          }
           const { data: urlData, error: urlError } = await supabase.storage
             .from(GALLERY_ASSETS_BUCKET)
             .createSignedUrl(row.storage_path_web, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
           if (urlError) {
             console.warn("Failed to create signed url for gallery asset", urlError);
             return { id: row.id, signedUrl: "" };
+          }
+          if (urlData?.signedUrl) {
+            signedUrlCacheRef.current.set(row.id, { url: urlData.signedUrl, expiresAt: signedUrlExpiresAt });
           }
           return { id: row.id, signedUrl: urlData.signedUrl };
         })
@@ -583,12 +595,21 @@ export default function GalleryDetail() {
 
         const localInFlight =
           Boolean(local.file) && (local.status === "queued" || local.status === "processing" || local.status === "uploading");
+        const localTerminal = local.status === "done" || local.status === "error" || local.status === "canceled";
         const storedTerminal = stored.status === "done" || stored.status === "error";
 
-        const status = storedTerminal ? stored.status : localInFlight ? local.status : stored.status;
-        const progress = storedTerminal ? stored.progress : localInFlight ? local.progress : stored.progress;
-        const previewUrl =
-          (local.previewUrl?.startsWith("blob:") ?? false) || !stored.previewUrl ? local.previewUrl : stored.previewUrl;
+        const status = storedTerminal ? stored.status : localInFlight || localTerminal ? local.status : stored.status;
+        const progress = storedTerminal ? stored.progress : localInFlight || localTerminal ? local.progress : stored.progress;
+
+        const localPreviewUrl = local.previewUrl;
+        const storedPreviewUrl = stored.previewUrl;
+        const hasLocalPreview = typeof localPreviewUrl === "string" && localPreviewUrl.length > 0;
+        const hasStoredPreview = typeof storedPreviewUrl === "string" && storedPreviewUrl.length > 0;
+        const localPreviewIsBlob = hasLocalPreview && localPreviewUrl.startsWith("blob:");
+        const keepBlobPreview = localPreviewIsBlob && Boolean(local.file);
+        const previewUrl = hasLocalPreview && (!localPreviewIsBlob || keepBlobPreview || !hasStoredPreview)
+          ? localPreviewUrl
+          : storedPreviewUrl;
 
         return {
           ...stored,
@@ -1744,6 +1765,12 @@ export default function GalleryDetail() {
         if (signedUrlError) {
           console.warn("Failed to create signed url for uploaded gallery asset", signedUrlError);
         }
+        if (signedUrlData?.signedUrl) {
+          signedUrlCacheRef.current.set(assetId, {
+            url: signedUrlData.signedUrl,
+            expiresAt: Date.now() + GALLERY_ASSET_SIGNED_URL_TTL_SECONDS * 1000 - 15_000,
+          });
+        }
 
         clearUploadTimer(assetId);
         setUploadQueue((prev) =>
@@ -1895,18 +1922,47 @@ export default function GalleryDetail() {
     setCoverPhotoId(photoId);
   }, []);
 
-  const refreshPreviewUrl = useCallback((photoId: string) => {
-    setUploadQueue((prev) =>
-      prev.map((item) => {
-        if (item.id !== photoId) return item;
-        if (!item.file) return item;
-        if (item.previewUrl?.startsWith("blob:")) {
-          URL.revokeObjectURL(item.previewUrl);
-        }
-        return { ...item, previewUrl: URL.createObjectURL(item.file) };
-      })
-    );
-  }, []);
+  const refreshPreviewUrl = useCallback(
+    (photoId: string) => {
+      const current = uploadQueueRef.current.find((item) => item.id === photoId);
+      if (!current) return;
+
+      if (current.file) {
+        setUploadQueue((prev) =>
+          prev.map((item) => {
+            if (item.id !== photoId) return item;
+            if (!item.file) return item;
+            if (item.previewUrl?.startsWith("blob:")) {
+              URL.revokeObjectURL(item.previewUrl);
+            }
+            return { ...item, previewUrl: URL.createObjectURL(item.file) };
+          })
+        );
+        return;
+      }
+
+      if (!current.storagePathWeb) return;
+      if (signedUrlRefreshInFlightRef.current.has(photoId)) return;
+
+      signedUrlRefreshInFlightRef.current.add(photoId);
+      void (async () => {
+        const { data: urlData, error } = await supabase.storage
+          .from(GALLERY_ASSETS_BUCKET)
+          .createSignedUrl(current.storagePathWeb, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
+        if (error || !urlData?.signedUrl) return;
+
+        signedUrlCacheRef.current.set(photoId, {
+          url: urlData.signedUrl,
+          expiresAt: Date.now() + GALLERY_ASSET_SIGNED_URL_TTL_SECONDS * 1000 - 15_000,
+        });
+
+        setUploadQueue((prev) => prev.map((item) => (item.id === photoId ? { ...item, previewUrl: urlData.signedUrl } : item)));
+      })().finally(() => {
+        signedUrlRefreshInFlightRef.current.delete(photoId);
+      });
+    },
+    []
+  );
 
   const isBatchSelectionMode =
     !activeSelectionRuleId || activeSelectionRuleId === FAVORITES_FILTER_ID || activeSelectionRuleId === STARRED_FILTER_ID;

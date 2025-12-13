@@ -2,6 +2,27 @@
 
 Always review these before making any changes.
 
+## Repo Quickstart
+
+- Package manager: CI runs `npm ci` / `npm test` (Node 20). Use npm for dependency changes so `package-lock.json` stays correct; `bun.lockb` is ignored.
+- Dev: `bun run dev` (or `npm run dev`)
+- Lint: `npm run lint`
+- Frontend tests: `npm test`
+- Supabase function tests (Deno): `deno task test` (or `npm run test:deno`)
+- Build/preview: `npm run build` + `npm run preview`
+
+## Codebase Map
+
+- App entry/routing: `src/main.tsx`, `src/App.tsx` (React Router)
+- UI primitives (shadcn): `src/components/ui/**` (see `components.json` and `docs/design-system/README.md`)
+- App components: `src/components/**`
+- Feature modules: `src/features/**`
+- Pages: `src/pages/**`
+- Hooks: `src/hooks/**`
+- Domain/data access: `src/services/**`, shared helpers in `src/lib/**`
+- i18n resources: `src/i18n/resources/{en,tr}/*.json`
+- Supabase: `src/integrations/supabase/**` (generated client/types), `supabase/functions/**` (Edge functions), `supabase/migrations/**`
+
 ## Task Completion
 
 - At the end of every task that alters the repository, reply with a single-line commit message summarizing the change.
@@ -15,10 +36,23 @@ Always review these before making any changes.
 - Deliver professional polish without over-engineering; simple is best.
 - Respect i18n: never hardcode user-facing strings; update all existing locales (EN and TR) when copy changes.
 
-## Supabase Functions
+## i18n (UI + Email)
+
+- UI copy: add/modify keys in both `src/i18n/resources/en/*.json` and `src/i18n/resources/tr/*.json` and use `useTranslation()` in components.
+- Toasts/snackbars: prefer `useI18nToast` (`src/lib/toastHelpers.ts`) so titles stay localized.
+- Email copy (Edge functions): update `supabase/functions/_shared/email-i18n.ts` and its tests when changing email templates.
+
+## Supabase (DB + Edge Functions)
 
 - Any change under `supabase/functions/**` (shared helpers and templates included) must be deployed after merge.
 - Before deploying, confirm Supabase CLI is authenticated and linked: `npx supabase login`, `npx supabase link --project-ref rifdykpdubrowzbylffe`.
+- After modifying Edge functions, run `deno task test` (or `npm run test:deno`) and ensure function-specific tests exist in `supabase/functions/tests/**`.
+- Treat `src/integrations/supabase/client.ts` and `src/integrations/supabase/types.ts` as generated; prefer regenerating types via Supabase CLI when DB schema changes.
+
+## Feature Flags
+
+- Prefer guarded rollouts for risky/user-facing changes using `isFeatureEnabled()` and `FEATURE_FLAGS` in `src/lib/featureFlags.ts`.
+- Env naming: `VITE_FEATURE_<FLAG_NAME>` (normalized); local overrides use `localStorage` key `flag:<flag>`.
 
 ## Process Expectations
 
@@ -27,8 +61,9 @@ Always review these before making any changes.
 
 ## Testing & Quality
 
+- Jest + Testing Library live under `src/**/__tests__` and `*.test.ts(x)`; keep global coverage thresholds passing (see `jest.config.js`).
 - Cover new behavior with automated tests (unit, integration, or E2E as appropriate) and add regression tests for bug fixes.
-- When automation isn’t enough, record manual verification steps so results are reproducible.
+- When automation isn’t enough, record manual verification steps so results are reproducible (see `docs/manual-testing/tests/*.json`).
 
 ## Security
 
@@ -43,12 +78,14 @@ Always review these before making any changes.
 ## Observability
 
 - Maintain or improve logging, metrics, and alerting whenever production pathways change.
+- Prefer `trackEvent()` (`src/lib/telemetry.ts`) for key UX flows; avoid logging PII (emails are redacted in `src/lib/authTelemetry.ts`).
 - Keep dashboards and monitors aligned with new or modified functionality.
 
 ## Accessibility & UX
 
 - Meet accessibility standards (contrast, keyboard navigation, ARIA) for every UI change.
 - Preserve consistent UX patterns and validate responsive behavior across breakpoints.
+- Follow `docs/design-system/README.md` before introducing new UI primitives or interaction patterns.
 
 ## Documentation & Releases
 

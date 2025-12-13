@@ -78,9 +78,12 @@ Templates attach to services/packages; when a session includes that deliverable,
     - [x] Progress UX: per-set progress bar (sidebar) + active-set banner in right panel (`uploaded/total` + ETA); completion chip shown only until set content changes.
     - [ ] Server/edge transcode fallback (if needed for legacy browsers / hardening).
   - [x] Destructive deletes: set delete confirms and deletes assets (DB + storage) without fallback; gallery delete button (typed-name) fully removes sets/assets/client selections + storage objects.
+  - [ ] Client preview (“Önizle”): open client-mode UI for photographers (no PIN yet) so they can see the exact client experience and interact like a client (favorite/select, counters, submit simulation).
   - [ ] Watermark settings: toggle on/off, choose source (logo/text), opacity/placement presets.
-  - [ ] Share: generate public link + PIN; copy-to-clipboard; optional expiry date.
-  - [ ] Client view: responsive grid, lazy load, favorite/select buttons with remaining counts, PIN gate, branding header.
+  - [ ] Share (real client): generate public link + PIN; copy-to-clipboard; optional expiry date.
+    - PIN settings live under Gallery “Ayarlar” tab → “Paylaşım & PIN” section (set/change/disable/regenerate).
+    - Share button in header uses this config and copies the real client URL (+ optionally the PIN).
+  - [ ] Client view (real client): responsive grid, lazy load, favorite/select buttons with remaining counts, PIN gate, branding header.
 - Data & services
   - [x] Supabase Storage: **single private bucket** for proofs (Phase 1), object paths prefixed by `organization_id/` for RLS.
   - [ ] Edge function: validate `share_link + PIN` and return signed URLs (optionally also does transcode).
@@ -114,10 +117,11 @@ Templates attach to services/packages; when a session includes that deliverable,
 - Should selection templates live on services or packages (line items) given the new services revamp? Recommendation: store on services and copy onto package line items during package creation.
 
 ## Immediate Next Steps
-1) Implement share link + PIN + edge function (signed URLs).
-2) Build client view (PIN gate + selection counters/limits + submit).
-3) Add watermark controls + publish flow.
-4) Add feature flag `galleries.m1` + help docs + basic QA.
+1) Wire “Önizle” → client preview route (no PIN) and implement the full client-mode UX/actions for internal users.
+2) Add “Paylaşım & PIN” settings in gallery Ayarlar + store PIN/share token.
+3) Implement real client URL + PIN gate + edge function (signed URLs) and ship the public client view.
+4) Add watermark controls + publish flow.
+5) Add feature flag `galleries.m1` + help docs + basic QA.
 
 ## Phase 1 UI status (services/settings)
 - ✅ Optional selection template UI shipped in Services (deliverable-only): indigo-styled card, toggle off by default, single-line rule rows (Part, Min, Max, Required checkbox, Delete).
@@ -133,7 +137,7 @@ Templates attach to services/packages; when a session includes that deliverable,
 - Gallery create sheet (max-w-3xl) mirrors the selection schema UI used in services: service groups show service name input, “Kural ekle” for service-scoped rules, and “Seçime aç/kapat” to disable a service; a manual “İlave kurallar” block sits underneath with a pill + add button. Saving seeds `branding.selectionTemplateGroups` and a flattened `selectionTemplate`.
 - Gallery detail admin focuses on upload + per‑photo selection: grid/list views with batch select, safe two‑step deselect, and a lightbox with filename header, photographer star in right rail, and read‑only client favorite indicator.
 - Multi-set workflow: uploads are scoped to the active set like folders; sets show per-set photo counts + upload progress; empty states are contextual; set deletion is guarded and deletes all contained media (DB + storage) without fallback.
-- Gallery header: “Önizle” + “Galeriyi sil” (typed-name confirm).
+- Gallery header: “Önizle” (client preview wiring pending) + “Galeriyi sil” (typed-name confirm).
 - Selection dashboard/filters: visible on proof galleries; filter-mode hides set actions. Client selections wiring is still pending.
 - Branding payload now carries both `selectionTemplateGroups` (grouped) and `selectionTemplate` (flattened). Required is persisted per rule.
 

@@ -190,4 +190,59 @@ describe("GalleryClientPreview", () => {
     const coverImage = await screen.findByAltText(/cover photo|kapak fotoğrafı/i);
     expect(coverImage).toHaveAttribute("src", "https://example.com/asset-2");
   });
+
+  it("cleans up missing assets when storage objects are gone", async () => {
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const galleryAssetsBuilder = supabaseMock.__createQueryBuilder();
+
+      supabaseMock.storage.from.mockImplementation(() => ({
+        createSignedUrl: jest.fn().mockResolvedValue({
+          data: null,
+          error: { statusCode: 404, message: "Object not found" },
+        }),
+      }));
+
+      supabaseMock.from.mockImplementation((table: string) => {
+        if (table === "galleries") {
+          return supabaseMock.__createQueryBuilder().__setResponse({
+            data: { id: "gallery-123", title: "My Gallery", branding: {} },
+            error: null,
+          });
+        }
+        if (table === "gallery_sets") {
+          return supabaseMock.__createQueryBuilder().__setResponse({
+            data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+            error: null,
+          });
+        }
+        if (table === "gallery_assets") {
+          return galleryAssetsBuilder.__setResponse({
+            data: [
+              {
+                id: "asset-missing",
+                storage_path_web: "org/galleries/gallery-123/proof/asset-missing.webp",
+                status: "ready",
+                metadata: { originalName: "missing.jpg", setId: "set-1", starred: false },
+                created_at: "2025-01-01T00:00:00Z",
+              },
+            ],
+            error: null,
+          });
+        }
+        return supabaseMock.__createQueryBuilder();
+      });
+
+      render(<GalleryClientPreview />);
+
+      expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+      expect(await screen.findByText(/no photos|fotoğraf yok/i)).toBeInTheDocument();
+
+      await waitFor(() => {
+        expect(galleryAssetsBuilder.delete).toHaveBeenCalled();
+      });
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
 });

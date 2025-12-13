@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/components/SelectionTemplateSection";
 import { Lightbox } from "@/components/galleries/Lightbox";
-import { GALLERY_ASSETS_BUCKET, getStorageBasename } from "@/lib/galleryAssets";
+import { GALLERY_ASSETS_BUCKET, getStorageBasename, isSupabaseStorageObjectMissingError } from "@/lib/galleryAssets";
 import {
   ArrowDown,
   ArrowRight,
@@ -176,20 +176,33 @@ export default function GalleryClientPreview() {
 
       const signedUrls = await Promise.all(
         readyRows.map(async (row) => {
-          if (!row.storage_path_web) return { id: row.id, signedUrl: "" };
+          if (!row.storage_path_web) return { id: row.id, signedUrl: "", missing: true };
           const { data: urlData, error: urlError } = await supabase.storage
             .from(GALLERY_ASSETS_BUCKET)
             .createSignedUrl(row.storage_path_web, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
           if (urlError) {
             console.warn("Failed to create signed url for gallery asset", urlError);
-            return { id: row.id, signedUrl: "" };
+            return { id: row.id, signedUrl: "", missing: isSupabaseStorageObjectMissingError(urlError) };
           }
-          return { id: row.id, signedUrl: urlData?.signedUrl ?? "" };
+          return { id: row.id, signedUrl: urlData?.signedUrl ?? "", missing: false };
         })
       );
+      const missingAssetIds = signedUrls.filter((entry) => entry.missing).map((entry) => entry.id);
+      if (missingAssetIds.length > 0) {
+        const { error: cleanupError } = await supabase
+          .from("gallery_assets")
+          .delete()
+          .eq("gallery_id", id)
+          .in("id", missingAssetIds);
+        if (cleanupError) {
+          console.warn("GalleryClientPreview: Failed to clean up missing gallery assets", cleanupError);
+        }
+      }
+
+      const missingIds = new Set(missingAssetIds);
       const signedUrlById = new Map(signedUrls.map((entry) => [entry.id, entry.signedUrl]));
 
-      return readyRows.map((row) => {
+      return readyRows.filter((row) => !missingIds.has(row.id)).map((row) => {
         const metadata = row.metadata ?? {};
         const originalName = typeof metadata.originalName === "string" ? metadata.originalName : null;
         const setId = typeof metadata.setId === "string" ? metadata.setId : null;

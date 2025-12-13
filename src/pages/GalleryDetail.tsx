@@ -53,7 +53,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { cn, getUserLocale } from "@/lib/utils";
-import { buildGalleryProofPath, convertImageToProof, GALLERY_ASSETS_BUCKET, getStorageBasename } from "@/lib/galleryAssets";
+import {
+  buildGalleryProofPath,
+  convertImageToProof,
+  GALLERY_ASSETS_BUCKET,
+  getStorageBasename,
+  isSupabaseStorageObjectMissingError,
+} from "@/lib/galleryAssets";
 import { shouldKeepLocalUploadItem } from "@/lib/galleryUploadQueue";
 import {
   CalendarRange,
@@ -535,27 +541,47 @@ export default function GalleryDetail() {
       const signedUrlExpiresAt = now + GALLERY_ASSET_SIGNED_URL_TTL_SECONDS * 1000 - 15_000;
       const signedUrls = await Promise.all(
         rows.map(async (row) => {
-          if (!row.storage_path_web) return { id: row.id, signedUrl: "" };
+          if (!row.storage_path_web) return { id: row.id, signedUrl: "", missing: false };
           const cached = signedUrlCacheRef.current.get(row.id);
           if (cached && cached.expiresAt > now) {
-            return { id: row.id, signedUrl: cached.url };
+            return { id: row.id, signedUrl: cached.url, missing: false };
           }
           const { data: urlData, error: urlError } = await supabase.storage
             .from(GALLERY_ASSETS_BUCKET)
             .createSignedUrl(row.storage_path_web, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
           if (urlError) {
             console.warn("Failed to create signed url for gallery asset", urlError);
-            return { id: row.id, signedUrl: "" };
+            return {
+              id: row.id,
+              signedUrl: "",
+              missing: row.status === "ready" && isSupabaseStorageObjectMissingError(urlError),
+            };
           }
           if (urlData?.signedUrl) {
             signedUrlCacheRef.current.set(row.id, { url: urlData.signedUrl, expiresAt: signedUrlExpiresAt });
           }
-          return { id: row.id, signedUrl: urlData.signedUrl };
+          return { id: row.id, signedUrl: urlData.signedUrl, missing: false };
         })
       );
+      const missingAssetIds = signedUrls.filter((entry) => entry.missing).map((entry) => entry.id);
+      if (missingAssetIds.length > 0) {
+        missingAssetIds.forEach((assetId) => signedUrlCacheRef.current.delete(assetId));
+        const { error: cleanupError } = await supabase
+          .from("gallery_assets")
+          .delete()
+          .eq("gallery_id", id)
+          .in("id", missingAssetIds);
+        if (cleanupError) {
+          console.warn("Failed to clean up missing gallery assets", cleanupError);
+        } else {
+          queryClient.invalidateQueries({ queryKey: ["gallery_storage_usage", id] });
+        }
+      }
+
+      const missingIds = new Set(missingAssetIds);
       const signedUrlById = new Map(signedUrls.map((entry) => [entry.id, entry.signedUrl]));
 
-      return rows.map((row) => {
+      return rows.filter((row) => !missingIds.has(row.id)).map((row) => {
         const metadata = row.metadata ?? {};
         const originalName = typeof metadata.originalName === "string" ? metadata.originalName : null;
         const setId = typeof metadata.setId === "string" ? metadata.setId : null;
@@ -1860,31 +1886,39 @@ export default function GalleryDetail() {
     async (assetIds: string[]) => {
       if (!id || assetIds.length === 0) return;
 
-      const { data: rows, error: fetchError } = await supabase
-        .from("gallery_assets")
-        .select("id,storage_path_web,storage_path_original")
-        .eq("gallery_id", id)
-        .in("id", assetIds);
-      if (fetchError) throw fetchError;
+      try {
+        const { data: rows, error: fetchError } = await supabase
+          .from("gallery_assets")
+          .select("id,storage_path_web,storage_path_original")
+          .eq("gallery_id", id)
+          .in("id", assetIds);
+        if (fetchError) throw fetchError;
 
-      const storagePaths = (rows ?? [])
-        .flatMap((row) => [row.storage_path_web, row.storage_path_original])
-        .filter((value): value is string => typeof value === "string" && value.length > 0);
+        const storagePaths = (rows ?? [])
+          .flatMap((row) => [row.storage_path_web, row.storage_path_original])
+          .filter((value): value is string => typeof value === "string" && value.length > 0);
 
-      if (storagePaths.length > 0) {
-        const { error: storageError } = await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove(storagePaths);
-        if (storageError) throw storageError;
+        const { error: deleteError } = await supabase
+          .from("gallery_assets")
+          .delete()
+          .eq("gallery_id", id)
+          .in("id", assetIds);
+        if (deleteError) throw deleteError;
+
+        queryClient.invalidateQueries({ queryKey: ["gallery_assets", id] });
+        queryClient.invalidateQueries({ queryKey: ["gallery_storage_usage", id] });
+
+        if (storagePaths.length > 0) {
+          const { error: storageError } = await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove(storagePaths);
+          if (storageError) {
+            console.warn("Failed to remove storage objects for deleted assets", storageError);
+          }
+        }
+      } catch (error) {
+        queryClient.invalidateQueries({ queryKey: ["gallery_assets", id] });
+        queryClient.invalidateQueries({ queryKey: ["gallery_storage_usage", id] });
+        throw error;
       }
-
-      const { error: deleteError } = await supabase
-        .from("gallery_assets")
-        .delete()
-        .eq("gallery_id", id)
-        .in("id", assetIds);
-      if (deleteError) throw deleteError;
-
-      queryClient.invalidateQueries({ queryKey: ["gallery_assets", id] });
-      queryClient.invalidateQueries({ queryKey: ["gallery_storage_usage", id] });
     },
     [id, queryClient]
   );
@@ -1957,7 +1991,25 @@ export default function GalleryDetail() {
         const { data: urlData, error } = await supabase.storage
           .from(GALLERY_ASSETS_BUCKET)
           .createSignedUrl(current.storagePathWeb, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
-        if (error || !urlData?.signedUrl) return;
+        if (error || !urlData?.signedUrl) {
+          if (error && isSupabaseStorageObjectMissingError(error)) {
+            signedUrlCacheRef.current.delete(photoId);
+            setUploadQueue((prev) => prev.filter((item) => item.id !== photoId));
+            if (id) {
+              const { error: cleanupError } = await supabase
+                .from("gallery_assets")
+                .delete()
+                .eq("gallery_id", id)
+                .in("id", [photoId]);
+              if (cleanupError) {
+                console.warn("Failed to clean up missing gallery asset after preview error", cleanupError);
+              }
+              queryClient.invalidateQueries({ queryKey: ["gallery_assets", id] });
+              queryClient.invalidateQueries({ queryKey: ["gallery_storage_usage", id] });
+            }
+          }
+          return;
+        }
 
         signedUrlCacheRef.current.set(photoId, {
           url: urlData.signedUrl,
@@ -1969,7 +2021,7 @@ export default function GalleryDetail() {
         signedUrlRefreshInFlightRef.current.delete(photoId);
       });
     },
-    []
+    [id, queryClient]
   );
 
   const isBatchSelectionMode =

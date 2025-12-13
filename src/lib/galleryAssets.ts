@@ -98,6 +98,15 @@ export const getStorageBasename = (path: string) => {
   return parts[parts.length - 1] || path;
 };
 
+export const isSupabaseStorageObjectMissingError = (error: unknown) => {
+  if (!error || typeof error !== "object") return false;
+  const statusCode = (error as { statusCode?: number }).statusCode;
+  if (statusCode === 404) return true;
+  const message = (error as { message?: unknown }).message;
+  if (typeof message !== "string") return false;
+  return message.toLowerCase().includes("not found");
+};
+
 export const convertImageToProof = async (
   file: File,
   options?: { longEdgePx?: number; webpQuality?: number }
@@ -137,4 +146,3 @@ export const convertImageToProof = async (
     decoded.cleanup();
   }
 };
-

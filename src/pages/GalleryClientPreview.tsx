@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,7 +102,6 @@ const parseCountValue = (value: unknown): number | null => {
 
 export default function GalleryClientPreview() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { t } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
   const i18nToast = useI18nToast();
@@ -124,14 +123,6 @@ export default function GalleryClientPreview() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
-
-  const handleExit = useCallback(() => {
-    if (id) {
-      navigate(`/galleries/${id}`);
-      return;
-    }
-    navigate(-1);
-  }, [id, navigate]);
 
   const { data: gallery, isLoading: galleryLoading } = useQuery({
     queryKey: ["gallery", id],
@@ -319,6 +310,10 @@ export default function GalleryClientPreview() {
       currentCount: ruleCounts[rule.id] ?? 0,
     }));
   }, [selectionRulesBase, ruleCounts]);
+
+  const selectionRuleTitleById = useMemo(() => {
+    return new Map(selectionRules.map((rule) => [rule.id, rule.title] as const));
+  }, [selectionRules]);
 
   const defaultSetName = t("sessionDetail.gallery.sets.defaultName");
   const resolvedSets = useMemo<GallerySetRow[]>(() => {
@@ -875,22 +870,6 @@ export default function GalleryClientPreview() {
                 <Grid3x3 size={16} />
               </button>
             </div>
-
-	            <button
-	              type="button"
-	              onClick={handleExit}
-	              className="hidden md:inline-flex bg-black text-white px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors"
-	            >
-	              {t("sessionDetail.gallery.clientPreview.actions.close")}
-	            </button>
-	            <button
-	              type="button"
-	              onClick={handleExit}
-	              className="md:hidden w-11 h-11 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-sm active:scale-95"
-	              aria-label={t("sessionDetail.gallery.clientPreview.actions.close")}
-	            >
-	              <X size={18} />
-	            </button>
 	          </div>
 	        </div>
 
@@ -918,6 +897,7 @@ export default function GalleryClientPreview() {
 	          <div className="flex items-center gap-2">
 	            <button
 	              type="button"
+	              data-touch-target="compact"
               onClick={() => setActiveFilter("all")}
               className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
                 activeFilter === "all"
@@ -930,6 +910,7 @@ export default function GalleryClientPreview() {
 
 	            <button
 	              type="button"
+	              data-touch-target="compact"
 	              onClick={() => setActiveFilter("starred")}
 	              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all border ${
 	                activeFilter === "starred"
@@ -954,6 +935,7 @@ export default function GalleryClientPreview() {
                 <div className="w-px h-4 bg-gray-300 mx-1" />
                 <button
                   type="button"
+                  data-touch-target="compact"
                   onClick={() => setActiveFilter("favorites")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
                     activeFilter === "favorites"
@@ -969,6 +951,7 @@ export default function GalleryClientPreview() {
 
             <button
               type="button"
+              data-touch-target="compact"
               onClick={() => setActiveFilter("unselected")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
                 activeFilter === "unselected"
@@ -991,6 +974,7 @@ export default function GalleryClientPreview() {
                   <button
                     key={rule.id}
                     type="button"
+                    data-touch-target="compact"
                     onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
                     className={`
                       relative flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all shrink-0
@@ -1034,6 +1018,9 @@ export default function GalleryClientPreview() {
                   const isMenuOpen = activeMenuId === photo.id;
                   const selectionIds = photo.selections;
                   const hasSelections = selectionIds.length > 0;
+                  const resolvedSelectionIds = selectionIds.filter((selectionId) => selectionRuleTitleById.has(selectionId));
+                  const visibleSelectionIds = resolvedSelectionIds.slice(0, 2);
+                  const remainingSelectionCount = Math.max(0, resolvedSelectionIds.length - visibleSelectionIds.length);
 
                   return (
                     <div
@@ -1192,26 +1179,32 @@ export default function GalleryClientPreview() {
                                   </div>
                                 </div>
                               ) : null}
-                            </div>
-                          ) : null}
+	                            </div>
+	                          ) : null}
 
-	                          <div className="hidden md:flex flex-col gap-1.5 items-start">
-	                            {selectionIds.map((selectionId) => {
-	                              const rule = selectionRules.find((rule) => rule.id === selectionId);
-	                              if (!rule) return null;
-	                              return (
-                                <div
-                                  key={selectionId}
-                                  className="bg-white/90 backdrop-blur-md text-gray-800 text-[9px] font-bold px-2 py-1 rounded-md shadow-sm border border-white/50 animate-in slide-in-from-left-2 duration-300"
-                                >
-                                  {rule.title}
-                                </div>
-                              );
-                            })}
-                          </div>
+	                          {visibleSelectionIds.length > 0 ? (
+	                            <div
+	                              className="flex flex-col gap-1.5 items-start"
+	                              data-testid={`gallery-preview-selection-chips-${photo.id}`}
+	                            >
+	                              {visibleSelectionIds.map((selectionId) => (
+	                                <div
+	                                  key={selectionId}
+	                                  className="bg-gray-900/80 backdrop-blur-md text-white text-[11px] md:text-xs font-semibold px-2.5 py-1.5 rounded-md shadow-sm border border-white/10 max-w-full truncate animate-in slide-in-from-left-2 duration-300"
+	                                >
+	                                  {selectionRuleTitleById.get(selectionId)}
+	                                </div>
+	                              ))}
+	                              {remainingSelectionCount > 0 ? (
+	                                <div className="bg-gray-900/80 backdrop-blur-md text-white text-[11px] md:text-xs font-semibold px-2.5 py-1.5 rounded-md shadow-sm border border-white/10 animate-in slide-in-from-left-2 duration-300">
+	                                  +{remainingSelectionCount}
+	                                </div>
+	                              ) : null}
+	                            </div>
+	                          ) : null}
                         </div>
 
-                        <div className="absolute top-2 right-2 w-full p-2 flex justify-end gap-2 z-20 pointer-events-none">
+                        <div className="absolute top-2 right-2 flex items-center gap-2 z-20 pointer-events-none">
                           {photo.isStarred ? (
                             <div className="w-8 h-8 rounded-full bg-amber-400 text-white flex items-center justify-center shadow-md animate-in zoom-in duration-300 pointer-events-auto">
                               <Star size={14} fill="currentColor" />

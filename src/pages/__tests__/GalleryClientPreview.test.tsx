@@ -139,6 +139,73 @@ describe("GalleryClientPreview", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/galleries/gallery-123");
   });
 
+  it("shows up to 2 selection chips and summarizes the rest", async () => {
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            branding: {
+              selectionSettings: { enabled: true, allowFavorites: true },
+              selectionTemplate: [
+                { part: "Large Print", min: 0, max: 10, required: false },
+                { part: "Test", min: 0, max: 10, required: false },
+                { part: "Album", min: 0, max: 10, required: false },
+              ],
+            },
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              status: "ready",
+              metadata: { originalName: "a.jpg", setId: "set-1", starred: false },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+
+    const addButtons = await screen.findAllByRole("button", { name: /^(add|ekle)$/i });
+    const addButton =
+      addButtons.find((button) => /add|ekle/i.test(button.textContent ?? "")) ?? addButtons[0];
+    fireEvent.click(addButton);
+
+    const menuTitle = await screen.findByText(/add to lists|listelere ekle/i);
+    const menuContainer = menuTitle.closest("div")?.parentElement;
+    expect(menuContainer).toBeTruthy();
+
+    fireEvent.click(within(menuContainer as HTMLElement).getByRole("button", { name: /large print/i }));
+    fireEvent.click(within(menuContainer as HTMLElement).getByRole("button", { name: /^test/i }));
+    fireEvent.click(within(menuContainer as HTMLElement).getByRole("button", { name: /album/i }));
+
+    const chipsContainer = await screen.findByTestId("gallery-preview-selection-chips-asset-1");
+    expect(within(chipsContainer).getByText("Large Print")).toBeInTheDocument();
+    expect(within(chipsContainer).getByText("Test")).toBeInTheDocument();
+    expect(within(chipsContainer).getByText("+1")).toBeInTheDocument();
+    expect(within(chipsContainer).queryByText("Album")).not.toBeInTheDocument();
+  });
+
   it("prefers coverAssetId for the hero cover image", async () => {
     supabaseMock.storage.from.mockImplementation(() => ({
       createSignedUrl: jest.fn().mockImplementation((path: string) => {

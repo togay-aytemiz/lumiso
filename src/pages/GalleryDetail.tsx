@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
@@ -292,6 +293,7 @@ export default function GalleryDetail() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { t } = useTranslation("pages");
   const { t: tForms } = useTranslation("forms");
   const { toast } = useToast();
@@ -1564,9 +1566,13 @@ export default function GalleryDetail() {
   const handlePreview = useCallback(() => {
     if (!id) return;
     const previewPath = `/galleries/${id}/preview`;
+    if (isMobile) {
+      navigate(previewPath);
+      return;
+    }
     const win = window.open(previewPath, "_blank", "noopener,noreferrer");
     win?.focus?.();
-  }, [id]);
+  }, [id, isMobile, navigate]);
 
   const expectedGalleryNameForDelete = useMemo(() => title.trim(), [title]);
   const canConfirmGalleryDelete =

@@ -685,6 +685,8 @@
 	        "createdDesc": "Yükleme ve paylaşmaya başlayabilirsin.",
         "errorTitle": "Galeri oluşturulamadı",
         "errorDesc": "Bir sorun oluştu. Lütfen tekrar dene.",
+        "starUpdateFailedTitle": "Öneri kaydedilemedi",
+        "starUpdateFailedDesc": "Lütfen tekrar deneyin.",
         "unsupportedFilesTitle": "Bazı dosyalar atlandı",
         "unsupportedFilesDesc_one": "Sadece görseller destekleniyor. 1 dosya eklenmedi.",
         "unsupportedFilesDesc_other": "Sadece görseller destekleniyor. {{count}} dosya eklenmedi.",
@@ -826,11 +828,15 @@
           "gridSmall": "Küçük grid"
         },
         "filters": {
+          "label": "Görünüm:",
           "all": "Tümü",
           "starred": "Fotoğrafçı Önerisi",
           "starredShort": "Öneri",
           "favorites": "Favoriler",
           "unselected": "Seçilmeyenler"
+        },
+        "tasks": {
+          "selectedCount": "{{count}} seçildi"
         },
         "labels": {
           "add": "Ekle",

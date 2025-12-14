@@ -665,16 +665,18 @@
 	          }
 	        }
 	      },
-	      "toast": {
-	        "createdTitle": "Gallery created",
-	        "createdDesc": "You can start uploading and sharing.",
-        "errorTitle": "Could not create gallery",
-        "errorDesc": "Something went wrong. Try again.",
-        "unsupportedFilesTitle": "Some files were skipped",
-        "unsupportedFilesDesc_one": "1 file wasn't added because only images are supported right now.",
-        "unsupportedFilesDesc_other": "{{count}} files weren't added because only images are supported right now.",
-        "updatedTitle": "Gallery saved",
-        "updatedDesc": "Changes applied.",
+        "toast": {
+          "createdTitle": "Gallery created",
+          "createdDesc": "You can start uploading and sharing.",
+          "errorTitle": "Could not create gallery",
+          "errorDesc": "Something went wrong. Try again.",
+          "starUpdateFailedTitle": "Couldn't save recommendation",
+          "starUpdateFailedDesc": "Please try again.",
+          "unsupportedFilesTitle": "Some files were skipped",
+          "unsupportedFilesDesc_one": "1 file wasn't added because only images are supported right now.",
+          "unsupportedFilesDesc_other": "{{count}} files weren't added because only images are supported right now.",
+          "updatedTitle": "Gallery saved",
+          "updatedDesc": "Changes applied.",
         "saveCta": "Save"
       },
       "form": {
@@ -811,11 +813,15 @@
           "gridSmall": "Small grid"
         },
         "filters": {
+          "label": "View:",
           "all": "All",
           "starred": "Photographer's choice",
           "starredShort": "Pick",
           "favorites": "Favorites",
           "unselected": "Unselected"
+        },
+        "tasks": {
+          "selectedCount": "{{count}} selected"
         },
         "labels": {
           "add": "Add",

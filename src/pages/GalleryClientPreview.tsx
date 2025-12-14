@@ -339,6 +339,7 @@ export default function GalleryClientPreview() {
       },
     ];
   }, [defaultSetName, sets]);
+  const showSetTabs = resolvedSets.length > 1;
 
   useEffect(() => {
     if (!resolvedSets.length) return;
@@ -367,6 +368,11 @@ export default function GalleryClientPreview() {
       };
     });
   }, [favoritePhotoIds, favoritesEnabled, photoSelectionsById, photosBase, resolvedSets]);
+
+  const activeSetLabel = useMemo(() => {
+    const active = activeSetId ? resolvedSets.find((set) => set.id === activeSetId) ?? null : null;
+    return (active ?? resolvedSets[0] ?? null)?.name ?? defaultSetName;
+  }, [activeSetId, defaultSetName, resolvedSets]);
 
   const coverUrl = useMemo(() => {
     const coverAssetId = typeof brandingData.coverAssetId === "string" ? brandingData.coverAssetId : "";
@@ -749,6 +755,11 @@ export default function GalleryClientPreview() {
     return resolvedPhotos.filter((photo) => photo.setId === activeSetId && photo.isStarred).length;
   }, [activeSetId, resolvedPhotos]);
 
+  const currentSetPhotoCount = useMemo(() => {
+    if (!activeSetId) return resolvedPhotos.length;
+    return resolvedPhotos.filter((photo) => photo.setId === activeSetId).length;
+  }, [activeSetId, resolvedPhotos]);
+
   const totalSelectedInSet = useMemo(() => {
     if (!activeSetId) return 0;
     return resolvedPhotos.filter((photo) => photo.setId === activeSetId && photo.selections.length > 0).length;
@@ -852,8 +863,8 @@ export default function GalleryClientPreview() {
 	            scrolled ? "h-16 md:h-20" : "h-16 md:h-32"
 	          }`}
 	        >
-	          {/* Left: Branding & Sets */}
-	          <div className="flex items-center gap-12 min-w-0">
+          {/* Left: Branding & Sets */}
+          <div className={`flex items-center min-w-0 ${showSetTabs ? "gap-12" : "gap-4"}`}>
 		            <div
 		              className={`font-playfair font-bold tracking-tight text-gray-900 transition-all duration-300 truncate ${
 		                scrolled ? "text-lg md:text-xl" : "text-lg md:text-3xl"
@@ -863,22 +874,24 @@ export default function GalleryClientPreview() {
 	              {heroTitle}
 	            </div>
 
-	            <div className="hidden md:flex items-center gap-8 overflow-x-auto no-scrollbar">
-	              {resolvedSets.map((set) => (
-	                <button
-	                  key={set.id}
-	                  type="button"
-                  onClick={() => setActiveSetId(set.id)}
-                  className={`text-sm font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${
-                    activeSetId === set.id
-                      ? "text-gray-900 border-b-2 border-black pb-1"
-                      : "text-gray-400 hover:text-gray-600"
-                  }`}
-                >
-                  {set.name}
-                </button>
-              ))}
-            </div>
+              {showSetTabs ? (
+	              <div className="hidden md:flex items-center gap-8 overflow-x-auto no-scrollbar">
+	                {resolvedSets.map((set) => (
+	                  <button
+	                    key={set.id}
+	                    type="button"
+                    onClick={() => setActiveSetId(set.id)}
+                    className={`text-sm font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${
+                      activeSetId === set.id
+                        ? "text-gray-900 border-b-2 border-black pb-1"
+                        : "text-gray-400 hover:text-gray-600"
+                    }`}
+                  >
+                    {set.name}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           {/* Right: Actions */}
@@ -944,136 +957,178 @@ export default function GalleryClientPreview() {
         </div>
 
 	        {/* ROW 2: Sets (Mobile Only) */}
-	        <div className="md:hidden w-full overflow-x-auto no-scrollbar border-t border-gray-100 bg-white">
-	          <div className="flex items-center px-4 min-w-max h-12 gap-8">
-	            {resolvedSets.map((set) => (
+          {showSetTabs ? (
+	          <div className="md:hidden w-full overflow-x-auto no-scrollbar border-t border-gray-100 bg-white">
+	            <div className="flex items-center px-4 min-w-max h-12 gap-8">
+	              {resolvedSets.map((set) => (
+	                <button
+	                  key={set.id}
+	                  type="button"
+	                  onClick={() => setActiveSetId(set.id)}
+	                  className={`text-sm font-bold uppercase tracking-widest transition-all h-full border-b-2 ${
+	                    activeSetId === set.id ? "text-gray-900 border-black" : "text-gray-400 border-transparent"
+	                  }`}
+	                >
+	                  {set.name}
+	                </button>
+	              ))}
+	            </div>
+	          </div>
+          ) : null}
+
+	        {/* ROW 3: Tasks */}
+	        {selectionRules.length > 0 ? (
+	          <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12">
+	            <div className="flex items-stretch gap-4 min-w-max">
 	              <button
-	                key={set.id}
 	                type="button"
-	                onClick={() => setActiveSetId(set.id)}
-	                className={`text-sm font-bold uppercase tracking-widest transition-all h-full border-b-2 ${
-	                  activeSetId === set.id ? "text-gray-900 border-black" : "text-gray-400 border-transparent"
+	                data-touch-target="compact"
+	                onClick={() => setActiveFilter("all")}
+	                className={`w-[220px] shrink-0 rounded-2xl border bg-white px-5 py-4 text-left shadow-sm transition-colors ${
+	                  activeFilter === "all"
+	                    ? "border-gray-900"
+	                    : "border-gray-200 hover:border-gray-300"
 	                }`}
 	              >
-	                {set.name}
+	                <p className="text-xs font-bold uppercase tracking-widest text-gray-500 truncate">
+	                  {activeSetLabel}
+	                </p>
+	                <div className="mt-4 flex items-center gap-3">
+	                  <LayoutGrid size={18} className="text-gray-900" aria-hidden="true" />
+	                  <span className="text-sm font-bold text-gray-900">
+	                    {t("sessionDetail.gallery.clientPreview.filters.all")}
+	                  </span>
+	                </div>
+	                <div className="mt-4 text-xs font-semibold text-gray-400">
+	                  {currentSetPhotoCount}
+	                </div>
 	              </button>
-	            ))}
+
+	              {selectionRules.map((rule) => {
+	                const isActive = activeFilter === rule.id;
+	                const isComplete = rule.currentCount >= rule.minCount;
+	                const targetCount = rule.maxCount ?? Math.max(1, rule.minCount);
+	                const progress = targetCount > 0 ? Math.min(1, rule.currentCount / targetCount) : 0;
+
+	                return (
+	                  <button
+	                    key={rule.id}
+	                    type="button"
+	                    data-touch-target="compact"
+	                    onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
+	                    className={`w-[240px] shrink-0 rounded-2xl border bg-white px-5 py-4 text-left shadow-sm transition-colors ${
+	                      isActive
+	                        ? "border-gray-900"
+	                        : isComplete
+	                          ? "border-emerald-200 hover:border-emerald-300"
+	                          : "border-gray-200 hover:border-gray-300"
+	                    }`}
+	                  >
+	                    <div className="flex items-start justify-between gap-3">
+	                      <p className="text-sm font-bold text-gray-900 truncate">{rule.title}</p>
+	                      <p className="text-xs font-bold text-gray-500 shrink-0">
+	                        {rule.currentCount}/{rule.maxCount ?? rule.minCount}
+	                      </p>
+	                    </div>
+
+	                    <div className="mt-3 flex items-center justify-between gap-3 text-xs text-gray-500">
+	                      <span className="truncate">
+	                        {t("sessionDetail.gallery.clientPreview.tasks.selectedCount", { count: rule.currentCount })}
+	                      </span>
+	                      {isComplete ? (
+	                        <span className="text-emerald-600 font-semibold">
+	                          <CheckCircle2 size={14} className="inline-block align-[-2px]" aria-hidden="true" />{" "}
+	                        </span>
+	                      ) : null}
+	                    </div>
+
+	                    <div className="mt-4 h-2 w-full rounded-full bg-gray-100 overflow-hidden">
+	                      <div className="h-full bg-brand-500" style={{ width: `${progress * 100}%` }} />
+	                    </div>
+	                  </button>
+	                );
+	              })}
+	            </div>
 	          </div>
-	        </div>
+	        ) : null}
 
-	        {/* ROW 3: Filters & Selection Tasks */}
+	        {/* ROW 4: Filters */}
 	        <div className="w-full border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm overflow-x-auto no-scrollbar py-3 px-4 md:px-12 flex items-center justify-between gap-6">
-	          {/* Left: Quick Filters */}
-	          <div className="flex items-center gap-2">
-	            <button
-	              type="button"
-	              data-touch-target="compact"
-              onClick={() => setActiveFilter("all")}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
-                activeFilter === "all"
-                  ? "bg-gray-900 text-white"
-                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-200"
-              }`}
-            >
-              {t("sessionDetail.gallery.clientPreview.filters.all")}
-            </button>
+	          <div className="flex items-center gap-3">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                {t("sessionDetail.gallery.clientPreview.filters.label")}
+              </span>
+	            <div className="flex items-center gap-2">
+	              <button
+	                type="button"
+	                data-touch-target="compact"
+                  onClick={() => setActiveFilter("all")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
+                    activeFilter === "all"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-500 hover:text-gray-900 hover:bg-gray-200"
+                  }`}
+                >
+                  {t("sessionDetail.gallery.clientPreview.filters.all")}
+                </button>
 
-	            <button
-	              type="button"
-	              data-touch-target="compact"
-	              onClick={() => setActiveFilter("starred")}
-	              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all border ${
-	                activeFilter === "starred"
-	                  ? "bg-amber-100 text-amber-700 border-amber-200 shadow-sm"
-	                  : "bg-white border-transparent text-gray-500 hover:text-amber-600 hover:bg-amber-50"
-	              }`}
-	            >
-	              <Star
-	                size={12}
-	                fill="currentColor"
-	                className={activeFilter === "starred" ? "text-amber-700" : "text-amber-400"}
-	              />
-	              <span className="md:hidden">{t("sessionDetail.gallery.clientPreview.filters.starredShort")}</span>
-	              <span className="hidden md:inline">{t("sessionDetail.gallery.clientPreview.filters.starred")}</span>
-	              {currentSetStarredCount > 0 ? (
-	                <span className="ml-0.5 opacity-60">({currentSetStarredCount})</span>
-	              ) : null}
-	            </button>
+	              <button
+	                type="button"
+	                data-touch-target="compact"
+	                onClick={() => setActiveFilter("starred")}
+	                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all border ${
+	                  activeFilter === "starred"
+	                    ? "bg-amber-100 text-amber-700 border-amber-200 shadow-sm"
+	                    : "bg-white border-transparent text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+	                }`}
+	              >
+	                <Star
+	                  size={12}
+	                  fill="currentColor"
+	                  className={activeFilter === "starred" ? "text-amber-700" : "text-amber-400"}
+	                />
+	                <span className="md:hidden">{t("sessionDetail.gallery.clientPreview.filters.starredShort")}</span>
+	                <span className="hidden md:inline">{t("sessionDetail.gallery.clientPreview.filters.starred")}</span>
+	                {currentSetStarredCount > 0 ? (
+	                  <span className="ml-0.5 opacity-60">({currentSetStarredCount})</span>
+	                ) : null}
+	              </button>
 
-            {favoritesEnabled ? (
-              <>
-                <div className="w-px h-4 bg-gray-300 mx-1" />
+                {favoritesEnabled ? (
+                  <>
+                    <div className="w-px h-4 bg-gray-300 mx-1" />
+                    <button
+                      type="button"
+                      data-touch-target="compact"
+                      onClick={() => setActiveFilter("favorites")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
+                        activeFilter === "favorites"
+                          ? "bg-red-50 text-red-600 border border-red-100"
+                          : "text-gray-500 hover:text-red-500"
+                      }`}
+                    >
+                      <Heart size={12} fill={activeFilter === "favorites" ? "currentColor" : "none"} />
+                      {t("sessionDetail.gallery.clientPreview.filters.favorites")}
+                    </button>
+                  </>
+                ) : null}
+
                 <button
                   type="button"
                   data-touch-target="compact"
-                  onClick={() => setActiveFilter("favorites")}
+                  onClick={() => setActiveFilter("unselected")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
-                    activeFilter === "favorites"
-                      ? "bg-red-50 text-red-600 border border-red-100"
-                      : "text-gray-500 hover:text-red-500"
+                    activeFilter === "unselected"
+                      ? "bg-gray-200 text-gray-900"
+                      : "text-gray-400 hover:text-gray-600"
                   }`}
                 >
-                  <Heart size={12} fill={activeFilter === "favorites" ? "currentColor" : "none"} />
-                  {t("sessionDetail.gallery.clientPreview.filters.favorites")}
+                  <CircleDashed size={12} />
+                  {t("sessionDetail.gallery.clientPreview.filters.unselected")}
                 </button>
-              </>
-            ) : null}
-
-            <button
-              type="button"
-              data-touch-target="compact"
-              onClick={() => setActiveFilter("unselected")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
-                activeFilter === "unselected"
-                  ? "bg-gray-200 text-gray-900"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <CircleDashed size={12} />
-              {t("sessionDetail.gallery.clientPreview.filters.unselected")}
-            </button>
-          </div>
-
-          {/* Right: Rules Progress */}
-          {selectionRules.length > 0 ? (
-            <div className="flex items-center gap-3">
-              {selectionRules.map((rule) => {
-                const isActive = activeFilter === rule.id;
-                const isComplete = rule.currentCount >= rule.minCount;
-                return (
-                  <button
-                    key={rule.id}
-                    type="button"
-                    data-touch-target="compact"
-                    onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
-                    className={`
-                      relative flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all shrink-0
-                      ${
-                        isActive
-                          ? "bg-brand-500 border-brand-500 text-white shadow-md"
-                          : "bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                      }
-                    `}
-                  >
-                    <div
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        isActive ? "bg-white" : isComplete ? "bg-green-500" : "bg-gray-300"
-                      }`}
-                    />
-                    <span>{rule.title}</span>
-                    <span
-                      className={`text-[9px] px-1 rounded ml-1 ${
-                        isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      {rule.currentCount}/{rule.maxCount || rule.minCount}
-                    </span>
-                  </button>
-                );
-              })}
+              </div>
             </div>
-          ) : null}
-        </div>
+          </div>
       </nav>
 
 	      {/* --- GALLERY SECTION --- */}

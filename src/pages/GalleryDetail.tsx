@@ -849,7 +849,7 @@ export default function GalleryDetail() {
     };
 
     void createDefaultSet();
-  }, [id, sets, defaultSetName, toast, queryClient]);
+  }, [id, sets, defaultSetName, toast, queryClient, t]);
 
   const resolvedSets = useMemo(() => {
     if (sets && sets.length > 0) return sets;
@@ -2006,11 +2006,96 @@ export default function GalleryDetail() {
     [uploadQueue, toast, t]
   );
 
-  const handleToggleStar = useCallback((id: string) => {
-    setUploadQueue((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, starred: !item.starred } : item))
-    );
-  }, []);
+  const updateGalleryAssetStarred = useCallback(
+    async ({ assetId, starred }: { assetId: string; starred: boolean }) => {
+      if (!id) return;
+      const { data: row, error: fetchError } = await supabase
+        .from("gallery_assets")
+        .select("metadata")
+        .eq("gallery_id", id)
+        .eq("id", assetId)
+        .maybeSingle();
+      if (fetchError) throw fetchError;
+
+      const rawMetadata = (row as { metadata?: unknown } | null)?.metadata ?? null;
+      const baseMetadata =
+        rawMetadata && typeof rawMetadata === "object" && !Array.isArray(rawMetadata)
+          ? (rawMetadata as Record<string, unknown>)
+          : {};
+      const nextMetadata = { ...baseMetadata, starred };
+
+      const { error: updateError } = await supabase
+        .from("gallery_assets")
+        .update({ metadata: nextMetadata })
+        .eq("gallery_id", id)
+        .eq("id", assetId);
+      if (updateError) throw updateError;
+    },
+    [id]
+  );
+
+  const updateGalleryAssetsStarred = useCallback(
+    async ({ assetIds, starred }: { assetIds: string[]; starred: boolean }) => {
+      if (!id || assetIds.length === 0) return;
+      const { data: rows, error: fetchError } = await supabase
+        .from("gallery_assets")
+        .select("id,metadata")
+        .eq("gallery_id", id)
+        .in("id", assetIds);
+      if (fetchError) throw fetchError;
+
+      const updates = (rows ?? []).map((row) => {
+        const typedRow = row as { id: string; metadata: unknown };
+        const rawMetadata = typedRow.metadata;
+        const baseMetadata =
+          rawMetadata && typeof rawMetadata === "object" && !Array.isArray(rawMetadata)
+            ? (rawMetadata as Record<string, unknown>)
+            : {};
+        return {
+          id: typedRow.id,
+          gallery_id: id,
+          metadata: { ...baseMetadata, starred },
+        };
+      });
+
+      if (updates.length === 0) return;
+      const { error: upsertError } = await supabase.from("gallery_assets").upsert(updates, { onConflict: "id" });
+      if (upsertError) throw upsertError;
+    },
+    [id]
+  );
+
+  const handleToggleStar = useCallback(
+    (assetId: string) => {
+      const current = uploadQueueRef.current.find((item) => item.id === assetId);
+      if (!current) return;
+      const nextStarred = !current.starred;
+
+      setUploadQueue((prev) =>
+        prev.map((item) => (item.id === assetId ? { ...item, starred: nextStarred } : item))
+      );
+
+      if (!id || current.status !== "done") return;
+
+      void (async () => {
+        try {
+          await updateGalleryAssetStarred({ assetId, starred: nextStarred });
+          queryClient.invalidateQueries({ queryKey: ["gallery_assets", id] });
+          queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_photos", id] });
+        } catch (error) {
+          setUploadQueue((prev) =>
+            prev.map((item) => (item.id === assetId ? { ...item, starred: current.starred } : item))
+          );
+          toast({
+            title: t("sessionDetail.gallery.toast.starUpdateFailedTitle"),
+            description: t("sessionDetail.gallery.toast.starUpdateFailedDesc"),
+            variant: "destructive",
+          });
+        }
+      })();
+    },
+    [id, queryClient, toast, t, updateGalleryAssetStarred]
+  );
 
   const deleteGalleryAssets = useCallback(
     async (assetIds: string[]) => {
@@ -2470,11 +2555,42 @@ export default function GalleryDetail() {
 
   const handleBatchStar = useCallback(() => {
     if (selectedBatchIds.size === 0) return;
-    setUploadQueue((prev) =>
-      prev.map((item) => (selectedBatchIds.has(item.id) ? { ...item, starred: true } : item))
-    );
+
+    const idsToStar = Array.from(selectedBatchIds);
+    const previousStarredById = new Map<string, boolean>();
+    const persistedIds = idsToStar.filter((assetId) => {
+      const current = uploadQueueRef.current.find((item) => item.id === assetId);
+      if (!current) return false;
+      previousStarredById.set(assetId, Boolean(current.starred));
+      return current.status === "done";
+    });
+
+    setUploadQueue((prev) => prev.map((item) => (selectedBatchIds.has(item.id) ? { ...item, starred: true } : item)));
     setSelectedBatchIds(new Set());
-  }, [selectedBatchIds]);
+
+    if (!id || persistedIds.length === 0) return;
+
+    void (async () => {
+      try {
+        await updateGalleryAssetsStarred({ assetIds: persistedIds, starred: true });
+        queryClient.invalidateQueries({ queryKey: ["gallery_assets", id] });
+        queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_photos", id] });
+      } catch (error) {
+        setUploadQueue((prev) =>
+          prev.map((item) => {
+            const previous = previousStarredById.get(item.id);
+            if (previous == null) return item;
+            return { ...item, starred: previous };
+          })
+        );
+        toast({
+          title: t("sessionDetail.gallery.toast.starUpdateFailedTitle"),
+          description: t("sessionDetail.gallery.toast.starUpdateFailedDesc"),
+          variant: "destructive",
+        });
+      }
+    })();
+  }, [id, queryClient, selectedBatchIds, t, toast, updateGalleryAssetsStarred]);
 
   const requestBatchDelete = useCallback(() => {
     if (selectedBatchIds.size === 0) return;

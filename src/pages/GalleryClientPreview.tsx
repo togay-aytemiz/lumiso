@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/components/SelectionTemplateSection";
 import { GalleryWatermarkOverlay } from "@/components/galleries/GalleryWatermarkOverlay";
 import { Lightbox } from "@/components/galleries/Lightbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { GALLERY_ASSETS_BUCKET, getStorageBasename, isSupabaseStorageObjectMissingError } from "@/lib/galleryAssets";
 import { parseGalleryWatermarkFromBranding } from "@/lib/galleryWatermark";
 import { useI18nToast } from "@/lib/toastHelpers";
@@ -375,6 +376,16 @@ export default function GalleryClientPreview() {
   }, [selectionRules]);
 
   const defaultSetName = t("sessionDetail.gallery.sets.defaultName");
+  const allFilterLabelLower = useMemo(() => {
+    const allLabel = t("sessionDetail.gallery.clientPreview.filters.all");
+    return allLabel.toLocaleLowerCase(i18n.language || "en");
+  }, [i18n.language, t]);
+  const defaultSetLabel = useMemo(() => `${defaultSetName} (${allFilterLabelLower})`, [allFilterLabelLower, defaultSetName]);
+  const resolveSetLabel = useCallback(
+    (label: string) => (label === defaultSetName ? defaultSetLabel : label),
+    [defaultSetLabel, defaultSetName]
+  );
+
   const resolvedSets = useMemo<GallerySetRow[]>(() => {
     if (sets && sets.length > 0) return sets;
     return [
@@ -418,8 +429,9 @@ export default function GalleryClientPreview() {
 
   const activeSetLabel = useMemo(() => {
     const active = activeSetId ? resolvedSets.find((set) => set.id === activeSetId) ?? null : null;
-    return (active ?? resolvedSets[0] ?? null)?.name ?? defaultSetName;
-  }, [activeSetId, defaultSetName, resolvedSets]);
+    const label = (active ?? resolvedSets[0] ?? null)?.name ?? defaultSetName;
+    return resolveSetLabel(label);
+  }, [activeSetId, defaultSetName, resolveSetLabel, resolvedSets]);
 
   const coverUrl = useMemo(() => {
     const coverAssetId = typeof brandingData.coverAssetId === "string" ? brandingData.coverAssetId : "";
@@ -495,15 +507,6 @@ export default function GalleryClientPreview() {
 
     return () => observer.disconnect();
   }, [filteredPhotos.length, visibleCount]);
-
-  // Click Outside to Close Menus
-  useEffect(() => {
-    const handleClickOutside = () => setActiveMenuId(null);
-    if (activeMenuId) {
-      window.addEventListener("click", handleClickOutside);
-    }
-    return () => window.removeEventListener("click", handleClickOutside);
-  }, [activeMenuId]);
 
   const visiblePhotos = filteredPhotos.slice(0, visibleCount);
 
@@ -985,7 +988,7 @@ export default function GalleryClientPreview() {
                         : "text-gray-400 hover:text-gray-600"
                     }`}
                   >
-                    {set.name}
+                    {resolveSetLabel(set.name)}
                   </button>
                 ))}
               </div>
@@ -1059,7 +1062,7 @@ export default function GalleryClientPreview() {
 	                    activeSetId === set.id ? "text-gray-900 border-black" : "text-gray-400 border-transparent"
 	                  }`}
 	                >
-	                  {set.name}
+	                  {resolveSetLabel(set.name)}
 	                </button>
 	              ))}
 	            </div>
@@ -1291,118 +1294,124 @@ export default function GalleryClientPreview() {
 	                                {hasSelections ? <Check size={16} strokeWidth={3} /> : <ListPlus size={18} />}
 	                              </button>
 
-	                              <button
-	                                type="button"
-	                                onClick={(e) => {
-	                                  e.stopPropagation();
-	                                  setActiveMenuId(isMenuOpen ? null : photo.id);
-	                                }}
-	                                className={`hidden md:flex h-8 px-3 rounded-full items-center gap-2 shadow-sm transition-all duration-200 backdrop-blur-md border border-white/20
-	                                  ${
-	                                    isMenuOpen
-	                                      ? "bg-white text-gray-900 shadow-xl"
-	                                      : "bg-black/40 text-white hover:bg-white hover:text-gray-900"
-	                                  }
-	                                  ${hasSelections ? "bg-brand-500 text-white !border-brand-400" : ""}
-	                                `}
+	                              <Popover
+	                                open={isMenuOpen}
+	                                onOpenChange={(open) => setActiveMenuId(open ? photo.id : null)}
 	                              >
-	                                {hasSelections ? <Check size={14} strokeWidth={3} /> : <ListPlus size={14} />}
-	                                <span className="text-[10px] font-bold uppercase tracking-wide">
-	                                  {hasSelections
-	                                    ? t("sessionDetail.gallery.clientPreview.labels.selected")
-	                                    : t("sessionDetail.gallery.clientPreview.labels.add")}
-	                                </span>
-	                              </button>
+	                                <PopoverTrigger asChild>
+	                                  <button
+	                                    type="button"
+	                                    onClick={(e) => {
+	                                      e.stopPropagation();
+	                                    }}
+	                                    className={`hidden md:flex h-8 px-3 rounded-full items-center gap-2 shadow-sm transition-all duration-200 backdrop-blur-md border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
+	                                      hasSelections
+	                                        ? "bg-brand-500 text-white border-brand-400 hover:bg-brand-600"
+	                                        : isMenuOpen
+	                                          ? "bg-white text-gray-900 border-gray-200 shadow-xl"
+	                                          : "bg-black/40 text-white border-white/20 hover:bg-white hover:text-gray-900"
+	                                    }`}
+	                                  >
+	                                    {hasSelections ? <Check size={14} strokeWidth={3} /> : <ListPlus size={14} />}
+	                                    <span className="text-[10px] font-bold uppercase tracking-wide">
+	                                      {hasSelections
+	                                        ? t("sessionDetail.gallery.clientPreview.labels.selected")
+	                                        : t("sessionDetail.gallery.clientPreview.labels.add")}
+	                                    </span>
+	                                  </button>
+	                                </PopoverTrigger>
 
-                              {isMenuOpen ? (
-                                <div
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="hidden md:block absolute left-0 top-10 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-[100] animate-in fade-in zoom-in-95 duration-150 origin-top-left cursor-default"
-                                >
-                                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-50">
-                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                                      {t("sessionDetail.gallery.clientPreview.labels.addToLists")}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => setActiveMenuId(null)}
-                                      className="text-gray-400 hover:text-gray-600 bg-gray-50 p-1 rounded-full hover:bg-gray-100 transition-colors"
-                                      aria-label={t("sessionDetail.gallery.clientPreview.actions.closeMenu")}
-                                    >
-                                      <X size={14} />
-                                    </button>
-                                  </div>
+	                                <PopoverContent
+	                                  align="start"
+	                                  side="bottom"
+	                                  sideOffset={10}
+	                                  className="!w-80 rounded-xl border border-gray-100 bg-white p-4 shadow-2xl"
+	                                  onClick={(e) => e.stopPropagation()}
+	                                >
+	                                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-50">
+	                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+	                                      {t("sessionDetail.gallery.clientPreview.labels.addToLists")}
+	                                    </span>
+	                                    <button
+	                                      type="button"
+	                                      onClick={() => setActiveMenuId(null)}
+	                                      className="text-gray-400 hover:text-gray-600 bg-gray-50 p-1 rounded-full hover:bg-gray-100 transition-colors"
+	                                      aria-label={t("sessionDetail.gallery.clientPreview.actions.closeMenu")}
+	                                    >
+	                                      <X size={14} />
+	                                    </button>
+	                                  </div>
 
-                                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
-                                    {selectionRules.map((rule) => {
-                                      const isSelected = selectionIds.includes(rule.id);
-                                      const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
-                                      const isDisabled = !isSelected && isFull;
+	                                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+	                                    {selectionRules.map((rule) => {
+	                                      const isSelected = selectionIds.includes(rule.id);
+	                                      const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
+	                                      const isDisabled = !isSelected && isFull;
 
-                                      return (
-                                        <button
-                                          key={rule.id}
-                                          type="button"
-                                          onClick={() => {
-                                            if (!isDisabled) toggleRuleSelect(photo.id, rule.id);
-                                          }}
-                                          disabled={isDisabled}
-                                          className={`w-full flex items-center justify-between p-3 rounded-lg text-sm transition-all border text-left group
-                                            ${
-                                              isSelected
-                                                ? "bg-sky-50 border-sky-200 text-sky-900"
-                                                : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50"
-                                            }
-                                            ${isDisabled ? "opacity-50 cursor-not-allowed bg-gray-50" : ""}
-                                          `}
-                                        >
-                                          <div className="flex flex-col gap-0.5">
-                                            <span
-                                              className={`font-semibold ${
-                                                isSelected ? "text-sky-700" : "text-gray-700"
-                                              }`}
-                                            >
-                                              {rule.title}
-                                            </span>
-                                            <span className={`text-[10px] ${isSelected ? "text-sky-500" : "text-gray-400"}`}>
-                                              {rule.currentCount} / {rule.maxCount || "∞"}
-                                            </span>
-                                          </div>
+	                                      return (
+	                                        <button
+	                                          key={rule.id}
+	                                          type="button"
+	                                          onClick={() => {
+	                                            if (!isDisabled) toggleRuleSelect(photo.id, rule.id);
+	                                          }}
+	                                          disabled={isDisabled}
+	                                          className={`w-full flex items-center justify-between p-3 rounded-lg text-sm transition-all border text-left group
+	                                            ${
+	                                              isSelected
+	                                                ? "bg-sky-50 border-sky-200 text-sky-900"
+	                                                : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50"
+	                                            }
+	                                            ${isDisabled ? "opacity-50 cursor-not-allowed bg-gray-50" : ""}
+	                                          `}
+	                                        >
+	                                          <div className="flex flex-col gap-0.5">
+	                                            <span
+	                                              className={`font-semibold ${
+	                                                isSelected ? "text-sky-700" : "text-gray-700"
+	                                              }`}
+	                                            >
+	                                              {rule.title}
+	                                            </span>
+	                                            <span className={`text-[10px] ${isSelected ? "text-sky-500" : "text-gray-400"}`}>
+	                                              {rule.currentCount} / {rule.maxCount || "∞"}
+	                                            </span>
+	                                          </div>
 
-                                          <div className="flex items-center gap-3">
-                                            {isDisabled ? (
-                                              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">
-                                                {t("sessionDetail.gallery.clientPreview.labels.limitFull")}
-                                              </span>
-                                            ) : null}
-                                            {isSelected ? (
-                                              <span className="text-[9px] font-bold text-sky-600 uppercase tracking-wide">
-                                                {t("sessionDetail.gallery.clientPreview.labels.added")}
-                                              </span>
-                                            ) : null}
+	                                          <div className="flex items-center gap-3">
+	                                            {isDisabled ? (
+	                                              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">
+	                                                {t("sessionDetail.gallery.clientPreview.labels.limitFull")}
+	                                              </span>
+	                                            ) : null}
+	                                            {isSelected ? (
+	                                              <span className="text-[9px] font-bold text-sky-600 uppercase tracking-wide">
+	                                                {t("sessionDetail.gallery.clientPreview.labels.added")}
+	                                              </span>
+	                                            ) : null}
 
-                                            <div
-                                              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
-                                                ${
-                                                  isSelected
-                                                    ? "bg-sky-500 text-white shadow-sm shadow-sky-200"
-                                                    : "bg-gray-100 text-gray-300 group-hover:bg-white group-hover:border group-hover:border-gray-200"
-                                                }
-                                              `}
-                                            >
-                                              {isSelected ? (
-                                                <Check size={14} strokeWidth={3} />
-                                              ) : (
-                                                <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-                                              )}
-                                            </div>
-                                          </div>
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              ) : null}
+	                                            <div
+	                                              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
+	                                                ${
+	                                                  isSelected
+	                                                    ? "bg-sky-500 text-white shadow-sm shadow-sky-200"
+	                                                    : "bg-gray-100 text-gray-300 group-hover:bg-white group-hover:border group-hover:border-gray-200"
+	                                                }
+	                                              `}
+	                                            >
+	                                              {isSelected ? (
+	                                                <Check size={14} strokeWidth={3} />
+	                                              ) : (
+	                                                <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+	                                              )}
+	                                            </div>
+	                                          </div>
+	                                        </button>
+	                                      );
+	                                    })}
+	                                  </div>
+	                                </PopoverContent>
+	                              </Popover>
 	                            </div>
 	                          ) : null}
 

@@ -65,7 +65,8 @@ export function Lightbox({
 }: LightboxProps) {
   const { t } = useTranslation("pages");
   const currentPhoto = photos[currentIndex];
-  const [showClientSelectionPanel, setShowClientSelectionPanel] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileSelectionPanelOpen, setIsMobileSelectionPanelOpen] = useState(false);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const touchEndRef = useRef<{ x: number; y: number } | null>(null);
   const minSwipeDistance = 50;
@@ -81,7 +82,10 @@ export function Lightbox({
 
   useEffect(() => {
     if (isOpen) {
-      setShowClientSelectionPanel(false);
+      setIsSidebarOpen(true);
+      if (mode === "client") {
+        setIsMobileSelectionPanelOpen(false);
+      }
     }
   }, [isOpen, mode]);
 
@@ -147,14 +151,16 @@ export function Lightbox({
   };
 
   const shouldRenderMobileAddButton = rules.length > 0;
-  const addButtonActive = shouldRenderMobileAddButton && (showClientSelectionPanel || currentPhoto.selections.length > 0);
+  const addButtonActive =
+    shouldRenderMobileAddButton &&
+    (isMobileSelectionPanelOpen || currentPhoto.selections.length > 0);
 
   return (
     <>
       {mode === "client" ? (
         <div className="fixed inset-0 z-[200] flex bg-black text-white md:hidden" role="dialog" aria-modal="true">
           <div className="relative flex-1 flex flex-col h-full overflow-hidden bg-black">
-            <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent">
+            <div className="absolute top-0 left-0 right-0 px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent">
               <button
                 type="button"
                 onClick={onClose}
@@ -242,7 +248,7 @@ export function Lightbox({
               {shouldRenderMobileAddButton ? (
                 <button
                   type="button"
-                  onClick={() => setShowClientSelectionPanel((prev) => !prev)}
+                  onClick={() => setIsMobileSelectionPanelOpen((prev) => !prev)}
                   className="flex flex-col items-center gap-2"
                 >
                   <div
@@ -276,11 +282,11 @@ export function Lightbox({
         </div>
       ) : null}
 
-      {mode === "client" && showClientSelectionPanel ? (
+      {mode === "client" && isMobileSelectionPanelOpen ? (
         <div className="fixed inset-0 z-[210] md:hidden">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowClientSelectionPanel(false)}
+            onClick={() => setIsMobileSelectionPanelOpen(false)}
           />
           <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.3)] max-h-[80vh] flex flex-col text-gray-900 animate-in slide-in-from-bottom duration-300">
             <div className="w-full flex justify-center pt-3 pb-1">
@@ -291,7 +297,7 @@ export function Lightbox({
               <h3 className="font-bold text-lg text-gray-900">{t("sessionDetail.gallery.lightbox.lists.clientTitle")}</h3>
               <button
                 type="button"
-                onClick={() => setShowClientSelectionPanel(false)}
+                onClick={() => setIsMobileSelectionPanelOpen(false)}
                 className="w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center active:scale-95"
                 aria-label={t("sessionDetail.gallery.lightbox.close")}
               >
@@ -340,22 +346,23 @@ export function Lightbox({
       <div className={desktopContainerClassName} role="dialog" aria-modal="true">
         <div
           className={`relative flex flex-col h-full flex-1 transition-all duration-300 ${
-            showClientSelectionPanel && mode === "client" ? "md:mr-80" : ""
+            isSidebarOpen ? "md:mr-80" : ""
           }`}
         >
-          <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent z-10">
+          <div className="absolute top-0 left-0 right-0 px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent z-10">
             <div className="flex items-center gap-4 min-w-0">
               <span className="text-sm font-medium opacity-80 shrink-0">
                 {currentIndex + 1} / {photos.length}
               </span>
-              <span className="text-sm opacity-60 font-mono truncate">{currentPhoto.filename}</span>
+              <span className="min-w-0 flex-1 text-sm opacity-60 font-mono truncate">{currentPhoto.filename}</span>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 shrink-0">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white"
+                aria-label={t("sessionDetail.gallery.lightbox.close")}
+                className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-colors text-white/90"
               >
                 <span className="text-sm font-medium hidden sm:inline uppercase tracking-wide">
                   {t("sessionDetail.gallery.lightbox.close")}
@@ -363,9 +370,9 @@ export function Lightbox({
                 <X size={24} />
               </button>
 
-              {mode === "client" && !showClientSelectionPanel ? (
+              {!isSidebarOpen ? (
                 <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4">
-                  {activeRule ? (
+                  {mode === "client" && activeRule ? (
                     <button
                       type="button"
                       onClick={() => !isActiveRuleDisabled && onToggleRule(currentPhoto.id, activeRule.id)}
@@ -393,7 +400,7 @@ export function Lightbox({
 
                   <button
                     type="button"
-                    onClick={() => setShowClientSelectionPanel(true)}
+                    onClick={() => setIsSidebarOpen(true)}
                     className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-all bg-white/10 text-white hover:bg-white hover:text-brand-600 backdrop-blur-md border border-white/10"
                     title={t("sessionDetail.gallery.lightbox.showSelectionsTitle")}
                   >
@@ -470,16 +477,12 @@ export function Lightbox({
           </div>
         </div>
 
-        {mode === "admin" || (mode === "client" && showClientSelectionPanel) ? (
+        {isSidebarOpen ? (
           <div
             className={`fixed right-0 top-0 bottom-0 w-80 bg-gray-900 border-l border-gray-800 ${
               mode === "client" ? "hidden md:flex" : "flex"
             } flex-col shrink-0 transition-transform duration-300 z-20 shadow-2xl ${
-              showClientSelectionPanel && mode === "client"
-                ? "translate-x-0"
-                : mode === "admin"
-                  ? "translate-x-0"
-                  : "translate-x-full"
+              "translate-x-0"
             }`}
           >
           <div className="p-6 border-b border-gray-800 flex justify-between items-center gap-3">
@@ -496,19 +499,17 @@ export function Lightbox({
               </p>
             </div>
 
-            {mode === "client" ? (
-              <button
-                type="button"
-                onClick={() => setShowClientSelectionPanel(false)}
-                className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors px-3 py-1.5 hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10"
-                title={t("sessionDetail.gallery.lightbox.collapseTitle")}
-              >
-                <span className="text-xs font-medium uppercase tracking-wide">
-                  {t("sessionDetail.gallery.lightbox.collapse")}
-                </span>
-                <PanelRightClose size={18} />
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(false)}
+              className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors px-3 py-1.5 hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10"
+              title={t("sessionDetail.gallery.lightbox.collapseTitle")}
+            >
+              <span className="text-xs font-medium uppercase tracking-wide">
+                {t("sessionDetail.gallery.lightbox.collapse")}
+              </span>
+              <PanelRightClose size={18} />
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-6">

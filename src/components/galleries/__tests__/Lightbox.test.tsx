@@ -2,6 +2,76 @@ import { fireEvent, render, screen } from "@/utils/testUtils";
 import { Lightbox } from "../Lightbox";
 
 describe("Lightbox", () => {
+  it("renders a close button", () => {
+    const onClose = jest.fn();
+
+    render(
+      <Lightbox
+        isOpen
+        onClose={onClose}
+        photos={[
+          {
+            id: "photo-1",
+            url: "https://example.com/1.jpg",
+            filename: "1.jpg",
+            isFavorite: false,
+            isStarred: false,
+            selections: [],
+          },
+        ]}
+        currentIndex={0}
+        onNavigate={jest.fn()}
+        rules={[]}
+        onToggleRule={jest.fn()}
+        onToggleStar={jest.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: /close|kapat/i })[0]);
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("allows collapsing and reopening sidebar in admin mode", () => {
+    render(
+      <Lightbox
+        isOpen
+        onClose={jest.fn()}
+        photos={[
+          {
+            id: "photo-1",
+            url: "https://example.com/1.jpg",
+            filename: "1.jpg",
+            isFavorite: false,
+            isStarred: false,
+            selections: [],
+          },
+        ]}
+        currentIndex={0}
+        onNavigate={jest.fn()}
+        rules={[
+          {
+            id: "rule-1",
+            title: "Cover",
+            serviceName: null,
+            currentCount: 0,
+            maxCount: 1,
+          },
+        ]}
+        onToggleRule={jest.fn()}
+        onToggleStar={jest.fn()}
+        mode="admin"
+      />
+    );
+
+    expect(screen.getByText(/selection details|seçim detayları/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /collapse|daralt/i }));
+    expect(screen.queryByText(/selection details|seçim detayları/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /selections|seçimler/i }));
+    expect(screen.getByText(/selection details|seçim detayları/i)).toBeInTheDocument();
+  });
+
   it("handles keyboard shortcuts in client mode", () => {
     const onClose = jest.fn();
     const onNavigate = jest.fn();

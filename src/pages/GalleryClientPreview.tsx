@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/components/SelectionTemplateSection";
 import { GalleryWatermarkOverlay } from "@/components/galleries/GalleryWatermarkOverlay";
@@ -91,6 +91,13 @@ type SelectionTemplateGroupForm = {
   rules: SelectionTemplateRuleForm[];
 };
 
+type ClientSelectionRow = {
+  id: string;
+  asset_id: string | null;
+  selection_part: string | null;
+  client_id: string | null;
+};
+
 const ITEMS_PER_PAGE = 15;
 const GALLERY_ASSET_SIGNED_URL_TTL_SECONDS = 60 * 60;
 
@@ -112,6 +119,7 @@ export default function GalleryClientPreview() {
   const { t: tCommon } = useTranslation("common");
   const i18nToast = useI18nToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const galleryRef = useRef<HTMLDivElement>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -124,6 +132,7 @@ export default function GalleryClientPreview() {
   const [sheetPhotoId, setSheetPhotoId] = useState<string | null>(null);
 
   const [favoritePhotoIds, setFavoritePhotoIds] = useState<Set<string>>(() => new Set());
+  const favoritesTouchedRef = useRef(false);
   const [photoSelectionsById, setPhotoSelectionsById] = useState<Record<string, string[]>>({});
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -229,6 +238,39 @@ export default function GalleryClientPreview() {
   const watermark = useMemo(() => parseGalleryWatermarkFromBranding(brandingData), [brandingData]);
   const favoritesEnabled = selectionSettings.allowFavorites !== false;
   const eventDate = typeof brandingData.eventDate === "string" ? brandingData.eventDate : "";
+
+  const { data: persistedFavoritePhotoIds } = useQuery({
+    queryKey: ["gallery_client_preview_favorites", id],
+    enabled: Boolean(id) && favoritesEnabled,
+    queryFn: async (): Promise<string[]> => {
+      if (!id) return [];
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const viewerId = userError ? null : userData.user?.id ?? null;
+
+      const baseQuery = supabase
+        .from("client_selections")
+        .select("id,asset_id,selection_part,client_id")
+        .eq("gallery_id", id)
+        .eq("selection_part", "favorites");
+      const { data, error } = viewerId ? await baseQuery.eq("client_id", viewerId) : await baseQuery;
+      if (error) throw error;
+
+      const rows = (data ?? []) as ClientSelectionRow[];
+      return rows.flatMap((row) => (typeof row.asset_id === "string" && row.asset_id ? [row.asset_id] : []));
+    },
+  });
+
+  useEffect(() => {
+    favoritesTouchedRef.current = false;
+    setFavoritePhotoIds(new Set());
+  }, [id]);
+
+  useEffect(() => {
+    if (!favoritesEnabled) return;
+    if (!persistedFavoritePhotoIds) return;
+    if (favoritesTouchedRef.current) return;
+    setFavoritePhotoIds(new Set(persistedFavoritePhotoIds));
+  }, [favoritesEnabled, persistedFavoritePhotoIds]);
 
   const formattedEventDate = useMemo(() => {
     if (!eventDate) return "";
@@ -511,32 +553,77 @@ export default function GalleryClientPreview() {
     setLightboxIndex((prev) => Math.min(prev, filteredPhotos.length - 1));
   }, [filteredPhotos.length, lightboxOpen]);
 
-  const toggleFavorite = useCallback(
-    (photoId: string) => {
-      if (!favoritesEnabled) return;
-      setFavoritePhotoIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(photoId)) next.delete(photoId);
-        else next.add(photoId);
-        return next;
-      });
+  const updateFavoriteMutation = useMutation({
+    mutationFn: async ({ photoId, nextIsFavorite }: { photoId: string; nextIsFavorite: boolean }) => {
+      if (!id) return;
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const viewerId = userError ? null : userData.user?.id ?? null;
+
+      const baseDelete = supabase
+        .from("client_selections")
+        .delete()
+        .eq("gallery_id", id)
+        .eq("asset_id", photoId)
+        .eq("selection_part", "favorites");
+      const deleteQuery = viewerId ? baseDelete.eq("client_id", viewerId) : baseDelete;
+      const { error: deleteError } = await deleteQuery;
+      if (deleteError) throw deleteError;
+
+      if (!nextIsFavorite) return;
+
+      const insertPayload = {
+        gallery_id: id,
+        asset_id: photoId,
+        selection_part: "favorites",
+        client_id: viewerId,
+      };
+      const { error: insertError } = await supabase.from("client_selections").insert(insertPayload);
+      if (insertError) throw insertError;
     },
-    [favoritesEnabled]
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_favorites", id] });
+      queryClient.invalidateQueries({ queryKey: ["client_selections", id] });
+    },
+  });
 
   const handleToggleFavorite = useCallback(
     (photoId: string) => {
       if (!favoritesEnabled) return;
+      favoritesTouchedRef.current = true;
       const wasFavorite = favoritePhotoIds.has(photoId);
-      toggleFavorite(photoId);
-      i18nToast.success(
-        wasFavorite
-          ? t("sessionDetail.gallery.clientPreview.toast.favoritesRemoved")
-          : t("sessionDetail.gallery.clientPreview.toast.favoritesAdded"),
-        { duration: 2000 }
+      const nextIsFavorite = !wasFavorite;
+
+      setFavoritePhotoIds((prev) => {
+        const next = new Set(prev);
+        if (nextIsFavorite) next.add(photoId);
+        else next.delete(photoId);
+        return next;
+      });
+
+      updateFavoriteMutation.mutate(
+        { photoId, nextIsFavorite },
+        {
+          onSuccess: () => {
+            i18nToast.success(
+              wasFavorite
+                ? t("sessionDetail.gallery.clientPreview.toast.favoritesRemoved")
+                : t("sessionDetail.gallery.clientPreview.toast.favoritesAdded"),
+              { duration: 2000 }
+            );
+          },
+          onError: () => {
+            setFavoritePhotoIds((prev) => {
+              const next = new Set(prev);
+              if (wasFavorite) next.add(photoId);
+              else next.delete(photoId);
+              return next;
+            });
+            i18nToast.error(t("sessionDetail.gallery.toast.errorDesc"), { duration: 2500 });
+          },
+        }
       );
     },
-    [favoritePhotoIds, favoritesEnabled, i18nToast, t, toggleFavorite]
+    [favoritePhotoIds, favoritesEnabled, i18nToast, t, updateFavoriteMutation]
   );
 
   const handleExit = useCallback(() => {

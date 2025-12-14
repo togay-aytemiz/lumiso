@@ -162,6 +162,7 @@ interface GallerySetRow {
 
 interface ClientSelectionRow {
   id: string;
+  asset_id: string | null;
   selection_part: string | null;
 }
 
@@ -702,7 +703,7 @@ export default function GalleryDetail() {
       if (!id) return [];
       const { data, error } = await supabase
         .from("client_selections")
-        .select("id,selection_part")
+        .select("id,asset_id,selection_part")
         .eq("gallery_id", id);
       if (error) throw error;
       return (data as ClientSelectionRow[]) ?? [];
@@ -1039,6 +1040,19 @@ export default function GalleryDetail() {
       counts[key] = (counts[key] ?? 0) + 1;
     });
     return counts;
+  }, [clientSelections]);
+
+  const clientFavoriteAssetIds = useMemo(() => {
+    const favoriteKey = normalizeSelectionPartKey(FAVORITES_FILTER_ID);
+    const ids = new Set<string>();
+    (clientSelections ?? []).forEach((entry) => {
+      const key = normalizeSelectionPartKey(entry.selection_part);
+      if (!key || key !== favoriteKey) return;
+      if (typeof entry.asset_id === "string" && entry.asset_id) {
+        ids.add(entry.asset_id);
+      }
+    });
+    return ids;
   }, [clientSelections]);
 
   const localRuleCounts = useMemo(() => {
@@ -2541,12 +2555,14 @@ export default function GalleryDetail() {
 	      return baseUploads.filter((item) => item.starred);
 	    }
 	    if (activeSelectionRuleId === FAVORITES_FILTER_ID) {
-	      return baseUploads.filter((item) => (photoSelections[item.id] ?? []).includes(FAVORITES_FILTER_ID));
+	      return baseUploads.filter(
+          (item) => clientFavoriteAssetIds.has(item.id) || (photoSelections[item.id] ?? []).includes(FAVORITES_FILTER_ID)
+        );
 	    }
 	    return baseUploads.filter((item) =>
 	      (photoSelections[item.id] ?? []).includes(activeSelectionRuleId)
 	    );
-	  }, [uploadsForActiveSet, uploadQueue, activeSelectionRuleId, photoSelections]);
+	  }, [uploadsForActiveSet, uploadQueue, activeSelectionRuleId, clientFavoriteAssetIds, photoSelections]);
 
   const activeFilterMeta = useMemo(() => {
     if (!activeSelectionRuleId) return null;
@@ -2734,16 +2750,17 @@ export default function GalleryDetail() {
     () =>
       filteredUploads.map((item) => {
         const selectedRuleIds = photoSelections[item.id] ?? [];
+        const isClientFavorite = clientFavoriteAssetIds.has(item.id) || selectedRuleIds.includes(FAVORITES_FILTER_ID);
         return {
           id: item.id,
           url: item.previewUrl ?? "",
           filename: item.name,
-          isFavorite: selectedRuleIds.includes(FAVORITES_FILTER_ID),
+          isFavorite: isClientFavorite,
           isStarred: Boolean(item.starred),
           selections: selectedRuleIds.filter((ruleId) => ruleId !== FAVORITES_FILTER_ID),
         };
       }),
-    [filteredUploads, photoSelections]
+    [filteredUploads, clientFavoriteAssetIds, photoSelections]
   );
 
   const handleLightboxNavigate = useCallback(
@@ -3573,13 +3590,14 @@ export default function GalleryDetail() {
                             const selectedRuleLabels = selectedRuleIds
                               .map((ruleId) => selectionRules.find((rule) => rule.id === ruleId)?.title)
                               .filter(Boolean) as string[];
-                            const isSelectedInActiveRule =
-                              Boolean(activeSelectionRuleId) &&
-                              activeSelectionRuleId !== FAVORITES_FILTER_ID &&
-                              activeSelectionRuleId !== STARRED_FILTER_ID &&
-                              selectedRuleIds.includes(activeSelectionRuleId);
-                            const isClientFavorite = selectedRuleIds.includes(FAVORITES_FILTER_ID);
-                            const isBatchSelected = selectedBatchIds.has(item.id);
+	                            const isSelectedInActiveRule =
+	                              Boolean(activeSelectionRuleId) &&
+	                              activeSelectionRuleId !== FAVORITES_FILTER_ID &&
+	                              activeSelectionRuleId !== STARRED_FILTER_ID &&
+	                              selectedRuleIds.includes(activeSelectionRuleId);
+	                            const isClientFavorite =
+	                              clientFavoriteAssetIds.has(item.id) || selectedRuleIds.includes(FAVORITES_FILTER_ID);
+	                            const isBatchSelected = selectedBatchIds.has(item.id);
 
                             const progressLabel =
                               item.status === "uploading"
@@ -3831,15 +3849,16 @@ export default function GalleryDetail() {
                             const isDone = item.status === "done";
                             const isError = item.status === "error";
                             const isCanceled = item.status === "canceled";
-                            const selectedRuleIds = photoSelections[item.id] ?? [];
-                            const selectedRuleLabels = selectedRuleIds
-                              .map((ruleId) => selectionRules.find((rule) => rule.id === ruleId)?.title)
-                              .filter(Boolean) as string[];
-                            const isClientFavorite = selectedRuleIds.includes(FAVORITES_FILTER_ID);
-	                            const isSelectedInActiveRule =
-	                              Boolean(activeSelectionRuleId) &&
-	                              activeSelectionRuleId !== FAVORITES_FILTER_ID &&
-	                              activeSelectionRuleId !== STARRED_FILTER_ID &&
+	                            const selectedRuleIds = photoSelections[item.id] ?? [];
+	                            const selectedRuleLabels = selectedRuleIds
+	                              .map((ruleId) => selectionRules.find((rule) => rule.id === ruleId)?.title)
+	                              .filter(Boolean) as string[];
+	                            const isClientFavorite =
+	                              clientFavoriteAssetIds.has(item.id) || selectedRuleIds.includes(FAVORITES_FILTER_ID);
+		                            const isSelectedInActiveRule =
+		                              Boolean(activeSelectionRuleId) &&
+		                              activeSelectionRuleId !== FAVORITES_FILTER_ID &&
+		                              activeSelectionRuleId !== STARRED_FILTER_ID &&
 	                              selectedRuleIds.includes(activeSelectionRuleId);
 	                            const isBatchSelected = selectedBatchIds.has(item.id);
 	                            const isCoverPhoto = coverPhotoId === item.id;

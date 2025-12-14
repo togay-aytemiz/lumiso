@@ -69,6 +69,11 @@ import {
   getStorageBasename,
   isSupabaseStorageObjectMissingError,
 } from "@/lib/galleryAssets";
+import {
+  applyGalleryWatermarkToBranding,
+  DEFAULT_GALLERY_WATERMARK_SETTINGS,
+  parseGalleryWatermarkFromBranding,
+} from "@/lib/galleryWatermark";
 import { shouldKeepLocalUploadItem } from "@/lib/galleryUploadQueue";
 import {
   CalendarRange,
@@ -312,13 +317,10 @@ export default function GalleryDetail() {
   const [status, setStatus] = useState<GalleryStatus>("draft");
   const [customType, setCustomType] = useState("");
   const [eventDate, setEventDate] = useState<string>("");
-  const [watermarkSettings, setWatermarkSettings] = useState<GalleryWatermarkSettings>({
-    enabled: false,
-    type: "text",
-    placement: "grid",
-    opacity: 60,
-    scale: 100,
-  });
+  const [watermarkSettings, setWatermarkSettings] = useState<GalleryWatermarkSettings>(DEFAULT_GALLERY_WATERMARK_SETTINGS);
+  const [watermarkSettingsSaved, setWatermarkSettingsSaved] = useState<GalleryWatermarkSettings>(
+    DEFAULT_GALLERY_WATERMARK_SETTINGS
+  );
   const [watermarkTextSaved, setWatermarkTextSaved] = useState("");
   const [watermarkTextDraft, setWatermarkTextDraft] = useState("");
   const [privacySettings, setPrivacySettings] = useState<GalleryPrivacySettings>({
@@ -436,12 +438,18 @@ export default function GalleryDetail() {
 
   const hasGallerySettingsUnsavedChanges = useMemo(() => {
     const watermarkDirty =
-      watermarkSettings.type === "text" && watermarkTextDraft !== watermarkTextSaved;
+      watermarkSettings.enabled !== watermarkSettingsSaved.enabled ||
+      watermarkSettings.type !== watermarkSettingsSaved.type ||
+      watermarkSettings.placement !== watermarkSettingsSaved.placement ||
+      watermarkSettings.opacity !== watermarkSettingsSaved.opacity ||
+      watermarkSettings.scale !== watermarkSettingsSaved.scale ||
+      watermarkTextDraft !== watermarkTextSaved;
     const passwordDirty =
       privacySettings.passwordEnabled && privacyPasswordDraft !== privacyPasswordSaved;
     return watermarkDirty || passwordDirty;
   }, [
-    watermarkSettings.type,
+    watermarkSettings,
+    watermarkSettingsSaved,
     watermarkTextDraft,
     watermarkTextSaved,
     privacySettings.passwordEnabled,
@@ -449,12 +457,79 @@ export default function GalleryDetail() {
     privacyPasswordSaved,
   ]);
 
-  const handleSaveGallerySettings = useCallback(async () => {
+  const handleSaveGallerySettings = async () => {
+    if (!id || !data) return;
     setGallerySettingsSaving(true);
     try {
-      if (watermarkSettings.type === "text") {
-        setWatermarkTextSaved(watermarkTextDraft);
+      const watermarkText = watermarkTextDraft.trim();
+
+      const branding: Record<string, unknown> = { ...(data.branding ?? {}) };
+      if (eventDate) {
+        branding.eventDate = eventDate;
+      } else {
+        delete branding.eventDate;
       }
+      if (type === "other" && customType.trim()) {
+        branding.customType = customType.trim();
+      } else {
+        delete branding.customType;
+      }
+
+      branding.selectionSettings = selectionSettings;
+
+      const normalizedTemplateGroups = selectionTemplateGroups
+        .map((group) => {
+          const rules = normalizeSelectionTemplate(group.rules) ?? [];
+          return {
+            serviceId: group.serviceId ?? null,
+            serviceName: group.serviceName ?? null,
+            billingType: group.billingType ?? null,
+            disabled: group.disabled === true,
+            rules,
+          };
+        })
+        .filter((group) => group.disabled || group.rules.length > 0);
+
+      if (normalizedTemplateGroups.length > 0) {
+        branding.selectionTemplateGroups = normalizedTemplateGroups.map((group) => ({
+          serviceId: group.serviceId,
+          serviceName: group.serviceName,
+          billingType: group.billingType,
+          rules: group.rules,
+          disabled: group.disabled,
+        }));
+        branding.selectionTemplate = normalizedTemplateGroups.flatMap((group) => group.rules ?? []);
+      } else {
+        delete branding.selectionTemplateGroups;
+        delete branding.selectionTemplate;
+      }
+
+      if (coverPhotoId) {
+        branding.coverAssetId = coverPhotoId;
+      } else {
+        delete branding.coverAssetId;
+      }
+
+      const nextBranding = applyGalleryWatermarkToBranding(branding, {
+        settings: watermarkSettings,
+        text: watermarkText,
+        logoUrl: organizationLogoUrl ?? null,
+      });
+
+      const payload: UpdatePayload = {
+        title: title.trim(),
+        type,
+        status,
+        branding: nextBranding,
+        publishedAt:
+          status === "published" ? data.published_at ?? new Date().toISOString() : data?.published_at ?? null,
+      };
+
+      await updateMutation.mutateAsync(payload);
+
+      setWatermarkSettingsSaved(watermarkSettings);
+      setWatermarkTextSaved(watermarkText);
+      setWatermarkTextDraft(watermarkText);
       if (privacySettings.passwordEnabled) {
         setPrivacyPasswordSaved(privacyPasswordDraft);
       }
@@ -468,18 +543,14 @@ export default function GalleryDetail() {
     } finally {
       setGallerySettingsSaving(false);
     }
-  }, [
-    watermarkSettings.type,
-    watermarkTextDraft,
-    privacySettings.passwordEnabled,
-    privacyPasswordDraft,
-  ]);
+  };
 
   const handleCancelGallerySettings = useCallback(() => {
+    setWatermarkSettings(watermarkSettingsSaved);
     setWatermarkTextDraft(watermarkTextSaved);
     setPrivacyPasswordDraft(privacyPasswordSaved);
     setGallerySettingsSaveSuccess(false);
-  }, [privacyPasswordSaved, watermarkTextSaved]);
+  }, [privacyPasswordSaved, watermarkSettingsSaved, watermarkTextSaved]);
 
   const handleGenerateGalleryPassword = useCallback(() => {
     setPrivacyPasswordDraft(Math.random().toString(36).slice(-6).toUpperCase());
@@ -554,6 +625,7 @@ export default function GalleryDetail() {
     const storedDate = typeof branding.eventDate === "string" ? branding.eventDate : "";
     const storedCustomType = typeof branding.customType === "string" ? (branding.customType as string) : "";
     const storedCoverAssetId = typeof branding.coverAssetId === "string" ? branding.coverAssetId : null;
+    const storedWatermark = parseGalleryWatermarkFromBranding(branding);
     const parsedTemplateGroups = parseSelectionTemplateGroups(branding);
     setTitle(data.title ?? "");
     setType(data.type);
@@ -561,6 +633,12 @@ export default function GalleryDetail() {
     setEventDate(storedDate);
     setCustomType(storedCustomType);
     setCoverPhotoId((prev) => prev ?? storedCoverAssetId);
+    setWatermarkSettingsSaved(storedWatermark.settings);
+    setWatermarkTextSaved(storedWatermark.text);
+    if (!hasGallerySettingsUnsavedChanges) {
+      setWatermarkSettings(storedWatermark.settings);
+      setWatermarkTextDraft(storedWatermark.text);
+    }
     setSelectionSettings({
       enabled: Boolean(storedSelection.enabled),
       limit: typeof storedSelection.limit === "number" ? storedSelection.limit : null,

@@ -25,19 +25,11 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { SettingsStickyFooter } from "@/components/settings/SettingsStickyFooter";
+import type { GalleryWatermarkPlacement, GalleryWatermarkSettings, GalleryWatermarkType } from "@/lib/galleryWatermark";
 
 export type GallerySettingsTab = "general" | "watermark" | "privacy";
 
-export type GalleryWatermarkPlacement = "grid" | "center" | "corner";
-export type GalleryWatermarkType = "text" | "logo";
-
-export type GalleryWatermarkSettings = {
-  enabled: boolean;
-  type: GalleryWatermarkType;
-  placement: GalleryWatermarkPlacement;
-  opacity: number;
-  scale: number;
-};
+export type { GalleryWatermarkPlacement, GalleryWatermarkSettings, GalleryWatermarkType };
 
 export type GalleryPrivacySettings = {
   passwordEnabled: boolean;

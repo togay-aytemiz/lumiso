@@ -63,6 +63,60 @@ describe("GalleryClientPreview", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders watermark overlay when enabled", async () => {
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            type: "proof",
+            branding: {
+              watermark: {
+                enabled: true,
+                type: "text",
+                placement: "center",
+                opacity: 60,
+                scale: 100,
+                text: "Studio",
+                logoUrl: null,
+              },
+            },
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              status: "ready",
+              metadata: { originalName: "a.jpg", setId: "set-1", starred: false },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+    expect(await screen.findByAltText("a.jpg")).toBeInTheDocument();
+    expect(await screen.findByText("Studio")).toBeInTheDocument();
+  });
+
   it("allows selecting and favoriting photos in preview mode", async () => {
     supabaseMock.from.mockImplementation((table: string) => {
       const builder = supabaseMock.__createQueryBuilder();

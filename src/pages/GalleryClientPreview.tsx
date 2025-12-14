@@ -4,8 +4,10 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/components/SelectionTemplateSection";
+import { GalleryWatermarkOverlay } from "@/components/galleries/GalleryWatermarkOverlay";
 import { Lightbox } from "@/components/galleries/Lightbox";
 import { GALLERY_ASSETS_BUCKET, getStorageBasename, isSupabaseStorageObjectMissingError } from "@/lib/galleryAssets";
+import { parseGalleryWatermarkFromBranding } from "@/lib/galleryWatermark";
 import { useI18nToast } from "@/lib/toastHelpers";
 import {
   ArrowDown,
@@ -224,6 +226,7 @@ export default function GalleryClientPreview() {
 
   const brandingData = useMemo(() => (gallery?.branding || {}) as Record<string, unknown>, [gallery?.branding]);
   const selectionSettings = useMemo(() => (brandingData.selectionSettings || {}) as Record<string, unknown>, [brandingData]);
+  const watermark = useMemo(() => parseGalleryWatermarkFromBranding(brandingData), [brandingData]);
   const favoritesEnabled = selectionSettings.allowFavorites !== false;
   const eventDate = typeof brandingData.eventDate === "string" ? brandingData.eventDate : "";
 
@@ -1178,10 +1181,12 @@ export default function GalleryClientPreview() {
                           </div>
                         )}
 
-	                        <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-2 max-w-[70%]">
-	                          {selectionRules.length > 0 ? (
-	                            <div className="relative">
-	                              <button
+                        <GalleryWatermarkOverlay watermark={watermark} variant="thumbnail" className="z-[15]" />
+
+		                        <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-2 max-w-[70%]">
+		                          {selectionRules.length > 0 ? (
+		                            <div className="relative">
+		                              <button
 	                                type="button"
 	                                onClick={(e) => {
 	                                  e.stopPropagation();
@@ -1448,6 +1453,7 @@ export default function GalleryClientPreview() {
 	        mode="client"
 	        activeRuleId={activeLightboxRuleId}
 	        favoritesEnabled={favoritesEnabled}
+	        watermark={watermark}
 	      />
 
       {renderSelectionSheet()}

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { GalleryWatermarkConfig } from "@/lib/galleryWatermark";
+import { GalleryWatermarkOverlay } from "./GalleryWatermarkOverlay";
 import {
   Check,
   CheckCircle2,
@@ -47,6 +49,7 @@ interface LightboxProps {
   activeRuleId?: string | null;
   favoritesEnabled?: boolean;
   onImageError?: (photoId: string) => void;
+  watermark?: GalleryWatermarkConfig;
 }
 
 export function Lightbox({
@@ -62,6 +65,7 @@ export function Lightbox({
   activeRuleId,
   favoritesEnabled = true,
   onImageError,
+  watermark,
 }: LightboxProps) {
   const { t } = useTranslation("pages");
   const currentPhoto = photos[currentIndex];
@@ -185,7 +189,7 @@ export function Lightbox({
             ) : null}
 
             <div
-              className="flex-1 flex items-center justify-center w-full h-full overflow-hidden"
+              className="relative flex-1 flex items-center justify-center w-full h-full overflow-hidden"
               onTouchStart={(event) => {
                 const touch = event.targetTouches[0];
                 if (!touch) return;
@@ -221,6 +225,10 @@ export function Lightbox({
               ) : (
                 <div className="text-sm text-white/60">{t("sessionDetail.gallery.lightbox.noPreview")}</div>
               )}
+
+              {mode === "client" && watermark ? (
+                <GalleryWatermarkOverlay watermark={watermark} variant="lightbox" className="z-10" />
+              ) : null}
             </div>
 
             <div className="absolute bottom-0 left-0 right-0 p-6 pb-10 bg-gradient-to-t from-black/90 via-black/70 to-transparent flex items-end justify-center gap-10">
@@ -437,13 +445,13 @@ export function Lightbox({
             <ChevronRight size={32} />
           </button>
 
-          <div
-            className="flex-1 flex items-center justify-center p-4 md:p-8 overflow-hidden"
-            onTouchStart={(event) => {
-              const touch = event.targetTouches[0];
-              if (!touch) return;
-              touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-              touchEndRef.current = null;
+	          <div
+	            className="relative flex-1 flex items-center justify-center p-4 md:p-8 overflow-hidden"
+	            onTouchStart={(event) => {
+	              const touch = event.targetTouches[0];
+	              if (!touch) return;
+	              touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+	              touchEndRef.current = null;
             }}
             onTouchMove={(event) => {
               const touch = event.targetTouches[0];
@@ -471,11 +479,15 @@ export function Lightbox({
                 className="max-w-full max-h-full object-contain shadow-2xl"
                 onError={() => onImageError?.(currentPhoto.id)}
               />
-            ) : (
-              <div className="text-sm text-white/60">{t("sessionDetail.gallery.lightbox.noPreview")}</div>
-            )}
-          </div>
-        </div>
+	            ) : (
+	              <div className="text-sm text-white/60">{t("sessionDetail.gallery.lightbox.noPreview")}</div>
+	            )}
+
+              {mode === "client" && watermark ? (
+                <GalleryWatermarkOverlay watermark={watermark} variant="lightbox" className="z-10" />
+              ) : null}
+	          </div>
+	        </div>
 
         {isSidebarOpen ? (
           <div

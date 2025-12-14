@@ -838,6 +838,9 @@
         "tasks": {
           "selectedCount": "{{count}} seçildi"
         },
+        "sections": {
+          "empty": "Bu sette gösterilecek fotoğraf yok."
+        },
         "labels": {
           "add": "Ekle",
           "selected": "Seçildi",
@@ -846,7 +849,7 @@
           "added": "Eklendi"
         },
         "floatingSelections": {
-          "kicker": "Bu sette",
+          "kicker": "Bu galeride",
           "title": "Fotoğraf seçildi"
         },
         "toast": {
@@ -855,8 +858,8 @@
         },
         "empty": {
           "noPhotos": {
-            "title": "Bu Klasörde Fotoğraf Yok",
-            "description": "Farklı bir set seçmeyi veya filtreleri temizlemeyi deneyin.",
+            "title": "Gösterilecek fotoğraf yok",
+            "description": "Filtreleri temizlemeyi deneyin veya daha sonra tekrar kontrol edin.",
             "action": "Filtreleri Temizle"
           },
           "favorites": {
@@ -866,12 +869,12 @@
           },
           "starred": {
             "title": "Fotoğrafçı Önerisi Yok",
-            "description": "Fotoğrafçınız bu set için özel bir öneri listesi oluşturmamış.",
+            "description": "Fotoğrafçınız bu galeri için özel bir öneri listesi oluşturmamış.",
             "action": "Tüm Fotoğrafları İncele"
           },
           "unselected": {
             "title": "Harika! Hepsi Düzenlendi",
-            "description": "Bu setteki tüm fotoğrafları bir kategoriye veya listeye atadınız.",
+            "description": "Bu galerideki tüm fotoğrafları bir kategoriye veya listeye atadınız.",
             "action": "Tüm Galeriyi Gör"
           },
           "selected": {

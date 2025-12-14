@@ -823,6 +823,9 @@
         "tasks": {
           "selectedCount": "{{count}} selected"
         },
+        "sections": {
+          "empty": "No photos to show in this set."
+        },
         "labels": {
           "add": "Add",
           "selected": "Selected",
@@ -831,7 +834,7 @@
           "added": "Added"
         },
         "floatingSelections": {
-          "kicker": "In this set",
+          "kicker": "In this gallery",
           "title": "Selected photos"
         },
         "toast": {
@@ -840,8 +843,8 @@
         },
         "empty": {
           "noPhotos": {
-            "title": "No photos in this set",
-            "description": "Try choosing a different set or clearing filters.",
+            "title": "No photos to show",
+            "description": "Try clearing filters or checking back later.",
             "action": "Clear filters"
           },
           "favorites": {
@@ -851,12 +854,12 @@
           },
           "starred": {
             "title": "No photographer picks",
-            "description": "Your photographer hasn't highlighted any photos in this set.",
+            "description": "Your photographer hasn't highlighted any photos in this gallery.",
             "action": "Browse all photos"
           },
           "unselected": {
             "title": "Great! All sorted",
-            "description": "You've assigned every photo in this set to a list.",
+            "description": "You've assigned every photo in this gallery to a list.",
             "action": "View full gallery"
           },
           "selected": {

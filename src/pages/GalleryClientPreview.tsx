@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,6 +7,7 @@ import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/
 import { GalleryWatermarkOverlay } from "@/components/galleries/GalleryWatermarkOverlay";
 import { Lightbox } from "@/components/galleries/Lightbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 import { GALLERY_ASSETS_BUCKET, getStorageBasename, isSupabaseStorageObjectMissingError } from "@/lib/galleryAssets";
 import { parseGalleryWatermarkFromBranding } from "@/lib/galleryWatermark";
 import { useI18nToast } from "@/lib/toastHelpers";
@@ -102,6 +103,9 @@ type ClientSelectionRow = {
 
 const ITEMS_PER_PAGE = 15;
 const GALLERY_ASSET_SIGNED_URL_TTL_SECONDS = 60 * 60;
+const SET_SECTION_ID_PREFIX = "client-preview-set-section-";
+const SET_SENTINEL_ID_PREFIX = "client-preview-set-sentinel-";
+const SECTION_SKELETON_COUNT = 10;
 
 const normalizeSelectionPartKey = (value: unknown) =>
   typeof value === "string" ? value.trim().toLowerCase() : "";
@@ -124,12 +128,14 @@ export default function GalleryClientPreview() {
   const queryClient = useQueryClient();
 
   const galleryRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [navHeight, setNavHeight] = useState(0);
 
   const [gridSize, setGridSize] = useState<GridSize>("small");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
-  const [activeSetId, setActiveSetId] = useState<string>("");
+  const [activeCategoryId, setActiveCategoryId] = useState<string>("");
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [sheetPhotoId, setSheetPhotoId] = useState<string | null>(null);
 
@@ -142,6 +148,7 @@ export default function GalleryClientPreview() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+  const [visibleCountBySetId, setVisibleCountBySetId] = useState<Record<string, number>>({});
 
   const { data: gallery, isLoading: galleryLoading } = useQuery({
     queryKey: ["gallery", id],
@@ -428,43 +435,38 @@ export default function GalleryClientPreview() {
     return new Map(selectionRules.map((rule) => [rule.id, rule.title] as const));
   }, [selectionRules]);
 
-  const defaultSetName = t("sessionDetail.gallery.sets.defaultName");
-  const allFilterLabelLower = useMemo(() => {
-    const allLabel = t("sessionDetail.gallery.clientPreview.filters.all");
-    return allLabel.toLocaleLowerCase(i18n.language || "en");
-  }, [i18n.language, t]);
-  const defaultSetLabel = useMemo(() => `${defaultSetName} (${allFilterLabelLower})`, [allFilterLabelLower, defaultSetName]);
-  const resolveSetLabel = useCallback(
-    (label: string) => (label === defaultSetName ? defaultSetLabel : label),
-    [defaultSetLabel, defaultSetName]
-  );
-
-  const resolvedSets = useMemo<GallerySetRow[]>(() => {
-    if (sets && sets.length > 0) return sets;
-    return [
-      {
-        id: "default-placeholder",
-        name: defaultSetName,
-        description: null,
-        order_index: 1,
-      },
-    ];
-  }, [defaultSetName, sets]);
-  const showSetTabs = resolvedSets.length > 1;
+  const orderedSets = useMemo(() => sets ?? [], [sets]);
+  const hasMultipleSets = orderedSets.length > 1;
 
   useEffect(() => {
-    if (!resolvedSets.length) return;
-    if (!activeSetId) {
-      setActiveSetId(resolvedSets[0].id);
+    if (!hasMultipleSets) {
+      setActiveCategoryId("");
       return;
     }
-    if (!resolvedSets.some((set) => set.id === activeSetId)) {
-      setActiveSetId(resolvedSets[0].id);
+
+    setActiveCategoryId((prev) => {
+      if (prev && orderedSets.some((set) => set.id === prev)) return prev;
+      return orderedSets[0]?.id ?? "";
+    });
+  }, [hasMultipleSets, orderedSets]);
+
+  useEffect(() => {
+    if (!hasMultipleSets) {
+      setVisibleCountBySetId({});
+      return;
     }
-  }, [activeSetId, resolvedSets]);
+
+    setVisibleCountBySetId(() => {
+      const next: Record<string, number> = {};
+      orderedSets.forEach((set, index) => {
+        next[set.id] = index === 0 ? ITEMS_PER_PAGE : 0;
+      });
+      return next;
+    });
+  }, [activeFilter, hasMultipleSets, id, orderedSets]);
 
   const resolvedPhotos = useMemo<ClientPreviewPhoto[]>(() => {
-    const fallbackSetId = resolvedSets[0]?.id ?? null;
+    const fallbackSetId = orderedSets[0]?.id ?? null;
     const base = photosBase ?? [];
 
     return base.map((photo) => {
@@ -478,13 +480,48 @@ export default function GalleryClientPreview() {
         selections,
       };
     });
-  }, [favoritePhotoIds, favoritesEnabled, photoSelectionsById, photosBase, resolvedSets]);
+  }, [favoritePhotoIds, favoritesEnabled, orderedSets, photoSelectionsById, photosBase]);
 
-  const activeSetLabel = useMemo(() => {
-    const active = activeSetId ? resolvedSets.find((set) => set.id === activeSetId) ?? null : null;
-    const label = (active ?? resolvedSets[0] ?? null)?.name ?? defaultSetName;
-    return resolveSetLabel(label);
-  }, [activeSetId, defaultSetName, resolveSetLabel, resolvedSets]);
+  const filteredPhotosUnsorted = useMemo(() => {
+    switch (activeFilter) {
+      case "all":
+        return resolvedPhotos;
+      case "favorites":
+        return resolvedPhotos.filter((photo) => photo.isFavorite);
+      case "starred":
+        return resolvedPhotos.filter((photo) => photo.isStarred);
+      case "unselected":
+        return resolvedPhotos.filter((photo) => photo.selections.length === 0);
+      case "selected":
+        return resolvedPhotos.filter((photo) => photo.selections.length > 0);
+      default:
+        return resolvedPhotos.filter((photo) => photo.selections.includes(activeFilter));
+    }
+  }, [resolvedPhotos, activeFilter]);
+
+  const filteredPhotosBySetId = useMemo(() => {
+    if (!hasMultipleSets) return {} as Record<string, ClientPreviewPhoto[]>;
+    const bySetId: Record<string, ClientPreviewPhoto[]> = {};
+    orderedSets.forEach((set) => {
+      bySetId[set.id] = [];
+    });
+
+    const fallbackSetId = orderedSets[0]?.id ?? "";
+    filteredPhotosUnsorted.forEach((photo) => {
+      const rawSetId = photo.setId ?? fallbackSetId;
+      const targetSetId =
+        rawSetId && Object.prototype.hasOwnProperty.call(bySetId, rawSetId) ? rawSetId : fallbackSetId;
+      if (!targetSetId) return;
+      bySetId[targetSetId].push(photo);
+    });
+
+    return bySetId;
+  }, [filteredPhotosUnsorted, hasMultipleSets, orderedSets]);
+
+  const filteredPhotos = useMemo(() => {
+    if (!hasMultipleSets) return filteredPhotosUnsorted;
+    return orderedSets.flatMap((set) => filteredPhotosBySetId[set.id] ?? []);
+  }, [filteredPhotosBySetId, filteredPhotosUnsorted, hasMultipleSets, orderedSets]);
 
   const coverUrl = useMemo(() => {
     const coverAssetId = typeof brandingData.coverAssetId === "string" ? brandingData.coverAssetId : "";
@@ -510,10 +547,11 @@ export default function GalleryClientPreview() {
     }
   }, []);
 
-  // Reset visible count when filter or set changes
+  // Reset visible count when filters change (single-section view)
   useEffect(() => {
+    if (hasMultipleSets) return;
     setVisibleCount(ITEMS_PER_PAGE);
-  }, [activeFilter, activeSetId]);
+  }, [activeFilter, hasMultipleSets, id]);
 
   // Sticky Nav Logic
   useEffect(() => {
@@ -522,27 +560,35 @@ export default function GalleryClientPreview() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Infinite Scroll Logic
-  const filteredPhotos = useMemo(() => {
-    const setPhotos = activeSetId ? resolvedPhotos.filter((photo) => photo.setId === activeSetId) : resolvedPhotos;
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    const nav = navRef.current;
+    if (!nav) return;
 
-    switch (activeFilter) {
-      case "all":
-        return setPhotos;
-      case "favorites":
-        return setPhotos.filter((photo) => photo.isFavorite);
-      case "starred":
-        return setPhotos.filter((photo) => photo.isStarred);
-      case "unselected":
-        return setPhotos.filter((photo) => photo.selections.length === 0);
-      case "selected":
-        return setPhotos.filter((photo) => photo.selections.length > 0);
-      default:
-        return setPhotos.filter((photo) => photo.selections.includes(activeFilter));
+    const update = () => setNavHeight(nav.getBoundingClientRect().height);
+    update();
+
+    const handleResize = () => update();
+    window.addEventListener("resize", handleResize);
+
+    if (typeof ResizeObserver === "undefined") {
+      return () => {
+        window.removeEventListener("resize", handleResize);
+      };
     }
-  }, [resolvedPhotos, activeSetId, activeFilter]);
 
+    const observer = new ResizeObserver(() => update());
+    observer.observe(nav);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [galleryLoading, photosLoading, setsLoading]);
+
+  // Infinite Scroll Logic (single-section view)
   useEffect(() => {
+    if (hasMultipleSets) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting && visibleCount < filteredPhotos.length) {
@@ -559,20 +605,177 @@ export default function GalleryClientPreview() {
     }
 
     return () => observer.disconnect();
-  }, [filteredPhotos.length, visibleCount]);
+  }, [filteredPhotos.length, hasMultipleSets, visibleCount]);
 
-  const visiblePhotos = filteredPhotos.slice(0, visibleCount);
+  const scrollToSet = useCallback(
+    (setId: string) => {
+      if (!setId) return;
+
+      setActiveCategoryId(setId);
+      setVisibleCountBySetId((prev) => {
+        const total = filteredPhotosBySetId[setId]?.length ?? 0;
+        const current = prev[setId] ?? 0;
+        const nextCount = total > 0 ? Math.min(Math.max(current, ITEMS_PER_PAGE), total) : 0;
+        if (nextCount === current) return prev;
+        return { ...prev, [setId]: nextCount };
+      });
+
+      const targetId = `${SET_SECTION_ID_PREFIX}${setId}`;
+      const target = typeof document !== "undefined" ? document.getElementById(targetId) : null;
+      if (!target) return;
+
+      const navOffset = navHeight || navRef.current?.offsetHeight || 0;
+      const targetPosition = target.getBoundingClientRect().top + window.scrollY;
+      const scrollTarget = Math.max(0, targetPosition - navOffset - 12);
+      const behavior: ScrollBehavior =
+        typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth";
+
+      try {
+        window.scrollTo({ top: scrollTarget, behavior });
+      } catch {
+        // noop (jsdom)
+      }
+    },
+    [filteredPhotosBySetId, navHeight]
+  );
+
+  // Section activation (lazy render per set)
+  useEffect(() => {
+    if (!hasMultipleSets) return;
+    if (typeof window === "undefined") return;
+
+    const sectionElements = orderedSets
+      .map((set) => document.getElementById(`${SET_SECTION_ID_PREFIX}${set.id}`))
+      .filter((el): el is HTMLElement => Boolean(el));
+
+    if (sectionElements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const intersecting = entries.filter((entry) => entry.isIntersecting);
+        if (intersecting.length === 0) return;
+
+        setVisibleCountBySetId((prev) => {
+          let changed = false;
+          const next: Record<string, number> = { ...prev };
+
+          intersecting.forEach((entry) => {
+            const setId = (entry.target as HTMLElement).dataset.setId ?? "";
+            if (!setId) return;
+            const total = filteredPhotosBySetId[setId]?.length ?? 0;
+            if (total === 0) return;
+            const current = next[setId] ?? 0;
+            if (current >= Math.min(ITEMS_PER_PAGE, total)) return;
+            next[setId] = Math.min(ITEMS_PER_PAGE, total);
+            changed = true;
+          });
+
+          return changed ? next : prev;
+        });
+      },
+      { threshold: 0.01, rootMargin: "800px 0px 800px 0px" }
+    );
+
+    sectionElements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [filteredPhotosBySetId, hasMultipleSets, orderedSets]);
+
+  // Load more per section
+  useEffect(() => {
+    if (!hasMultipleSets) return;
+    if (typeof window === "undefined") return;
+
+    const sentinelElements = orderedSets
+      .map((set) => document.getElementById(`${SET_SENTINEL_ID_PREFIX}${set.id}`))
+      .filter((el): el is HTMLElement => Boolean(el));
+
+    if (sentinelElements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const target = entry.target as HTMLElement;
+          const setId = target.dataset.setId ?? "";
+          if (!setId) return;
+
+          const total = filteredPhotosBySetId[setId]?.length ?? 0;
+          if (total === 0) return;
+
+          setVisibleCountBySetId((prev) => {
+            const current = prev[setId] ?? 0;
+            if (current >= total) return prev;
+            const nextCount = Math.min(current + ITEMS_PER_PAGE, total);
+            if (nextCount === current) return prev;
+            return { ...prev, [setId]: nextCount };
+          });
+        });
+      },
+      { threshold: 0.1, rootMargin: "600px 0px" }
+    );
+
+    sentinelElements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [filteredPhotosBySetId, hasMultipleSets, orderedSets]);
+
+  // Active section tracking (for nav highlight)
+  useEffect(() => {
+    if (!hasMultipleSets) return;
+    if (typeof window === "undefined") return;
+
+    const sectionElements = orderedSets
+      .map((set) => document.getElementById(`${SET_SECTION_ID_PREFIX}${set.id}`))
+      .filter((el): el is HTMLElement => Boolean(el));
+
+    if (sectionElements.length === 0) return;
+
+    const navOffset = navHeight || navRef.current?.offsetHeight || 0;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const setId = (visible[0]?.target as HTMLElement | undefined)?.dataset.setId ?? "";
+        if (setId) setActiveCategoryId(setId);
+      },
+      { rootMargin: `-${navOffset + 24}px 0px -60% 0px`, threshold: [0, 0.5, 1] }
+    );
+
+    sectionElements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [hasMultipleSets, navHeight, orderedSets]);
+
+  const visiblePhotos = useMemo(() => filteredPhotos.slice(0, visibleCount), [filteredPhotos, visibleCount]);
+
+  const filteredPhotoIndexById = useMemo(() => {
+    const map = new Map<string, number>();
+    filteredPhotos.forEach((photo, index) => {
+      map.set(photo.id, index);
+    });
+    return map;
+  }, [filteredPhotos]);
 
   const scrollToGallery = () => {
+    const behavior: ScrollBehavior =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth";
+
     try {
-      window.scrollTo({ top: window.innerHeight, behavior: "smooth" });
+      window.scrollTo({ top: window.innerHeight, behavior });
     } catch {
       // noop (jsdom)
     }
   };
 
-  const openViewer = (index: number) => {
-    setLightboxIndex(index);
+  const openViewer = (photoId: string) => {
+    setLightboxIndex(filteredPhotoIndexById.get(photoId) ?? 0);
     setLightboxOpen(true);
   };
 
@@ -864,6 +1067,256 @@ export default function GalleryClientPreview() {
     );
   };
 
+  const renderSkeletonGrid = (keyPrefix: string) => (
+    <div className={getGridClass()} aria-hidden="true">
+      {Array.from({ length: SECTION_SKELETON_COUNT }).map((_, index) => (
+        <div key={`${keyPrefix}-${index}`} className="break-inside-avoid mb-4">
+          <Skeleton className="w-full aspect-[3/4] rounded-sm" />
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderPhotoGrid = (photos: ClientPreviewPhoto[]) => (
+    <div className={getGridClass()}>
+      {photos.map((photo) => {
+        const isMenuOpen = activeMenuId === photo.id;
+        const selectionIds = photo.selections;
+        const hasSelections = selectionIds.length > 0;
+        const resolvedSelectionIds = selectionIds.filter((selectionId) => selectionRuleTitleById.has(selectionId));
+        const visibleSelectionIds = resolvedSelectionIds.slice(0, 2);
+        const remainingSelectionCount = Math.max(0, resolvedSelectionIds.length - visibleSelectionIds.length);
+
+        return (
+          <div key={photo.id} className="break-inside-avoid group relative mb-4 z-0" style={{ zIndex: isMenuOpen ? 50 : 0 }}>
+            <div
+              onClick={() => openViewer(photo.id)}
+              className="overflow-hidden rounded-sm bg-gray-100 relative cursor-pointer"
+            >
+              {photo.url ? (
+                <img
+                  src={photo.url}
+                  alt={photo.filename}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <div className="w-full aspect-[3/4] bg-gray-200 flex items-center justify-center text-gray-500">
+                  <ImageIcon size={32} />
+                </div>
+              )}
+
+              <GalleryWatermarkOverlay watermark={watermark} variant="thumbnail" className="z-[15]" />
+
+              <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-2 max-w-[70%]">
+                {selectionRules.length > 0 ? (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSheetPhotoId((prev) => (prev === photo.id ? null : photo.id));
+                      }}
+                      aria-label={
+                        hasSelections
+                          ? t("sessionDetail.gallery.clientPreview.labels.selected")
+                          : t("sessionDetail.gallery.clientPreview.labels.add")
+                      }
+                      className={`md:hidden w-11 h-11 rounded-full flex items-center justify-center shadow-md backdrop-blur-md transition-all duration-200 active:scale-95
+                        ${hasSelections ? "bg-brand-500 text-white" : "bg-white/90 text-gray-900"}
+                      `}
+                    >
+                      {hasSelections ? <Check size={16} strokeWidth={3} /> : <ListPlus size={18} />}
+                    </button>
+
+                    <Popover open={isMenuOpen} onOpenChange={(open) => setActiveMenuId(open ? photo.id : null)}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className={`hidden md:flex h-8 px-3 rounded-full items-center gap-2 shadow-sm transition-all duration-200 backdrop-blur-md border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
+                            hasSelections
+                              ? "bg-brand-500 text-white border-brand-400 hover:bg-brand-600"
+                              : isMenuOpen
+                                ? "bg-white text-gray-900 border-gray-200 shadow-xl"
+                                : "bg-black/40 text-white border-white/20 hover:bg-white hover:text-gray-900"
+                          }`}
+                        >
+                          {hasSelections ? <Check size={14} strokeWidth={3} /> : <ListPlus size={14} />}
+                          <span className="text-[10px] font-bold uppercase tracking-wide">
+                            {hasSelections
+                              ? t("sessionDetail.gallery.clientPreview.labels.selected")
+                              : t("sessionDetail.gallery.clientPreview.labels.add")}
+                          </span>
+                        </button>
+                      </PopoverTrigger>
+
+                      <PopoverContent
+                        align="start"
+                        side="bottom"
+                        sideOffset={10}
+                        className="!w-80 rounded-xl border border-gray-100 bg-white p-4 shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-50">
+                          <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                            {t("sessionDetail.gallery.clientPreview.labels.addToLists")}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setActiveMenuId(null)}
+                            className="text-gray-400 hover:text-gray-600 bg-gray-50 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                            aria-label={t("sessionDetail.gallery.clientPreview.actions.closeMenu")}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+
+                        <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                          {selectionRules.map((rule) => {
+                            const isSelected = selectionIds.includes(rule.id);
+                            const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
+                            const isDisabled = !isSelected && isFull;
+
+                            return (
+                              <button
+                                key={rule.id}
+                                type="button"
+                                onClick={() => {
+                                  if (!isDisabled) toggleRuleSelect(photo.id, rule.id);
+                                }}
+                                disabled={isDisabled}
+                                className={`w-full flex items-center justify-between p-3 rounded-lg text-sm transition-all border text-left group
+                                  ${
+                                    isSelected
+                                      ? "bg-sky-50 border-sky-200 text-sky-900"
+                                      : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50"
+                                  }
+                                  ${isDisabled ? "opacity-50 cursor-not-allowed bg-gray-50" : ""}
+                                `}
+                              >
+                                <div className="flex flex-col gap-0.5">
+                                  <span className={`font-semibold ${isSelected ? "text-sky-700" : "text-gray-700"}`}>
+                                    {rule.title}
+                                  </span>
+                                  <span className={`text-[10px] ${isSelected ? "text-sky-500" : "text-gray-400"}`}>
+                                    {rule.currentCount} / {rule.maxCount || "∞"}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  {isDisabled ? (
+                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">
+                                      {t("sessionDetail.gallery.clientPreview.labels.limitFull")}
+                                    </span>
+                                  ) : null}
+                                  {isSelected ? (
+                                    <span className="text-[9px] font-bold text-sky-600 uppercase tracking-wide">
+                                      {t("sessionDetail.gallery.clientPreview.labels.added")}
+                                    </span>
+                                  ) : null}
+
+                                  <div
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
+                                      ${
+                                        isSelected
+                                          ? "bg-sky-500 text-white shadow-sm shadow-sky-200"
+                                          : "bg-gray-100 text-gray-300 group-hover:bg-white group-hover:border group-hover:border-gray-200"
+                                      }
+                                    `}
+                                  >
+                                    {isSelected ? <Check size={14} strokeWidth={3} /> : <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                ) : null}
+
+                {visibleSelectionIds.length > 0 ? (
+                  <div className="flex flex-col gap-1.5 items-start" data-testid={`gallery-preview-selection-chips-${photo.id}`}>
+                    {visibleSelectionIds.map((selectionId) => (
+                      <div
+                        key={selectionId}
+                        className="bg-black/80 backdrop-blur-md text-white text-[11px] md:text-sm font-semibold px-2.5 py-1.5 rounded-md shadow-md border border-white/10 max-w-full truncate animate-in slide-in-from-left-2 duration-300"
+                      >
+                        {selectionRuleTitleById.get(selectionId)}
+                      </div>
+                    ))}
+                    {remainingSelectionCount > 0 ? (
+                      <div className="bg-black/80 backdrop-blur-md text-white text-[11px] md:text-sm font-semibold px-2.5 py-1.5 rounded-md shadow-md border border-white/10 animate-in slide-in-from-left-2 duration-300">
+                        +{remainingSelectionCount}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="absolute top-2 right-2 flex items-center gap-2 z-20 pointer-events-none">
+                {photo.isStarred ? (
+                  <div className="w-8 h-8 rounded-full bg-amber-400 text-white flex items-center justify-center shadow-md animate-in zoom-in duration-300 pointer-events-auto">
+                    <Star size={14} fill="currentColor" />
+                  </div>
+                ) : null}
+
+                {favoritesEnabled ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleFavorite(photo.id);
+                    }}
+                    className={`w-11 h-11 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-md transition-all duration-200 pointer-events-auto active:scale-95
+                      ${
+                        photo.isFavorite
+                          ? "bg-red-500 text-white scale-100"
+                          : "bg-black/40 text-white hover:bg-white hover:text-red-500 backdrop-blur-sm"
+                      }`}
+                    title={
+                      photo.isFavorite
+                        ? t("sessionDetail.gallery.clientPreview.actions.removeFromFavorites")
+                        : t("sessionDetail.gallery.clientPreview.actions.addToFavorites")
+                    }
+                    aria-label={
+                      photo.isFavorite
+                        ? t("sessionDetail.gallery.clientPreview.actions.removeFromFavorites")
+                        : t("sessionDetail.gallery.clientPreview.actions.addToFavorites")
+                    }
+                  >
+                    <span className="scale-110 md:scale-100">
+                      <Heart size={14} fill={photo.isFavorite ? "currentColor" : "none"} />
+                    </span>
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            {!isMenuOpen ? (
+              <div
+                onClick={() => openViewer(photo.id)}
+                className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-4 pointer-events-none z-10"
+              >
+                <div className="flex flex-col items-center gap-2 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                  <Maximize2 size={32} strokeWidth={1.5} className="drop-shadow-lg" />
+                  <span className="text-[10px] uppercase tracking-widest font-medium drop-shadow-md">
+                    {t("sessionDetail.gallery.clientPreview.actions.inspect")}
+                  </span>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+
   const renderSelectionSheet = () => {
     if (!sheetPhotoId) return null;
     const photo = resolvedPhotos.find((candidate) => candidate.id === sheetPhotoId);
@@ -969,20 +1422,12 @@ export default function GalleryClientPreview() {
     );
   };
 
-  const currentSetStarredCount = useMemo(() => {
-    if (!activeSetId) return 0;
-    return resolvedPhotos.filter((photo) => photo.setId === activeSetId && photo.isStarred).length;
-  }, [activeSetId, resolvedPhotos]);
-
-  const currentSetPhotoCount = useMemo(() => {
-    if (!activeSetId) return resolvedPhotos.length;
-    return resolvedPhotos.filter((photo) => photo.setId === activeSetId).length;
-  }, [activeSetId, resolvedPhotos]);
-
-  const totalSelectedInSet = useMemo(() => {
-    if (!activeSetId) return 0;
-    return resolvedPhotos.filter((photo) => photo.setId === activeSetId && photo.selections.length > 0).length;
-  }, [activeSetId, resolvedPhotos]);
+  const starredCount = useMemo(() => resolvedPhotos.filter((photo) => photo.isStarred).length, [resolvedPhotos]);
+  const totalPhotoCount = useMemo(() => resolvedPhotos.length, [resolvedPhotos]);
+  const totalSelectedCount = useMemo(
+    () => resolvedPhotos.filter((photo) => photo.selections.length > 0).length,
+    [resolvedPhotos]
+  );
 
   const isLoading = galleryLoading || setsLoading || photosLoading;
   const heroTitle = gallery?.title || t("sessionDetail.gallery.clientPreview.hero.untitled");
@@ -1070,6 +1515,7 @@ export default function GalleryClientPreview() {
 
       {/* --- STICKY NAVIGATION --- */}
       <nav
+        ref={navRef}
         className={`sticky top-0 z-50 transition-all duration-500 border-b flex flex-col ${
           scrolled
             ? "bg-white/95 backdrop-blur-md border-gray-100 shadow-sm"
@@ -1083,7 +1529,7 @@ export default function GalleryClientPreview() {
 	          }`}
 	        >
           {/* Left: Branding & Sets */}
-          <div className={`flex items-center min-w-0 ${showSetTabs ? "gap-12" : "gap-4"}`}>
+          <div className={`flex items-center min-w-0 ${hasMultipleSets ? "gap-12" : "gap-4"}`}>
 		            <div
 		              className={`font-playfair font-bold tracking-tight text-gray-900 transition-all duration-300 truncate ${
 		                scrolled ? "text-lg md:text-xl" : "text-lg md:text-3xl"
@@ -1093,20 +1539,21 @@ export default function GalleryClientPreview() {
 	              {heroTitle}
 	            </div>
 
-              {showSetTabs ? (
+              {hasMultipleSets ? (
 	              <div className="hidden md:flex items-center gap-8 overflow-x-auto no-scrollbar">
-	                {resolvedSets.map((set) => (
+	                {orderedSets.map((set) => (
 	                  <button
 	                    key={set.id}
 	                    type="button"
-                    onClick={() => setActiveSetId(set.id)}
-                    className={`text-sm font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${
-                      activeSetId === set.id
+                    onClick={() => scrollToSet(set.id)}
+                    className={`font-playfair text-sm md:text-base font-semibold tracking-tight transition-colors whitespace-nowrap ${
+                      activeCategoryId === set.id
                         ? "text-gray-900 border-b-2 border-black pb-1"
-                        : "text-gray-400 hover:text-gray-600"
+                        : "text-gray-500 hover:text-gray-700"
                     }`}
+                    aria-current={activeCategoryId === set.id ? "page" : undefined}
                   >
-                    {resolveSetLabel(set.name)}
+                    {set.name}
                   </button>
                 ))}
               </div>
@@ -1168,19 +1615,20 @@ export default function GalleryClientPreview() {
 	        </div>
 
 	        {/* ROW 2: Sets (Mobile Only) */}
-          {showSetTabs ? (
+          {hasMultipleSets ? (
 	          <div className="md:hidden w-full overflow-x-auto no-scrollbar border-t border-gray-100 bg-white">
 	            <div className="flex items-center px-4 min-w-max h-12 gap-8">
-	              {resolvedSets.map((set) => (
+	              {orderedSets.map((set) => (
 	                <button
 	                  key={set.id}
 	                  type="button"
-	                  onClick={() => setActiveSetId(set.id)}
-	                  className={`text-sm font-bold uppercase tracking-widest transition-all h-full border-b-2 ${
-	                    activeSetId === set.id ? "text-gray-900 border-black" : "text-gray-400 border-transparent"
+	                  onClick={() => scrollToSet(set.id)}
+	                  className={`font-playfair text-sm font-semibold tracking-tight transition-all h-full border-b-2 ${
+	                    activeCategoryId === set.id ? "text-gray-900 border-black" : "text-gray-500 border-transparent"
 	                  }`}
+                    aria-current={activeCategoryId === set.id ? "page" : undefined}
 	                >
-	                  {resolveSetLabel(set.name)}
+	                  {set.name}
 	                </button>
 	              ))}
 	            </div>
@@ -1202,7 +1650,7 @@ export default function GalleryClientPreview() {
 	                }`}
 	              >
 	                <p className="text-xs font-bold uppercase tracking-widest text-gray-500 truncate">
-	                  {activeSetLabel}
+	                  {heroTitle}
 	                </p>
 	                <div className="mt-4 flex items-center gap-3">
 	                  <LayoutGrid size={18} className="text-gray-900" aria-hidden="true" />
@@ -1211,7 +1659,7 @@ export default function GalleryClientPreview() {
 	                  </span>
 	                </div>
 	                <div className="mt-4 text-xs font-semibold text-gray-400">
-	                  {currentSetPhotoCount}
+	                  {totalPhotoCount}
 	                </div>
 	              </button>
 
@@ -1307,8 +1755,8 @@ export default function GalleryClientPreview() {
 	                />
 	                <span className="md:hidden">{t("sessionDetail.gallery.clientPreview.filters.starredShort")}</span>
 	                <span className="hidden md:inline">{t("sessionDetail.gallery.clientPreview.filters.starred")}</span>
-	                {currentSetStarredCount > 0 ? (
-	                  <span className="ml-0.5 opacity-60">({currentSetStarredCount})</span>
+	                {starredCount > 0 ? (
+	                  <span className="ml-0.5 opacity-60">({starredCount})</span>
 	                ) : null}
 	              </button>
 
@@ -1350,268 +1798,65 @@ export default function GalleryClientPreview() {
       </nav>
 
 	      {/* --- GALLERY SECTION --- */}
-	      <div ref={galleryRef} className="bg-white min-h-screen py-12 px-4 md:px-8 pb-32 md:pb-12">
+	      <div ref={galleryRef} className="bg-white min-h-screen pt-4 md:pt-6 px-4 md:px-8 pb-32 md:pb-12">
         <div className="w-full">
-          {visiblePhotos.length === 0 ? (
+          {hasMultipleSets ? (
+            <div className="space-y-16">
+              {orderedSets.map((set) => {
+	                const setPhotos = filteredPhotosBySetId[set.id] ?? [];
+	                const visibleSetCount = visibleCountBySetId[set.id] ?? 0;
+	                const visibleSetPhotos = setPhotos.slice(0, visibleSetCount);
+	                const hasPhotos = setPhotos.length > 0;
+	                const showSkeleton = hasPhotos && visibleSetCount === 0;
+	                const showLoader = hasPhotos && visibleSetCount > 0 && visibleSetCount < setPhotos.length;
+
+	                return (
+	                  <section
+	                    key={set.id}
+	                    id={`${SET_SECTION_ID_PREFIX}${set.id}`}
+	                    data-set-id={set.id}
+	                    className="scroll-mt-24"
+	                  >
+                      <div
+                        className="sticky z-20 -mx-4 md:-mx-8 px-4 md:px-8 py-4 bg-white/95 backdrop-blur border-b border-gray-100"
+                        style={{ top: navHeight }}
+                      >
+                        <h2 className="font-playfair text-xl md:text-2xl font-semibold text-gray-900 tracking-tight">
+                          {set.name}
+                        </h2>
+                        {set.description ? (
+                          <p className="mt-1 text-sm text-gray-500 max-w-2xl">{set.description}</p>
+                        ) : null}
+                      </div>
+
+                      <div className="pt-6">
+                        {!hasPhotos ? (
+                          <div className="rounded-2xl border border-gray-100 bg-gray-50 px-6 py-10 text-center text-sm text-gray-500">
+                            {t("sessionDetail.gallery.clientPreview.sections.empty")}
+                          </div>
+                        ) : showSkeleton ? (
+                          renderSkeletonGrid(`set-${set.id}`)
+                        ) : (
+                          renderPhotoGrid(visibleSetPhotos)
+                        )}
+                      </div>
+
+	                    <div
+	                      id={`${SET_SENTINEL_ID_PREFIX}${set.id}`}
+	                      data-set-id={set.id}
+	                      className={showLoader ? "py-12 flex items-center justify-center w-full" : "hidden"}
+                    >
+                      <Loader2 className="animate-spin text-gray-300" size={32} />
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          ) : visiblePhotos.length === 0 ? (
             renderEmptyState()
           ) : (
             <>
-              <div className={getGridClass()}>
-                {visiblePhotos.map((photo, index) => {
-                  const isMenuOpen = activeMenuId === photo.id;
-                  const selectionIds = photo.selections;
-                  const hasSelections = selectionIds.length > 0;
-                  const resolvedSelectionIds = selectionIds.filter((selectionId) => selectionRuleTitleById.has(selectionId));
-                  const visibleSelectionIds = resolvedSelectionIds.slice(0, 2);
-                  const remainingSelectionCount = Math.max(0, resolvedSelectionIds.length - visibleSelectionIds.length);
-
-                  return (
-                    <div
-                      key={photo.id}
-                      className="break-inside-avoid group relative mb-4 z-0"
-                      style={{ zIndex: isMenuOpen ? 50 : 0 }}
-                    >
-                      <div
-                        onClick={() => openViewer(index)}
-                        className="overflow-hidden rounded-sm bg-gray-100 relative cursor-pointer"
-                      >
-                        {photo.url ? (
-                          <img
-                            src={photo.url}
-                            alt={photo.filename}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="w-full aspect-[3/4] bg-gray-200 flex items-center justify-center text-gray-500">
-                            <ImageIcon size={32} />
-                          </div>
-                        )}
-
-                        <GalleryWatermarkOverlay watermark={watermark} variant="thumbnail" className="z-[15]" />
-
-		                        <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-2 max-w-[70%]">
-		                          {selectionRules.length > 0 ? (
-		                            <div className="relative">
-		                              <button
-	                                type="button"
-	                                onClick={(e) => {
-	                                  e.stopPropagation();
-	                                  setSheetPhotoId((prev) => (prev === photo.id ? null : photo.id));
-	                                }}
-	                                aria-label={
-	                                  hasSelections
-	                                    ? t("sessionDetail.gallery.clientPreview.labels.selected")
-	                                    : t("sessionDetail.gallery.clientPreview.labels.add")
-	                                }
-	                                className={`md:hidden w-11 h-11 rounded-full flex items-center justify-center shadow-md backdrop-blur-md transition-all duration-200 active:scale-95
-	                                  ${hasSelections ? "bg-brand-500 text-white" : "bg-white/90 text-gray-900"}
-	                                `}
-	                              >
-	                                {hasSelections ? <Check size={16} strokeWidth={3} /> : <ListPlus size={18} />}
-	                              </button>
-
-	                              <Popover
-	                                open={isMenuOpen}
-	                                onOpenChange={(open) => setActiveMenuId(open ? photo.id : null)}
-	                              >
-	                                <PopoverTrigger asChild>
-	                                  <button
-	                                    type="button"
-	                                    onClick={(e) => {
-	                                      e.stopPropagation();
-	                                    }}
-	                                    className={`hidden md:flex h-8 px-3 rounded-full items-center gap-2 shadow-sm transition-all duration-200 backdrop-blur-md border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
-	                                      hasSelections
-	                                        ? "bg-brand-500 text-white border-brand-400 hover:bg-brand-600"
-	                                        : isMenuOpen
-	                                          ? "bg-white text-gray-900 border-gray-200 shadow-xl"
-	                                          : "bg-black/40 text-white border-white/20 hover:bg-white hover:text-gray-900"
-	                                    }`}
-	                                  >
-	                                    {hasSelections ? <Check size={14} strokeWidth={3} /> : <ListPlus size={14} />}
-	                                    <span className="text-[10px] font-bold uppercase tracking-wide">
-	                                      {hasSelections
-	                                        ? t("sessionDetail.gallery.clientPreview.labels.selected")
-	                                        : t("sessionDetail.gallery.clientPreview.labels.add")}
-	                                    </span>
-	                                  </button>
-	                                </PopoverTrigger>
-
-	                                <PopoverContent
-	                                  align="start"
-	                                  side="bottom"
-	                                  sideOffset={10}
-	                                  className="!w-80 rounded-xl border border-gray-100 bg-white p-4 shadow-2xl"
-	                                  onClick={(e) => e.stopPropagation()}
-	                                >
-	                                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-50">
-	                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-	                                      {t("sessionDetail.gallery.clientPreview.labels.addToLists")}
-	                                    </span>
-	                                    <button
-	                                      type="button"
-	                                      onClick={() => setActiveMenuId(null)}
-	                                      className="text-gray-400 hover:text-gray-600 bg-gray-50 p-1 rounded-full hover:bg-gray-100 transition-colors"
-	                                      aria-label={t("sessionDetail.gallery.clientPreview.actions.closeMenu")}
-	                                    >
-	                                      <X size={14} />
-	                                    </button>
-	                                  </div>
-
-	                                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
-	                                    {selectionRules.map((rule) => {
-	                                      const isSelected = selectionIds.includes(rule.id);
-	                                      const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
-	                                      const isDisabled = !isSelected && isFull;
-
-	                                      return (
-	                                        <button
-	                                          key={rule.id}
-	                                          type="button"
-	                                          onClick={() => {
-	                                            if (!isDisabled) toggleRuleSelect(photo.id, rule.id);
-	                                          }}
-	                                          disabled={isDisabled}
-	                                          className={`w-full flex items-center justify-between p-3 rounded-lg text-sm transition-all border text-left group
-	                                            ${
-	                                              isSelected
-	                                                ? "bg-sky-50 border-sky-200 text-sky-900"
-	                                                : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50"
-	                                            }
-	                                            ${isDisabled ? "opacity-50 cursor-not-allowed bg-gray-50" : ""}
-	                                          `}
-	                                        >
-	                                          <div className="flex flex-col gap-0.5">
-	                                            <span
-	                                              className={`font-semibold ${
-	                                                isSelected ? "text-sky-700" : "text-gray-700"
-	                                              }`}
-	                                            >
-	                                              {rule.title}
-	                                            </span>
-	                                            <span className={`text-[10px] ${isSelected ? "text-sky-500" : "text-gray-400"}`}>
-	                                              {rule.currentCount} / {rule.maxCount || "∞"}
-	                                            </span>
-	                                          </div>
-
-	                                          <div className="flex items-center gap-3">
-	                                            {isDisabled ? (
-	                                              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">
-	                                                {t("sessionDetail.gallery.clientPreview.labels.limitFull")}
-	                                              </span>
-	                                            ) : null}
-	                                            {isSelected ? (
-	                                              <span className="text-[9px] font-bold text-sky-600 uppercase tracking-wide">
-	                                                {t("sessionDetail.gallery.clientPreview.labels.added")}
-	                                              </span>
-	                                            ) : null}
-
-	                                            <div
-	                                              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
-	                                                ${
-	                                                  isSelected
-	                                                    ? "bg-sky-500 text-white shadow-sm shadow-sky-200"
-	                                                    : "bg-gray-100 text-gray-300 group-hover:bg-white group-hover:border group-hover:border-gray-200"
-	                                                }
-	                                              `}
-	                                            >
-	                                              {isSelected ? (
-	                                                <Check size={14} strokeWidth={3} />
-	                                              ) : (
-	                                                <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-	                                              )}
-	                                            </div>
-	                                          </div>
-	                                        </button>
-	                                      );
-	                                    })}
-	                                  </div>
-	                                </PopoverContent>
-	                              </Popover>
-	                            </div>
-	                          ) : null}
-
-	                          {visibleSelectionIds.length > 0 ? (
-	                            <div
-	                              className="flex flex-col gap-1.5 items-start"
-	                              data-testid={`gallery-preview-selection-chips-${photo.id}`}
-	                            >
-	                              {visibleSelectionIds.map((selectionId) => (
-	                                <div
-	                                  key={selectionId}
-	                                  className="bg-black/80 backdrop-blur-md text-white text-[11px] md:text-sm font-semibold px-2.5 py-1.5 rounded-md shadow-md border border-white/10 max-w-full truncate animate-in slide-in-from-left-2 duration-300"
-	                                >
-	                                  {selectionRuleTitleById.get(selectionId)}
-	                                </div>
-	                              ))}
-	                              {remainingSelectionCount > 0 ? (
-	                                <div className="bg-black/80 backdrop-blur-md text-white text-[11px] md:text-sm font-semibold px-2.5 py-1.5 rounded-md shadow-md border border-white/10 animate-in slide-in-from-left-2 duration-300">
-	                                  +{remainingSelectionCount}
-	                                </div>
-	                              ) : null}
-	                            </div>
-	                          ) : null}
-                        </div>
-
-                        <div className="absolute top-2 right-2 flex items-center gap-2 z-20 pointer-events-none">
-                          {photo.isStarred ? (
-                            <div className="w-8 h-8 rounded-full bg-amber-400 text-white flex items-center justify-center shadow-md animate-in zoom-in duration-300 pointer-events-auto">
-                              <Star size={14} fill="currentColor" />
-                            </div>
-                          ) : null}
-
-		                          {favoritesEnabled ? (
-		                            <button
-		                              type="button"
-		                              onClick={(e) => {
-		                                e.stopPropagation();
-		                                handleToggleFavorite(photo.id);
-		                              }}
-		                              className={`w-11 h-11 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-md transition-all duration-200 pointer-events-auto active:scale-95
-		                                ${
-		                                  photo.isFavorite
-		                                    ? "bg-red-500 text-white scale-100"
-		                                    : "bg-black/40 text-white hover:bg-white hover:text-red-500 backdrop-blur-sm"
-		                                }`}
-                              title={
-                                photo.isFavorite
-                                  ? t("sessionDetail.gallery.clientPreview.actions.removeFromFavorites")
-                                  : t("sessionDetail.gallery.clientPreview.actions.addToFavorites")
-                              }
-		                              aria-label={
-		                                photo.isFavorite
-		                                  ? t("sessionDetail.gallery.clientPreview.actions.removeFromFavorites")
-		                                  : t("sessionDetail.gallery.clientPreview.actions.addToFavorites")
-		                              }
-		                            >
-		                              <span className="scale-110 md:scale-100">
-		                                <Heart size={14} fill={photo.isFavorite ? "currentColor" : "none"} />
-		                              </span>
-		                            </button>
-		                          ) : null}
-	                        </div>
-                      </div>
-
-                      {!isMenuOpen ? (
-                        <div
-                          onClick={() => openViewer(index)}
-                          className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-4 pointer-events-none z-10"
-                        >
-                          <div className="flex flex-col items-center gap-2 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                            <Maximize2 size={32} strokeWidth={1.5} className="drop-shadow-lg" />
-                            <span className="text-[10px] uppercase tracking-widest font-medium drop-shadow-md">
-                              {t("sessionDetail.gallery.clientPreview.actions.inspect")}
-                            </span>
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-
+              {renderPhotoGrid(visiblePhotos)}
               {visibleCount < filteredPhotos.length ? (
                 <div ref={observerTarget} className="py-12 flex items-center justify-center w-full">
                   <Loader2 className="animate-spin text-gray-300" size={32} />
@@ -1632,7 +1877,7 @@ export default function GalleryClientPreview() {
 	        </p>
 	      </footer>
 
-	      {totalSelectedInSet > 0 && activeFilter !== "selected" ? (
+	      {totalSelectedCount > 0 && activeFilter !== "selected" ? (
 	        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-6 duration-500">
 	          <button
 	            type="button"
@@ -1640,7 +1885,7 @@ export default function GalleryClientPreview() {
 	            className="bg-gray-900 text-white pl-4 pr-6 py-3 rounded-full shadow-2xl flex items-center gap-3 hover:scale-105 transition-transform"
 	          >
 	            <div className="w-8 h-8 rounded-full bg-white text-gray-900 flex items-center justify-center text-sm font-bold">
-	              {totalSelectedInSet}
+	              {totalSelectedCount}
 	            </div>
 	            <div className="text-left">
 	              <div className="text-[10px] opacity-70 uppercase tracking-wider font-medium">

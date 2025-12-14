@@ -117,6 +117,72 @@ describe("GalleryClientPreview", () => {
     expect(await screen.findByText("Studio")).toBeInTheDocument();
   });
 
+  it("renders categorized sets and scrolls to a set section", async () => {
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: { id: "gallery-123", title: "My Gallery", type: "proof", branding: {} },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [
+            { id: "set-1", name: "Highlights", description: null, order_index: 1 },
+            { id: "set-2", name: "Test 2", description: null, order_index: 2 },
+          ],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              status: "ready",
+              metadata: { originalName: "a.jpg", setId: "set-1", starred: false },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+            {
+              id: "asset-2",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-2.webp",
+              status: "ready",
+              metadata: { originalName: "b.jpg", setId: "set-2", starred: false },
+              created_at: "2025-01-02T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+    expect(screen.queryByText(/highlights\\s*\\(all\\)/i)).not.toBeInTheDocument();
+
+    const test2Buttons = await screen.findAllByRole("button", { name: "Test 2" });
+    fireEvent.click(test2Buttons[0]);
+
+    await waitFor(() => {
+      const scrollToMock = window.scrollTo as unknown as jest.Mock;
+      expect(scrollToMock).toHaveBeenCalledWith(expect.objectContaining({ behavior: "smooth" }));
+    });
+
+    expect(await screen.findByAltText("b.jpg")).toBeInTheDocument();
+
+    const favoritesFilter = await screen.findByRole("button", { name: /^(favorites|favoriler)$/i });
+    fireEvent.click(favoritesFilter);
+
+    expect(await screen.findAllByRole("button", { name: "Test 2" })).toHaveLength(test2Buttons.length);
+  });
+
   it("allows selecting and favoriting photos in preview mode", async () => {
     supabaseMock.from.mockImplementation((table: string) => {
       const builder = supabaseMock.__createQueryBuilder();

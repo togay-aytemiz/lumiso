@@ -594,7 +594,8 @@
 	          "preview": {
 	            "title": "Live preview",
 	            "description": "Quickly check how it will look.",
-	            "disabled": "Watermark off"
+	            "disabled": "Watermark off",
+	            "backgroundAlt": "Preview background"
 	          },
 	          "toggle": {
 	            "title": "Watermark",
@@ -781,16 +782,26 @@
         "filterFavorites": "Filtering favorites",
         "filterAll": "Showing all items"
       },
-      "clientPreview": {
-        "hero": {
-          "kicker": "Private collection",
-          "scrollCta": "View gallery",
-          "coverAlt": "Cover photo",
-          "untitled": "Untitled gallery"
-        },
-        "actions": {
-          "close": "Close",
-          "inspect": "Inspect",
+	      "clientPreview": {
+	        "hero": {
+	          "kicker": "Private collection",
+	          "scrollCta": "View gallery",
+	          "coverAlt": "Cover photo",
+	          "untitled": "Untitled gallery",
+	          "badge": {
+	            "selection": {
+	              "title": "SELECTION STAGE",
+	              "description": "Please complete your selections"
+	            },
+	            "delivery": {
+	              "title": "FINAL COLLECTION",
+	              "description": "All your memories are ready"
+	            }
+	          }
+	        },
+	        "actions": {
+	          "close": "Close",
+	          "inspect": "Inspect",
           "closeMenu": "Close menu",
           "closeViewer": "Close photo",
           "addToFavorites": "Add to favorites",

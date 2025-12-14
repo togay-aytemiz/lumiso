@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +17,7 @@ import {
   Heart,
   Image as ImageIcon,
   LayoutGrid,
+  ListChecks,
   ListPlus,
   Loader2,
   Maximize2,
@@ -29,10 +30,12 @@ import {
 
 type GridSize = "small" | "medium" | "large";
 type FilterType = "all" | "favorites" | "starred" | "unselected" | "selected" | string;
+type HeroMode = "selection" | "delivery";
 
 type GalleryDetailRow = {
   id: string;
   title: string;
+  type: string;
   branding: Record<string, unknown> | null;
 };
 
@@ -102,9 +105,10 @@ const parseCountValue = (value: unknown): number | null => {
 
 export default function GalleryClientPreview() {
   const { id } = useParams<{ id: string }>();
-  const { t } = useTranslation("pages");
+  const { t, i18n } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
   const i18nToast = useI18nToast();
+  const navigate = useNavigate();
 
   const galleryRef = useRef<HTMLDivElement>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -131,7 +135,7 @@ export default function GalleryClientPreview() {
       if (!id) return null;
       const { data, error } = await supabase
         .from("galleries")
-        .select("id,title,branding")
+        .select("id,title,type,branding")
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -220,6 +224,14 @@ export default function GalleryClientPreview() {
   const brandingData = useMemo(() => (gallery?.branding || {}) as Record<string, unknown>, [gallery?.branding]);
   const selectionSettings = useMemo(() => (brandingData.selectionSettings || {}) as Record<string, unknown>, [brandingData]);
   const favoritesEnabled = selectionSettings.allowFavorites !== false;
+  const eventDate = typeof brandingData.eventDate === "string" ? brandingData.eventDate : "";
+
+  const formattedEventDate = useMemo(() => {
+    if (!eventDate) return "";
+    const parsed = new Date(`${eventDate}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) return "";
+    return new Intl.DateTimeFormat(i18n.language || "en", { dateStyle: "long" }).format(parsed);
+  }, [eventDate, i18n.language]);
 
   const parseSelectionTemplateGroups = useCallback(
     (branding: Record<string, unknown> | null): SelectionTemplateGroupForm[] => {
@@ -516,6 +528,14 @@ export default function GalleryClientPreview() {
     [favoritePhotoIds, favoritesEnabled, i18nToast, t, toggleFavorite]
   );
 
+  const handleExit = useCallback(() => {
+    if (id) {
+      navigate(`/galleries/${id}`);
+      return;
+    }
+    navigate(-1);
+  }, [id, navigate]);
+
   const toggleRuleSelect = useCallback((photoId: string, ruleId: string) => {
     setPhotoSelectionsById((prev) => {
       const current = prev[photoId] ?? [];
@@ -736,6 +756,7 @@ export default function GalleryClientPreview() {
 
   const isLoading = galleryLoading || setsLoading || photosLoading;
   const heroTitle = gallery?.title || t("sessionDetail.gallery.clientPreview.hero.untitled");
+  const heroMode: HeroMode = gallery?.type === "final" ? "delivery" : "selection";
 
   if (isLoading) {
     return (
@@ -766,17 +787,48 @@ export default function GalleryClientPreview() {
         </div>
 
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center p-6 animate-in fade-in duration-1000 slide-in-from-bottom-10">
-          <span className="text-xs md:text-sm tracking-[0.3em] uppercase font-light mb-4 opacity-90">
-            {t("sessionDetail.gallery.clientPreview.hero.kicker")}
-          </span>
-          <h1 className="font-serif text-5xl md:text-7xl lg:text-9xl mb-6 tracking-tight drop-shadow-2xl">
+          <div
+            className={`
+              flex items-center gap-2.5 px-5 py-2 rounded-full backdrop-blur-md border shadow-lg mb-8 transition-all
+              ${
+                heroMode === "selection"
+                  ? "bg-amber-900/30 border-amber-200/30 text-amber-100"
+                  : "bg-white/10 border-white/20 text-white"
+              }
+            `}
+            data-testid="gallery-client-preview-hero-badge"
+          >
+            {heroMode === "selection" ? (
+              <ListChecks size={14} className="text-amber-200" />
+            ) : (
+              <Sparkles size={14} className="text-slate-100" />
+            )}
+            <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] leading-none">
+              {t(`sessionDetail.gallery.clientPreview.hero.badge.${heroMode}.title`)}
+            </span>
+          </div>
+
+          <h1 className="font-playfair text-5xl md:text-7xl lg:text-9xl mb-4 tracking-tight drop-shadow-2xl">
             {heroTitle}
           </h1>
+
+          {formattedEventDate ? (
+            <div
+              className="text-[11px] md:text-sm tracking-[0.25em] uppercase font-medium text-white/80 mb-4"
+              data-testid="gallery-client-preview-event-date"
+            >
+              {formattedEventDate}
+            </div>
+          ) : null}
+
+          <p className="text-white/80 font-light text-sm md:text-base max-w-lg mx-auto tracking-wide">
+            {t(`sessionDetail.gallery.clientPreview.hero.badge.${heroMode}.description`)}
+          </p>
 
           <button
             type="button"
             onClick={scrollToGallery}
-            className="group flex flex-col items-center gap-2 text-[10px] uppercase tracking-[0.2em] hover:text-white/80 transition-colors cursor-pointer mt-12"
+            className="group flex flex-col items-center gap-2 text-[10px] uppercase tracking-[0.2em] hover:text-white/80 transition-colors cursor-pointer mt-10"
           >
             <span>{t("sessionDetail.gallery.clientPreview.hero.scrollCta")}</span>
             <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center group-hover:bg-white/10 transition-all mt-2">
@@ -802,12 +854,12 @@ export default function GalleryClientPreview() {
 	        >
 	          {/* Left: Branding & Sets */}
 	          <div className="flex items-center gap-12 min-w-0">
-	            <div
-	              className={`font-serif font-bold tracking-tight text-gray-900 transition-all duration-300 truncate ${
-	                scrolled ? "text-lg md:text-xl" : "text-lg md:text-3xl"
-	              }`}
-	              title={heroTitle}
-	            >
+		            <div
+		              className={`font-playfair font-bold tracking-tight text-gray-900 transition-all duration-300 truncate ${
+		                scrolled ? "text-lg md:text-xl" : "text-lg md:text-3xl"
+		              }`}
+		              title={heroTitle}
+		            >
 	              {heroTitle}
 	            </div>
 
@@ -831,6 +883,15 @@ export default function GalleryClientPreview() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-4 md:gap-6 shrink-0">
+            <button
+              type="button"
+              onClick={handleExit}
+              className="md:hidden p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors"
+              aria-label={t("sessionDetail.gallery.clientPreview.actions.close")}
+            >
+              <X size={20} />
+            </button>
+
             {/* Grid Size Controls */}
             <div className="hidden lg:flex items-center bg-gray-100 rounded-lg p-1 mr-2">
               <button
@@ -870,8 +931,17 @@ export default function GalleryClientPreview() {
                 <Grid3x3 size={16} />
               </button>
             </div>
-	          </div>
-	        </div>
+
+            <button
+              type="button"
+              onClick={handleExit}
+              className="hidden md:flex items-center gap-2 bg-gray-900 text-white px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-black transition-colors"
+            >
+              <X size={16} />
+              {t("sessionDetail.gallery.clientPreview.actions.close")}
+            </button>
+          </div>
+        </div>
 
 	        {/* ROW 2: Sets (Mobile Only) */}
 	        <div className="md:hidden w-full overflow-x-auto no-scrollbar border-t border-gray-100 bg-white">
@@ -1190,13 +1260,13 @@ export default function GalleryClientPreview() {
 	                              {visibleSelectionIds.map((selectionId) => (
 	                                <div
 	                                  key={selectionId}
-	                                  className="bg-gray-900/80 backdrop-blur-md text-white text-[11px] md:text-xs font-semibold px-2.5 py-1.5 rounded-md shadow-sm border border-white/10 max-w-full truncate animate-in slide-in-from-left-2 duration-300"
+	                                  className="bg-black/80 backdrop-blur-md text-white text-[11px] md:text-sm font-semibold px-2.5 py-1.5 rounded-md shadow-md border border-white/10 max-w-full truncate animate-in slide-in-from-left-2 duration-300"
 	                                >
 	                                  {selectionRuleTitleById.get(selectionId)}
 	                                </div>
 	                              ))}
 	                              {remainingSelectionCount > 0 ? (
-	                                <div className="bg-gray-900/80 backdrop-blur-md text-white text-[11px] md:text-xs font-semibold px-2.5 py-1.5 rounded-md shadow-sm border border-white/10 animate-in slide-in-from-left-2 duration-300">
+	                                <div className="bg-black/80 backdrop-blur-md text-white text-[11px] md:text-sm font-semibold px-2.5 py-1.5 rounded-md shadow-md border border-white/10 animate-in slide-in-from-left-2 duration-300">
 	                                  +{remainingSelectionCount}
 	                                </div>
 	                              ) : null}

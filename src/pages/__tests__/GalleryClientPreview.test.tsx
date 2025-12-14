@@ -39,7 +39,7 @@ describe("GalleryClientPreview", () => {
       const builder = supabaseMock.__createQueryBuilder();
       if (table === "galleries") {
         return builder.__setResponse({
-          data: { id: "gallery-123", title: "My Gallery", branding: {} },
+          data: { id: "gallery-123", title: "My Gallery", type: "proof", branding: {} },
           error: null,
         });
       }
@@ -71,6 +71,7 @@ describe("GalleryClientPreview", () => {
           data: {
             id: "gallery-123",
             title: "My Gallery",
+            type: "proof",
             branding: {
               selectionSettings: { enabled: true, allowFavorites: true },
               selectionTemplate: [{ part: "Cover", min: 1, max: 1, required: true }],
@@ -147,6 +148,7 @@ describe("GalleryClientPreview", () => {
           data: {
             id: "gallery-123",
             title: "My Gallery",
+            type: "proof",
             branding: {
               selectionSettings: { enabled: true, allowFavorites: true },
               selectionTemplate: [
@@ -206,6 +208,81 @@ describe("GalleryClientPreview", () => {
     expect(within(chipsContainer).queryByText("Album")).not.toBeInTheDocument();
   });
 
+  it("renders hero badge and event date when available", async () => {
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            type: "proof",
+            branding: { eventDate: "2025-01-01" },
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+
+    const badge = await screen.findByTestId("gallery-client-preview-hero-badge");
+    expect(within(badge).getByText(/selection stage|seçim aşaması/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/please complete your selections|seçimlerinizi tamamlamanız bekleniyor/i)
+    ).toBeInTheDocument();
+
+    const eventDate = await screen.findByTestId("gallery-client-preview-event-date");
+    expect(eventDate).toHaveTextContent(/2025/);
+  });
+
+  it("renders delivery badge for final galleries", async () => {
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            type: "final",
+            branding: {},
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+
+    const badge = await screen.findByTestId("gallery-client-preview-hero-badge");
+    expect(within(badge).getByText(/final collection|final koleksiyon/i)).toBeInTheDocument();
+    expect(screen.getByText(/all your memories are ready|tüm anılarınız hazır/i)).toBeInTheDocument();
+  });
+
   it("prefers coverAssetId for the hero cover image", async () => {
     supabaseMock.storage.from.mockImplementation(() => ({
       createSignedUrl: jest.fn().mockImplementation((path: string) => {
@@ -220,7 +297,7 @@ describe("GalleryClientPreview", () => {
       const builder = supabaseMock.__createQueryBuilder();
       if (table === "galleries") {
         return builder.__setResponse({
-          data: { id: "gallery-123", title: "My Gallery", branding: { coverAssetId: "asset-2" } },
+          data: { id: "gallery-123", title: "My Gallery", type: "proof", branding: { coverAssetId: "asset-2" } },
           error: null,
         });
       }
@@ -277,7 +354,7 @@ describe("GalleryClientPreview", () => {
       supabaseMock.from.mockImplementation((table: string) => {
         if (table === "galleries") {
           return supabaseMock.__createQueryBuilder().__setResponse({
-            data: { id: "gallery-123", title: "My Gallery", branding: {} },
+            data: { id: "gallery-123", title: "My Gallery", type: "proof", branding: {} },
             error: null,
           });
         }

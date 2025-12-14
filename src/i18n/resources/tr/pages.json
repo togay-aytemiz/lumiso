@@ -609,7 +609,8 @@
 	          "preview": {
 	            "title": "Canlı Önizleme",
 	            "description": "Filigran görünümünü hızlıca kontrol edin.",
-	            "disabled": "Filigran kapalı"
+	            "disabled": "Filigran kapalı",
+	            "backgroundAlt": "Önizleme arka planı"
 	          },
 	          "toggle": {
 	            "title": "Filigran Kullanımı",
@@ -796,16 +797,26 @@
         "filterFavorites": "Favoriler filtreleniyor",
         "filterAll": "Tüm öğeler gösteriliyor"
       },
-      "clientPreview": {
-        "hero": {
-          "kicker": "Özel Koleksiyon",
-          "scrollCta": "Galeriyi Görüntüle",
-          "coverAlt": "Kapak fotoğrafı",
-          "untitled": "Başlıksız galeri"
-        },
-        "actions": {
-          "close": "Kapat",
-          "inspect": "İncele",
+	      "clientPreview": {
+	        "hero": {
+	          "kicker": "Özel Koleksiyon",
+	          "scrollCta": "Galeriyi Görüntüle",
+	          "coverAlt": "Kapak fotoğrafı",
+	          "untitled": "Başlıksız galeri",
+	          "badge": {
+	            "selection": {
+	              "title": "SEÇİM AŞAMASI",
+	              "description": "Seçimlerinizi tamamlamanız bekleniyor"
+	            },
+	            "delivery": {
+	              "title": "FİNAL KOLEKSİYON",
+	              "description": "Tüm anılarınız hazır"
+	            }
+	          }
+	        },
+	        "actions": {
+	          "close": "Kapat",
+	          "inspect": "İncele",
           "closeMenu": "Menüyü kapat",
           "closeViewer": "Fotoğrafı kapat",
           "addToFavorites": "Favorilere Ekle",

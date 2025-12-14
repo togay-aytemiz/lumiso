@@ -310,6 +310,7 @@ export default function GalleryDetail() {
 
   const signedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
   const signedUrlRefreshInFlightRef = useRef<Set<string>>(new Set());
+  const photoSelectionsTouchedRef = useRef(false);
 
   const [activeTab, setActiveTab] = useState<"photos" | "settings">("photos");
   const [activeSettingsTab, setActiveSettingsTab] = useState<GallerySettingsTab>("general");
@@ -671,6 +672,7 @@ export default function GalleryDetail() {
     setUploadQueue([]);
     setSelectedBatchIds(new Set());
     setPhotoSelections({});
+    photoSelectionsTouchedRef.current = false;
     setActiveSelectionRuleId(null);
     setPendingSelectionRemovalId(null);
     setPendingBatchDeleteIds(null);
@@ -1128,6 +1130,65 @@ export default function GalleryDetail() {
     const favoriteKey = normalizeSelectionPartKey(FAVORITES_FILTER_ID);
     return Math.max(selectionPartCounts[favoriteKey] ?? 0, localFavorites);
   }, [selectionPartCounts, localRuleCounts]);
+
+  const selectionPartKeyByRuleId = useMemo(() => {
+    const map = new Map<string, string>();
+    selectionTemplateGroups.forEach((group, groupIndex) => {
+      group.rules.forEach((rule, ruleIndex) => {
+        const part = typeof rule.part === "string" ? rule.part.trim() : "";
+        const normalizedKey = normalizeSelectionPartKey(part);
+        if (!normalizedKey) return;
+        const ruleId = `${group.key}-${groupIndex}-${normalizedKey || ruleIndex}`;
+        map.set(ruleId, normalizedKey);
+      });
+    });
+    return map;
+  }, [selectionTemplateGroups]);
+
+  const selectionRuleIdByPartKey = useMemo(() => {
+    const map = new Map<string, string>();
+    selectionTemplateGroups.forEach((group, groupIndex) => {
+      group.rules.forEach((rule, ruleIndex) => {
+        const part = typeof rule.part === "string" ? rule.part.trim() : "";
+        const normalizedKey = normalizeSelectionPartKey(part);
+        if (!normalizedKey) return;
+        const ruleId = `${group.key}-${groupIndex}-${normalizedKey || ruleIndex}`;
+        if (map.has(normalizedKey)) return;
+        map.set(normalizedKey, ruleId);
+      });
+    });
+    return map;
+  }, [selectionTemplateGroups]);
+
+  const persistedPhotoSelectionsById = useMemo(() => {
+    const selections: Record<string, string[]> = {};
+    (clientSelections ?? []).forEach((entry) => {
+      const assetId = typeof entry.asset_id === "string" ? entry.asset_id : "";
+      if (!assetId) return;
+      const partKey = normalizeSelectionPartKey(entry.selection_part);
+      if (!partKey) return;
+      if (partKey === normalizeSelectionPartKey(FAVORITES_FILTER_ID)) {
+        const current = selections[assetId] ?? [];
+        if (!current.includes(FAVORITES_FILTER_ID)) {
+          selections[assetId] = [...current, FAVORITES_FILTER_ID];
+        }
+        return;
+      }
+      const ruleId = selectionRuleIdByPartKey.get(partKey);
+      if (!ruleId) return;
+      const current = selections[assetId] ?? [];
+      if (!current.includes(ruleId)) {
+        selections[assetId] = [...current, ruleId];
+      }
+    });
+    return selections;
+  }, [clientSelections, selectionRuleIdByPartKey]);
+
+  useEffect(() => {
+    if (!clientSelections) return;
+    if (photoSelectionsTouchedRef.current) return;
+    setPhotoSelections(persistedPhotoSelectionsById);
+  }, [clientSelections, persistedPhotoSelectionsById]);
 
   const handleSelectionTemplateRulesChange = useCallback(
     (groupKey: string, rules: SelectionTemplateRuleForm[]) => {
@@ -2356,20 +2417,96 @@ export default function GalleryDetail() {
     }
   }, [isBatchSelectionMode, selectedBatchIds.size]);
 
-  const togglePhotoRuleSelection = useCallback((photoId: string, ruleId: string) => {
-    setPhotoSelections((prev) => {
-      const current = prev[photoId] ?? [];
-      if (current.includes(ruleId)) {
-        const next = current.filter((id) => id !== ruleId);
-        if (next.length === 0) {
-          const { [photoId]: _removed, ...rest } = prev;
-          return rest;
+  const updateClientSelectionMutation = useMutation({
+    mutationFn: async ({
+      photoId,
+      selectionPartKey,
+      nextIsSelected,
+    }: {
+      photoId: string;
+      selectionPartKey: string;
+      nextIsSelected: boolean;
+    }) => {
+      if (!id) return;
+      if (!selectionPartKey) return;
+
+      const { error: deleteError } = await supabase
+        .from("client_selections")
+        .delete()
+        .eq("gallery_id", id)
+        .eq("asset_id", photoId)
+        .eq("selection_part", selectionPartKey);
+      if (deleteError) throw deleteError;
+
+      if (!nextIsSelected) return;
+
+      const { error: insertError } = await supabase.from("client_selections").insert({
+        gallery_id: id,
+        asset_id: photoId,
+        selection_part: selectionPartKey,
+      });
+      if (insertError) throw insertError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client_selections", id] });
+      queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_client_selections", id] });
+    },
+  });
+
+  const togglePhotoRuleSelection = useCallback(
+    (photoId: string, ruleId: string) => {
+      const selectionPartKey = selectionPartKeyByRuleId.get(ruleId) ?? "";
+      if (!selectionPartKey) return;
+
+      photoSelectionsTouchedRef.current = true;
+      const currentRuleIds = photoSelections[photoId] ?? [];
+      const wasSelected = currentRuleIds.includes(ruleId);
+      const nextIsSelected = !wasSelected;
+
+      setPhotoSelections((prev) => {
+        const current = prev[photoId] ?? [];
+        if (current.includes(ruleId)) {
+          const next = current.filter((id) => id !== ruleId);
+          if (next.length === 0) {
+            const { [photoId]: _removed, ...rest } = prev;
+            return rest;
+          }
+          return { ...prev, [photoId]: next };
         }
-        return { ...prev, [photoId]: next };
-      }
-      return { ...prev, [photoId]: [...current, ruleId] };
-    });
-  }, []);
+        return { ...prev, [photoId]: [...current, ruleId] };
+      });
+
+      updateClientSelectionMutation.mutate(
+        { photoId, selectionPartKey, nextIsSelected },
+        {
+          onError: (error) => {
+            setPhotoSelections((prev) => {
+              const current = prev[photoId] ?? [];
+              const hasRule = current.includes(ruleId);
+              if (nextIsSelected) {
+                if (!hasRule) return prev;
+                const next = current.filter((id) => id !== ruleId);
+                if (next.length === 0) {
+                  const { [photoId]: _removed, ...rest } = prev;
+                  return rest;
+                }
+                return { ...prev, [photoId]: next };
+              }
+              if (hasRule) return prev;
+              return { ...prev, [photoId]: [...current, ruleId] };
+            });
+
+            toast({
+              title: t("sessionDetail.gallery.toast.errorTitle"),
+              description: error instanceof Error ? error.message : t("sessionDetail.gallery.toast.errorDesc"),
+              variant: "destructive",
+            });
+          },
+        }
+      );
+    },
+    [photoSelections, selectionPartKeyByRuleId, t, toast, updateClientSelectionMutation]
+  );
 
   useEffect(() => {
     if (

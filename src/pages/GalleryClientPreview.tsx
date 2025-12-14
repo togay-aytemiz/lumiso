@@ -77,6 +77,7 @@ type ClientPreviewRuleBase = {
   minCount: number;
   maxCount: number | null;
   required: boolean;
+  selectionPartKey: string;
 };
 
 type ClientPreviewRule = ClientPreviewRuleBase & {
@@ -135,6 +136,7 @@ export default function GalleryClientPreview() {
   const [favoritePhotoIds, setFavoritePhotoIds] = useState<Set<string>>(() => new Set());
   const favoritesTouchedRef = useRef(false);
   const [photoSelectionsById, setPhotoSelectionsById] = useState<Record<string, string[]>>({});
+  const selectionsTouchedRef = useRef(false);
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -240,38 +242,47 @@ export default function GalleryClientPreview() {
   const favoritesEnabled = selectionSettings.allowFavorites !== false;
   const eventDate = typeof brandingData.eventDate === "string" ? brandingData.eventDate : "";
 
-  const { data: persistedFavoritePhotoIds } = useQuery({
-    queryKey: ["gallery_client_preview_favorites", id],
-    enabled: Boolean(id) && favoritesEnabled,
-    queryFn: async (): Promise<string[]> => {
+  const { data: persistedClientSelections } = useQuery({
+    queryKey: ["gallery_client_preview_client_selections", id],
+    enabled: Boolean(id),
+    queryFn: async (): Promise<ClientSelectionRow[]> => {
       if (!id) return [];
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      const viewerId = userError ? null : userData.user?.id ?? null;
-
-      const baseQuery = supabase
+      const { data, error } = await supabase
         .from("client_selections")
         .select("id,asset_id,selection_part,client_id")
-        .eq("gallery_id", id)
-        .eq("selection_part", "favorites");
-      const { data, error } = viewerId ? await baseQuery.eq("client_id", viewerId) : await baseQuery;
+        .eq("gallery_id", id);
       if (error) throw error;
-
-      const rows = (data ?? []) as ClientSelectionRow[];
-      return rows.flatMap((row) => (typeof row.asset_id === "string" && row.asset_id ? [row.asset_id] : []));
+      return (data as ClientSelectionRow[]) ?? [];
     },
   });
+
+  const persistedFavoritePhotoIds = useMemo(() => {
+    if (!favoritesEnabled) return [] as string[];
+    const favoriteKey = normalizeSelectionPartKey("favorites");
+    const ids = new Set<string>();
+    (persistedClientSelections ?? []).forEach((row) => {
+      const partKey = normalizeSelectionPartKey(row.selection_part);
+      if (partKey !== favoriteKey) return;
+      if (typeof row.asset_id === "string" && row.asset_id) {
+        ids.add(row.asset_id);
+      }
+    });
+    return Array.from(ids);
+  }, [favoritesEnabled, persistedClientSelections]);
 
   useEffect(() => {
     favoritesTouchedRef.current = false;
     setFavoritePhotoIds(new Set());
+    selectionsTouchedRef.current = false;
+    setPhotoSelectionsById({});
   }, [id]);
 
   useEffect(() => {
     if (!favoritesEnabled) return;
-    if (!persistedFavoritePhotoIds) return;
+    if (!persistedClientSelections) return;
     if (favoritesTouchedRef.current) return;
     setFavoritePhotoIds(new Set(persistedFavoritePhotoIds));
-  }, [favoritesEnabled, persistedFavoritePhotoIds]);
+  }, [favoritesEnabled, persistedClientSelections, persistedFavoritePhotoIds]);
 
   const formattedEventDate = useMemo(() => {
     if (!eventDate) return "";
@@ -347,12 +358,54 @@ export default function GalleryClientPreview() {
           minCount,
           maxCount,
           required,
+          selectionPartKey: normalizedKey,
         });
       });
     });
 
     return rules;
   }, [brandingData, parseSelectionTemplateGroups, t]);
+
+  const selectionPartKeyByRuleId = useMemo(() => {
+    const map = new Map<string, string>();
+    selectionRulesBase.forEach((rule) => {
+      if (!rule.selectionPartKey) return;
+      map.set(rule.id, rule.selectionPartKey);
+    });
+    return map;
+  }, [selectionRulesBase]);
+
+  const selectionRuleIdByPartKey = useMemo(() => {
+    const map = new Map<string, string>();
+    selectionRulesBase.forEach((rule) => {
+      if (!rule.selectionPartKey) return;
+      if (map.has(rule.selectionPartKey)) return;
+      map.set(rule.selectionPartKey, rule.id);
+    });
+    return map;
+  }, [selectionRulesBase]);
+
+  const persistedRuleSelectionsById = useMemo(() => {
+    const selections: Record<string, string[]> = {};
+    (persistedClientSelections ?? []).forEach((row) => {
+      if (typeof row.asset_id !== "string" || !row.asset_id) return;
+      const partKey = normalizeSelectionPartKey(row.selection_part);
+      if (!partKey || partKey === normalizeSelectionPartKey("favorites")) return;
+      const ruleId = selectionRuleIdByPartKey.get(partKey);
+      if (!ruleId) return;
+      const current = selections[row.asset_id] ?? [];
+      if (!current.includes(ruleId)) {
+        selections[row.asset_id] = [...current, ruleId];
+      }
+    });
+    return selections;
+  }, [persistedClientSelections, selectionRuleIdByPartKey]);
+
+  useEffect(() => {
+    if (!persistedClientSelections) return;
+    if (selectionsTouchedRef.current) return;
+    setPhotoSelectionsById(persistedRuleSelectionsById);
+  }, [persistedClientSelections, persistedRuleSelectionsById]);
 
   const ruleCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -559,17 +612,12 @@ export default function GalleryClientPreview() {
   const updateFavoriteMutation = useMutation({
     mutationFn: async ({ photoId, nextIsFavorite }: { photoId: string; nextIsFavorite: boolean }) => {
       if (!id) return;
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      const viewerId = userError ? null : userData.user?.id ?? null;
-
-      const baseDelete = supabase
+      const { error: deleteError } = await supabase
         .from("client_selections")
         .delete()
         .eq("gallery_id", id)
         .eq("asset_id", photoId)
         .eq("selection_part", "favorites");
-      const deleteQuery = viewerId ? baseDelete.eq("client_id", viewerId) : baseDelete;
-      const { error: deleteError } = await deleteQuery;
       if (deleteError) throw deleteError;
 
       if (!nextIsFavorite) return;
@@ -578,13 +626,48 @@ export default function GalleryClientPreview() {
         gallery_id: id,
         asset_id: photoId,
         selection_part: "favorites",
-        client_id: viewerId,
       };
       const { error: insertError } = await supabase.from("client_selections").insert(insertPayload);
       if (insertError) throw insertError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_favorites", id] });
+      queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_client_selections", id] });
+      queryClient.invalidateQueries({ queryKey: ["client_selections", id] });
+    },
+  });
+
+  const updateRuleSelectionMutation = useMutation({
+    mutationFn: async ({
+      photoId,
+      selectionPartKey,
+      nextIsSelected,
+    }: {
+      photoId: string;
+      selectionPartKey: string;
+      nextIsSelected: boolean;
+    }) => {
+      if (!id) return;
+      if (!selectionPartKey) return;
+
+      const { error: deleteError } = await supabase
+        .from("client_selections")
+        .delete()
+        .eq("gallery_id", id)
+        .eq("asset_id", photoId)
+        .eq("selection_part", selectionPartKey);
+      if (deleteError) throw deleteError;
+
+      if (!nextIsSelected) return;
+
+      const { error: insertError } = await supabase.from("client_selections").insert({
+        gallery_id: id,
+        asset_id: photoId,
+        selection_part: selectionPartKey,
+      });
+      if (insertError) throw insertError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_client_selections", id] });
       queryClient.invalidateQueries({ queryKey: ["client_selections", id] });
     },
   });
@@ -637,20 +720,55 @@ export default function GalleryClientPreview() {
     navigate(-1);
   }, [id, navigate]);
 
-  const toggleRuleSelect = useCallback((photoId: string, ruleId: string) => {
-    setPhotoSelectionsById((prev) => {
-      const current = prev[photoId] ?? [];
-      if (current.includes(ruleId)) {
-        const next = current.filter((id) => id !== ruleId);
-        if (next.length === 0) {
-          const { [photoId]: _removed, ...rest } = prev;
-          return rest;
+  const toggleRuleSelect = useCallback(
+    (photoId: string, ruleId: string) => {
+      const selectionPartKey = selectionPartKeyByRuleId.get(ruleId) ?? "";
+      if (!selectionPartKey) return;
+
+      selectionsTouchedRef.current = true;
+      const current = photoSelectionsById[photoId] ?? [];
+      const wasSelected = current.includes(ruleId);
+      const nextIsSelected = !wasSelected;
+
+      setPhotoSelectionsById((prev) => {
+        const currentRuleIds = prev[photoId] ?? [];
+        if (currentRuleIds.includes(ruleId)) {
+          const next = currentRuleIds.filter((id) => id !== ruleId);
+          if (next.length === 0) {
+            const { [photoId]: _removed, ...rest } = prev;
+            return rest;
+          }
+          return { ...prev, [photoId]: next };
         }
-        return { ...prev, [photoId]: next };
-      }
-      return { ...prev, [photoId]: [...current, ruleId] };
-    });
-  }, []);
+        return { ...prev, [photoId]: [...currentRuleIds, ruleId] };
+      });
+
+      updateRuleSelectionMutation.mutate(
+        { photoId, selectionPartKey, nextIsSelected },
+        {
+          onError: () => {
+            setPhotoSelectionsById((prev) => {
+              const currentRuleIds = prev[photoId] ?? [];
+              const hasRule = currentRuleIds.includes(ruleId);
+              if (nextIsSelected) {
+                if (!hasRule) return prev;
+                const next = currentRuleIds.filter((id) => id !== ruleId);
+                if (next.length === 0) {
+                  const { [photoId]: _removed, ...rest } = prev;
+                  return rest;
+                }
+                return { ...prev, [photoId]: next };
+              }
+              if (hasRule) return prev;
+              return { ...prev, [photoId]: [...currentRuleIds, ruleId] };
+            });
+            i18nToast.error(t("sessionDetail.gallery.toast.errorDesc"), { duration: 2500 });
+          },
+        }
+      );
+    },
+    [i18nToast, photoSelectionsById, selectionPartKeyByRuleId, t, updateRuleSelectionMutation]
+  );
 
   const getGridClass = () => {
     switch (gridSize) {

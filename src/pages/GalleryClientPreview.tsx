@@ -70,6 +70,7 @@ type ClientPreviewPhoto = ClientPreviewPhotoBase & {
 type ClientPreviewRuleBase = {
   id: string;
   title: string;
+  serviceName: string | null;
   minCount: number;
   maxCount: number | null;
   required: boolean;
@@ -296,6 +297,7 @@ export default function GalleryClientPreview() {
         rules.push({
           id: ruleId,
           title: part || t("sessionDetail.gallery.selectionTemplate.customLabel"),
+          serviceName: group.serviceName ?? null,
           minCount,
           maxCount,
           required,
@@ -628,11 +630,11 @@ export default function GalleryClientPreview() {
       }
     }
 
-    return (
-      <div className="flex flex-col items-center justify-center py-32 px-4 text-center animate-in fade-in zoom-in duration-500">
-        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-sm">
-          <content.icon size={40} className={content.color} strokeWidth={1.5} />
-        </div>
+	    return (
+	      <div className="flex flex-col items-center justify-center pt-20 pb-24 px-4 text-center animate-in fade-in zoom-in duration-500">
+	        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-sm">
+	          <content.icon size={40} className={content.color} strokeWidth={1.5} />
+	        </div>
         <h3 className="text-3xl font-serif font-bold text-gray-900 mb-4">
           {content.title}
         </h3>
@@ -690,16 +692,17 @@ export default function GalleryClientPreview() {
             </div>
           </div>
 
-          <div className="space-y-3">
-            {selectionRules.map((rule) => {
-              const selectionIds = photo.selections;
-              const isSelected = selectionIds.includes(rule.id);
-              const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
-              const isDisabled = !isSelected && isFull;
+	          <div className="space-y-3">
+	            {selectionRules.map((rule) => {
+	              const selectionIds = photo.selections;
+	              const isSelected = selectionIds.includes(rule.id);
+	              const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
+	              const isDisabled = !isSelected && isFull;
+                const serviceName = rule.serviceName?.trim() ?? "";
 
-              return (
-                <button
-                  key={rule.id}
+	              return (
+	                <button
+	                  key={rule.id}
                   type="button"
                   disabled={isDisabled}
                   onClick={() => {
@@ -717,13 +720,18 @@ export default function GalleryClientPreview() {
                       `}
                     >
                       {isSelected ? <Check size={18} strokeWidth={3} /> : <ListPlus size={18} />}
-                    </div>
-                    <div className="min-w-0">
-                      <div className={`font-bold text-sm truncate ${isSelected ? "text-brand-900" : "text-gray-900"}`}>
-                        {rule.title}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {rule.currentCount} / {rule.maxCount || "∞"}
+	                    </div>
+	                    <div className="min-w-0">
+                        {serviceName ? (
+                          <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 truncate">
+                            {serviceName}
+                          </div>
+                        ) : null}
+	                      <div className={`font-bold text-sm truncate ${isSelected ? "text-brand-900" : "text-gray-900"}`}>
+	                        {rule.title}
+	                      </div>
+	                      <div className="text-xs text-gray-500">
+	                        {rule.currentCount} / {rule.maxCount || "∞"}
                       </div>
                     </div>
                   </div>
@@ -945,16 +953,8 @@ export default function GalleryClientPreview() {
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={handleExit}
-              className="hidden md:flex items-center gap-2 bg-gray-900 text-white px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-black transition-colors"
-            >
-              <X size={16} />
-              {t("sessionDetail.gallery.clientPreview.actions.close")}
-            </button>
-          </div>
-        </div>
+	          </div>
+	        </div>
 
 	        {/* ROW 2: Sets (Mobile Only) */}
           {showSetTabs ? (
@@ -1004,15 +1004,16 @@ export default function GalleryClientPreview() {
 	                </div>
 	              </button>
 
-	              {selectionRules.map((rule) => {
-	                const isActive = activeFilter === rule.id;
-	                const isComplete = rule.currentCount >= rule.minCount;
-	                const targetCount = rule.maxCount ?? Math.max(1, rule.minCount);
-	                const progress = targetCount > 0 ? Math.min(1, rule.currentCount / targetCount) : 0;
+		              {selectionRules.map((rule) => {
+		                const isActive = activeFilter === rule.id;
+		                const isComplete = rule.currentCount >= rule.minCount;
+		                const targetCount = rule.maxCount ?? Math.max(1, rule.minCount);
+		                const progress = targetCount > 0 ? Math.min(1, rule.currentCount / targetCount) : 0;
+                    const serviceName = rule.serviceName?.trim() ?? "";
 
-	                return (
-	                  <button
-	                    key={rule.id}
+		                return (
+		                  <button
+		                    key={rule.id}
 	                    type="button"
 	                    data-touch-target="compact"
 	                    onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
@@ -1024,12 +1025,18 @@ export default function GalleryClientPreview() {
 	                          : "border-gray-200 hover:border-gray-300"
 	                    }`}
 	                  >
-	                    <div className="flex items-start justify-between gap-3">
-	                      <p className="text-sm font-bold text-gray-900 truncate">{rule.title}</p>
-	                      <p className="text-xs font-bold text-gray-500 shrink-0">
-	                        {rule.currentCount}/{rule.maxCount ?? rule.minCount}
-	                      </p>
-	                    </div>
+                        {serviceName ? (
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 truncate">
+                            {serviceName}
+                          </p>
+                        ) : null}
+
+		                    <div className={`flex items-start justify-between gap-3 ${serviceName ? "mt-2" : ""}`}>
+		                      <p className="text-sm font-bold text-gray-900 truncate">{rule.title}</p>
+		                      <p className="text-xs font-bold text-gray-500 shrink-0">
+		                        {rule.currentCount}/{rule.maxCount ?? rule.minCount}
+		                      </p>
+		                    </div>
 
 	                    <div className="mt-3 flex items-center justify-between gap-3 text-xs text-gray-500">
 	                      <span className="truncate">

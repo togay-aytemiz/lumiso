@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   CornerDownRight,
+  Crosshair,
   Grid3x3,
   Image as ImageIcon,
   Settings,
@@ -13,7 +14,6 @@ import { cn } from "@/lib/utils";
 import { settingsClasses } from "@/theme/settingsTokens";
 import SettingsHeader from "@/components/settings/SettingsHeader";
 import {
-  SettingsCollectionSection,
   SettingsFormSection,
   SettingsToggleSection,
 } from "@/components/settings/SettingsSectionVariants";
@@ -23,7 +23,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Button } from "@/components/ui/button";
 import { SettingsStickyFooter } from "@/components/settings/SettingsStickyFooter";
 
@@ -134,7 +133,7 @@ type GallerySettingsWatermarkModel = {
   onTextDraftChange: (value: string) => void;
   businessName?: string | null;
   logoUrl?: string | null;
-  coverUrl?: string;
+  previewBackgroundUrl?: string;
   onOpenOrganizationBranding?: () => void;
 };
 
@@ -164,10 +163,6 @@ export function GallerySettingsContent({
 
   const watermarkTextFallback =
     watermark.textDraft.trim() || watermark.businessName?.trim() || t("sessionDetail.gallery.settings.watermark.text.fallback");
-
-  const watermarkEnabledClass = watermark.settings.enabled
-    ? undefined
-    : "opacity-60 grayscale pointer-events-none";
 
   if (activeTab === "general") {
     return (
@@ -278,56 +273,34 @@ export function GallerySettingsContent({
   }
 
   if (activeTab === "watermark") {
-    const placementOptions = [
+    const typeOptions = [
       {
-        value: "grid",
-        label: (
-          <>
-            <Grid3x3 className="h-4 w-4" aria-hidden="true" />
-            {t("sessionDetail.gallery.settings.watermark.placement.grid")}
-          </>
-        ),
+        value: "text" as const,
+        label: t("sessionDetail.gallery.settings.watermark.type.text"),
+        icon: Type,
       },
       {
-        value: "center",
-        label: (
-          <>
-            <span className="inline-flex h-4 w-4 items-center justify-center" aria-hidden="true">
-              <span className="h-2.5 w-2.5 rounded-full border border-current" />
-            </span>
-            {t("sessionDetail.gallery.settings.watermark.placement.center")}
-          </>
-        ),
-      },
-      {
-        value: "corner",
-        label: (
-          <>
-            <CornerDownRight className="h-4 w-4" aria-hidden="true" />
-            {t("sessionDetail.gallery.settings.watermark.placement.corner")}
-          </>
-        ),
+        value: "logo" as const,
+        label: t("sessionDetail.gallery.settings.watermark.type.logo"),
+        icon: ImageIcon,
       },
     ];
 
-    const typeOptions = [
+    const placementOptions = [
       {
-        value: "text",
-        label: (
-          <>
-            <Type className="h-4 w-4" aria-hidden="true" />
-            {t("sessionDetail.gallery.settings.watermark.type.text")}
-          </>
-        ),
+        value: "grid" as const,
+        label: t("sessionDetail.gallery.settings.watermark.placement.grid"),
+        icon: Grid3x3,
       },
       {
-        value: "logo",
-        label: (
-          <>
-            <ImageIcon className="h-4 w-4" aria-hidden="true" />
-            {t("sessionDetail.gallery.settings.watermark.type.logo")}
-          </>
-        ),
+        value: "center" as const,
+        label: t("sessionDetail.gallery.settings.watermark.placement.center"),
+        icon: Crosshair,
+      },
+      {
+        value: "corner" as const,
+        label: t("sessionDetail.gallery.settings.watermark.placement.corner"),
+        icon: CornerDownRight,
       },
     ];
 
@@ -338,7 +311,7 @@ export function GallerySettingsContent({
       const content =
         watermark.settings.type === "text" ? (
           <span
-            className="select-none whitespace-nowrap text-lg font-semibold text-white drop-shadow-sm md:text-2xl"
+            className="select-none whitespace-nowrap text-base font-semibold text-white drop-shadow-sm sm:text-lg md:text-xl"
             style={{ opacity: opacityValue, transform: `scale(${scaleValue})` }}
           >
             {watermarkTextFallback}
@@ -347,7 +320,7 @@ export function GallerySettingsContent({
           <img
             src={watermark.logoUrl}
             alt={t("sessionDetail.gallery.settings.watermark.logo.alt")}
-            className="max-h-14 object-contain drop-shadow-sm md:max-h-16"
+            className="max-h-12 object-contain drop-shadow-sm sm:max-h-14 md:max-h-16"
             style={{ opacity: opacityValue, transform: `scale(${scaleValue})` }}
           />
         ) : (
@@ -365,11 +338,11 @@ export function GallerySettingsContent({
       }
 
       if (watermark.settings.placement === "corner") {
-        return <div className="absolute inset-0 flex items-end justify-end p-6 md:p-8">{content}</div>;
+        return <div className="absolute inset-0 flex items-end justify-end p-4 sm:p-6 md:p-8">{content}</div>;
       }
 
       return (
-        <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-8 p-8">
+        <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-6 p-6 sm:gap-8 sm:p-8">
           {Array.from({ length: 9 }).map((_, index) => (
             <div key={index} className="flex items-center justify-center -rotate-12">
               {content}
@@ -388,44 +361,6 @@ export function GallerySettingsContent({
         />
 
         <div className="space-y-10">
-          <SettingsCollectionSection
-            sectionId="watermark-preview"
-            title={t("sessionDetail.gallery.settings.watermark.preview.title")}
-            description={t("sessionDetail.gallery.settings.watermark.preview.description")}
-            unstyledBody
-          >
-            <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-              <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted/30">
-                {watermark.coverUrl ? (
-                  <img
-                    src={watermark.coverUrl}
-                    alt={t("sessionDetail.gallery.labels.coverSelected")}
-                    className={cn("h-full w-full object-cover", !watermark.settings.enabled && "grayscale opacity-70")}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ) : (
-                  <div
-                    className={cn(
-                      "absolute inset-0 bg-[radial-gradient(circle_at_top,_hsl(var(--muted)),_hsl(var(--background)))]",
-                      !watermark.settings.enabled && "opacity-70"
-                    )}
-                  />
-                )}
-
-                {watermark.settings.enabled ? (
-                  <div className="absolute inset-0 pointer-events-none">{WatermarkOverlay()}</div>
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-background/20">
-                    <span className="rounded-full border border-border/60 bg-card/95 px-4 py-2 text-sm font-semibold text-muted-foreground shadow-sm">
-                      {t("sessionDetail.gallery.settings.watermark.preview.disabled")}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </SettingsCollectionSection>
-
           <SettingsToggleSection
             layout="two-column"
             sectionId="watermark-toggle"
@@ -448,138 +383,207 @@ export function GallerySettingsContent({
             ]}
           />
 
-          <div className="space-y-10">
-            <SettingsFormSection
-              sectionId="watermark-appearance"
-              title={t("sessionDetail.gallery.settings.watermark.appearance.title")}
-              description={t("sessionDetail.gallery.settings.watermark.appearance.description")}
-              fieldColumns={2}
-              className={watermarkEnabledClass}
-            >
-              <div className="space-y-2 sm:col-span-2">
-                <Label>{t("sessionDetail.gallery.settings.watermark.type.label")}</Label>
-                <SegmentedControl
-                  value={watermark.settings.type}
-                  onValueChange={(value) => watermark.onSettingsChange({ type: value as GalleryWatermarkType })}
-                  options={typeOptions}
-                  className="w-full justify-between"
-                />
-              </div>
-
-              {watermark.settings.type === "text" ? (
-                <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="watermark-text">{t("sessionDetail.gallery.settings.watermark.text.label")}</Label>
-                  <Input
-                    id="watermark-text"
-                    value={watermark.textDraft}
-                    onChange={(event) => watermark.onTextDraftChange(event.target.value)}
-                    placeholder={t("sessionDetail.gallery.settings.watermark.text.placeholder")}
-                  />
+          {watermark.settings.enabled ? (
+            <div className="space-y-10">
+              <SettingsFormSection
+                sectionId="watermark-appearance"
+                title={t("sessionDetail.gallery.settings.watermark.appearance.title")}
+                description={t("sessionDetail.gallery.settings.watermark.appearance.description")}
+                fieldColumns={2}
+              >
+                <div className="space-y-3 sm:col-span-2">
+                  <Label>{t("sessionDetail.gallery.settings.watermark.type.label")}</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {typeOptions.map((option) => {
+                      const Icon = option.icon;
+                      const isSelected = watermark.settings.type === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          aria-pressed={isSelected}
+                          aria-label={option.label}
+                          onClick={() => watermark.onSettingsChange({ type: option.value })}
+                          className={cn(
+                            "group flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                            isSelected
+                              ? "border-primary bg-primary/5 text-foreground shadow-sm"
+                              : "border-border/60 bg-background text-muted-foreground hover:border-primary/50 hover:bg-muted/20 hover:text-foreground"
+                          )}
+                        >
+                          <Icon className="h-4 w-4" aria-hidden="true" />
+                          <span>{option.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              ) : (
-                <div className="sm:col-span-2">
-                  {watermark.logoUrl ? (
-                    <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/60 bg-muted/20 px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="h-11 w-11 overflow-hidden rounded-xl border border-border/60 bg-background p-2">
-                          <img
-                            src={watermark.logoUrl}
-                            alt={t("sessionDetail.gallery.settings.watermark.logo.alt")}
-                            className="h-full w-full object-contain"
-                            loading="lazy"
-                            decoding="async"
-                          />
+
+                {watermark.settings.type === "text" ? (
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="watermark-text">{t("sessionDetail.gallery.settings.watermark.text.label")}</Label>
+                    <Input
+                      id="watermark-text"
+                      value={watermark.textDraft}
+                      onChange={(event) => watermark.onTextDraftChange(event.target.value)}
+                      placeholder={t("sessionDetail.gallery.settings.watermark.text.placeholder")}
+                    />
+                  </div>
+                ) : (
+                  <div className="sm:col-span-2">
+                    {watermark.logoUrl ? (
+                      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/60 bg-muted/20 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="h-11 w-11 overflow-hidden rounded-xl border border-border/60 bg-background p-2">
+                            <img
+                              src={watermark.logoUrl}
+                              alt={t("sessionDetail.gallery.settings.watermark.logo.alt")}
+                              className="h-full w-full object-contain"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-semibold text-foreground">
+                              {t("sessionDetail.gallery.settings.watermark.logo.detectedTitle")}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {t("sessionDetail.gallery.settings.watermark.logo.detectedDescription")}
+                            </p>
+                          </div>
                         </div>
-                        <div className="space-y-0.5">
-                          <p className="text-sm font-semibold text-foreground">
-                            {t("sessionDetail.gallery.settings.watermark.logo.detectedTitle")}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {t("sessionDetail.gallery.settings.watermark.logo.detectedDescription")}
-                          </p>
-                        </div>
+                        {watermark.onOpenOrganizationBranding ? (
+                          <Button type="button" variant="outline" size="sm" onClick={watermark.onOpenOrganizationBranding}>
+                            {t("sessionDetail.gallery.settings.watermark.logo.manage")}
+                          </Button>
+                        ) : null}
                       </div>
-                      {watermark.onOpenOrganizationBranding ? (
-                        <Button type="button" variant="outline" size="sm" onClick={watermark.onOpenOrganizationBranding}>
-                          {t("sessionDetail.gallery.settings.watermark.logo.manage")}
-                        </Button>
-                      ) : null}
+                    ) : (
+                      <div className="flex flex-col gap-2 rounded-2xl border border-amber-200/60 bg-amber-50/60 px-4 py-3 text-sm text-amber-900">
+                        <p className="font-semibold">{t("sessionDetail.gallery.settings.watermark.logo.missingTitle")}</p>
+                        <p className="text-xs text-amber-900/80">
+                          {t("sessionDetail.gallery.settings.watermark.logo.missingDescription")}
+                        </p>
+                        {watermark.onOpenOrganizationBranding ? (
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto justify-start px-0 text-amber-900"
+                            onClick={watermark.onOpenOrganizationBranding}
+                          >
+                            {t("sessionDetail.gallery.settings.watermark.logo.manage")}
+                          </Button>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </SettingsFormSection>
+
+              <SettingsFormSection
+                sectionId="watermark-layout"
+                title={t("sessionDetail.gallery.settings.watermark.layout.title")}
+                description={t("sessionDetail.gallery.settings.watermark.layout.description")}
+                fieldColumns={2}
+              >
+                <div className="space-y-3 sm:col-span-2">
+                  <Label>{t("sessionDetail.gallery.settings.watermark.placement.label")}</Label>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {placementOptions.map((option) => {
+                      const Icon = option.icon;
+                      const isSelected = watermark.settings.placement === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          aria-pressed={isSelected}
+                          aria-label={option.label}
+                          onClick={() => watermark.onSettingsChange({ placement: option.value })}
+                          className={cn(
+                            "group flex w-full flex-col items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                            isSelected
+                              ? "border-primary bg-primary/5 text-foreground shadow-sm"
+                              : "border-border/60 bg-background text-muted-foreground hover:border-primary/50 hover:bg-muted/20 hover:text-foreground"
+                          )}
+                        >
+                          <Icon className="h-5 w-5" aria-hidden="true" />
+                          <span>{option.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-3 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <Label>{t("sessionDetail.gallery.settings.watermark.opacity.label")}</Label>
+                    <span className="text-xs font-semibold text-muted-foreground">%{watermark.settings.opacity}</span>
+                  </div>
+                  <Slider
+                    value={[watermark.settings.opacity]}
+                    min={10}
+                    max={100}
+                    step={5}
+                    onValueChange={(values) =>
+                      watermark.onSettingsChange({ opacity: values[0] ?? watermark.settings.opacity })
+                    }
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{t("sessionDetail.gallery.settings.watermark.opacity.faint")}</span>
+                    <span>{t("sessionDetail.gallery.settings.watermark.opacity.strong")}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <Label>{t("sessionDetail.gallery.settings.watermark.size.label")}</Label>
+                    <span className="text-xs font-semibold text-muted-foreground">%{watermark.settings.scale}</span>
+                  </div>
+                  <Slider
+                    value={[watermark.settings.scale]}
+                    min={20}
+                    max={200}
+                    step={5}
+                    onValueChange={(values) => watermark.onSettingsChange({ scale: values[0] ?? watermark.settings.scale })}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{t("sessionDetail.gallery.settings.watermark.size.small")}</span>
+                    <span>{t("sessionDetail.gallery.settings.watermark.size.large")}</span>
+                  </div>
+                </div>
+              </SettingsFormSection>
+
+              <SettingsFormSection
+                sectionId="watermark-preview"
+                title={t("sessionDetail.gallery.settings.watermark.preview.title")}
+                description={t("sessionDetail.gallery.settings.watermark.preview.description")}
+                fieldColumns={1}
+              >
+                <div className="flex w-full items-start">
+                  <div className="relative h-[220px] w-full max-w-[520px] overflow-hidden rounded-2xl border border-border/60 bg-muted/30 shadow-sm">
+                    {watermark.previewBackgroundUrl ? (
+                      <img
+                        src={watermark.previewBackgroundUrl}
+                        alt={t("sessionDetail.gallery.settings.watermark.preview.backgroundAlt")}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-muted/30" />
+                    )}
+
+                    <div className="absolute inset-0 pointer-events-none">
+                      <div className="absolute inset-0 bg-black/10" />
+                      {WatermarkOverlay()}
                     </div>
-                  ) : (
-                    <div className="flex flex-col gap-2 rounded-2xl border border-amber-200/60 bg-amber-50/60 px-4 py-3 text-sm text-amber-900">
-                      <p className="font-semibold">{t("sessionDetail.gallery.settings.watermark.logo.missingTitle")}</p>
-                      <p className="text-xs text-amber-900/80">
-                        {t("sessionDetail.gallery.settings.watermark.logo.missingDescription")}
-                      </p>
-                      {watermark.onOpenOrganizationBranding ? (
-                        <Button type="button" variant="link" className="h-auto justify-start px-0 text-amber-900" onClick={watermark.onOpenOrganizationBranding}>
-                          {t("sessionDetail.gallery.settings.watermark.logo.manage")}
-                        </Button>
-                      ) : null}
-                    </div>
-                  )}
+                  </div>
                 </div>
-              )}
-            </SettingsFormSection>
-
-            <SettingsFormSection
-              sectionId="watermark-layout"
-              title={t("sessionDetail.gallery.settings.watermark.layout.title")}
-              description={t("sessionDetail.gallery.settings.watermark.layout.description")}
-              fieldColumns={2}
-              className={watermarkEnabledClass}
-            >
-              <div className="space-y-2 sm:col-span-2">
-                <Label>{t("sessionDetail.gallery.settings.watermark.placement.label")}</Label>
-                <SegmentedControl
-                  value={watermark.settings.placement}
-                  onValueChange={(value) => watermark.onSettingsChange({ placement: value as GalleryWatermarkPlacement })}
-                  options={placementOptions}
-                  className="w-full justify-between"
-                />
-              </div>
-
-              <div className="space-y-3 min-w-0">
-                <div className="flex items-center justify-between">
-                  <Label>{t("sessionDetail.gallery.settings.watermark.opacity.label")}</Label>
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    %{watermark.settings.opacity}
-                  </span>
-                </div>
-                <Slider
-                  value={[watermark.settings.opacity]}
-                  min={10}
-                  max={100}
-                  step={5}
-                  onValueChange={(values) => watermark.onSettingsChange({ opacity: values[0] ?? watermark.settings.opacity })}
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{t("sessionDetail.gallery.settings.watermark.opacity.faint")}</span>
-                  <span>{t("sessionDetail.gallery.settings.watermark.opacity.strong")}</span>
-                </div>
-              </div>
-
-              <div className="space-y-3 min-w-0">
-                <div className="flex items-center justify-between">
-                  <Label>{t("sessionDetail.gallery.settings.watermark.size.label")}</Label>
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    %{watermark.settings.scale}
-                  </span>
-                </div>
-                <Slider
-                  value={[watermark.settings.scale]}
-                  min={20}
-                  max={200}
-                  step={5}
-                  onValueChange={(values) => watermark.onSettingsChange({ scale: values[0] ?? watermark.settings.scale })}
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{t("sessionDetail.gallery.settings.watermark.size.small")}</span>
-                  <span>{t("sessionDetail.gallery.settings.watermark.size.large")}</span>
-                </div>
-              </div>
-            </SettingsFormSection>
-          </div>
+              </SettingsFormSection>
+            </div>
+          ) : null}
         </div>
 
         <SettingsStickyFooter

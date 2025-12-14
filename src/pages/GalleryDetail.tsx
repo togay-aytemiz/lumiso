@@ -406,6 +406,14 @@ export default function GalleryDetail() {
   const organizationBusinessName = organizationSettings?.photography_business_name ?? null;
   const organizationLogoUrl = organizationSettings?.logo_url ?? null;
 
+  useEffect(() => {
+    const name = organizationBusinessName?.trim() ?? "";
+    if (!name) return;
+    if (watermarkTextDraft.trim() || watermarkTextSaved.trim()) return;
+    setWatermarkTextDraft(name);
+    setWatermarkTextSaved(name);
+  }, [organizationBusinessName, watermarkTextDraft, watermarkTextSaved]);
+
   const handleOpenOrganizationBrandingSettings = useCallback(() => {
     const shouldAttachBackground = !location.pathname.startsWith("/settings");
     const state = shouldAttachBackground ? { backgroundLocation: location } : undefined;
@@ -938,6 +946,12 @@ export default function GalleryDetail() {
     ? uploadQueue.find((item) => item.id === resolvedCoverAssetId)?.previewUrl ?? ""
     : "";
   const coverUrl = localCoverUrl || storedCoverUrl;
+  const fallbackPreviewUrl = useMemo(() => {
+    const storedPreview = (storedAssets ?? []).find((asset) => asset.status !== "canceled" && asset.previewUrl)?.previewUrl;
+    if (storedPreview) return storedPreview;
+    return uploadQueue.find((asset) => asset.status !== "canceled" && asset.previewUrl)?.previewUrl ?? "";
+  }, [storedAssets, uploadQueue]);
+  const watermarkPreviewBackgroundUrl = coverUrl || fallbackPreviewUrl;
 
   const selectionPartCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -2982,7 +2996,7 @@ export default function GalleryDetail() {
 	                  onTextDraftChange: setWatermarkTextDraft,
 	                  businessName: organizationBusinessName,
 	                  logoUrl: organizationLogoUrl,
-	                  coverUrl,
+	                  previewBackgroundUrl: watermarkPreviewBackgroundUrl,
 	                  onOpenOrganizationBranding: handleOpenOrganizationBrandingSettings,
 	                }}
 	                privacy={{

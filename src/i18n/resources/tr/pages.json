@@ -836,7 +836,8 @@
           "unselected": "Seçilmeyenler"
         },
         "tasks": {
-          "selectedCount": "{{count}} seçildi"
+          "selectedCount": "{{count}} seçildi",
+          "missingCount": "{{count}} eksik"
         },
         "sections": {
           "empty": "Bu sette gösterilecek fotoğraf yok."

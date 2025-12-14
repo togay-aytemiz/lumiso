@@ -1,5 +1,8 @@
 import { cn } from "@/lib/utils";
 import { Check, CheckCircle2, Heart, LayoutGrid, ListChecks, Star } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
 
 export interface SelectionRule {
   id: string;
@@ -34,10 +37,11 @@ export function SelectionDashboard({
   totalSelected,
   activeRuleId,
   onSelectRuleFilter,
-  onEditRules: _onEditRules,
+  onEditRules,
   showHeader = true,
 }: SelectionDashboardProps) {
   const resolvedRules = rules ?? [];
+  const { t } = useTranslation("pages");
 
   const getRuleStatus = (rule: SelectionRule) => {
     if (rule.minCount <= 0) {
@@ -52,10 +56,22 @@ export function SelectionDashboard({
   return (
     <div className="space-y-3">
       {showHeader ? (
-        <div className="flex items-center px-1">
+        <div className="flex items-center justify-between gap-2 px-1">
           <h2 className="text-sm font-semibold text-slate-900">
             Seçim özeti
           </h2>
+          {onEditRules ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onEditRules}
+              className="h-8 gap-2"
+            >
+              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+              {t("sessionDetail.gallery.selection.open")}
+            </Button>
+          ) : null}
         </div>
       ) : null}
 

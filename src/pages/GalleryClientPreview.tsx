@@ -1637,13 +1637,13 @@ export default function GalleryClientPreview() {
 
 	        {/* ROW 3: Tasks */}
 	        {selectionRules.length > 0 ? (
-	          <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12">
-	            <div className="flex items-stretch gap-4 min-w-max">
+	          <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-3">
+	            <div className="flex items-stretch gap-4 md:gap-3 min-w-max">
 	              <button
 	                type="button"
 	                data-touch-target="compact"
 	                onClick={() => setActiveFilter("all")}
-	                className={`w-[220px] shrink-0 rounded-2xl border bg-white px-5 py-4 text-left shadow-sm transition-colors ${
+	                className={`w-[220px] shrink-0 rounded-2xl border bg-white px-5 py-4 md:px-4 md:py-3 text-left shadow-sm transition-colors ${
 	                  activeFilter === "all"
 	                    ? "border-gray-900"
 	                    : "border-gray-200 hover:border-gray-300"
@@ -1669,6 +1669,13 @@ export default function GalleryClientPreview() {
 		                const targetCount = rule.maxCount ?? Math.max(1, rule.minCount);
 		                const progress = targetCount > 0 ? Math.min(1, rule.currentCount / targetCount) : 0;
                     const serviceName = rule.serviceName?.trim() ?? "";
+                    const missingCount = Math.max(0, rule.minCount - rule.currentCount);
+                    const showRange = rule.minCount > 0 && rule.maxCount != null && rule.maxCount !== rule.minCount;
+                    const desktopDenominator = showRange ? `${rule.minCount}-${rule.maxCount}` : `${rule.maxCount ?? rule.minCount}`;
+                    const desktopSubLabel =
+                      missingCount > 0
+                        ? t("sessionDetail.gallery.clientPreview.tasks.missingCount", { count: missingCount })
+                        : t("sessionDetail.gallery.clientPreview.tasks.selectedCount", { count: rule.currentCount });
 
 		                return (
 		                  <button
@@ -1676,7 +1683,7 @@ export default function GalleryClientPreview() {
 	                    type="button"
 	                    data-touch-target="compact"
 	                    onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
-	                    className={`w-[240px] shrink-0 rounded-2xl border bg-white px-5 py-4 text-left shadow-sm transition-colors ${
+	                    className={`w-[240px] shrink-0 rounded-2xl border bg-white px-5 py-4 md:px-4 md:py-3 text-left shadow-sm transition-colors ${
 	                      isActive
 	                        ? "border-gray-900"
 	                        : isComplete
@@ -1690,14 +1697,17 @@ export default function GalleryClientPreview() {
                           </p>
                         ) : null}
 
-		                    <div className={`flex items-start justify-between gap-3 ${serviceName ? "mt-2" : ""}`}>
-		                      <p className="text-sm font-bold text-gray-900 truncate">{rule.title}</p>
-		                      <p className="text-xs font-bold text-gray-500 shrink-0">
+		                    <div className={`flex items-start justify-between gap-3 ${serviceName ? "mt-2 md:mt-1" : ""}`}>
+		                      <p className="text-sm font-bold text-gray-900 truncate md:text-[13px]">{rule.title}</p>
+		                      <p className="text-xs font-bold text-gray-500 shrink-0 md:hidden">
 		                        {rule.currentCount}/{rule.maxCount ?? rule.minCount}
 		                      </p>
+                          <p className="hidden md:block text-xs font-semibold text-gray-500 shrink-0 tabular-nums">
+                            {rule.currentCount}/{desktopDenominator}
+                          </p>
 		                    </div>
 
-	                    <div className="mt-3 flex items-center justify-between gap-3 text-xs text-gray-500">
+	                    <div className="mt-3 flex items-center justify-between gap-3 text-xs text-gray-500 md:hidden">
 	                      <span className="truncate">
 	                        {t("sessionDetail.gallery.clientPreview.tasks.selectedCount", { count: rule.currentCount })}
 	                      </span>
@@ -1708,7 +1718,16 @@ export default function GalleryClientPreview() {
 	                      ) : null}
 	                    </div>
 
-	                    <div className="mt-4 h-2 w-full rounded-full bg-gray-100 overflow-hidden">
+                      <div className="hidden md:flex mt-2 items-center justify-between gap-3 text-xs text-gray-500">
+                        <span className="truncate">{desktopSubLabel}</span>
+                        {isComplete ? (
+                          <span className="text-emerald-600 font-semibold">
+                            <CheckCircle2 size={14} className="inline-block align-[-2px]" aria-hidden="true" />
+                          </span>
+                        ) : null}
+                      </div>
+
+	                    <div className="mt-4 h-2 w-full rounded-full bg-gray-100 overflow-hidden md:hidden">
 	                      <div className="h-full bg-brand-500" style={{ width: `${progress * 100}%` }} />
 	                    </div>
 	                  </button>

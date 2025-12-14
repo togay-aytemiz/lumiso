@@ -69,6 +69,7 @@ import {
   getStorageBasename,
   isSupabaseStorageObjectMissingError,
 } from "@/lib/galleryAssets";
+import { countUniqueSelectedAssets } from "@/lib/gallerySelections";
 import {
   applyGalleryWatermarkToBranding,
   DEFAULT_GALLERY_WATERMARK_SETTINGS,
@@ -1119,11 +1120,15 @@ export default function GalleryDetail() {
     return rules;
   }, [selectionTemplateGroups, selectionPartCounts, localRuleCounts, t]);
 
+  const persistedSelectedPhotoCount = useMemo(() => {
+    return countUniqueSelectedAssets(clientSelections, { favoritesSelectionPartKey: FAVORITES_FILTER_ID });
+  }, [clientSelections]);
+
   const totalSelectedCount = useMemo(() => {
-    if (clientSelections && clientSelections.length > 0) return clientSelections.length;
+    if (persistedSelectedPhotoCount > 0) return persistedSelectedPhotoCount;
     if (localSelectedPhotoCount > 0) return localSelectedPhotoCount;
-    return selectionRules.reduce((sum, rule) => sum + rule.currentCount, 0);
-  }, [clientSelections, localSelectedPhotoCount, selectionRules]);
+    return 0;
+  }, [localSelectedPhotoCount, persistedSelectedPhotoCount]);
 
   const favoritesCount = useMemo(() => {
     const localFavorites = localRuleCounts[FAVORITES_FILTER_ID] ?? 0;
@@ -3365,7 +3370,7 @@ export default function GalleryDetail() {
               </TabsContent>
 
               <TabsContent value="photos" className="mt-0">
-                <>
+                <div className="space-y-4">
                   {type === "proof" && totalPhotosCount > 0 ? (
                     <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
                       <SelectionDashboard
@@ -3376,6 +3381,7 @@ export default function GalleryDetail() {
                         totalSelected={totalSelectedCount}
                         activeRuleId={activeSelectionRuleId}
                         onSelectRuleFilter={setActiveSelectionRuleId}
+                        onEditRules={() => setSelectionSheetOpen(true)}
                       />
                     </div>
                   ) : null}
@@ -4272,7 +4278,7 @@ export default function GalleryDetail() {
 	                )}
 		                  </div>
 		                </div>
-                </>
+                </div>
               </TabsContent>
 	          </div>
           </div>

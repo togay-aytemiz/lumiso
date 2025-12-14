@@ -821,7 +821,8 @@
           "unselected": "Unselected"
         },
         "tasks": {
-          "selectedCount": "{{count}} selected"
+          "selectedCount": "{{count}} selected",
+          "missingCount": "{{count}} missing"
         },
         "sections": {
           "empty": "No photos to show in this set."

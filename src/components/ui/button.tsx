@@ -103,10 +103,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ? buttonColorSchemes[colorScheme]
         : undefined
 
-    // Add compact touch target for text-style buttons to prevent 44px min-height on mobile
+    // Add compact touch target for dense controls to prevent 44px min-height on mobile
     const isTextVariant = variant === "textAccent" || variant === "textGhost"
+    const isDenseSize = size === "sm" || size === "icon"
     const shouldUseCompactTouchTarget =
-      touchTarget === "compact" || (!touchTarget && (isTextVariant || variant === "link"))
+      touchTarget === "compact" ||
+      (!touchTarget && (isTextVariant || variant === "link" || isDenseSize))
 
     return (
       <Comp

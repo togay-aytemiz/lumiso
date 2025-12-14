@@ -20,6 +20,7 @@ export const IconActionButton = forwardRef<HTMLButtonElement, IconActionButtonPr
     <button
       ref={ref}
       type={type}
+      data-touch-target="compact"
       className={cn(
         "inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50",
         variantStyles[variant],

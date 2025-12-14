@@ -87,6 +87,7 @@ Always review these before making any changes.
 - Meet accessibility standards (contrast, keyboard navigation, ARIA) for every UI change.
 - Preserve consistent UX patterns and validate responsive behavior across breakpoints.
 - Follow `docs/design-system/README.md` before introducing new UI primitives or interaction patterns.
+- Mobile density: `src/index.css` enforces larger touch targets on `@media (pointer: coarse)`; use `touchTarget="compact"` (or `data-touch-target="compact"` / `.touch-target-compact`) for dense/icon/inline controls to avoid oversized buttons on mobile.
 
 ## Documentation & Releases
 

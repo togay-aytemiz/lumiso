@@ -1802,7 +1802,7 @@ export default function GalleryClientPreview() {
                 aria-label={t("sessionDetail.gallery.clientPreview.hero.scrollCta")}
                 className="hero-scroll-indicator absolute inset-x-0 mx-auto bottom-[calc(env(safe-area-inset-bottom,0px)+24px)] w-14 h-14 rounded-full border border-white/40 bg-white/20 backdrop-blur-md shadow-lg shadow-black/20 flex items-center justify-center text-white hover:bg-white/30 hover:border-white/50 transition-colors duration-300 cursor-pointer"
               >
-                <ArrowDown size={24} className="translate-y-px" aria-hidden="true" />
+                <ArrowDown size={24} className="hero-scroll-indicator-arrow translate-y-px" aria-hidden="true" />
               </button>
             ) : (
               <button

@@ -359,7 +359,7 @@ All colors MUST be HSL.
   animation: float-slow 10s ease-in-out infinite;
 }
 
-@keyframes hero-scroll-indicator {
+@keyframes hero-scroll-indicator-arrow {
   0%,
   100% {
     transform: translateY(0);
@@ -369,12 +369,13 @@ All colors MUST be HSL.
   }
 }
 
-.hero-scroll-indicator {
-  animation: hero-scroll-indicator 2.4s ease-in-out infinite;
+.hero-scroll-indicator-arrow {
+  animation: hero-scroll-indicator-arrow 2.4s ease-in-out infinite;
+  will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-scroll-indicator {
+  .hero-scroll-indicator-arrow {
     animation: none;
   }
 }

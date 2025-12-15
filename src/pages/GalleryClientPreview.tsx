@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/components/SelectionTemplateSection";
 import { GalleryWatermarkOverlay } from "@/components/galleries/GalleryWatermarkOverlay";
 import { Lightbox } from "@/components/galleries/Lightbox";
@@ -35,6 +36,7 @@ import {
 type GridSize = "small" | "medium" | "large";
 type FilterType = "all" | "favorites" | "starred" | "unselected" | "selected" | string;
 type HeroMode = "selection" | "delivery";
+type MobileTab = "gallery" | "tasks" | "favorites" | "starred";
 
 type GalleryDetailRow = {
   id: string;
@@ -126,15 +128,18 @@ export default function GalleryClientPreview() {
   const i18nToast = useI18nToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const galleryRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const [navHeight, setNavHeight] = useState(0);
+  const [showBottomNav, setShowBottomNav] = useState(false);
 
   const [gridSize, setGridSize] = useState<GridSize>("small");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [mobileTab, setMobileTab] = useState<MobileTab>("gallery");
   const [activeCategoryId, setActiveCategoryId] = useState<string>("");
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [sheetPhotoId, setSheetPhotoId] = useState<string | null>(null);
@@ -555,10 +560,19 @@ export default function GalleryClientPreview() {
 
   // Sticky Nav Logic
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setScrolled(scrollY > 50);
+
+      if (!isMobile) return;
+      const shouldShow = mobileTab !== "gallery" || activeFilter !== "all" || scrollY > 100;
+      setShowBottomNav(shouldShow);
+    };
+
+    handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [activeFilter, isMobile, mobileTab]);
 
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
@@ -773,6 +787,42 @@ export default function GalleryClientPreview() {
       // noop (jsdom)
     }
   };
+
+  const scrollToTop = useCallback(() => {
+    const behavior: ScrollBehavior =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth";
+
+    try {
+      window.scrollTo({ top: 0, behavior });
+    } catch {
+      // noop (jsdom)
+    }
+  }, []);
+
+  const handleMobileTabChange = useCallback(
+    (nextTab: MobileTab) => {
+      if (!isMobile) return;
+      setMobileTab(nextTab);
+      if (nextTab === "gallery") setActiveFilter("all");
+      if (nextTab === "favorites") setActiveFilter("favorites");
+      if (nextTab === "starred") setActiveFilter("starred");
+      scrollToTop();
+    },
+    [isMobile, scrollToTop]
+  );
+
+  const handleMobileTaskSelect = useCallback(
+    (ruleId: string) => {
+      setActiveFilter(ruleId);
+      setMobileTab("gallery");
+      scrollToTop();
+    },
+    [scrollToTop]
+  );
 
   const openViewer = (photoId: string) => {
     setLightboxIndex(filteredPhotoIndexById.get(photoId) ?? 0);
@@ -1422,6 +1472,111 @@ export default function GalleryClientPreview() {
     );
   };
 
+  const renderMobileTasksScreen = () => {
+    return (
+      <div className="min-h-screen bg-gray-50 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+        <header className="mb-6">
+          <h2 className="font-playfair text-2xl font-semibold text-gray-900 tracking-tight">
+            {t("sessionDetail.gallery.clientPreview.selections.title")}
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            {t("sessionDetail.gallery.clientPreview.selections.subtitle")}
+          </p>
+        </header>
+
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={() => handleMobileTabChange("gallery")}
+            className="w-full bg-white p-5 rounded-2xl border border-gray-200 flex items-center gap-4 shadow-sm active:scale-[0.99] transition-transform"
+          >
+            <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 shrink-0">
+              <LayoutGrid size={20} />
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <h3 className="font-bold text-gray-900 truncate">
+                {t("sessionDetail.gallery.clientPreview.selections.allPhotos")}
+              </h3>
+              <p className="text-xs text-gray-500">{totalPhotoCount}</p>
+            </div>
+            <ArrowRight size={16} className="text-gray-300 shrink-0" />
+          </button>
+
+          <div className="pt-4">
+            <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest px-1">
+              {t("sessionDetail.gallery.clientPreview.selections.tasksLabel")}
+            </div>
+          </div>
+
+          {selectionRules.length === 0 ? (
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
+              {t("sessionDetail.gallery.clientPreview.selections.empty")}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {selectionRules.map((rule) => {
+                const isActive = activeFilter === rule.id;
+                const isComplete = rule.currentCount >= rule.minCount;
+                const targetCount = rule.maxCount ?? Math.max(1, rule.minCount);
+                const progress = targetCount > 0 ? Math.min(1, rule.currentCount / targetCount) : 0;
+                const serviceName = rule.serviceName?.trim() ?? "";
+                const missingCount = Math.max(0, rule.minCount - rule.currentCount);
+                const statusLabel =
+                  missingCount > 0
+                    ? t("sessionDetail.gallery.clientPreview.tasks.missingCount", { count: missingCount })
+                    : t("sessionDetail.gallery.clientPreview.tasks.selectedCount", { count: rule.currentCount });
+                const denominator = rule.maxCount ?? (rule.minCount > 0 ? rule.minCount : "∞");
+
+                return (
+                  <button
+                    key={rule.id}
+                    type="button"
+                    onClick={() => handleMobileTaskSelect(rule.id)}
+                    className={`w-full bg-white p-5 rounded-2xl border-2 text-left relative overflow-hidden transition-all active:scale-[0.99] shadow-sm ${
+                      isActive ? "border-gray-900" : "border-gray-100"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3 relative z-10">
+                      <div className="min-w-0">
+                        {serviceName ? (
+                          <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 truncate">
+                            {serviceName}
+                          </div>
+                        ) : null}
+                        <h4 className={`font-bold truncate ${isActive ? "text-gray-900" : "text-gray-900"}`}>
+                          {rule.title}
+                        </h4>
+                        <p className="mt-1 text-xs text-gray-500 truncate">{statusLabel}</p>
+                      </div>
+
+                      <div className="shrink-0 text-right">
+                        <div
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold tabular-nums ${
+                            isComplete ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {rule.currentCount} / {denominator}
+                          {isComplete ? <CheckCircle2 size={14} className="ml-0.5" aria-hidden="true" /> : null}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 w-full h-2 bg-gray-100 rounded-full overflow-hidden relative z-10">
+                      <div
+                        className={`h-full transition-all duration-500 ${isComplete ? "bg-emerald-500" : "bg-brand-500"}`}
+                        style={{ width: `${progress * 100}%` }}
+                      />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const starredCount = useMemo(() => resolvedPhotos.filter((photo) => photo.isStarred).length, [resolvedPhotos]);
   const totalPhotoCount = useMemo(() => resolvedPhotos.length, [resolvedPhotos]);
   const totalSelectedCount = useMemo(
@@ -1432,6 +1587,18 @@ export default function GalleryClientPreview() {
   const isLoading = galleryLoading || setsLoading || photosLoading;
   const heroTitle = gallery?.title || t("sessionDetail.gallery.clientPreview.hero.untitled");
   const heroMode: HeroMode = gallery?.type === "final" ? "delivery" : "selection";
+  const showHero = !isMobile || (mobileTab === "gallery" && activeFilter === "all");
+
+  const navTitle = useMemo(() => {
+    if (!isMobile) return heroTitle;
+    if (mobileTab === "tasks") return t("sessionDetail.gallery.clientPreview.selections.title");
+    if (mobileTab === "favorites") return t("sessionDetail.gallery.clientPreview.filters.favorites");
+    if (mobileTab === "starred") return t("sessionDetail.gallery.clientPreview.filters.starred");
+    if (activeLightboxRuleId) {
+      return selectionRules.find((rule) => rule.id === activeLightboxRuleId)?.title || heroTitle;
+    }
+    return heroTitle;
+  }, [activeLightboxRuleId, heroTitle, isMobile, mobileTab, selectionRules, t]);
 
   if (isLoading) {
     return (
@@ -1444,26 +1611,27 @@ export default function GalleryClientPreview() {
   return (
     <div className="bg-white min-h-screen font-sans text-gray-900 relative">
       {/* --- HERO SECTION --- */}
-      <div className="relative h-screen w-full overflow-hidden bg-gray-900">
-        <div className="absolute inset-0">
-          {coverUrl ? (
-            <img
-              src={coverUrl}
-              alt={t("sessionDetail.gallery.clientPreview.hero.coverAlt")}
-              loading="eager"
-              className="w-full h-full object-cover opacity-80"
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-800 flex items-center justify-center text-gray-600">
-              <ImageIcon size={64} />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-black/30" />
-        </div>
+      {showHero ? (
+        <div className="relative h-screen w-full overflow-hidden bg-gray-900">
+          <div className="absolute inset-0">
+            {coverUrl ? (
+              <img
+                src={coverUrl}
+                alt={t("sessionDetail.gallery.clientPreview.hero.coverAlt")}
+                loading="eager"
+                className="w-full h-full object-cover opacity-80"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-800 flex items-center justify-center text-gray-600">
+                <ImageIcon size={64} />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/30" />
+          </div>
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center p-6 animate-in fade-in duration-1000 slide-in-from-bottom-10">
-          <div
-            className={`
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center p-6 animate-in fade-in duration-1000 slide-in-from-bottom-10">
+            <div
+              className={`
               flex items-center gap-2.5 px-5 py-2 rounded-full backdrop-blur-md border shadow-lg mb-8 transition-all
               ${
                 heroMode === "selection"
@@ -1471,47 +1639,48 @@ export default function GalleryClientPreview() {
                   : "bg-white/10 border-white/20 text-white"
               }
             `}
-            data-testid="gallery-client-preview-hero-badge"
-          >
-            {heroMode === "selection" ? (
-              <ListChecks size={14} className="text-amber-200" />
-            ) : (
-              <Sparkles size={14} className="text-slate-100" />
-            )}
-            <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] leading-none">
-              {t(`sessionDetail.gallery.clientPreview.hero.badge.${heroMode}.title`)}
-            </span>
-          </div>
-
-          <h1 className="font-playfair text-5xl md:text-7xl lg:text-9xl mb-4 tracking-tight drop-shadow-2xl">
-            {heroTitle}
-          </h1>
-
-          {formattedEventDate ? (
-            <div
-              className="text-[11px] md:text-sm tracking-[0.25em] uppercase font-medium text-white/80 mb-4"
-              data-testid="gallery-client-preview-event-date"
+              data-testid="gallery-client-preview-hero-badge"
             >
-              {formattedEventDate}
+              {heroMode === "selection" ? (
+                <ListChecks size={14} className="text-amber-200" />
+              ) : (
+                <Sparkles size={14} className="text-slate-100" />
+              )}
+              <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] leading-none">
+                {t(`sessionDetail.gallery.clientPreview.hero.badge.${heroMode}.title`)}
+              </span>
             </div>
-          ) : null}
 
-          <p className="text-white/80 font-light text-sm md:text-base max-w-lg mx-auto tracking-wide">
-            {t(`sessionDetail.gallery.clientPreview.hero.badge.${heroMode}.description`)}
-          </p>
+            <h1 className="font-playfair text-5xl md:text-7xl lg:text-9xl mb-4 tracking-tight drop-shadow-2xl">
+              {heroTitle}
+            </h1>
 
-          <button
-            type="button"
-            onClick={scrollToGallery}
-            className="group flex flex-col items-center gap-2 text-[10px] uppercase tracking-[0.2em] hover:text-white/80 transition-colors cursor-pointer mt-10"
-          >
-            <span>{t("sessionDetail.gallery.clientPreview.hero.scrollCta")}</span>
-            <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center group-hover:bg-white/10 transition-all mt-2">
-              <ArrowDown size={14} className="animate-bounce" />
-            </div>
-          </button>
+            {formattedEventDate ? (
+              <div
+                className="text-[11px] md:text-sm tracking-[0.25em] uppercase font-medium text-white/80 mb-4"
+                data-testid="gallery-client-preview-event-date"
+              >
+                {formattedEventDate}
+              </div>
+            ) : null}
+
+            <p className="text-white/80 font-light text-sm md:text-base max-w-lg mx-auto tracking-wide">
+              {t(`sessionDetail.gallery.clientPreview.hero.badge.${heroMode}.description`)}
+            </p>
+
+            <button
+              type="button"
+              onClick={scrollToGallery}
+              className="group flex flex-col items-center gap-2 text-[10px] uppercase tracking-[0.2em] hover:text-white/80 transition-colors cursor-pointer mt-10"
+            >
+              <span>{t("sessionDetail.gallery.clientPreview.hero.scrollCta")}</span>
+              <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center group-hover:bg-white/10 transition-all mt-2">
+                <ArrowDown size={14} className="animate-bounce" />
+              </div>
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* --- STICKY NAVIGATION --- */}
       <nav
@@ -1534,9 +1703,9 @@ export default function GalleryClientPreview() {
 		              className={`font-playfair font-bold tracking-tight text-gray-900 transition-all duration-300 truncate ${
 		                scrolled ? "text-lg md:text-xl" : "text-lg md:text-3xl"
 		              }`}
-		              title={heroTitle}
+		              title={navTitle}
 		            >
-	              {heroTitle}
+	              {navTitle}
 	            </div>
 
               {hasMultipleSets ? (
@@ -1562,6 +1731,17 @@ export default function GalleryClientPreview() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-4 md:gap-6 shrink-0">
+            {isMobile && mobileTab === "gallery" && activeLightboxRuleId ? (
+              <button
+                type="button"
+                data-touch-target="compact"
+                onClick={() => setActiveFilter("all")}
+                className="flex items-center gap-1.5 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-xs font-bold"
+              >
+                {tCommon("buttons.clear")}
+                <X size={14} className="text-gray-500" aria-hidden="true" />
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={handleExit}
@@ -1615,7 +1795,7 @@ export default function GalleryClientPreview() {
 	        </div>
 
 	        {/* ROW 2: Sets (Mobile Only) */}
-          {hasMultipleSets ? (
+          {hasMultipleSets && (!isMobile || (mobileTab === "gallery" && activeFilter === "all")) ? (
 	          <div className="md:hidden w-full overflow-x-auto no-scrollbar border-t border-gray-100 bg-white">
 	            <div className="flex items-center px-4 min-w-max h-12 gap-8">
 	              {orderedSets.map((set) => (
@@ -1636,7 +1816,7 @@ export default function GalleryClientPreview() {
           ) : null}
 
 	        {/* ROW 3: Tasks */}
-	        {selectionRules.length > 0 ? (
+	        {!isMobile && selectionRules.length > 0 ? (
 	          <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-2">
 	            <div className="flex items-stretch gap-4 md:gap-3 min-w-max">
 	              <button
@@ -1738,90 +1918,94 @@ export default function GalleryClientPreview() {
 	        ) : null}
 
 	        {/* ROW 4: Filters */}
-	        <div className="w-full border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm overflow-x-auto no-scrollbar py-3 px-4 md:px-12 flex items-center justify-between gap-6">
-	          <div className="flex items-center gap-3">
-              <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
-                {t("sessionDetail.gallery.clientPreview.filters.label")}
-              </span>
-	            <div className="flex items-center gap-2">
-	              <button
-	                type="button"
-	                data-touch-target="compact"
-                  onClick={() => setActiveFilter("all")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
-                    activeFilter === "all"
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-500 hover:text-gray-900 hover:bg-gray-200"
-                  }`}
-                >
-                  {t("sessionDetail.gallery.clientPreview.filters.all")}
-                </button>
+	        {!isMobile ? (
+            <div className="w-full border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm overflow-x-auto no-scrollbar py-3 px-4 md:px-12 flex items-center justify-between gap-6">
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                  {t("sessionDetail.gallery.clientPreview.filters.label")}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    data-touch-target="compact"
+                    onClick={() => setActiveFilter("all")}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
+                      activeFilter === "all"
+                        ? "bg-gray-900 text-white"
+                        : "text-gray-500 hover:text-gray-900 hover:bg-gray-200"
+                    }`}
+                  >
+                    {t("sessionDetail.gallery.clientPreview.filters.all")}
+                  </button>
 
-	              <button
-	                type="button"
-	                data-touch-target="compact"
-	                onClick={() => setActiveFilter("starred")}
-	                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all border ${
-	                  activeFilter === "starred"
-	                    ? "bg-amber-100 text-amber-700 border-amber-200 shadow-sm"
-	                    : "bg-white border-transparent text-gray-500 hover:text-amber-600 hover:bg-amber-50"
-	                }`}
-	              >
-	                <Star
-	                  size={12}
-	                  fill="currentColor"
-	                  className={activeFilter === "starred" ? "text-amber-700" : "text-amber-400"}
-	                />
-	                <span className="md:hidden">{t("sessionDetail.gallery.clientPreview.filters.starredShort")}</span>
-	                <span className="hidden md:inline">{t("sessionDetail.gallery.clientPreview.filters.starred")}</span>
-	                {starredCount > 0 ? (
-	                  <span className="ml-0.5 opacity-60">({starredCount})</span>
-	                ) : null}
-	              </button>
+                  <button
+                    type="button"
+                    data-touch-target="compact"
+                    onClick={() => setActiveFilter("starred")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all border ${
+                      activeFilter === "starred"
+                        ? "bg-amber-100 text-amber-700 border-amber-200 shadow-sm"
+                        : "bg-white border-transparent text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+                    }`}
+                  >
+                    <Star
+                      size={12}
+                      fill="currentColor"
+                      className={activeFilter === "starred" ? "text-amber-700" : "text-amber-400"}
+                    />
+                    <span className="md:hidden">{t("sessionDetail.gallery.clientPreview.filters.starredShort")}</span>
+                    <span className="hidden md:inline">{t("sessionDetail.gallery.clientPreview.filters.starred")}</span>
+                    {starredCount > 0 ? <span className="ml-0.5 opacity-60">({starredCount})</span> : null}
+                  </button>
 
-                {favoritesEnabled ? (
-                  <>
-                    <div className="w-px h-4 bg-gray-300 mx-1" />
-                    <button
-                      type="button"
-                      data-touch-target="compact"
-                      onClick={() => setActiveFilter("favorites")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
-                        activeFilter === "favorites"
-                          ? "bg-red-50 text-red-600 border border-red-100"
-                          : "text-gray-500 hover:text-red-500"
-                      }`}
-                    >
-                      <Heart size={12} fill={activeFilter === "favorites" ? "currentColor" : "none"} />
-                      {t("sessionDetail.gallery.clientPreview.filters.favorites")}
-                    </button>
-                  </>
-                ) : null}
+                  {favoritesEnabled ? (
+                    <>
+                      <div className="w-px h-4 bg-gray-300 mx-1" />
+                      <button
+                        type="button"
+                        data-touch-target="compact"
+                        onClick={() => setActiveFilter("favorites")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
+                          activeFilter === "favorites"
+                            ? "bg-red-50 text-red-600 border border-red-100"
+                            : "text-gray-500 hover:text-red-500"
+                        }`}
+                      >
+                        <Heart size={12} fill={activeFilter === "favorites" ? "currentColor" : "none"} />
+                        {t("sessionDetail.gallery.clientPreview.filters.favorites")}
+                      </button>
+                    </>
+                  ) : null}
 
-                <button
-                  type="button"
-                  data-touch-target="compact"
-                  onClick={() => setActiveFilter("unselected")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
-                    activeFilter === "unselected"
-                      ? "bg-gray-200 text-gray-900"
-                      : "text-gray-400 hover:text-gray-600"
-                  }`}
-                >
-                  <CircleDashed size={12} />
-                  {t("sessionDetail.gallery.clientPreview.filters.unselected")}
-                </button>
+                  <button
+                    type="button"
+                    data-touch-target="compact"
+                    onClick={() => setActiveFilter("unselected")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
+                      activeFilter === "unselected"
+                        ? "bg-gray-200 text-gray-900"
+                        : "text-gray-400 hover:text-gray-600"
+                    }`}
+                  >
+                    <CircleDashed size={12} />
+                    {t("sessionDetail.gallery.clientPreview.filters.unselected")}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
       </nav>
 
-	      {/* --- GALLERY SECTION --- */}
-	      <div ref={galleryRef} className="bg-white min-h-screen pt-4 md:pt-6 px-4 md:px-8 pb-32 md:pb-12">
-        <div className="w-full">
-          {hasMultipleSets ? (
-            <div className="space-y-16">
-              {orderedSets.map((set) => {
+      {isMobile && mobileTab === "tasks" ? (
+        renderMobileTasksScreen()
+      ) : (
+        <>
+          {/* --- GALLERY SECTION --- */}
+          <div ref={galleryRef} className="bg-white min-h-screen pt-4 md:pt-6 px-4 md:px-8 pb-32 md:pb-12">
+            <div className="w-full">
+              {hasMultipleSets ? (
+                <div className="space-y-16">
+                  {orderedSets.map((set) => {
 	                const setPhotos = filteredPhotosBySetId[set.id] ?? [];
 	                const visibleSetCount = visibleCountBySetId[set.id] ?? 0;
 	                const visibleSetPhotos = setPhotos.slice(0, visibleSetCount);
@@ -1870,21 +2054,23 @@ export default function GalleryClientPreview() {
                   </section>
                 );
               })}
-            </div>
-          ) : visiblePhotos.length === 0 ? (
-            renderEmptyState()
-          ) : (
-            <>
-              {renderPhotoGrid(visiblePhotos)}
-              {visibleCount < filteredPhotos.length ? (
-                <div ref={observerTarget} className="py-12 flex items-center justify-center w-full">
-                  <Loader2 className="animate-spin text-gray-300" size={32} />
                 </div>
-              ) : null}
-            </>
-          )}
-        </div>
-      </div>
+              ) : visiblePhotos.length === 0 ? (
+                renderEmptyState()
+              ) : (
+                <>
+                  {renderPhotoGrid(visiblePhotos)}
+                  {visibleCount < filteredPhotos.length ? (
+                    <div ref={observerTarget} className="py-12 flex items-center justify-center w-full">
+                      <Loader2 className="animate-spin text-gray-300" size={32} />
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* --- FOOTER --- */}
 	      <footer className="bg-white py-12 border-t border-gray-100 text-center">
@@ -1896,7 +2082,7 @@ export default function GalleryClientPreview() {
 	        </p>
 	      </footer>
 
-	      {totalSelectedCount > 0 && activeFilter !== "selected" ? (
+	      {!isMobile && totalSelectedCount > 0 && activeFilter !== "selected" ? (
 	        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-6 duration-500">
 	          <button
 	            type="button"
@@ -1918,6 +2104,89 @@ export default function GalleryClientPreview() {
 	          </button>
 	        </div>
 	      ) : null}
+
+      {isMobile ? (
+        <nav
+          aria-label={t("sessionDetail.gallery.clientPreview.bottomNav.ariaLabel")}
+          className={`mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-100 px-2 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] transition-transform duration-300 ease-out ${
+            showBottomNav ? "translate-y-0" : "translate-y-full"
+          }`}
+        >
+          <div className="flex items-center justify-around">
+            <button
+              type="button"
+              onClick={() => handleMobileTabChange("gallery")}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${
+                mobileTab === "gallery" ? "text-brand-600 bg-brand-50" : "text-gray-400"
+              }`}
+              aria-current={mobileTab === "gallery" ? "page" : undefined}
+            >
+              <LayoutGrid size={22} strokeWidth={mobileTab === "gallery" ? 2.5 : 2} aria-hidden="true" />
+              <span className="text-[10px] font-bold mt-0.5">
+                {t("sessionDetail.gallery.clientPreview.bottomNav.gallery")}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleMobileTabChange("tasks")}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${
+                mobileTab === "tasks" ? "text-brand-600 bg-brand-50" : "text-gray-400"
+              }`}
+              aria-current={mobileTab === "tasks" ? "page" : undefined}
+            >
+              <div className="relative">
+                <ListChecks size={22} strokeWidth={mobileTab === "tasks" ? 2.5 : 2} aria-hidden="true" />
+                {totalSelectedCount > 0 ? (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white" />
+                ) : null}
+              </div>
+              <span className="text-[10px] font-bold mt-0.5">
+                {t("sessionDetail.gallery.clientPreview.bottomNav.selections")}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              disabled={!favoritesEnabled}
+              onClick={() => handleMobileTabChange("favorites")}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${
+                mobileTab === "favorites" ? "text-red-500 bg-red-50" : "text-gray-400"
+              } ${favoritesEnabled ? "" : "opacity-50 cursor-not-allowed"}`}
+              aria-current={mobileTab === "favorites" ? "page" : undefined}
+            >
+              <Heart
+                size={22}
+                fill={mobileTab === "favorites" ? "currentColor" : "none"}
+                strokeWidth={mobileTab === "favorites" ? 2.5 : 2}
+                aria-hidden="true"
+              />
+              <span className="text-[10px] font-bold mt-0.5">
+                {t("sessionDetail.gallery.clientPreview.filters.favorites")}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleMobileTabChange("starred")}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${
+                mobileTab === "starred" ? "text-amber-500 bg-amber-50" : "text-gray-400"
+              }`}
+              aria-current={mobileTab === "starred" ? "page" : undefined}
+            >
+              <Star
+                size={22}
+                fill={mobileTab === "starred" ? "currentColor" : "none"}
+                strokeWidth={mobileTab === "starred" ? 2.5 : 2}
+                aria-hidden="true"
+              />
+              <span className="text-[10px] font-bold mt-0.5">
+                {t("sessionDetail.gallery.clientPreview.bottomNav.starred")}
+              </span>
+            </button>
+          </div>
+        </nav>
+      ) : null}
 
 	      <Lightbox
 	        isOpen={lightboxOpen}

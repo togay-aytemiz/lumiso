@@ -575,4 +575,54 @@ describe("GalleryClientPreview", () => {
       warnSpy.mockRestore();
     }
   });
+
+  it("shows a mobile bottom nav with a selections tab", async () => {
+    const originalInnerWidth = window.innerWidth;
+    window.innerWidth = 375;
+
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            type: "proof",
+            branding: {
+              selectionSettings: { enabled: true, allowFavorites: true },
+              selectionTemplate: [{ part: "Cover", min: 1, max: 1, required: true }],
+            },
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    try {
+      render(<GalleryClientPreview />);
+
+      expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+
+      const selectionsTab = await screen.findByRole("button", { name: /selections|seçimlerim/i });
+      fireEvent.click(selectionsTab);
+
+      expect(await screen.findByRole("heading", { name: /selection lists|seçim listeleri/i })).toBeInTheDocument();
+      expect(await screen.findByRole("button", { name: /cover/i })).toBeInTheDocument();
+    } finally {
+      window.innerWidth = originalInnerWidth;
+    }
+  });
 });

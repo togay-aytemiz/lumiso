@@ -835,6 +835,19 @@
           "favorites": "Favoriler",
           "unselected": "Seçilmeyenler"
         },
+        "bottomNav": {
+          "ariaLabel": "Galeri sekmeleri",
+          "gallery": "Galeri",
+          "selections": "Seçimlerim",
+          "starred": "Önerilen"
+        },
+        "selections": {
+          "title": "Seçim Listeleri",
+          "subtitle": "Aşağıdaki listeleri tamamlayın.",
+          "allPhotos": "Tüm Fotoğraflar",
+          "tasksLabel": "GÖREVLER",
+          "empty": "Henüz seçim listeniz yok."
+        },
         "tasks": {
           "selectedCount": "{{count}} seçildi",
           "missingCount": "{{count}} eksik"

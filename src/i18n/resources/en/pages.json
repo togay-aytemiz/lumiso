@@ -820,6 +820,19 @@
           "favorites": "Favorites",
           "unselected": "Unselected"
         },
+        "bottomNav": {
+          "ariaLabel": "Gallery navigation",
+          "gallery": "Gallery",
+          "selections": "Selections",
+          "starred": "Recommended"
+        },
+        "selections": {
+          "title": "Selection lists",
+          "subtitle": "Complete the lists below.",
+          "allPhotos": "All photos",
+          "tasksLabel": "TASKS",
+          "empty": "No selection lists configured yet."
+        },
         "tasks": {
           "selectedCount": "{{count}} selected",
           "missingCount": "{{count}} missing"

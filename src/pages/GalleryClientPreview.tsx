@@ -108,7 +108,7 @@ type ClientSelectionRow = {
   client_id: string | null;
 };
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 60;
 const GALLERY_ASSET_SIGNED_URL_TTL_SECONDS = 60 * 60;
 const SET_SECTION_ID_PREFIX = "client-preview-set-section-";
 const SET_SENTINEL_ID_PREFIX = "client-preview-set-sentinel-";
@@ -262,6 +262,11 @@ export default function GalleryClientPreview() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+  const visibleCountRef = useRef(visibleCount);
+  useEffect(() => {
+    visibleCountRef.current = visibleCount;
+  }, [visibleCount]);
+
   const [visibleCountBySetId, setVisibleCountBySetId] = useState<Record<string, number>>({});
 
   const { data: gallery, isLoading: galleryLoading } = useQuery({
@@ -798,14 +803,14 @@ export default function GalleryClientPreview() {
     if (hasMultipleSets) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting && visibleCount < filteredPhotos.length) {
+        if (entries[0]?.isIntersecting && visibleCountRef.current < filteredPhotos.length) {
           setVisibleCount((prev) => {
             if (prev >= filteredPhotos.length) return prev;
             return Math.min(prev + ITEMS_PER_PAGE, filteredPhotos.length);
           });
         }
       },
-      { threshold: 0.01, rootMargin: "800px 0px" }
+      { threshold: 0.1, rootMargin: "800px 0px" }
     );
 
     if (observerTarget.current) {
@@ -813,7 +818,7 @@ export default function GalleryClientPreview() {
     }
 
     return () => observer.disconnect();
-  }, [filteredPhotos.length, hasMultipleSets, visibleCount]);
+  }, [filteredPhotos.length, hasMultipleSets]); // Removed visibleCount from deps
 
   const scrollToSet = useCallback(
     (setId: string) => {
@@ -2374,21 +2379,31 @@ export default function GalleryClientPreview() {
                   }`}
                 aria-current={mobileTab === "tasks" ? "page" : undefined}
               >
-                <div className="relative">
-                  <ListChecks size={22} strokeWidth={mobileTab === "tasks" ? 2.5 : 2} aria-hidden="true" />
-                  {hasIncompleteMandatory ? (
-                    <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center p-[2px] border-2 border-white shadow-sm font-bold text-[10px]">
-                      !
-                    </div>
-                  ) : areAllMandatoryComplete ? (
-                    <div className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white rounded-full p-[3px] border-[1.5px] border-white shadow-sm animate-pulse">
-                      <Check size={8} strokeWidth={4} />
-                    </div>
-                  ) : totalSelectedCount > 0 ? (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white" />
-                  ) : null}
+                <div className="relative flex items-center justify-center w-6 h-6">
+                  {areAllMandatoryComplete ? (
+                    <>
+                      {/* Outward Pulse (Slowed Down) */}
+                      <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20 [animation-duration:3s]" />
+
+                      {/* Fixed Icon: Green BG, White Tick */}
+                      <div className="relative z-10 bg-emerald-500 text-white rounded-full p-[3px] shadow-sm">
+                        <Check size={14} strokeWidth={4} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <ListChecks size={22} strokeWidth={mobileTab === "tasks" ? 2.5 : 2} aria-hidden="true" />
+                      {hasIncompleteMandatory ? (
+                        <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center p-[2px] border-2 border-white shadow-sm font-bold text-[10px]">
+                          !
+                        </div>
+                      ) : totalSelectedCount > 0 ? (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white" />
+                      ) : null}
+                    </>
+                  )}
                 </div>
-                <span className="text-[10px] font-bold mt-0.5">
+                <span className={`text-[10px] font-bold mt-0.5 ${areAllMandatoryComplete ? "text-emerald-600" : ""}`}>
                   {t("sessionDetail.gallery.clientPreview.bottomNav.selections")}
                 </span>
               </button>

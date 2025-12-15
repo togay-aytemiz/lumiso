@@ -14,6 +14,8 @@ export type MobilePhotoSelectionSheetRule = {
   serviceName?: string | null;
   currentCount: number;
   maxCount: number | null;
+  minCount?: number;
+  required?: boolean;
 };
 
 interface MobilePhotoSelectionSheetProps {
@@ -90,11 +92,11 @@ export function MobilePhotoSelectionSheet({
               <ImageIcon size={20} aria-hidden="true" />
             </div>
           )}
-          <div className="min-w-0">
-            <h3 id={titleId} className="font-bold text-lg text-gray-900">
+          <div className="min-w-0 flex-1">
+            <h3 id={titleId} className="font-bold text-lg text-gray-900 leading-tight">
               {t("sessionDetail.gallery.clientPreview.labels.addToLists")}
             </h3>
-            <p className="text-sm text-gray-500">{t("sessionDetail.gallery.lightbox.sidebar.client.description")}</p>
+            <p className="text-sm text-gray-500 mt-1">{t("sessionDetail.gallery.lightbox.sidebar.client.description")}</p>
           </div>
         </div>
 
@@ -105,48 +107,67 @@ export function MobilePhotoSelectionSheet({
             const isDisabled = !isSelected && isFull;
             const serviceName = rule.serviceName?.trim() ?? "";
 
+            // Replicate smart status logic locally to keep it consistent 
+            // (or ideally this should be a shared helper, but inline is fine here for now)
+            const minCount = Math.max(0, rule.minCount ?? 0);
+            // Wait, we just need to know if it's "Valid" or "Missing" for color coding? 
+            // Actually, the chip just says "Zorunlu" or "Opsiyonel". 
+            // The status text (Valid/Missing) is separate.
+            // User request: "Zorunlu/optional in a chip but very compact top of the name (1st line)"
+
             return (
-              <button
-                key={rule.id}
-                type="button"
-                disabled={isDisabled}
-                onClick={() => {
-                  if (!isDisabled) onToggleRule(rule.id);
-                }}
-                className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left
+              <div key={rule.id} className={`group w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left
                     ${isSelected ? "bg-brand-50 border-brand-200 shadow-sm" : "bg-white border-gray-100 active:bg-gray-50"}
                     ${isDisabled ? "opacity-50 grayscale cursor-not-allowed" : ""}
                   `}
+                onClick={() => {
+                  if (!isDisabled) onToggleRule(rule.id);
+                }}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-4 w-full">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors
-                        ${isSelected ? "bg-brand-500 text-white" : "bg-gray-100 text-gray-400"}
-                      `}
+                    className={`shrink-0 w-10 h-10 mt-1 rounded-full flex items-center justify-center transition-colors
+                          ${isSelected ? "bg-brand-500 text-white" : "bg-gray-100 text-gray-400"}
+                        `}
                   >
                     {isSelected ? <Check size={18} strokeWidth={3} /> : <ListPlus size={18} />}
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
+                    {/* Chip Line */}
+                    <div className="mb-2">
+                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${rule.required
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-gray-100 text-gray-500"
+                        }`}>
+                        {rule.required
+                          ? t("sessionDetail.gallery.clientPreview.labels.mandatory")
+                          : t("sessionDetail.gallery.clientPreview.labels.optional")}
+                      </span>
+                    </div>
+
+                    <div className={`font-bold text-sm truncate leading-snug ${isSelected ? "text-brand-900" : "text-gray-900"}`}>
+                      {rule.title}
+                    </div>
+
                     {serviceName ? (
-                      <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 truncate">
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 truncate mt-0.5">
                         {serviceName}
                       </div>
                     ) : null}
-                    <div className={`font-bold text-sm truncate ${isSelected ? "text-brand-900" : "text-gray-900"}`}>
-                      {rule.title}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {rule.currentCount} / {rule.maxCount || "∞"}
+
+                    <div className={`text-xs font-medium mt-1.5 ${isFull && !isSelected ? "text-orange-500" : "text-gray-500"}`}>
+                      <span className="tabular-nums">
+                        {rule.currentCount} / {rule.minCount && rule.maxCount && rule.minCount !== rule.maxCount ? `${rule.minCount}-${rule.maxCount}` : (rule.maxCount || "∞")}
+                      </span>
+                      {isFull && !isSelected ? (
+                        <span className="ml-1.5 font-normal opacity-90 text-orange-600">
+                          • {t("sessionDetail.gallery.clientPreview.labels.limitReached")}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 </div>
-
-                {isDisabled && !isSelected ? (
-                  <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-1 rounded">
-                    {t("sessionDetail.gallery.clientPreview.labels.limitFull")}
-                  </span>
-                ) : null}
-              </button>
+              </div>
             );
           })}
         </div>
@@ -154,7 +175,7 @@ export function MobilePhotoSelectionSheet({
         <button
           type="button"
           onClick={closeSheet}
-          className="w-full mt-6 bg-gray-900 text-white py-4 rounded-xl font-bold text-sm"
+          className="w-full mt-6 bg-gray-900 text-white py-4 rounded-xl font-bold text-sm active:scale-[0.99] transition-transform"
         >
           {tCommon("buttons.close")}
         </button>

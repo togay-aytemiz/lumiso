@@ -114,6 +114,98 @@ const SET_SECTION_ID_PREFIX = "client-preview-set-section-";
 const SET_SENTINEL_ID_PREFIX = "client-preview-set-sentinel-";
 const SECTION_SKELETON_COUNT = 10;
 
+// Helper to determine rule status
+const getRuleStatus = (
+  rule: ClientPreviewRuleBase & { currentCount: number },
+  t: (key: string, options?: any) => string
+) => {
+  const isRequired = rule.required;
+  const currentCount = rule.currentCount;
+  const minCount = Math.max(0, rule.minCount); // Ensure non-negative
+  const maxCount = rule.maxCount;
+
+  // 1. Mandatory Rules
+  if (isRequired) {
+    const effectiveMin = minCount < 1 ? 1 : minCount;
+    const isComplete = currentCount >= effectiveMin;
+    const targetCount = maxCount ?? effectiveMin;
+    const progress = targetCount > 0 ? Math.min(1, currentCount / targetCount) : 0;
+
+    if (isComplete) {
+      return {
+        isComplete: true,
+        progress,
+        statusLabel: t("sessionDetail.gallery.clientPreview.labels.validSelection"),
+        statusColor: "text-emerald-600",
+        progressColor: "bg-emerald-500",
+        iconColor: "text-emerald-600",
+        iconBg: "bg-emerald-50",
+        borderColor: "border-emerald-200 hover:border-emerald-300",
+      };
+    } else {
+      const missing = effectiveMin - currentCount;
+      return {
+        isComplete: false,
+        progress,
+        statusLabel: t("sessionDetail.gallery.clientPreview.tasks.missingCount", { count: missing }),
+        statusColor: "text-orange-600",
+        progressColor: "bg-orange-500",
+        iconColor: "text-orange-600",
+        iconBg: "bg-orange-50",
+        borderColor: "border-orange-200 hover:border-orange-300",
+      };
+    }
+  }
+
+  // 2. Optional Rules
+  const targetCount = maxCount ?? (minCount > 0 ? minCount : 1);
+  const progress = targetCount > 0 ? Math.min(1, currentCount / targetCount) : 0;
+
+  if (currentCount === 0) {
+    // Totally empty optional rule -> Valid (or specific "Empty" state?)
+    // User request: "The only optional place is the button...".
+    // If optional, 0/5 is valid.
+    return {
+      isComplete: true, // It is "valid" in the sense of not blocking
+      progress,
+      statusLabel: t("sessionDetail.gallery.clientPreview.labels.optional"), // Or "Seçim yapılmadı"
+      statusColor: "text-gray-400",
+      progressColor: "bg-gray-300",
+      iconColor: "text-gray-400", // Neutral
+      iconBg: "bg-gray-100",
+      borderColor: "border-gray-200 hover:border-gray-300",
+    };
+  }
+
+  // Started but not reached min
+  if (minCount > 0 && currentCount < minCount) {
+    const missing = minCount - currentCount;
+    // Screenshot 2 shows "1 tane daha" (1 more needed) and "Eksik" label.
+    return {
+      isComplete: false,
+      progress,
+      statusLabel: t("sessionDetail.gallery.clientPreview.tasks.missingCount", { count: missing }),
+      statusColor: "text-orange-600",
+      progressColor: "bg-orange-500",
+      iconColor: "text-orange-600",
+      iconBg: "bg-orange-50",
+      borderColor: "border-orange-200 hover:border-orange-300",
+    };
+  }
+
+  // Satisfied min count
+  return {
+    isComplete: true,
+    progress,
+    statusLabel: t("sessionDetail.gallery.clientPreview.labels.validSelection"),
+    statusColor: "text-emerald-600",
+    progressColor: "bg-emerald-500",
+    iconColor: "text-emerald-600",
+    iconBg: "bg-emerald-50",
+    borderColor: "border-emerald-200 hover:border-emerald-300",
+  };
+};
+
 const normalizeSelectionPartKey = (value: unknown) =>
   typeof value === "string" ? value.trim().toLowerCase() : "";
 
@@ -668,6 +760,13 @@ export default function GalleryClientPreview() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [activeFilter, isMobile, mobileTab]);
 
+  // Mobile Tabs Scroll Reset
+  useEffect(() => {
+    if (isMobile && mobileTab === "tasks") {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [isMobile, mobileTab]);
+
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
     const nav = navRef.current;
@@ -738,8 +837,8 @@ export default function GalleryClientPreview() {
       const scrollTarget = Math.max(0, targetPosition - navOffset - 12);
       const behavior: ScrollBehavior =
         typeof window !== "undefined" &&
-        typeof window.matchMedia === "function" &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          typeof window.matchMedia === "function" &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches
           ? "auto"
           : "smooth";
 
@@ -871,8 +970,8 @@ export default function GalleryClientPreview() {
   const scrollToGallery = () => {
     const behavior: ScrollBehavior =
       typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "auto"
         : "smooth";
 
@@ -1213,11 +1312,11 @@ export default function GalleryClientPreview() {
       }
     }
 
-	    return (
-	      <div className="flex flex-col items-center justify-center pt-20 pb-24 px-4 text-center animate-in fade-in zoom-in duration-500">
-	        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-sm">
-	          <content.icon size={40} className={content.color} strokeWidth={1.5} />
-	        </div>
+    return (
+      <div className="flex flex-col items-center justify-center pt-20 pb-24 px-4 text-center animate-in fade-in zoom-in duration-500">
+        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-sm">
+          <content.icon size={40} className={content.color} strokeWidth={1.5} />
+        </div>
         <h3 className="text-3xl font-serif font-bold text-gray-900 mb-4">
           {content.title}
         </h3>
@@ -1309,13 +1408,12 @@ export default function GalleryClientPreview() {
                           onClick={(e) => {
                             e.stopPropagation();
                           }}
-                          className={`hidden md:flex h-8 px-3 rounded-full items-center gap-2 shadow-sm transition-all duration-200 backdrop-blur-md border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
-                            hasSelections
-                              ? "bg-brand-500 text-white border-brand-400 hover:bg-brand-600"
-                              : isMenuOpen
-                                ? "bg-white text-gray-900 border-gray-200 shadow-xl"
-                                : "bg-black/40 text-white border-white/20 hover:bg-white hover:text-gray-900"
-                          }`}
+                          className={`hidden md:flex h-8 px-3 rounded-full items-center gap-2 shadow-sm transition-all duration-200 backdrop-blur-md border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${hasSelections
+                            ? "bg-brand-500 text-white border-brand-400 hover:bg-brand-600"
+                            : isMenuOpen
+                              ? "bg-white text-gray-900 border-gray-200 shadow-xl"
+                              : "bg-black/40 text-white border-white/20 hover:bg-white hover:text-gray-900"
+                            }`}
                         >
                           {hasSelections ? <Check size={14} strokeWidth={3} /> : <ListPlus size={14} />}
                           <span className="text-[10px] font-bold uppercase tracking-wide">
@@ -1352,6 +1450,10 @@ export default function GalleryClientPreview() {
                             const isSelected = selectionIds.includes(rule.id);
                             const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
                             const isDisabled = !isSelected && isFull;
+                            const ruleStatus = getRuleStatus(rule, t);
+                            const serviceName = rule.serviceName?.trim() ?? "";
+                            const showRange = rule.minCount > 0 && rule.maxCount != null && rule.maxCount !== rule.minCount;
+                            const desktopDenominator = showRange ? `${rule.minCount}-${rule.maxCount}` : `${rule.maxCount ?? rule.maxCount}`;
 
                             return (
                               <button
@@ -1362,21 +1464,44 @@ export default function GalleryClientPreview() {
                                 }}
                                 disabled={isDisabled}
                                 className={`w-full flex items-center justify-between p-3 rounded-lg text-sm transition-all border text-left group
-                                  ${
-                                    isSelected
-                                      ? "bg-sky-50 border-sky-200 text-sky-900"
-                                      : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50"
+                                  ${isSelected
+                                    ? "bg-sky-50 border-sky-200 text-sky-900"
+                                    : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50"
                                   }
                                   ${isDisabled ? "opacity-50 cursor-not-allowed bg-gray-50" : ""}
                                 `}
                               >
                                 <div className="flex flex-col gap-0.5">
-                                  <span className={`font-semibold ${isSelected ? "text-sky-700" : "text-gray-700"}`}>
+                                  {/* Chip Line */}
+                                  <div className="mb-1.5">
+                                    <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${rule.required
+                                      ? "bg-brand-50 text-brand-600 border border-brand-100"
+                                      : "bg-gray-100 text-gray-500 border border-gray-200"
+                                      }`}>
+                                      {rule.required
+                                        ? t("sessionDetail.gallery.clientPreview.labels.mandatory")
+                                        : t("sessionDetail.gallery.clientPreview.labels.optional")}
+                                    </span>
+                                  </div>
+
+                                  <div className={`text-sm font-semibold mb-0.5 text-left truncate ${isSelected ? "text-brand-900" : "text-gray-900"}`}>
                                     {rule.title}
-                                  </span>
-                                  <span className={`text-[10px] ${isSelected ? "text-sky-500" : "text-gray-400"}`}>
-                                    {rule.currentCount} / {rule.maxCount || "∞"}
-                                  </span>
+                                  </div>
+                                  <div className="text-[10px] text-gray-400 mb-0.5 text-left">
+                                    {serviceName}
+                                  </div>
+                                  <div className={`text-xs font-medium text-left ${isFull && !isSelected ? "text-orange-500" : "text-gray-500"}`}>
+                                    {rule.currentCount} / {desktopDenominator}
+                                    {isFull && !isSelected ? (
+                                      <span className="ml-2 text-[10px] font-bold uppercase tracking-wider opacity-80 text-orange-600">
+                                        {t("sessionDetail.gallery.clientPreview.labels.limitFull")}
+                                      </span>
+                                    ) : null}
+                                    <span className="mx-1.5 opacity-30">•</span>
+                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${ruleStatus.statusColor}`}>
+                                      {ruleStatus.statusLabel}
+                                    </span>
+                                  </div>
                                 </div>
 
                                 <div className="flex items-center gap-3">
@@ -1393,10 +1518,9 @@ export default function GalleryClientPreview() {
 
                                   <div
                                     className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
-                                      ${
-                                        isSelected
-                                          ? "bg-sky-500 text-white shadow-sm shadow-sky-200"
-                                          : "bg-gray-100 text-gray-300 group-hover:bg-white group-hover:border group-hover:border-gray-200"
+                                      ${isSelected
+                                        ? "bg-sky-500 text-white shadow-sm shadow-sky-200"
+                                        : "bg-gray-100 text-gray-300 group-hover:bg-white group-hover:border group-hover:border-gray-200"
                                       }
                                     `}
                                   >
@@ -1446,10 +1570,9 @@ export default function GalleryClientPreview() {
                       handleToggleFavorite(photo.id);
                     }}
                     className={`w-11 h-11 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-md transition-all duration-200 pointer-events-auto active:scale-95
-                      ${
-                        photo.isFavorite
-                          ? "bg-red-500 text-white scale-100"
-                          : "bg-black/40 text-white hover:bg-white hover:text-red-500 backdrop-blur-sm"
+                      ${photo.isFavorite
+                        ? "bg-red-500 text-white scale-100"
+                        : "bg-black/40 text-white hover:bg-white hover:text-red-500 backdrop-blur-sm"
                       }`}
                     title={
                       photo.isFavorite
@@ -1509,6 +1632,8 @@ export default function GalleryClientPreview() {
           serviceName: rule.serviceName,
           currentCount: rule.currentCount,
           maxCount: rule.maxCount,
+          minCount: rule.minCount,
+          required: rule.required,
         }))}
         selectedRuleIds={photo.selections}
         onToggleRule={(ruleId) => toggleRuleSelect(photo.id, ruleId)}
@@ -1581,55 +1706,65 @@ export default function GalleryClientPreview() {
             <div className="space-y-3">
               {selectionRules.map((rule) => {
                 const isActive = activeFilter === rule.id;
-                const isComplete = rule.currentCount >= rule.minCount;
-                const targetCount = rule.maxCount ?? Math.max(1, rule.minCount);
-                const progress = targetCount > 0 ? Math.min(1, rule.currentCount / targetCount) : 0;
+                const status = getRuleStatus(rule, t);
                 const serviceName = rule.serviceName?.trim() ?? "";
-                const missingCount = Math.max(0, rule.minCount - rule.currentCount);
-                const statusLabel =
-                  missingCount > 0
-                    ? t("sessionDetail.gallery.clientPreview.tasks.missingCount", { count: missingCount })
-                    : t("sessionDetail.gallery.clientPreview.tasks.selectedCount", { count: rule.currentCount });
-                const denominator = rule.maxCount ?? (rule.minCount > 0 ? rule.minCount : "∞");
+                const showRange = rule.minCount > 0 && rule.maxCount != null && rule.maxCount !== rule.minCount;
+                const denominator = showRange ? `${rule.minCount}-${rule.maxCount}` : `${rule.maxCount ?? rule.maxCount}`;
 
                 return (
                   <button
                     key={rule.id}
                     type="button"
                     onClick={() => handleMobileTaskSelect(rule.id)}
-                    className={`w-full bg-white p-5 rounded-2xl border-2 text-left relative overflow-hidden transition-all active:scale-[0.99] shadow-sm ${
-                      isActive ? "border-gray-900" : "border-gray-100"
-                    }`}
+                    className={`w-full bg-white p-4 rounded-2xl border transition-all text-left shadow-sm active:scale-[0.99] group ${isActive ? "border-gray-900 ring-1 ring-gray-900" : status.borderColor
+                      }`}
                   >
-                    <div className="flex items-start justify-between gap-3 relative z-10">
-                      <div className="min-w-0">
+                    {/* Chip Line */}
+                    <div className="mb-2">
+                      <span className={`inline-block px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${rule.required
+                        ? "bg-brand-50 text-brand-600 border border-brand-100"
+                        : "bg-gray-100 text-gray-500 border border-gray-200"
+                        }`}>
+                        {rule.required
+                          ? t("sessionDetail.gallery.clientPreview.labels.mandatory")
+                          : t("sessionDetail.gallery.clientPreview.labels.optional")}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className="font-bold text-gray-900 text-sm truncate leading-snug">
+                            {rule.title}
+                          </h4>
+                        </div>
                         {serviceName ? (
-                          <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 truncate">
+                          <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 truncate mb-1">
                             {serviceName}
                           </div>
                         ) : null}
-                        <h4 className={`font-bold truncate ${isActive ? "text-gray-900" : "text-gray-900"}`}>
-                          {rule.title}
-                        </h4>
-                        <p className="mt-1 text-xs text-gray-500 truncate">{statusLabel}</p>
+                        <p className={`text-[11px] font-bold transition-colors ${status.statusColor}`}>
+                          {status.statusLabel}
+                        </p>
                       </div>
 
-                      <div className="shrink-0 text-right">
-                        <div
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold tabular-nums ${
-                            isComplete ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {rule.currentCount} / {denominator}
-                          {isComplete ? <CheckCircle2 size={14} className="ml-0.5" aria-hidden="true" /> : null}
-                        </div>
+                      <div className={`w-8 h-8 rounded-full flex shrink-0 items-center justify-center transition-colors ${status.isComplete ? "bg-emerald-500 text-white shadow-md shadow-emerald-200" : "bg-gray-50 text-gray-300"
+                        }`}>
+                        {status.isComplete ? <Check size={16} strokeWidth={3} /> : <div className="w-2 h-2 rounded-full bg-gray-300" />}
                       </div>
                     </div>
 
-                    <div className="mt-4 w-full h-2 bg-gray-100 rounded-full overflow-hidden relative z-10">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs font-semibold text-gray-500 tabular-nums">
+                        <span className="text-lg font-bold text-gray-900 mr-0.5">{rule.currentCount}</span>
+                        <span className="opacity-60">/ {denominator}</span>
+                      </div>
+                    </div>
+
+                    <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
                       <div
-                        className={`h-full transition-all duration-500 ${isComplete ? "bg-emerald-500" : "bg-brand-500"}`}
-                        style={{ width: `${progress * 100}%` }}
+                        className={`h-full transition-all duration-500 ease-out ${isActive ? "bg-brand-500" : status.progressColor}`}
+                        style={{ width: `${status.progress * 100}%` }}
                       />
                     </div>
                   </button>
@@ -1652,6 +1787,31 @@ export default function GalleryClientPreview() {
     () => resolvedPhotos.filter((photo) => photo.selections.length === 0).length,
     [resolvedPhotos]
   );
+
+  // Status Logic for Navbar
+  const { areAllMandatoryComplete, hasIncompleteMandatory } = useMemo(() => {
+    // If no rules, nothing to complete
+    if (selectionRules.length === 0) {
+      return { areAllMandatoryComplete: false, hasIncompleteMandatory: false };
+    }
+
+    const mandatoryRules = selectionRules.filter((r) => r.required);
+
+    // If we have mandatory rules, check them
+    if (mandatoryRules.length > 0) {
+      const allComplete = mandatoryRules.every((rule) => getRuleStatus(rule, t).isComplete);
+      const anyIncomplete = mandatoryRules.some((rule) => !getRuleStatus(rule, t).isComplete);
+      return {
+        areAllMandatoryComplete: allComplete,
+        hasIncompleteMandatory: anyIncomplete
+      };
+    }
+
+    // No mandatory rules -> "Complete" isn't really a state we track for pulsing checkmark 
+    // unless we want to track "all optional filled" but usually mandatory is the gate.
+    // We'll return false to fall back to standard behavior (Red Dot if selections exist).
+    return { areAllMandatoryComplete: false, hasIncompleteMandatory: false };
+  }, [selectionRules, t]);
 
   const isLoading = galleryLoading || setsLoading || photosLoading;
   const heroTitle = gallery?.title || t("sessionDetail.gallery.clientPreview.hero.untitled");
@@ -1706,11 +1866,10 @@ export default function GalleryClientPreview() {
             <div
               className={`
               flex items-center gap-2.5 px-5 py-2 rounded-full backdrop-blur-md border shadow-lg mb-8 transition-all
-              ${
-                heroMode === "selection"
+              ${heroMode === "selection"
                   ? "bg-amber-900/30 border-amber-200/30 text-amber-100"
                   : "bg-white/10 border-white/20 text-white"
-              }
+                }
             `}
               data-testid="gallery-client-preview-hero-badge"
             >
@@ -1769,41 +1928,37 @@ export default function GalleryClientPreview() {
       {/* --- STICKY NAVIGATION --- */}
       <nav
         ref={navRef}
-        className={`sticky top-0 z-50 transition-all duration-500 border-b flex flex-col ${
-          scrolled
-            ? "bg-white/95 backdrop-blur-md border-gray-100 shadow-sm"
-            : "bg-white border-transparent"
-        }`}
-	      >
-	        {/* ROW 1: Branding, Sets & Main Actions */}
-	        <div
-	          className={`w-full px-4 md:px-12 flex items-center justify-between transition-all duration-300 ${
-	            scrolled ? "h-16 md:h-20" : "h-16 md:h-32"
-	          }`}
-	        >
+        className={`sticky top-0 z-50 transition-all duration-500 border-b flex flex-col ${scrolled
+          ? "bg-white/95 backdrop-blur-md border-gray-100 shadow-sm"
+          : "bg-white border-transparent"
+          }`}
+      >
+        {/* ROW 1: Branding, Sets & Main Actions */}
+        <div
+          className={`w-full px-4 md:px-12 flex items-center justify-between transition-all duration-300 ${scrolled ? "h-16 md:h-20" : "h-16 md:h-32"
+            }`}
+        >
           {/* Left: Branding & Sets */}
           <div className={`flex items-center min-w-0 ${hasMultipleSets ? "gap-12" : "gap-4"}`}>
-		            <div
-		              className={`font-playfair font-bold tracking-tight text-gray-900 transition-all duration-300 truncate ${
-		                scrolled ? "text-lg md:text-xl" : "text-lg md:text-3xl"
-		              }`}
-		              title={navTitle}
-		            >
-	              {navTitle}
-	            </div>
+            <div
+              className={`font-playfair font-bold tracking-tight text-gray-900 transition-all duration-300 truncate ${scrolled ? "text-lg md:text-xl" : "text-lg md:text-3xl"
+                }`}
+              title={navTitle}
+            >
+              {navTitle}
+            </div>
 
-              {hasMultipleSets ? (
-	              <div className="hidden md:flex items-center gap-8 overflow-x-auto no-scrollbar">
-	                {orderedSets.map((set) => (
-	                  <button
-	                    key={set.id}
-	                    type="button"
+            {hasMultipleSets ? (
+              <div className="hidden md:flex items-center gap-8 overflow-x-auto no-scrollbar">
+                {orderedSets.map((set) => (
+                  <button
+                    key={set.id}
+                    type="button"
                     onClick={() => scrollToSet(set.id)}
-                    className={`font-playfair text-sm md:text-base font-semibold tracking-tight transition-colors whitespace-nowrap ${
-                      activeCategoryId === set.id
-                        ? "text-gray-900 border-b-2 border-black pb-1"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
+                    className={`font-playfair text-sm md:text-base font-semibold tracking-tight transition-colors whitespace-nowrap ${activeCategoryId === set.id
+                      ? "text-gray-900 border-b-2 border-black pb-1"
+                      : "text-gray-500 hover:text-gray-700"
+                      }`}
                     aria-current={activeCategoryId === set.id ? "page" : undefined}
                   >
                     {set.name}
@@ -1843,11 +1998,10 @@ export default function GalleryClientPreview() {
               <button
                 type="button"
                 onClick={() => setGridSize("large")}
-                className={`p-1.5 rounded-md transition-all ${
-                  gridSize === "large"
-                    ? "bg-white shadow-sm text-gray-900"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
+                className={`p-1.5 rounded-md transition-all ${gridSize === "large"
+                  ? "bg-white shadow-sm text-gray-900"
+                  : "text-gray-400 hover:text-gray-600"
+                  }`}
                 aria-label={t("sessionDetail.gallery.clientPreview.actions.gridLarge")}
               >
                 <Rows size={16} />
@@ -1855,11 +2009,10 @@ export default function GalleryClientPreview() {
               <button
                 type="button"
                 onClick={() => setGridSize("medium")}
-                className={`p-1.5 rounded-md transition-all ${
-                  gridSize === "medium"
-                    ? "bg-white shadow-sm text-gray-900"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
+                className={`p-1.5 rounded-md transition-all ${gridSize === "medium"
+                  ? "bg-white shadow-sm text-gray-900"
+                  : "text-gray-400 hover:text-gray-600"
+                  }`}
                 aria-label={t("sessionDetail.gallery.clientPreview.actions.gridMedium")}
               >
                 <LayoutGrid size={16} />
@@ -1867,220 +2020,215 @@ export default function GalleryClientPreview() {
               <button
                 type="button"
                 onClick={() => setGridSize("small")}
-                className={`p-1.5 rounded-md transition-all ${
-                  gridSize === "small"
-                    ? "bg-white shadow-sm text-gray-900"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
+                className={`p-1.5 rounded-md transition-all ${gridSize === "small"
+                  ? "bg-white shadow-sm text-gray-900"
+                  : "text-gray-400 hover:text-gray-600"
+                  }`}
                 aria-label={t("sessionDetail.gallery.clientPreview.actions.gridSmall")}
               >
                 <Grid3x3 size={16} />
               </button>
             </div>
 
-	          </div>
-	        </div>
+          </div>
+        </div>
 
-	        {/* ROW 2: Sets (Mobile Only) */}
-          {hasMultipleSets && (!isMobile || (mobileTab === "gallery" && activeFilter === "all")) ? (
-	          <div className="md:hidden w-full overflow-x-auto no-scrollbar border-t border-gray-100 bg-white">
-	            <div className="flex items-center px-4 min-w-max h-12 gap-8">
-	              {orderedSets.map((set) => (
-	                <button
-	                  key={set.id}
-	                  type="button"
-	                  onClick={() => scrollToSet(set.id)}
-	                  className={`font-playfair text-sm font-semibold tracking-tight transition-all h-full border-b-2 ${
-	                    activeCategoryId === set.id ? "text-gray-900 border-black" : "text-gray-500 border-transparent"
-	                  }`}
-                    aria-current={activeCategoryId === set.id ? "page" : undefined}
-	                >
-	                  {set.name}
-	                </button>
-	              ))}
-	            </div>
-	          </div>
-          ) : null}
+        {/* ROW 2: Sets (Mobile Only) */}
+        {hasMultipleSets && (!isMobile || (mobileTab === "gallery" && activeFilter === "all")) ? (
+          <div className="md:hidden w-full overflow-x-auto no-scrollbar border-t border-gray-100 bg-white">
+            <div className="flex items-center px-4 min-w-max h-12 gap-8">
+              {orderedSets.map((set) => (
+                <button
+                  key={set.id}
+                  type="button"
+                  onClick={() => scrollToSet(set.id)}
+                  className={`font-playfair text-sm font-semibold tracking-tight transition-all h-full border-b-2 ${activeCategoryId === set.id ? "text-gray-900 border-black" : "text-gray-500 border-transparent"
+                    }`}
+                  aria-current={activeCategoryId === set.id ? "page" : undefined}
+                >
+                  {set.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
-	        {/* ROW 3: Tasks */}
-	        {!isMobile && selectionRules.length > 0 ? (
-	          <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-2">
-	            <div className="flex items-stretch gap-4 md:gap-3 min-w-max">
-	              <button
-	                type="button"
-	                data-touch-target="compact"
-	                onClick={() => setActiveFilter("all")}
-	                className={`w-[220px] md:w-[200px] shrink-0 rounded-2xl border bg-white px-5 py-4 md:px-3 md:py-2.5 text-left shadow-sm transition-colors ${
-	                  activeFilter === "all"
-	                    ? "border-gray-900"
-	                    : "border-gray-200 hover:border-gray-300"
-	                }`}
-	              >
-	                <p className="text-xs font-bold uppercase tracking-widest text-gray-500 truncate md:hidden">
-	                  {heroTitle}
-	                </p>
-	                <div className="mt-4 md:mt-0 flex items-center gap-3">
-	                  <LayoutGrid size={18} className="text-gray-900" aria-hidden="true" />
-	                  <span className="text-sm font-bold text-gray-900">
-	                    {t("sessionDetail.gallery.clientPreview.filters.all")}
-	                  </span>
-	                </div>
-	                <div className="mt-4 md:mt-2 text-xs font-semibold text-gray-400 tabular-nums">
-	                  {totalPhotoCount}
-	                </div>
-	              </button>
+        {/* ROW 3: Tasks */}
+        {!isMobile && selectionRules.length > 0 ? (
+          <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-2">
+            <div className="flex items-stretch gap-4 md:gap-3 min-w-max">
+              <button
+                type="button"
+                data-touch-target="compact"
+                onClick={() => setActiveFilter("all")}
+                className={`w-[220px] md:w-[200px] shrink-0 rounded-2xl border bg-white px-5 py-4 md:px-3 md:py-2.5 text-left shadow-sm transition-colors ${activeFilter === "all"
+                  ? "border-gray-900"
+                  : "border-gray-200 hover:border-gray-300"
+                  }`}
+              >
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-500 truncate md:hidden">
+                  {heroTitle}
+                </p>
+                <div className="mt-4 md:mt-0 flex items-center gap-3">
+                  <LayoutGrid size={18} className="text-gray-900" aria-hidden="true" />
+                  <span className="text-sm font-bold text-gray-900">
+                    {t("sessionDetail.gallery.clientPreview.filters.all")}
+                  </span>
+                </div>
+                <div className="mt-4 md:mt-2 text-xs font-semibold text-gray-400 tabular-nums">
+                  {totalPhotoCount}
+                </div>
+              </button>
 
-		              {selectionRules.map((rule) => {
-		                const isActive = activeFilter === rule.id;
-		                const isComplete = rule.currentCount >= rule.minCount;
-		                const targetCount = rule.maxCount ?? Math.max(1, rule.minCount);
-		                const progress = targetCount > 0 ? Math.min(1, rule.currentCount / targetCount) : 0;
-                    const serviceName = rule.serviceName?.trim() ?? "";
-                    const missingCount = Math.max(0, rule.minCount - rule.currentCount);
-                    const showRange = rule.minCount > 0 && rule.maxCount != null && rule.maxCount !== rule.minCount;
-                    const desktopDenominator = showRange ? `${rule.minCount}-${rule.maxCount}` : `${rule.maxCount ?? rule.minCount}`;
-                    const desktopSubLabel =
-                      missingCount > 0
-                        ? t("sessionDetail.gallery.clientPreview.tasks.missingCount", { count: missingCount })
-                        : t("sessionDetail.gallery.clientPreview.tasks.selectedCount", { count: rule.currentCount });
+              {selectionRules.map((rule) => {
+                const isActive = activeFilter === rule.id;
+                const status = getRuleStatus(rule, t);
+                const serviceName = rule.serviceName?.trim() ?? "";
+                const showRange = rule.minCount > 0 && rule.maxCount != null && rule.maxCount !== rule.minCount;
+                const desktopDenominator = showRange ? `${rule.minCount}-${rule.maxCount}` : `${rule.maxCount ?? rule.maxCount}`;
 
-		                return (
-		                  <button
-		                    key={rule.id}
-	                    type="button"
-	                    data-touch-target="compact"
-	                    onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
-	                    className={`w-[240px] md:w-[220px] shrink-0 rounded-2xl border bg-white px-5 py-4 md:px-3 md:py-2.5 text-left shadow-sm transition-colors ${
-	                      isActive
-	                        ? "border-gray-900"
-	                        : isComplete
-	                          ? "border-emerald-200 hover:border-emerald-300"
-	                          : "border-gray-200 hover:border-gray-300"
-	                    }`}
-	                  >
-                        {serviceName ? (
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 truncate">
-                            {serviceName}
-                          </p>
-                        ) : null}
-
-		                    <div className={`flex items-start justify-between gap-3 ${serviceName ? "mt-2 md:mt-1" : ""}`}>
-		                      <p className="text-sm font-bold text-gray-900 truncate md:text-[13px]">{rule.title}</p>
-		                      <p className="text-xs font-bold text-gray-500 shrink-0 md:hidden">
-		                        {rule.currentCount}/{rule.maxCount ?? rule.minCount}
-		                      </p>
-                          <p className="hidden md:block text-xs font-semibold text-gray-500 shrink-0 tabular-nums">
-                            {rule.currentCount}/{desktopDenominator}
-                          </p>
-		                    </div>
-
-	                    <div className="mt-3 flex items-center justify-between gap-3 text-xs text-gray-500 md:hidden">
-	                      <span className="truncate">
-	                        {t("sessionDetail.gallery.clientPreview.tasks.selectedCount", { count: rule.currentCount })}
-	                      </span>
-	                      {isComplete ? (
-	                        <span className="text-emerald-600 font-semibold">
-	                          <CheckCircle2 size={14} className="inline-block align-[-2px]" aria-hidden="true" />{" "}
-	                        </span>
-	                      ) : null}
-	                    </div>
-
-                      <div className="hidden md:flex mt-2 items-center justify-between gap-3 text-xs text-gray-500">
-                        <span className="truncate">{desktopSubLabel}</span>
-                        {isComplete ? (
-                          <span className="text-emerald-600 font-semibold">
-                            <CheckCircle2 size={14} className="inline-block align-[-2px]" aria-hidden="true" />
-                          </span>
-                        ) : null}
+                return (
+                  <button
+                    key={rule.id}
+                    type="button"
+                    data-touch-target="compact"
+                    onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
+                    className={`group relative flex flex-col justify-between w-[260px] md:w-[280px] shrink-0 rounded-2xl border bg-white transition-all text-left overflow-hidden hover:shadow-md ${isActive
+                      ? "border-gray-900 shadow-sm"
+                      : status.borderColor
+                      }`}
+                  >
+                    {/* Top Content */}
+                    <div className="p-4 w-full">
+                      <div className="mb-4">
+                        {/* Chip Line */}
+                        <span className={`inline-block px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${rule.required
+                          ? "bg-brand-50 text-brand-600 border border-brand-100"
+                          : "bg-gray-100 text-gray-500 border border-gray-200"
+                          }`}>
+                          {rule.required
+                            ? t("sessionDetail.gallery.clientPreview.labels.mandatory")
+                            : t("sessionDetail.gallery.clientPreview.labels.optional")}
+                        </span>
                       </div>
 
-	                    <div className="mt-4 h-2 w-full rounded-full bg-gray-100 overflow-hidden md:hidden">
-	                      <div className="h-full bg-brand-500" style={{ width: `${progress * 100}%` }} />
-	                    </div>
-	                  </button>
-	                );
-	              })}
-	            </div>
-	          </div>
-	        ) : null}
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-full flex shrink-0 items-center justify-center transition-colors ${isActive ? "bg-brand-50 text-brand-600" : status.iconBg + " " + status.iconColor
+                          }`}>
+                          <ListChecks size={20} strokeWidth={2.5} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-bold text-gray-900 text-sm truncate leading-snug">{rule.title}</h4>
+                          {serviceName ? (
+                            <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider truncate mb-0.5">{serviceName}</p>
+                          ) : null}
+                          <p className={`text-[11px] font-bold mt-1 transition-colors ${status.statusColor}`}>
+                            {status.statusLabel}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
 
-	        {/* ROW 4: Filters */}
-	        {!isMobile ? (
-            <div className="w-full border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm overflow-x-auto no-scrollbar py-3 px-4 md:px-12 flex items-center justify-between gap-6">
-              <div className="flex items-center gap-3">
-                <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
-                  {t("sessionDetail.gallery.clientPreview.filters.label")}
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    data-touch-target="compact"
-                    onClick={() => setActiveFilter("all")}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
-                      activeFilter === "all"
-                        ? "bg-gray-900 text-white"
-                        : "text-gray-500 hover:text-gray-900 hover:bg-gray-200"
-                    }`}
-                  >
-                    {t("sessionDetail.gallery.clientPreview.filters.all")}
+                    {/* Footer Content */}
+                    <div className="px-4 pb-4 w-full mt-auto">
+                      <div className="flex items-end justify-between mb-3">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl font-bold text-gray-900 tabular-nums leading-none">{rule.currentCount}</span>
+                          <span className="text-sm font-semibold text-gray-400 tabular-nums">/{desktopDenominator}</span>
+                        </div>
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-colors ${status.isComplete ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-200 text-transparent"
+                          }`}>
+                          <Check size={14} strokeWidth={4} />
+                        </div>
+                      </div>
+
+                      <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-500 ease-out ${isActive ? "bg-brand-500" : status.progressColor}`}
+                          style={{ width: `${status.progress * 100}%` }}
+                        />
+                      </div>
+                    </div>
                   </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
 
-                  <button
-                    type="button"
-                    data-touch-target="compact"
-                    onClick={() => setActiveFilter("starred")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all border ${
-                      activeFilter === "starred"
-                        ? "bg-amber-100 text-amber-700 border-amber-200 shadow-sm"
-                        : "bg-white border-transparent text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+        {/* ROW 4: Filters */}
+        {!isMobile ? (
+          <div className="w-full border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm overflow-x-auto no-scrollbar py-3 px-4 md:px-12 flex items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                {t("sessionDetail.gallery.clientPreview.filters.label")}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  data-touch-target="compact"
+                  onClick={() => setActiveFilter("all")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${activeFilter === "all"
+                    ? "bg-gray-900 text-white"
+                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-200"
                     }`}
-                  >
-                    <Star
-                      size={12}
-                      fill="currentColor"
-                      className={activeFilter === "starred" ? "text-amber-700" : "text-amber-400"}
-                    />
-                    <span className="md:hidden">{t("sessionDetail.gallery.clientPreview.filters.starredShort")}</span>
-                    <span className="hidden md:inline">{t("sessionDetail.gallery.clientPreview.filters.starred")}</span>
-                    {starredCount > 0 ? <span className="ml-0.5 opacity-60">({starredCount})</span> : null}
-                  </button>
+                >
+                  {t("sessionDetail.gallery.clientPreview.filters.all")}
+                </button>
 
-                  {favoritesEnabled ? (
-                    <>
-                      <div className="w-px h-4 bg-gray-300 mx-1" />
-                      <button
-                        type="button"
-                        data-touch-target="compact"
-                        onClick={() => setActiveFilter("favorites")}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
-                          activeFilter === "favorites"
-                            ? "bg-red-50 text-red-600 border border-red-100"
-                            : "text-gray-500 hover:text-red-500"
+                <button
+                  type="button"
+                  data-touch-target="compact"
+                  onClick={() => setActiveFilter("starred")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all border ${activeFilter === "starred"
+                    ? "bg-amber-100 text-amber-700 border-amber-200 shadow-sm"
+                    : "bg-white border-transparent text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+                    }`}
+                >
+                  <Star
+                    size={12}
+                    fill="currentColor"
+                    className={activeFilter === "starred" ? "text-amber-700" : "text-amber-400"}
+                  />
+                  <span className="md:hidden">{t("sessionDetail.gallery.clientPreview.filters.starredShort")}</span>
+                  <span className="hidden md:inline">{t("sessionDetail.gallery.clientPreview.filters.starred")}</span>
+                  {starredCount > 0 ? <span className="ml-0.5 opacity-60">({starredCount})</span> : null}
+                </button>
+
+                {favoritesEnabled ? (
+                  <>
+                    <div className="w-px h-4 bg-gray-300 mx-1" />
+                    <button
+                      type="button"
+                      data-touch-target="compact"
+                      onClick={() => setActiveFilter("favorites")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${activeFilter === "favorites"
+                        ? "bg-red-50 text-red-600 border border-red-100"
+                        : "text-gray-500 hover:text-red-500"
                         }`}
-                      >
-                        <Heart size={12} fill={activeFilter === "favorites" ? "currentColor" : "none"} />
-                        {t("sessionDetail.gallery.clientPreview.filters.favorites")}
-                      </button>
-                    </>
-                  ) : null}
+                    >
+                      <Heart size={12} fill={activeFilter === "favorites" ? "currentColor" : "none"} />
+                      {t("sessionDetail.gallery.clientPreview.filters.favorites")}
+                    </button>
+                  </>
+                ) : null}
 
-                  <button
-                    type="button"
-                    data-touch-target="compact"
-                    onClick={() => setActiveFilter("unselected")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
-                      activeFilter === "unselected"
-                        ? "bg-gray-200 text-gray-900"
-                        : "text-gray-400 hover:text-gray-600"
+                <button
+                  type="button"
+                  data-touch-target="compact"
+                  onClick={() => setActiveFilter("unselected")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${activeFilter === "unselected"
+                    ? "bg-gray-200 text-gray-900"
+                    : "text-gray-400 hover:text-gray-600"
                     }`}
-                  >
-                    <CircleDashed size={12} />
-                    {t("sessionDetail.gallery.clientPreview.filters.unselected")}
-                  </button>
-                </div>
+                >
+                  <CircleDashed size={12} />
+                  {t("sessionDetail.gallery.clientPreview.filters.unselected")}
+                </button>
               </div>
             </div>
-          ) : null}
+          </div>
+        ) : null}
       </nav>
 
       {isMobile && mobileTab === "tasks" ? (
@@ -2096,54 +2244,54 @@ export default function GalleryClientPreview() {
                 ) : (
                   <div className="space-y-16">
                     {orderedSets.map((set) => {
-	                const setPhotos = filteredPhotosBySetId[set.id] ?? [];
-	                const visibleSetCount = visibleCountBySetId[set.id] ?? 0;
-	                const visibleSetPhotos = setPhotos.slice(0, visibleSetCount);
-	                const hasPhotos = setPhotos.length > 0;
-	                const showSkeleton = hasPhotos && visibleSetCount === 0;
-	                const showLoader = hasPhotos && visibleSetCount > 0 && visibleSetCount < setPhotos.length;
+                      const setPhotos = filteredPhotosBySetId[set.id] ?? [];
+                      const visibleSetCount = visibleCountBySetId[set.id] ?? 0;
+                      const visibleSetPhotos = setPhotos.slice(0, visibleSetCount);
+                      const hasPhotos = setPhotos.length > 0;
+                      const showSkeleton = hasPhotos && visibleSetCount === 0;
+                      const showLoader = hasPhotos && visibleSetCount > 0 && visibleSetCount < setPhotos.length;
 
-	                return (
-	                  <section
-	                    key={set.id}
-	                    id={`${SET_SECTION_ID_PREFIX}${set.id}`}
-	                    data-set-id={set.id}
-	                    className="scroll-mt-24"
-	                  >
-                      <div
-                        className="sticky z-20 -mx-4 md:-mx-8 px-4 md:px-8 py-4 bg-white/95 backdrop-blur border-b border-gray-100"
-                        style={{ top: navHeight }}
-                      >
-                        <h2 className="font-playfair text-xl md:text-2xl font-semibold text-gray-900 tracking-tight">
-                          {set.name}
-                        </h2>
-                        {set.description ? (
-                          <p className="mt-1 text-sm text-gray-500 max-w-2xl">{set.description}</p>
-                        ) : null}
-                      </div>
-
-                      <div className="pt-6">
-                        {!hasPhotos ? (
-                          <div className="rounded-2xl border border-gray-100 bg-gray-50 px-6 py-10 text-center text-sm text-gray-500">
-                            {t("sessionDetail.gallery.clientPreview.sections.empty")}
+                      return (
+                        <section
+                          key={set.id}
+                          id={`${SET_SECTION_ID_PREFIX}${set.id}`}
+                          data-set-id={set.id}
+                          className="scroll-mt-24"
+                        >
+                          <div
+                            className="sticky z-20 -mx-4 md:-mx-8 px-4 md:px-8 py-4 bg-white/95 backdrop-blur border-b border-gray-100"
+                            style={{ top: navHeight }}
+                          >
+                            <h2 className="font-playfair text-xl md:text-2xl font-semibold text-gray-900 tracking-tight">
+                              {set.name}
+                            </h2>
+                            {set.description ? (
+                              <p className="mt-1 text-sm text-gray-500 max-w-2xl">{set.description}</p>
+                            ) : null}
                           </div>
-                        ) : showSkeleton ? (
-                          renderSkeletonGrid(`set-${set.id}`)
-                        ) : (
-                          renderPhotoGrid(visibleSetPhotos)
-                        )}
-                      </div>
 
-	                    <div
-	                      id={`${SET_SENTINEL_ID_PREFIX}${set.id}`}
-	                      data-set-id={set.id}
-	                      className={showLoader ? "py-12 flex items-center justify-center w-full" : "hidden"}
-                    >
-                      <Loader2 className="animate-spin text-gray-300" size={32} />
-                    </div>
-                  </section>
-                );
-              })}
+                          <div className="pt-6">
+                            {!hasPhotos ? (
+                              <div className="rounded-2xl border border-gray-100 bg-gray-50 px-6 py-10 text-center text-sm text-gray-500">
+                                {t("sessionDetail.gallery.clientPreview.sections.empty")}
+                              </div>
+                            ) : showSkeleton ? (
+                              renderSkeletonGrid(`set-${set.id}`)
+                            ) : (
+                              renderPhotoGrid(visibleSetPhotos)
+                            )}
+                          </div>
+
+                          <div
+                            id={`${SET_SENTINEL_ID_PREFIX}${set.id}`}
+                            data-set-id={set.id}
+                            className={showLoader ? "py-12 flex items-center justify-center w-full" : "hidden"}
+                          >
+                            <Loader2 className="animate-spin text-gray-300" size={32} />
+                          </div>
+                        </section>
+                      );
+                    })}
                   </div>
                 )
               ) : visiblePhotos.length === 0 ? (
@@ -2164,138 +2312,161 @@ export default function GalleryClientPreview() {
       )}
 
       {/* --- FOOTER --- */}
-	      <footer className="bg-white py-12 border-t border-gray-100 text-center">
-	        <div className="flex items-center justify-center gap-2 text-xl font-bold font-serif mb-4 text-gray-900">
-	          {t("sessionDetail.gallery.clientPreview.footer.brand")}
-	        </div>
-	        <p className="text-gray-400 text-xs uppercase tracking-widest">
-	          {t("sessionDetail.gallery.clientPreview.footer.copyright")}
-	        </p>
-	      </footer>
+      <footer className="bg-white py-12 border-t border-gray-100 text-center">
+        <div className="flex items-center justify-center gap-2 text-xl font-bold font-serif mb-4 text-gray-900">
+          {t("sessionDetail.gallery.clientPreview.footer.brand")}
+        </div>
+        <p className="text-gray-400 text-xs uppercase tracking-widest">
+          {t("sessionDetail.gallery.clientPreview.footer.copyright")}
+        </p>
+      </footer>
 
-	      {!isMobile && totalSelectedCount > 0 && activeFilter !== "selected" ? (
-	        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-6 duration-500">
-	          <button
-	            type="button"
-	            onClick={() => setActiveFilter("selected")}
-	            className="bg-gray-900 text-white pl-4 pr-6 py-3 rounded-full shadow-2xl flex items-center gap-3 hover:scale-105 transition-transform"
-	          >
-	            <div className="w-8 h-8 rounded-full bg-white text-gray-900 flex items-center justify-center text-sm font-bold">
-	              {totalSelectedCount}
-	            </div>
-	            <div className="text-left">
-	              <div className="text-[10px] opacity-70 uppercase tracking-wider font-medium">
-	                {t("sessionDetail.gallery.clientPreview.floatingSelections.kicker")}
-	              </div>
-	              <div className="text-xs font-bold uppercase tracking-wider">
-	                {t("sessionDetail.gallery.clientPreview.floatingSelections.title")}
-	              </div>
-	            </div>
-	            <ArrowRight size={16} className="ml-2" />
-	          </button>
-	        </div>
-	      ) : null}
-
-      {isMobile ? (
-        <nav
-          aria-label={t("sessionDetail.gallery.clientPreview.bottomNav.ariaLabel")}
-          className={`mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-100 px-2 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] transition-transform duration-300 ease-out ${
-            showBottomNav ? "translate-y-0" : "translate-y-full"
-          }`}
-        >
-          <div className="flex items-center justify-around">
+      {
+        !isMobile && totalSelectedCount > 0 && activeFilter !== "selected" ? (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-6 duration-500">
             <button
               type="button"
-              onClick={() => handleMobileTabChange("gallery")}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${
-                mobileTab === "gallery" ? "text-brand-600 bg-brand-50" : "text-gray-400"
-              }`}
-              aria-current={mobileTab === "gallery" ? "page" : undefined}
+              onClick={() => setActiveFilter("selected")}
+              className="bg-gray-900 text-white pl-4 pr-6 py-3 rounded-full shadow-2xl flex items-center gap-3 hover:scale-105 transition-transform"
             >
-              <LayoutGrid size={22} strokeWidth={mobileTab === "gallery" ? 2.5 : 2} aria-hidden="true" />
-              <span className="text-[10px] font-bold mt-0.5">
-                {t("sessionDetail.gallery.clientPreview.bottomNav.gallery")}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleMobileTabChange("tasks")}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${
-                mobileTab === "tasks" ? "text-brand-600 bg-brand-50" : "text-gray-400"
-              }`}
-              aria-current={mobileTab === "tasks" ? "page" : undefined}
-            >
-              <div className="relative">
-                <ListChecks size={22} strokeWidth={mobileTab === "tasks" ? 2.5 : 2} aria-hidden="true" />
-                {totalSelectedCount > 0 ? (
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white" />
-                ) : null}
+              <div className="w-8 h-8 rounded-full bg-white text-gray-900 flex items-center justify-center text-sm font-bold">
+                {totalSelectedCount}
               </div>
-              <span className="text-[10px] font-bold mt-0.5">
-                {t("sessionDetail.gallery.clientPreview.bottomNav.selections")}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              disabled={!favoritesEnabled}
-              onClick={() => handleMobileTabChange("favorites")}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${
-                mobileTab === "favorites" ? "text-red-500 bg-red-50" : "text-gray-400"
-              } ${favoritesEnabled ? "" : "opacity-50 cursor-not-allowed"}`}
-              aria-current={mobileTab === "favorites" ? "page" : undefined}
-            >
-              <Heart
-                size={22}
-                fill={mobileTab === "favorites" ? "currentColor" : "none"}
-                strokeWidth={mobileTab === "favorites" ? 2.5 : 2}
-                aria-hidden="true"
-              />
-              <span className="text-[10px] font-bold mt-0.5">
-                {t("sessionDetail.gallery.clientPreview.filters.favorites")}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleMobileTabChange("starred")}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${
-                mobileTab === "starred" ? "text-amber-500 bg-amber-50" : "text-gray-400"
-              }`}
-              aria-current={mobileTab === "starred" ? "page" : undefined}
-            >
-              <Star
-                size={22}
-                fill={mobileTab === "starred" ? "currentColor" : "none"}
-                strokeWidth={mobileTab === "starred" ? 2.5 : 2}
-                aria-hidden="true"
-              />
-              <span className="text-[10px] font-bold mt-0.5">
-                {t("sessionDetail.gallery.clientPreview.bottomNav.starred")}
-              </span>
+              <div className="text-left">
+                <div className="text-[10px] opacity-70 uppercase tracking-wider font-medium">
+                  {t("sessionDetail.gallery.clientPreview.floatingSelections.kicker")}
+                </div>
+                <div className="text-xs font-bold uppercase tracking-wider">
+                  {t("sessionDetail.gallery.clientPreview.floatingSelections.title")}
+                </div>
+              </div>
+              <ArrowRight size={16} className="ml-2" />
             </button>
           </div>
-        </nav>
-      ) : null}
+        ) : null
+      }
 
-	      <Lightbox
-	        isOpen={lightboxOpen}
-	        onClose={() => setLightboxOpen(false)}
-	        photos={filteredPhotos}
-	        currentIndex={lightboxIndex}
-	        onNavigate={handleLightboxNavigate}
-	        rules={selectionRules}
-	        onToggleRule={toggleRuleSelect}
-	        onToggleStar={handleToggleFavorite}
-	        mode="client"
-	        activeRuleId={activeLightboxRuleId}
-	        favoritesEnabled={favoritesEnabled}
-          onImageError={handleAssetImageError}
-	        watermark={watermark}
-	      />
+      {
+        isMobile ? (
+          <nav
+            aria-label={t("sessionDetail.gallery.clientPreview.bottomNav.ariaLabel")}
+            className={`mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-100 px-2 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] transition-transform duration-300 ease-out ${showBottomNav ? "translate-y-0" : "translate-y-full"
+              }`}
+          >
+            <div className="flex items-center justify-around">
+              <button
+                type="button"
+                onClick={() => handleMobileTabChange("gallery")}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "gallery" ? "text-brand-600 bg-brand-50" : "text-gray-400"
+                  }`}
+                aria-current={mobileTab === "gallery" ? "page" : undefined}
+              >
+                <LayoutGrid size={22} strokeWidth={mobileTab === "gallery" ? 2.5 : 2} aria-hidden="true" />
+                <span className="text-[10px] font-bold mt-0.5">
+                  {t("sessionDetail.gallery.clientPreview.bottomNav.gallery")}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleMobileTabChange("tasks")}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "tasks" ? "text-brand-600 bg-brand-50" : "text-gray-400"
+                  }`}
+                aria-current={mobileTab === "tasks" ? "page" : undefined}
+              >
+                <div className="relative">
+                  <ListChecks size={22} strokeWidth={mobileTab === "tasks" ? 2.5 : 2} aria-hidden="true" />
+                  {hasIncompleteMandatory ? (
+                    <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center p-[2px] border-2 border-white shadow-sm font-bold text-[10px]">
+                      !
+                    </div>
+                  ) : areAllMandatoryComplete ? (
+                    <div className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white rounded-full p-[3px] border-[1.5px] border-white shadow-sm animate-pulse">
+                      <Check size={8} strokeWidth={4} />
+                    </div>
+                  ) : totalSelectedCount > 0 ? (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white" />
+                  ) : null}
+                </div>
+                <span className="text-[10px] font-bold mt-0.5">
+                  {t("sessionDetail.gallery.clientPreview.bottomNav.selections")}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                disabled={!favoritesEnabled}
+                onClick={() => handleMobileTabChange("favorites")}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "favorites" ? "text-red-500 bg-red-50" : "text-gray-400"
+                  } ${favoritesEnabled ? "" : "opacity-50 cursor-not-allowed"}`}
+                aria-current={mobileTab === "favorites" ? "page" : undefined}
+              >
+                <div className="relative">
+                  <Heart
+                    size={22}
+                    fill={mobileTab === "favorites" ? "currentColor" : "none"}
+                    strokeWidth={mobileTab === "favorites" ? 2.5 : 2}
+                    aria-hidden="true"
+                  />
+                  {favoritePhotoIds.size > 0 ? (
+                    <div className={`absolute -top-1.5 -right-2 min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[9px] font-bold border-2 border-white shadow-sm transition-colors ${mobileTab === "favorites" ? "bg-red-500 text-white" : "bg-gray-200 text-gray-600"
+                      }`}>
+                      {favoritePhotoIds.size}
+                    </div>
+                  ) : null}
+                </div>
+                <span className="text-[10px] font-bold mt-0.5">
+                  {t("sessionDetail.gallery.clientPreview.filters.favorites")}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleMobileTabChange("starred")}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "starred" ? "text-amber-500 bg-amber-50" : "text-gray-400"
+                  }`}
+                aria-current={mobileTab === "starred" ? "page" : undefined}
+              >
+                <div className="relative">
+                  <Star
+                    size={22}
+                    fill={mobileTab === "starred" ? "currentColor" : "none"}
+                    strokeWidth={mobileTab === "starred" ? 2.5 : 2}
+                    aria-hidden="true"
+                  />
+                  {starredCount > 0 ? (
+                    <div className={`absolute -top-1.5 -right-2 min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[9px] font-bold border-2 border-white shadow-sm transition-colors ${mobileTab === "starred" ? "bg-amber-500 text-white" : "bg-gray-200 text-gray-600"
+                      }`}>
+                      {starredCount}
+                    </div>
+                  ) : null}
+                </div>
+                <span className="text-[10px] font-bold mt-0.5">
+                  {t("sessionDetail.gallery.clientPreview.bottomNav.starred")}
+                </span>
+              </button>
+            </div>
+          </nav>
+        ) : null
+      }
+
+      <Lightbox
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        photos={filteredPhotos}
+        currentIndex={lightboxIndex}
+        onNavigate={handleLightboxNavigate}
+        rules={selectionRules}
+        onToggleRule={toggleRuleSelect}
+        onToggleStar={handleToggleFavorite}
+        mode="client"
+        activeRuleId={activeLightboxRuleId}
+        favoritesEnabled={favoritesEnabled}
+        onImageError={handleAssetImageError}
+        watermark={watermark}
+      />
 
       {renderSelectionSheet()}
-    </div>
+    </div >
   );
 }

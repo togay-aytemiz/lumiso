@@ -114,6 +114,7 @@ interface LightboxProps {
   favoritesEnabled?: boolean;
   onImageError?: (photoId: string) => void;
   watermark?: GalleryWatermarkConfig;
+  isSelectionsLocked?: boolean;
 }
 
 export function Lightbox({
@@ -131,6 +132,7 @@ export function Lightbox({
   favoritesEnabled = true,
   onImageError,
   watermark,
+  isSelectionsLocked = false,
 }: LightboxProps) {
   const { t } = useTranslation("pages");
   const currentPhoto = photos[currentIndex];
@@ -147,7 +149,7 @@ export function Lightbox({
   );
   const isSelectedForActiveRule = activeRuleId ? currentPhoto?.selections.includes(activeRuleId) : false;
   const activeRuleIsFull = activeRule?.maxCount != null ? activeRule.currentCount >= activeRule.maxCount : false;
-  const isActiveRuleDisabled = Boolean(activeRule && activeRuleIsFull && !isSelectedForActiveRule);
+  const isActiveRuleDisabled = Boolean(activeRule && activeRuleIsFull && !isSelectedForActiveRule) || isSelectionsLocked;
   const hasSelections = (currentPhoto?.selections.length ?? 0) > 0;
 
   useEffect(() => {
@@ -261,7 +263,7 @@ export function Lightbox({
     }
   };
 
-  const shouldRenderMobileAddButton = rules.length > 0;
+  const shouldRenderMobileAddButton = rules.length > 0 && !isSelectionsLocked;
   const addButtonActive =
     shouldRenderMobileAddButton &&
     (isMobileSelectionPanelOpen || currentPhoto.selections.length > 0);

@@ -823,6 +823,7 @@
           "closeViewer": "Fotoğrafı kapat",
           "addToFavorites": "Favorilere Ekle",
           "removeFromFavorites": "Favorilerden Çıkar",
+          "completeSelection": "Seçimi Tamamla",
           "gridLarge": "Büyük grid",
           "gridMedium": "Orta grid",
           "gridSmall": "Küçük grid"
@@ -847,7 +848,24 @@
           "subtitle": "Seçimlerinizi görüntülemek için ilgili göreve dokunun.",
           "allPhotos": "Tüm Fotoğraflar",
           "tasksLabel": "GÖREVLER",
-          "empty": "Henüz seçim listeniz yok."
+          "empty": "Henüz seçim listeniz yok.",
+          "sentTitle": "Seçimler Gönderildi!",
+          "sentDesc": "Fotoğrafçı bilgilendirildi. Seçimlerinizi görüntüleyebilirsiniz ancak artık değişiklik yapamazsınız."
+        },
+        "confirmation": {
+          "title": "Seçimleri Tamamla",
+          "bannerTitle": "Son bir kontrol",
+          "bannerDesc": "Onayladığınızda seçimleriniz fotoğrafçıya iletilecek ve kilitlenecek. Sonrasında değişiklik yapamayacaksınız.",
+          "noteLabel": "Not bırak (isteğe bağlı)",
+          "notePlaceholder": "Yorum veya özel istek ekleyin...",
+          "cancel": "Vazgeç",
+          "confirm": "Seçimleri Gönder"
+        },
+        "banner": {
+          "lockedMessage": "Seçimler onaylandı ve fotoğrafçıya gönderildi"
+        },
+        "status": {
+          "confirmed": "Onaylandı"
         },
         "tasks": {
           "selectedCount": "{{count}} seçildi",
@@ -874,7 +892,8 @@
         },
         "toast": {
           "favoritesAdded": "Favorilere eklendi",
-          "favoritesRemoved": "Favorilerden çıkarıldı"
+          "favoritesRemoved": "Favorilerden çıkarıldı",
+          "selectionsLocked": "Seçimler kesinleştirildi, artık değiştirilemez."
         },
         "empty": {
           "noPhotos": {

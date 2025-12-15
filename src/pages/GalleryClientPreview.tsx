@@ -25,14 +25,25 @@ import {
   LayoutGrid,
   ListChecks,
   ListPlus,
+  Lock,
   Loader2,
   Maximize2,
   Rows,
   SearchX,
+  SendHorizontal,
   Sparkles,
   Star,
   X,
 } from "lucide-react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 type GridSize = "small" | "medium" | "large";
 type FilterType = "all" | "favorites" | "starred" | "unselected" | "selected" | string;
@@ -268,6 +279,17 @@ export default function GalleryClientPreview() {
   }, [visibleCount]);
 
   const [visibleCountBySetId, setVisibleCountBySetId] = useState<Record<string, number>>({});
+
+  // Selection Confirmation State
+  const [isSelectionsConfirmed, setIsSelectionsConfirmed] = useState(false);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [photographerNote, setPhotographerNote] = useState("");
+
+  useEffect(() => {
+    if (!isSelectionsConfirmed) return;
+    setActiveMenuId(null);
+    setSheetPhotoId(null);
+  }, [isSelectionsConfirmed]);
 
   const { data: gallery, isLoading: galleryLoading } = useQuery({
     queryKey: ["gallery", id],
@@ -1188,8 +1210,26 @@ export default function GalleryClientPreview() {
     navigate(-1);
   }, [id, navigate]);
 
+  const handleOpenConfirmation = () => {
+    setIsConfirmationModalOpen(true);
+  };
+
+  const handleConfirmSelections = () => {
+    setIsConfirmationModalOpen(false);
+    setIsSelectionsConfirmed(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+
   const toggleRuleSelect = useCallback(
     (photoId: string, ruleId: string) => {
+      if (isSelectionsConfirmed) {
+        i18nToast.error(t("sessionDetail.gallery.clientPreview.toast.selectionsLocked"), {
+          duration: 3000,
+        });
+        return;
+      }
+
       const selectionPartKey = selectionPartKeyByRuleId.get(ruleId) ?? "";
       if (!selectionPartKey) return;
 
@@ -1235,7 +1275,7 @@ export default function GalleryClientPreview() {
         }
       );
     },
-    [i18nToast, photoSelectionsById, selectionPartKeyByRuleId, t, updateRuleSelectionMutation]
+    [i18nToast, isSelectionsConfirmed, photoSelectionsById, selectionPartKeyByRuleId, t, updateRuleSelectionMutation]
   );
 
   const getGridClass = () => {
@@ -1388,44 +1428,72 @@ export default function GalleryClientPreview() {
               <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-2 max-w-[70%]">
                 {selectionRules.length > 0 ? (
                   <div className="relative">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSheetPhotoId((prev) => (prev === photo.id ? null : photo.id));
-                      }}
-                      aria-label={
-                        hasSelections
+	                    <button
+	                      type="button"
+	                      disabled={isSelectionsConfirmed}
+	                      onClick={(e) => {
+	                        e.stopPropagation();
+	                        if (isSelectionsConfirmed) return;
+	                        setSheetPhotoId((prev) => (prev === photo.id ? null : photo.id));
+	                      }}
+	                      aria-label={
+	                        hasSelections
                           ? t("sessionDetail.gallery.clientPreview.labels.selected")
                           : t("sessionDetail.gallery.clientPreview.labels.add")
                       }
                       className={`md:hidden w-11 h-11 rounded-full flex items-center justify-center shadow-md backdrop-blur-md transition-all duration-200 active:scale-95
-                        ${hasSelections ? "bg-brand-500 text-white" : "bg-white/90 text-gray-900"}
+                        ${isSelectionsConfirmed
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed opacity-50"
+                          : hasSelections
+                            ? "bg-brand-500 text-white"
+                            : "bg-white/90 text-gray-900"}
                       `}
                     >
-                      {hasSelections ? <Check size={16} strokeWidth={3} /> : <ListPlus size={18} />}
+                      {isSelectionsConfirmed ? (
+                        <Lock size={16} />
+                      ) : (
+                        hasSelections ? <Check size={16} strokeWidth={3} /> : <ListPlus size={18} />
+                      )}
                     </button>
 
                     <Popover open={isMenuOpen} onOpenChange={(open) => setActiveMenuId(open ? photo.id : null)}>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
+                          disabled={isSelectionsConfirmed}
                           onClick={(e) => {
                             e.stopPropagation();
+                            // If desktop, toggle dropdown or quick-select if likely single rule
+                            if (isSelectionsConfirmed) return;
+                            if (activeFilter !== "all" && activeFilter !== "favorites") {
+                              toggleRuleSelect(photo.id, activeFilter);
+                            } else {
+                              setActiveMenuId(isMenuOpen ? null : photo.id);
+                            }
                           }}
-                          className={`hidden md:flex h-8 px-3 rounded-full items-center gap-2 shadow-sm transition-all duration-200 backdrop-blur-md border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${hasSelections
-                            ? "bg-brand-500 text-white border-brand-400 hover:bg-brand-600"
-                            : isMenuOpen
-                              ? "bg-white text-gray-900 border-gray-200 shadow-xl"
-                              : "bg-black/40 text-white border-white/20 hover:bg-white hover:text-gray-900"
-                            }`}
+                          className={`hidden md:flex h-9 px-3 rounded-full items-center justify-center gap-2 shadow-sm backdrop-blur-md transition-all duration-200 border
+                        ${isSelectionsConfirmed
+                              ? "bg-gray-700/50 text-white/50 border-transparent cursor-not-allowed"
+                              : hasSelections
+                                ? "bg-brand-600 text-white border-brand-500 hover:bg-brand-700 hover:scale-105"
+                                : "bg-white/90 text-gray-700 border-white/50 hover:bg-white hover:text-gray-900 hover:scale-105"}
+                      `}
                         >
-                          {hasSelections ? <Check size={14} strokeWidth={3} /> : <ListPlus size={14} />}
-                          <span className="text-[10px] font-bold uppercase tracking-wide">
-                            {hasSelections
-                              ? t("sessionDetail.gallery.clientPreview.labels.selected")
-                              : t("sessionDetail.gallery.clientPreview.labels.add")}
-                          </span>
+                          {isSelectionsConfirmed ? (
+                            <>
+                              <Lock size={14} className="opacity-70" />
+                              <span className="text-[10px] font-bold uppercase tracking-wider">{t("sessionDetail.gallery.clientPreview.status.confirmed")}</span>
+                            </>
+                          ) : (
+                            <>
+                              {hasSelections ? <Check size={14} strokeWidth={3} /> : <ListPlus size={16} />}
+                              <span className="text-[11px] font-bold uppercase tracking-wider">
+                                {hasSelections
+                                  ? t("sessionDetail.gallery.clientPreview.labels.selected")
+                                  : t("sessionDetail.gallery.clientPreview.labels.add")}
+                              </span>
+                            </>
+                          )}
                         </button>
                       </PopoverTrigger>
 
@@ -1655,6 +1723,40 @@ export default function GalleryClientPreview() {
         <p className="mb-6 text-sm text-gray-500">
           {t("sessionDetail.gallery.clientPreview.selections.subtitle")}
         </p>
+        {/* COMPLETE / SENT SECTION - MOVED TO TOP */}
+        <div className="mb-4">
+          {isSelectionsConfirmed ? (
+            <div className="mb-4 bg-emerald-50 border border-emerald-100 rounded-2xl p-6 text-center animate-in zoom-in duration-300">
+              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-600">
+                <CheckCircle2 size={32} strokeWidth={2} />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                {t("sessionDetail.gallery.clientPreview.selections.sentTitle")}
+              </h3>
+              <p className="text-sm text-gray-600 leading-relaxed max-w-xs mx-auto">
+                {t("sessionDetail.gallery.clientPreview.selections.sentDesc")}
+              </p>
+            </div>
+          ) : (
+            selectionRules.length > 0 && (
+	                <button
+	                  type="button"
+	                  disabled={!areAllMandatoryComplete}
+	                  onClick={handleOpenConfirmation}
+                className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm uppercase tracking-widest shadow-lg transition-all
+                    ${areAllMandatoryComplete
+                    ? "bg-gray-900 text-white hover:bg-black hover:scale-[1.02] active:scale-[0.98]"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }
+                  `}
+              >
+                {t("sessionDetail.gallery.clientPreview.actions.completeSelection")}
+                {areAllMandatoryComplete ? <ArrowRight size={16} /> : <Lock size={14} />}
+              </button>
+            )
+          )}
+        </div>
+
         <div className="space-y-3">
           <button
             type="button"
@@ -1697,7 +1799,11 @@ export default function GalleryClientPreview() {
             </button>
           ) : null}
 
-          <div className="pt-4">
+
+
+
+
+          <div className="pt-2">
             <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest px-1">
               {t("sessionDetail.gallery.clientPreview.selections.tasksLabel")}
             </div>
@@ -1779,6 +1885,7 @@ export default function GalleryClientPreview() {
           )}
         </div>
       </div>
+
     );
   };
 
@@ -1848,6 +1955,18 @@ export default function GalleryClientPreview() {
 
   return (
     <div className="bg-white min-h-screen font-sans text-gray-900 relative">
+      {/* --- LOCKED BANNER (Sticky Top) --- */}
+      {isSelectionsConfirmed ? (
+        <div className="sticky top-0 z-[100] bg-emerald-600 text-white px-4 py-3 shadow-md flex items-center justify-center gap-3 animate-in slide-in-from-top duration-500">
+          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+            <CheckCircle2 size={16} className="text-white" strokeWidth={3} />
+          </div>
+          <p className="text-sm font-bold tracking-wide">
+            {t("sessionDetail.gallery.clientPreview.banner.lockedMessage")}
+          </p>
+        </div>
+      ) : null}
+
       {/* --- HERO SECTION --- */}
       {showHero ? (
         <div className={`relative ${isMobile ? "h-[100dvh]" : "h-screen"} w-full overflow-hidden bg-gray-900`}>
@@ -1975,6 +2094,33 @@ export default function GalleryClientPreview() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-4 md:gap-6 shrink-0">
+            {/* Desktop Complete Button */}
+            {!isMobile && selectionRules.length > 0 ? (
+              isSelectionsConfirmed ? (
+                <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
+                  <CheckCircle2 size={16} />
+                  <span className="text-xs font-bold uppercase tracking-wider">
+                    {t("sessionDetail.gallery.clientPreview.status.confirmed")}
+                  </span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={!areAllMandatoryComplete}
+                  onClick={handleOpenConfirmation}
+                  className={`hidden md:flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest transition-all
+                     ${areAllMandatoryComplete
+                      ? "bg-gray-900 text-white hover:bg-black shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    }
+                   `}
+	                >
+	                  {t("sessionDetail.gallery.clientPreview.actions.completeSelection")}
+	                  {areAllMandatoryComplete ? <ArrowRight size={14} /> : <Lock size={12} />}
+	                </button>
+	              )
+	            ) : null}
+
             {isMobile && mobileTab === "gallery" && activeFilter !== "all" ? (
               <button
                 type="button"
@@ -2479,9 +2625,65 @@ export default function GalleryClientPreview() {
         favoritesEnabled={favoritesEnabled}
         onImageError={handleAssetImageError}
         watermark={watermark}
+        isSelectionsLocked={isSelectionsConfirmed}
       />
 
       {renderSelectionSheet()}
+
+      <Dialog open={isConfirmationModalOpen} onOpenChange={setIsConfirmationModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("sessionDetail.gallery.clientPreview.confirmation.title")}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-4 flex gap-3">
+              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                <CheckCircle2 size={16} className="text-emerald-600" />
+              </div>
+              <div>
+                <h4 className="font-bold text-emerald-900 text-sm mb-1">
+                  {t("sessionDetail.gallery.clientPreview.confirmation.bannerTitle")}
+                </h4>
+                <p className="text-xs text-emerald-800 leading-relaxed">
+                  {t("sessionDetail.gallery.clientPreview.confirmation.bannerDesc")}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                {t("sessionDetail.gallery.clientPreview.confirmation.noteLabel")}
+              </label>
+              <textarea
+                value={photographerNote}
+                onChange={(e) => setPhotographerNote(e.target.value)}
+                placeholder={t("sessionDetail.gallery.clientPreview.confirmation.notePlaceholder")}
+                className="w-full h-32 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none resize-none placeholder:text-gray-400"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-3 sm:justify-between p-6 pt-2 bg-gray-50/50">
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
+              >
+                {t("sessionDetail.gallery.clientPreview.confirmation.cancel")}
+              </button>
+            </DialogClose>
+            <button
+              type="button"
+              onClick={handleConfirmSelections}
+              className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors text-sm flex items-center justify-center gap-2 shadow-sm"
+	            >
+	              <SendHorizontal size={16} />
+	              {t("sessionDetail.gallery.clientPreview.confirmation.confirm")}
+	            </button>
+	          </DialogFooter>
+	        </DialogContent>
+	      </Dialog>
     </div >
   );
 }

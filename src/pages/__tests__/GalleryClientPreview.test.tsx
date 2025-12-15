@@ -324,7 +324,7 @@ describe("GalleryClientPreview", () => {
     expect(menuContainer).toBeTruthy();
 
     fireEvent.click(within(menuContainer as HTMLElement).getByRole("button", { name: /large print/i }));
-    fireEvent.click(within(menuContainer as HTMLElement).getByRole("button", { name: /^test/i }));
+    fireEvent.click(within(menuContainer as HTMLElement).getByRole("button", { name: /test/i }));
     fireEvent.click(within(menuContainer as HTMLElement).getByRole("button", { name: /album/i }));
 
     const chipsContainer = await screen.findByTestId("gallery-preview-selection-chips-asset-1");

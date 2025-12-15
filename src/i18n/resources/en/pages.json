@@ -547,136 +547,136 @@
         "published": "Published",
         "archived": "Archived"
       },
-	      "labels": {
-	        "updated": "Updated",
-	        "published": "Published",
-		        "shareSoon": "Share link coming soon",
-		        "settings": "Settings",
-	        "media": "Photos",
-	        "uploadTitle": "Upload photos",
-	        "uploadDesc": "Drag & drop photos here to add to this gallery.",
-	        "uploadHint": "Proof uploads will be optimized to WebP. Originals remain untouched.",
-	        "addMedia": "Add photo",
-	        "coverSelected": "Cover photo",
-	        "coverMissing": "Select a cover photo",
-	        "coverEmpty": "No photos yet",
-	        "coverHint": "Choose a photo to highlight your gallery.",
-	        "coverActionHint": "Mark a photo as cover inside the gallery view.",
+      "labels": {
+        "updated": "Updated",
+        "published": "Published",
+        "shareSoon": "Share link coming soon",
+        "settings": "Settings",
+        "media": "Photos",
+        "uploadTitle": "Upload photos",
+        "uploadDesc": "Drag & drop photos here to add to this gallery.",
+        "uploadHint": "Proof uploads will be optimized to WebP. Originals remain untouched.",
+        "addMedia": "Add photo",
+        "coverSelected": "Cover photo",
+        "coverMissing": "Select a cover photo",
+        "coverEmpty": "No photos yet",
+        "coverHint": "Choose a photo to highlight your gallery.",
+        "coverActionHint": "Mark a photo as cover inside the gallery view.",
         "chooseCover": "Choose cover",
-	        "coverAfterUpload": "Pick any uploaded photo as your cover.",
-	        "coverEmptyHint": "Add photos to this gallery, then pick your cover."
-	      },
-	      "settings": {
-	        "header": {
-	          "eyebrow": "Gallery Settings"
-	        },
-	        "rail": {
-	          "sectionLabel": "Gallery Management",
-	          "general": "General",
-	          "watermark": "Watermark",
-	          "privacy": "Privacy"
-	        },
-	        "general": {
-	          "header": {
-	            "title": "General settings",
-	            "description": "Manage the gallery’s basic info."
-	          },
-	          "basics": {
-	            "title": "Gallery info",
-	            "description": "Title, date, and status."
-	          }
-	        },
-	        "watermark": {
-	          "header": {
-	            "title": "Watermark settings",
-	            "description": "Protect proofs and reinforce your brand."
-	          },
-	          "preview": {
-	            "title": "Live preview",
-	            "description": "Quickly check how it will look.",
-	            "disabled": "Watermark off",
-	            "backgroundAlt": "Preview background"
-	          },
-	          "toggle": {
-	            "title": "Watermark",
-	            "description": "Apply a watermark to photos in this gallery."
-	          },
-	          "appearance": {
-	            "title": "Appearance",
-	            "description": "Use text or your logo."
-	          },
-	          "type": {
-	            "label": "Watermark type",
-	            "text": "Text",
-	            "logo": "Logo"
-	          },
-	          "text": {
-	            "label": "Text",
-	            "placeholder": "e.g., Studio Name",
-	            "fallback": "Studio name"
-	          },
-	          "logo": {
-	            "alt": "Watermark logo",
-	            "missingInline": "No logo",
-	            "detectedTitle": "Brand logo",
-	            "detectedDescription": "Pulled from your account settings.",
-	            "manage": "Open account settings",
-	            "missingTitle": "Logo not found",
-	            "missingDescription": "Add a logo in account settings to use it as a watermark."
-	          },
-	          "layout": {
-	            "title": "Placement & style",
-	            "description": "Adjust placement, opacity, and size."
-	          },
-	          "placement": {
-	            "label": "Placement",
-	            "grid": "Tiled",
-	            "center": "Center",
-	            "corner": "Corner"
-	          },
-	          "opacity": {
-	            "label": "Opacity",
-	            "faint": "Faint",
-	            "strong": "Strong"
-	          },
-	          "size": {
-	            "label": "Size",
-	            "small": "Small",
-	            "large": "Large"
-	          }
-	        },
-	        "privacy": {
-	          "header": {
-	            "title": "Privacy settings",
-	            "description": "Control access to this gallery."
-	          },
-	          "access": {
-	            "title": "Access protection",
-	            "description": "Limit access with a password when needed."
-	          },
-	          "password": {
-	            "toggleTitle": "Gallery password",
-	            "toggleDescription": "Visitors must enter a password to view the gallery.",
-	            "formTitle": "Password",
-	            "formDescription": "Set a password for this gallery before sharing.",
-	            "label": "Password",
-	            "placeholder": "Enter a password",
-	            "generate": "Generate"
-	          }
-	        }
-	      },
-        "toast": {
-          "createdTitle": "Gallery created",
-          "createdDesc": "You can start uploading and sharing.",
-          "errorTitle": "Could not create gallery",
-          "errorDesc": "Something went wrong. Try again.",
-          "starUpdateFailedTitle": "Couldn't save recommendation",
-          "starUpdateFailedDesc": "Please try again.",
-          "unsupportedFilesTitle": "Some files were skipped",
-          "unsupportedFilesDesc_one": "1 file wasn't added because only images are supported right now.",
-          "unsupportedFilesDesc_other": "{{count}} files weren't added because only images are supported right now.",
-          "updatedTitle": "Gallery saved",
-          "updatedDesc": "Changes applied.",
+        "coverAfterUpload": "Pick any uploaded photo as your cover.",
+        "coverEmptyHint": "Add photos to this gallery, then pick your cover."
+      },
+      "settings": {
+        "header": {
+          "eyebrow": "Gallery Settings"
+        },
+        "rail": {
+          "sectionLabel": "Gallery Management",
+          "general": "General",
+          "watermark": "Watermark",
+          "privacy": "Privacy"
+        },
+        "general": {
+          "header": {
+            "title": "General settings",
+            "description": "Manage the gallery’s basic info."
+          },
+          "basics": {
+            "title": "Gallery info",
+            "description": "Title, date, and status."
+          }
+        },
+        "watermark": {
+          "header": {
+            "title": "Watermark settings",
+            "description": "Protect proofs and reinforce your brand."
+          },
+          "preview": {
+            "title": "Live preview",
+            "description": "Quickly check how it will look.",
+            "disabled": "Watermark off",
+            "backgroundAlt": "Preview background"
+          },
+          "toggle": {
+            "title": "Watermark",
+            "description": "Apply a watermark to photos in this gallery."
+          },
+          "appearance": {
+            "title": "Appearance",
+            "description": "Use text or your logo."
+          },
+          "type": {
+            "label": "Watermark type",
+            "text": "Text",
+            "logo": "Logo"
+          },
+          "text": {
+            "label": "Text",
+            "placeholder": "e.g., Studio Name",
+            "fallback": "Studio name"
+          },
+          "logo": {
+            "alt": "Watermark logo",
+            "missingInline": "No logo",
+            "detectedTitle": "Brand logo",
+            "detectedDescription": "Pulled from your account settings.",
+            "manage": "Open account settings",
+            "missingTitle": "Logo not found",
+            "missingDescription": "Add a logo in account settings to use it as a watermark."
+          },
+          "layout": {
+            "title": "Placement & style",
+            "description": "Adjust placement, opacity, and size."
+          },
+          "placement": {
+            "label": "Placement",
+            "grid": "Tiled",
+            "center": "Center",
+            "corner": "Corner"
+          },
+          "opacity": {
+            "label": "Opacity",
+            "faint": "Faint",
+            "strong": "Strong"
+          },
+          "size": {
+            "label": "Size",
+            "small": "Small",
+            "large": "Large"
+          }
+        },
+        "privacy": {
+          "header": {
+            "title": "Privacy settings",
+            "description": "Control access to this gallery."
+          },
+          "access": {
+            "title": "Access protection",
+            "description": "Limit access with a password when needed."
+          },
+          "password": {
+            "toggleTitle": "Gallery password",
+            "toggleDescription": "Visitors must enter a password to view the gallery.",
+            "formTitle": "Password",
+            "formDescription": "Set a password for this gallery before sharing.",
+            "label": "Password",
+            "placeholder": "Enter a password",
+            "generate": "Generate"
+          }
+        }
+      },
+      "toast": {
+        "createdTitle": "Gallery created",
+        "createdDesc": "You can start uploading and sharing.",
+        "errorTitle": "Could not create gallery",
+        "errorDesc": "Something went wrong. Try again.",
+        "starUpdateFailedTitle": "Couldn't save recommendation",
+        "starUpdateFailedDesc": "Please try again.",
+        "unsupportedFilesTitle": "Some files were skipped",
+        "unsupportedFilesDesc_one": "1 file wasn't added because only images are supported right now.",
+        "unsupportedFilesDesc_other": "{{count}} files weren't added because only images are supported right now.",
+        "updatedTitle": "Gallery saved",
+        "updatedDesc": "Changes applied.",
         "saveCta": "Save"
       },
       "form": {
@@ -784,43 +784,44 @@
         "filterFavorites": "Filtering favorites",
         "filterAll": "Showing all items"
       },
-	      "clientPreview": {
-	        "hero": {
-	          "kicker": "Private collection",
-	          "scrollCta": "View gallery",
-	          "coverAlt": "Cover photo",
-	          "untitled": "Untitled gallery",
-	          "badge": {
-	            "selection": {
-	              "title": "SELECTION STAGE",
-	              "description": "Please complete your selections"
-	            },
-	            "delivery": {
-	              "title": "FINAL COLLECTION",
-	              "description": "All your memories are ready"
-	            }
-	          }
-	        },
-	        "actions": {
-	          "close": "Close",
-	          "inspect": "Inspect",
+      "clientPreview": {
+        "hero": {
+          "kicker": "Private collection",
+          "scrollCta": "View gallery",
+          "coverAlt": "Cover photo",
+          "untitled": "Untitled gallery",
+          "badge": {
+            "selection": {
+              "title": "SELECTION STAGE",
+              "description": "Please complete your selections"
+            },
+            "delivery": {
+              "title": "FINAL COLLECTION",
+              "description": "All your memories are ready"
+            }
+          }
+        },
+        "actions": {
+          "close": "Close",
+          "inspect": "Inspect",
           "closeMenu": "Close menu",
           "closeViewer": "Close photo",
           "addToFavorites": "Add to favorites",
           "removeFromFavorites": "Remove from favorites",
           "gridLarge": "Large grid",
           "gridMedium": "Medium grid",
-          "gridSmall": "Small grid"
+          "gridSmall": "Small grid",
+          "completeSelection": "Complete Selection"
         },
-          "filters": {
-            "label": "View:",
-            "all": "All",
-            "starred": "Photographer's choice",
-            "starredShort": "Pick",
-            "favorites": "Favorites",
-            "unselected": "Unselected",
-            "selected": "Selected"
-          },
+        "filters": {
+          "label": "View:",
+          "all": "All",
+          "starred": "Photographer's choice",
+          "starredShort": "Pick",
+          "favorites": "Favorites",
+          "unselected": "Unselected",
+          "selected": "Selected"
+        },
         "bottomNav": {
           "ariaLabel": "Gallery navigation",
           "gallery": "Gallery",
@@ -832,7 +833,24 @@
           "subtitle": "Tap a task to view your selections.",
           "allPhotos": "All photos",
           "tasksLabel": "TASKS",
-          "empty": "No selection lists configured yet."
+          "empty": "No selection lists configured yet.",
+          "sentTitle": "Selections Sent!",
+          "sentDesc": "We've notified the photographer. You can view your selections but changes are now locked."
+        },
+        "confirmation": {
+          "title": "Complete Selections",
+          "bannerTitle": "One last check",
+          "bannerDesc": "Once confirmed, your selections will be sent to the photographer and locked. You won't be able to change them afterwards.",
+          "noteLabel": "Leave a note (optional)",
+          "notePlaceholder": "Add any comments or special requests...",
+          "cancel": "Cancel",
+          "confirm": "Send Selections"
+        },
+        "banner": {
+          "lockedMessage": "Selections are confirmed and sent to the photographer"
+        },
+        "status": {
+          "confirmed": "Confirmed"
         },
         "tasks": {
           "selectedCount": "{{count}} selected",
@@ -846,6 +864,10 @@
           "selected": "Selected",
           "addToLists": "Add to lists",
           "limitFull": "Limit full",
+          "limitReached": "Limit reached",
+          "mandatory": "Required",
+          "optional": "Optional",
+          "validSelection": "Valid selection",
           "added": "Added"
         },
         "floatingSelections": {
@@ -854,7 +876,8 @@
         },
         "toast": {
           "favoritesAdded": "Added to favorites",
-          "favoritesRemoved": "Removed from favorites"
+          "favoritesRemoved": "Removed from favorites",
+          "selectionsLocked": "Selections are finalized and cannot be changed."
         },
         "empty": {
           "noPhotos": {

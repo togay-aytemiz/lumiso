@@ -1042,6 +1042,33 @@ export default function GalleryDetail() {
   const displayTitle =
     title.trim() || t("sessionDetail.gallery.form.titlePlaceholder", { defaultValue: "Untitled gallery" });
   const brandingData = (data?.branding || {}) as Record<string, unknown>;
+  const selectionTemplateHasRuleIds = useMemo(() => {
+    const groupsRaw = Array.isArray(brandingData.selectionTemplateGroups)
+      ? (brandingData.selectionTemplateGroups as unknown[])
+      : [];
+
+    const hasIdInGroups = groupsRaw.some((group) => {
+      if (!group || typeof group !== "object") return false;
+      const rules = (group as Record<string, unknown>).rules;
+      if (!Array.isArray(rules)) return false;
+      return rules.some((rule) => {
+        if (!rule || typeof rule !== "object") return false;
+        const id = (rule as Record<string, unknown>).id;
+        return typeof id === "string" && id.trim().length > 0;
+      });
+    });
+    if (hasIdInGroups) return true;
+
+    const templateRaw = Array.isArray(brandingData.selectionTemplate)
+      ? (brandingData.selectionTemplate as unknown[])
+      : [];
+
+    return templateRaw.some((rule) => {
+      if (!rule || typeof rule !== "object") return false;
+      const id = (rule as Record<string, unknown>).id;
+      return typeof id === "string" && id.trim().length > 0;
+    });
+  }, [brandingData.selectionTemplate, brandingData.selectionTemplateGroups]);
   const storedCoverUrl = typeof brandingData.coverUrl === "string" ? brandingData.coverUrl : "";
   const storedCoverAssetId = typeof brandingData.coverAssetId === "string" ? brandingData.coverAssetId : null;
   const resolvedCoverAssetId = coverPhotoId ?? storedCoverAssetId;
@@ -1065,6 +1092,26 @@ export default function GalleryDetail() {
     });
     return counts;
   }, [clientSelections]);
+
+  const legacySingleRuleSelectionPartKeyOverride = useMemo(() => {
+    if (selectionTemplateHasRuleIds) return null;
+
+    const favoriteKey = normalizeSelectionPartKey(FAVORITES_FILTER_ID);
+    const persistedKeys = Object.keys(selectionPartCounts).filter((key) => key && key !== favoriteKey);
+    if (persistedKeys.length !== 1) return null;
+
+    const allRules = selectionTemplateGroups.flatMap((group) => group.rules);
+    if (allRules.length !== 1) return null;
+
+    const templateKey =
+      normalizeSelectionPartKey(allRules[0]?.id) || normalizeSelectionPartKey(allRules[0]?.part);
+    if (!templateKey) return null;
+
+    const persistedKey = persistedKeys[0];
+    if (persistedKey === templateKey) return null;
+
+    return persistedKey;
+  }, [selectionPartCounts, selectionTemplateGroups, selectionTemplateHasRuleIds]);
 
   const clientFavoriteAssetIds = useMemo(() => {
     const favoriteKey = normalizeSelectionPartKey(FAVORITES_FILTER_ID);
@@ -1102,13 +1149,17 @@ export default function GalleryDetail() {
   const selectionRules = useMemo<SelectionRule[]>(() => {
     const rules: SelectionRule[] = [];
 
-    const addRule = (ruleData: SelectionTemplateRuleForm, ruleId: string, serviceName: string | null) => {
+    const addRule = (
+      ruleData: SelectionTemplateRuleForm,
+      ruleId: string,
+      selectionPartKey: string,
+      serviceName: string | null
+    ) => {
       const part = typeof ruleData.part === "string" ? ruleData.part.trim() : "";
-      const normalizedKey = normalizeSelectionPartKey(part);
       const minCount = Math.max(0, parseCountValue(ruleData.min) ?? 0);
       const rawMax = parseCountValue(ruleData.max);
       const maxCount = rawMax != null ? Math.max(rawMax, minCount) : null;
-      const dbCount = normalizedKey ? selectionPartCounts[normalizedKey] ?? 0 : 0;
+      const dbCount = selectionPartKey ? selectionPartCounts[selectionPartKey] ?? 0 : 0;
       const localCount = localRuleCounts[ruleId] ?? 0;
       const currentCount = Math.max(dbCount, localCount);
       const required = ruleData.required !== false;
@@ -1131,15 +1182,22 @@ export default function GalleryDetail() {
     if (selectionTemplateGroups.length > 0) {
       selectionTemplateGroups.forEach((group, groupIndex) => {
         group.rules.forEach((rule, ruleIndex) => {
-          const normalizedKey = normalizeSelectionPartKey(rule.part);
-          const ruleId = `${group.key}-${groupIndex}-${normalizedKey || ruleIndex}`;
-          addRule(rule, ruleId, group.serviceName ?? null);
+          const templateSelectionPartKey = normalizeSelectionPartKey(rule.id) || normalizeSelectionPartKey(rule.part);
+          const ruleId = `${group.key}-${groupIndex}-${templateSelectionPartKey || ruleIndex}`;
+          const effectiveSelectionPartKey = legacySingleRuleSelectionPartKeyOverride ?? templateSelectionPartKey;
+          addRule(rule, ruleId, effectiveSelectionPartKey, group.serviceName ?? null);
         });
       });
     }
 
     return rules;
-  }, [selectionTemplateGroups, selectionPartCounts, localRuleCounts, t]);
+  }, [
+    selectionTemplateGroups,
+    selectionPartCounts,
+    localRuleCounts,
+    legacySingleRuleSelectionPartKeyOverride,
+    t,
+  ]);
 
   const persistedSelectedPhotoCount = useMemo(() => {
     return countUniqueSelectedAssets(clientSelections, { favoritesSelectionPartKey: FAVORITES_FILTER_ID });
@@ -1162,29 +1220,36 @@ export default function GalleryDetail() {
     selectionTemplateGroups.forEach((group, groupIndex) => {
       group.rules.forEach((rule, ruleIndex) => {
         const part = typeof rule.part === "string" ? rule.part.trim() : "";
-        const normalizedKey = normalizeSelectionPartKey(part);
-        if (!normalizedKey) return;
-        const ruleId = `${group.key}-${groupIndex}-${normalizedKey || ruleIndex}`;
-        map.set(ruleId, normalizedKey);
+        const templateSelectionPartKey = normalizeSelectionPartKey(rule.id) || normalizeSelectionPartKey(part);
+        const selectionPartKey = legacySingleRuleSelectionPartKeyOverride ?? templateSelectionPartKey;
+        if (!selectionPartKey) return;
+        const ruleId = `${group.key}-${groupIndex}-${templateSelectionPartKey || ruleIndex}`;
+        map.set(ruleId, selectionPartKey);
       });
     });
     return map;
-  }, [selectionTemplateGroups]);
+  }, [legacySingleRuleSelectionPartKeyOverride, selectionTemplateGroups]);
 
   const selectionRuleIdByPartKey = useMemo(() => {
     const map = new Map<string, string>();
     selectionTemplateGroups.forEach((group, groupIndex) => {
       group.rules.forEach((rule, ruleIndex) => {
         const part = typeof rule.part === "string" ? rule.part.trim() : "";
-        const normalizedKey = normalizeSelectionPartKey(part);
-        if (!normalizedKey) return;
-        const ruleId = `${group.key}-${groupIndex}-${normalizedKey || ruleIndex}`;
-        if (map.has(normalizedKey)) return;
-        map.set(normalizedKey, ruleId);
+        const templateSelectionPartKey = normalizeSelectionPartKey(rule.id) || normalizeSelectionPartKey(part);
+        if (!templateSelectionPartKey) return;
+        const ruleId = `${group.key}-${groupIndex}-${templateSelectionPartKey || ruleIndex}`;
+
+        const effectiveSelectionPartKey = legacySingleRuleSelectionPartKeyOverride ?? templateSelectionPartKey;
+        if (!map.has(templateSelectionPartKey)) {
+          map.set(templateSelectionPartKey, ruleId);
+        }
+        if (!map.has(effectiveSelectionPartKey)) {
+          map.set(effectiveSelectionPartKey, ruleId);
+        }
       });
     });
     return map;
-  }, [selectionTemplateGroups]);
+  }, [legacySingleRuleSelectionPartKeyOverride, selectionTemplateGroups]);
 
   const persistedPhotoSelectionsById = useMemo(() => {
     const selections: Record<string, string[]> = {};

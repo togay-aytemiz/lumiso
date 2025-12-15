@@ -32,9 +32,13 @@ export const deserializeSelectionTemplate = (
     .map((item, index) => {
       if (item && typeof item === "object") {
         const typed = item as Record<string, unknown>;
+        const part = typeof typed.part === "string" ? typed.part : "";
+        const storedId = typeof typed.id === "string" ? typed.id.trim() : "";
+        const legacyId = part.trim() ? part.trim().toLowerCase() : "";
+
         return {
-          id: createRuleId() || `rule-${index}`,
-          part: typeof typed.part === "string" ? typed.part : "",
+          id: storedId || legacyId || createRuleId() || `rule-${index}`,
+          part,
           min: typed.min != null ? String(typed.min) : "",
           max: typed.max != null ? String(typed.max) : "",
           required: typeof typed.required === "boolean" ? typed.required : true,
@@ -56,10 +60,12 @@ export const normalizeSelectionTemplate = (
   const cleaned = rules
     .map((rule) => {
       const part = rule.part.trim();
+      const id = rule.id.trim().toLowerCase() || createRuleId();
       const min = clampNumber(rule.min);
       const max = clampNumber(rule.max);
       const normalizedMax = max != null && min != null && max < min ? min : max;
       return {
+        id,
         part,
         min,
         max: normalizedMax,

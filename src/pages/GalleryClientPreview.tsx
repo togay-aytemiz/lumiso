@@ -254,6 +254,30 @@ export default function GalleryClientPreview() {
   });
 
   const brandingData = useMemo(() => (gallery?.branding || {}) as Record<string, unknown>, [gallery?.branding]);
+  const selectionTemplateHasRuleIds = useMemo(() => {
+    const groupsRaw = Array.isArray(brandingData.selectionTemplateGroups)
+      ? (brandingData.selectionTemplateGroups as unknown[])
+      : [];
+
+    const hasIdInGroups = groupsRaw.some((group) => {
+      if (!group || typeof group !== "object") return false;
+      const rules = (group as Record<string, unknown>).rules;
+      if (!Array.isArray(rules)) return false;
+      return rules.some((rule) => {
+        if (!rule || typeof rule !== "object") return false;
+        const id = (rule as Record<string, unknown>).id;
+        return typeof id === "string" && id.trim().length > 0;
+      });
+    });
+    if (hasIdInGroups) return true;
+
+    const templateRaw = Array.isArray(brandingData.selectionTemplate) ? (brandingData.selectionTemplate as unknown[]) : [];
+    return templateRaw.some((rule) => {
+      if (!rule || typeof rule !== "object") return false;
+      const id = (rule as Record<string, unknown>).id;
+      return typeof id === "string" && id.trim().length > 0;
+    });
+  }, [brandingData.selectionTemplate, brandingData.selectionTemplateGroups]);
   const selectionSettings = useMemo(() => (brandingData.selectionSettings || {}) as Record<string, unknown>, [brandingData]);
   const watermark = useMemo(() => parseGalleryWatermarkFromBranding(brandingData), [brandingData]);
   const favoritesEnabled = selectionSettings.allowFavorites !== false;
@@ -364,10 +388,12 @@ export default function GalleryClientPreview() {
       group.rules.forEach((rule, ruleIndex) => {
         const part = typeof rule.part === "string" ? rule.part.trim() : "";
         const normalizedKey = normalizeSelectionPartKey(part);
+        const storedKey = normalizeSelectionPartKey(rule.id);
+        const selectionPartKey = storedKey || normalizedKey;
         const minCount = Math.max(0, parseCountValue(rule.min) ?? 0);
         const rawMax = parseCountValue(rule.max);
         const maxCount = rawMax != null ? Math.max(rawMax, minCount) : null;
-        const ruleId = `${group.key}-${groupIndex}-${normalizedKey || ruleIndex}`;
+        const ruleId = `${group.key}-${groupIndex}-${selectionPartKey || ruleIndex}`;
         const required = rule.required !== false;
 
         rules.push({
@@ -377,7 +403,7 @@ export default function GalleryClientPreview() {
           minCount,
           maxCount,
           required,
-          selectionPartKey: normalizedKey,
+          selectionPartKey,
         });
       });
     });
@@ -385,14 +411,36 @@ export default function GalleryClientPreview() {
     return rules;
   }, [brandingData, parseSelectionTemplateGroups, t]);
 
+  const legacySingleRuleSelectionPartKeyOverride = useMemo(() => {
+    if (selectionTemplateHasRuleIds) return null;
+    if (selectionRulesBase.length !== 1) return null;
+
+    const favoritesKey = normalizeSelectionPartKey("favorites");
+    const keys = new Set<string>();
+    (persistedClientSelections ?? []).forEach((row) => {
+      const partKey = normalizeSelectionPartKey(row.selection_part);
+      if (!partKey || partKey === favoritesKey) return;
+      keys.add(partKey);
+    });
+
+    if (keys.size !== 1) return null;
+
+    const persistedKey = Array.from(keys)[0];
+    const templateKey = normalizeSelectionPartKey(selectionRulesBase[0]?.selectionPartKey);
+    if (!templateKey || templateKey === persistedKey) return null;
+
+    return persistedKey;
+  }, [persistedClientSelections, selectionRulesBase, selectionTemplateHasRuleIds]);
+
   const selectionPartKeyByRuleId = useMemo(() => {
     const map = new Map<string, string>();
     selectionRulesBase.forEach((rule) => {
-      if (!rule.selectionPartKey) return;
-      map.set(rule.id, rule.selectionPartKey);
+      const selectionPartKey = legacySingleRuleSelectionPartKeyOverride ?? rule.selectionPartKey;
+      if (!selectionPartKey) return;
+      map.set(rule.id, selectionPartKey);
     });
     return map;
-  }, [selectionRulesBase]);
+  }, [legacySingleRuleSelectionPartKeyOverride, selectionRulesBase]);
 
   const selectionRuleIdByPartKey = useMemo(() => {
     const map = new Map<string, string>();
@@ -401,8 +449,11 @@ export default function GalleryClientPreview() {
       if (map.has(rule.selectionPartKey)) return;
       map.set(rule.selectionPartKey, rule.id);
     });
+    if (legacySingleRuleSelectionPartKeyOverride && selectionRulesBase.length === 1) {
+      map.set(legacySingleRuleSelectionPartKeyOverride, selectionRulesBase[0].id);
+    }
     return map;
-  }, [selectionRulesBase]);
+  }, [legacySingleRuleSelectionPartKeyOverride, selectionRulesBase]);
 
   const persistedRuleSelectionsById = useMemo(() => {
     const selections: Record<string, string[]> = {};
@@ -1929,33 +1980,6 @@ export default function GalleryClientPreview() {
 	                  {totalPhotoCount}
 	                </div>
 	              </button>
-
-                {unselectedCount > 0 ? (
-                  <button
-                    type="button"
-                    data-touch-target="compact"
-                    onClick={() => setActiveFilter("unselected")}
-                    data-testid="gallery-client-preview-unselected-shortcut"
-                    className={`w-[220px] md:w-[200px] shrink-0 rounded-2xl border bg-white px-5 py-4 md:px-3 md:py-2.5 text-left shadow-sm transition-colors ${
-                      activeFilter === "unselected"
-                        ? "border-gray-900"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <p className="text-xs font-bold uppercase tracking-widest text-gray-500 truncate md:hidden">
-                      {heroTitle}
-                    </p>
-                    <div className="mt-4 md:mt-0 flex items-center gap-3">
-                      <CircleDashed size={18} className="text-gray-900" aria-hidden="true" />
-                      <span className="text-sm font-bold text-gray-900">
-                        {t("sessionDetail.gallery.clientPreview.filters.unselected")}
-                      </span>
-                    </div>
-                    <div className="mt-4 md:mt-2 text-xs font-semibold text-gray-400 tabular-nums">
-                      {unselectedCount}
-                    </div>
-                  </button>
-                ) : null}
 
 		              {selectionRules.map((rule) => {
 		                const isActive = activeFilter === rule.id;

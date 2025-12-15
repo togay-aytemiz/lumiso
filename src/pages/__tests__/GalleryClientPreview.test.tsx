@@ -328,7 +328,7 @@ describe("GalleryClientPreview", () => {
     expect(within(chipsContainer).queryByText("Album")).not.toBeInTheDocument();
   });
 
-  it("rehydrates persisted rule selections from client selections", async () => {
+  it("keeps persisted selections when rule title changes", async () => {
     supabaseMock.from.mockImplementation((table: string) => {
       const builder = supabaseMock.__createQueryBuilder();
       if (table === "galleries") {
@@ -339,7 +339,7 @@ describe("GalleryClientPreview", () => {
             type: "proof",
             branding: {
               selectionSettings: { enabled: true, allowFavorites: true },
-              selectionTemplate: [{ part: "Cover", min: 1, max: 1, required: true }],
+              selectionTemplate: [{ part: "Kapak", min: 1, max: 1, required: true }],
             },
           },
           error: null,
@@ -387,7 +387,7 @@ describe("GalleryClientPreview", () => {
     expect(await screen.findByAltText("a.jpg")).toBeInTheDocument();
 
     const chipsContainer = await screen.findByTestId("gallery-preview-selection-chips-asset-1");
-    expect(within(chipsContainer).getByText("Cover")).toBeInTheDocument();
+    expect(within(chipsContainer).getByText("Kapak")).toBeInTheDocument();
   });
 
   it("renders hero badge and event date when available", async () => {
@@ -625,7 +625,10 @@ describe("GalleryClientPreview", () => {
     });
   });
 
-  it("offers an unselected shortcut from desktop selections", async () => {
+  it("offers an unselected shortcut from mobile selections", async () => {
+    const originalInnerWidth = window.innerWidth;
+    window.innerWidth = 375;
+
     supabaseMock.storage.from.mockImplementation(() => ({
       createSignedUrl: jest.fn().mockImplementation((path: string) => {
         const url = path.includes("asset-2") ? "https://example.com/asset-2" : "https://example.com/asset-1";
@@ -685,18 +688,21 @@ describe("GalleryClientPreview", () => {
       return builder;
     });
 
-    render(<GalleryClientPreview />);
+    try {
+      render(<GalleryClientPreview />);
 
-    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
-    expect(await screen.findByAltText("a.jpg")).toBeInTheDocument();
-    expect(await screen.findByAltText("b.jpg")).toBeInTheDocument();
+      expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
 
-    fireEvent.click(await screen.findByTestId("gallery-client-preview-unselected-shortcut"));
+      fireEvent.click(await screen.findByRole("button", { name: /selections|seçimlerim/i }));
+      fireEvent.click(await screen.findByTestId("gallery-client-preview-unselected-shortcut"));
 
-    await waitFor(() => {
-      expect(screen.queryByAltText("a.jpg")).not.toBeInTheDocument();
-    });
-    expect(await screen.findByAltText("b.jpg")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByAltText("a.jpg")).not.toBeInTheDocument();
+      });
+      expect(await screen.findByAltText("b.jpg")).toBeInTheDocument();
+    } finally {
+      window.innerWidth = originalInnerWidth;
+    }
   });
 
   it("shows a mobile bottom nav with a selections tab", async () => {

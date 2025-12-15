@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { GalleryWatermarkConfig } from "@/lib/galleryWatermark";
 import { GalleryWatermarkOverlay } from "./GalleryWatermarkOverlay";
+import { MobilePhotoSelectionSheet } from "./MobilePhotoSelectionSheet";
 import {
   Check,
   CheckCircle2,
@@ -17,14 +18,14 @@ import {
   X,
 } from "lucide-react";
 
-type SlideDirection = "next" | "prev";
 type SlidePhase = "from" | "to";
+type SlideDirection = "next" | "prev";
 
 type SlideTransition = {
   from: LightboxPhoto;
   to: LightboxPhoto;
-  direction: SlideDirection;
   phase: SlidePhase;
+  direction: SlideDirection;
 };
 
 type ZoomState = {
@@ -205,8 +206,6 @@ export function Lightbox({
     if (!prevPhoto) return;
     if (prevPhoto.id === currentPhoto.id) return;
 
-    const direction: SlideDirection = currentIndex > prevIndex ? "next" : "prev";
-
     if (slideTimeoutRef.current != null) {
       window.clearTimeout(slideTimeoutRef.current);
       slideTimeoutRef.current = null;
@@ -216,7 +215,8 @@ export function Lightbox({
       slideRafRef.current = null;
     }
 
-    setSlideTransition({ from: prevPhoto, to: currentPhoto, direction, phase: "from" });
+    const direction: SlideDirection = currentIndex >= prevIndex ? "next" : "prev";
+    setSlideTransition({ from: prevPhoto, to: currentPhoto, phase: "from", direction });
 
     slideRafRef.current = window.requestAnimationFrame(() => {
       setSlideTransition((prev) => (prev ? { ...prev, phase: "to" } : null));
@@ -298,19 +298,19 @@ export function Lightbox({
   const getSlideLayerStyle = (layer: "from" | "to") => {
     if (!slideTransition) return undefined;
 
-    const startX = layer === "to" ? (slideTransition.direction === "next" ? 100 : -100) : 0;
-    const endX =
-      layer === "to" ? 0 : slideTransition.direction === "next" ? -100 : 100;
-    const translateX = slideTransition.phase === "from" ? startX : endX;
-
-    const startOpacity = layer === "to" ? 0.7 : 1;
-    const endOpacity = layer === "to" ? 1 : 0.4;
+    const startOpacity = layer === "to" ? 0 : 1;
+    const endOpacity = layer === "to" ? 1 : 0;
     const opacity = slideTransition.phase === "from" ? startOpacity : endOpacity;
 
+    const directionMultiplier = slideTransition.direction === "next" ? 1 : -1;
+    const startTranslateX = layer === "from" ? 0 : 100 * directionMultiplier;
+    const endTranslateX = layer === "from" ? -100 * directionMultiplier : 0;
+    const translateX = slideTransition.phase === "from" ? startTranslateX : endTranslateX;
+
     return {
-      transform: `translate3d(${translateX}%, 0, 0)`,
       opacity,
-      transition: `transform ${SLIDE_ANIMATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1), opacity ${SLIDE_ANIMATION_MS}ms ease-out`,
+      transform: `translate3d(${translateX}%, 0, 0)`,
+      transition: `transform ${SLIDE_ANIMATION_MS}ms ease-out, opacity ${SLIDE_ANIMATION_MS}ms ease-out`,
       willChange: "transform, opacity",
     } as const;
   };
@@ -318,24 +318,26 @@ export function Lightbox({
   const renderSlidePhoto = (photo: LightboxPhoto, layer: "from" | "to", imageClassName: string) => {
     return (
       <div
-        className="absolute inset-0 flex items-center justify-center relative"
+        className="absolute inset-0 flex items-center justify-center"
         style={getSlideLayerStyle(layer)}
         aria-hidden={layer === "from"}
       >
         {photo.url ? (
-          <img
-            src={photo.url}
-            alt={photo.filename}
-            className={imageClassName}
-            onError={() => onImageError?.(photo.id)}
-          />
+          <div className="relative">
+            <img
+              src={photo.url}
+              alt={photo.filename}
+              className={imageClassName}
+              onError={() => onImageError?.(photo.id)}
+            />
+
+            {mode === "client" && watermark ? (
+              <GalleryWatermarkOverlay watermark={watermark} variant="lightbox" className="z-10" />
+            ) : null}
+          </div>
         ) : (
           <div className="text-sm text-white/60">{t("sessionDetail.gallery.lightbox.noPreview")}</div>
         )}
-
-        {mode === "client" && watermark ? (
-          <GalleryWatermarkOverlay watermark={watermark} variant="lightbox" className="z-10" />
-        ) : null}
       </div>
     );
   };
@@ -343,7 +345,7 @@ export function Lightbox({
   const renderStagePhotos = (imageClassName: string, options?: { imageStyle?: React.CSSProperties }) => {
     if (!slideTransition) {
       return (
-        <div className="absolute inset-0 flex items-center justify-center relative">
+        <div className="absolute inset-0 flex items-center justify-center">
           {currentPhoto.url ? (
             <div className="relative" style={options?.imageStyle}>
               <img
@@ -701,65 +703,27 @@ export function Lightbox({
         </div>
       ) : null}
 
-      {mode === "client" && isMobileSelectionPanelOpen ? (
-        <div className="fixed inset-0 z-[210] md:hidden">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setIsMobileSelectionPanelOpen(false)}
-          />
-          <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.3)] max-h-[80vh] flex flex-col text-gray-900 animate-in slide-in-from-bottom duration-300">
-            <div className="w-full flex justify-center pt-3 pb-1">
-              <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
-            </div>
-
-            <div className="px-6 pb-4 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="font-bold text-lg text-gray-900">{t("sessionDetail.gallery.lightbox.lists.clientTitle")}</h3>
-              <button
-                type="button"
-                onClick={() => setIsMobileSelectionPanelOpen(false)}
-                className="w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center active:scale-95"
-                aria-label={t("sessionDetail.gallery.lightbox.close")}
-              >
-                <X size={20} className="text-gray-500" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {rules.map((rule) => {
-                const isSelected = currentPhoto.selections.includes(rule.id);
-                const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
-                const isDisabled = !isSelected && isFull;
-
-                return (
-                  <button
-                    key={rule.id}
-                    type="button"
-                    onClick={() => !isDisabled && onToggleRule(currentPhoto.id, rule.id)}
-                    disabled={isDisabled}
-                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left
-                      ${isSelected ? "bg-brand-500 text-white border-brand-500" : "bg-white border-gray-200 text-gray-700 active:bg-gray-50"}
-                      ${isDisabled ? "opacity-50" : ""}
-                    `}
-                  >
-                    <div className="min-w-0">
-                      <div className="font-bold text-sm truncate">{rule.title}</div>
-                      <div className={`text-xs ${isSelected ? "text-white/80" : "text-gray-400"}`}>
-                        {rule.currentCount} / {rule.maxCount || "∞"}
-                      </div>
-                    </div>
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                        isSelected ? "bg-white text-brand-600" : "bg-gray-100"
-                      }`}
-                    >
-                      {isSelected ? <Check size={14} strokeWidth={3} /> : null}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+      {mode === "client" ? (
+        <MobilePhotoSelectionSheet
+          open={isMobileSelectionPanelOpen}
+          onOpenChange={setIsMobileSelectionPanelOpen}
+          photo={{
+            id: currentPhoto.id,
+            url: currentPhoto.url,
+            filename: currentPhoto.filename,
+          }}
+          rules={rules.map((rule) => ({
+            id: rule.id,
+            title: rule.title,
+            serviceName: rule.serviceName,
+            currentCount: rule.currentCount,
+            maxCount: rule.maxCount,
+          }))}
+          selectedRuleIds={currentPhoto.selections}
+          onToggleRule={(ruleId) => onToggleRule(currentPhoto.id, ruleId)}
+          onPhotoImageError={() => onImageError?.(currentPhoto.id)}
+          zIndexClassName="z-[210]"
+        />
       ) : null}
 
       <div className={desktopContainerClassName} role="dialog" aria-modal="true">

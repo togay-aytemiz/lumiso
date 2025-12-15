@@ -7,6 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/components/SelectionTemplateSection";
 import { GalleryWatermarkOverlay } from "@/components/galleries/GalleryWatermarkOverlay";
 import { Lightbox } from "@/components/galleries/Lightbox";
+import { MobilePhotoSelectionSheet } from "@/components/galleries/MobilePhotoSelectionSheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GALLERY_ASSETS_BUCKET, getStorageBasename, isSupabaseStorageObjectMissingError } from "@/lib/galleryAssets";
@@ -882,16 +883,13 @@ export default function GalleryClientPreview() {
     }
   };
 
-  const scrollToTop = useCallback(() => {
-    const behavior: ScrollBehavior =
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "auto"
-        : "smooth";
+  const scrollToContentStart = useCallback(() => {
+    const targetTop = navRef.current?.offsetTop ?? 0;
 
     try {
-      window.scrollTo({ top: 0, behavior });
+      window.scrollTo({ top: targetTop, behavior: "auto" });
+      document.documentElement.scrollTop = targetTop;
+      document.body.scrollTop = targetTop;
     } catch {
       // noop (jsdom)
     }
@@ -904,18 +902,18 @@ export default function GalleryClientPreview() {
       if (nextTab === "gallery") setActiveFilter("all");
       if (nextTab === "favorites") setActiveFilter("favorites");
       if (nextTab === "starred") setActiveFilter("starred");
-      scrollToTop();
+      scrollToContentStart();
     },
-    [isMobile, scrollToTop]
+    [isMobile, scrollToContentStart]
   );
 
   const handleMobileTaskSelect = useCallback(
     (ruleId: string) => {
       setActiveFilter(ruleId);
       setMobileTab("gallery");
-      scrollToTop();
+      scrollToContentStart();
     },
-    [scrollToTop]
+    [scrollToContentStart]
   );
 
   const openViewer = (photoId: string) => {
@@ -1499,101 +1497,25 @@ export default function GalleryClientPreview() {
     const closeSheet = () => setSheetPhotoId(null);
 
     return (
-      <div className="fixed inset-0 z-[200] flex flex-col justify-end md:hidden">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeSheet} />
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="client-preview-selection-sheet-title"
-          className="relative bg-white rounded-t-3xl shadow-2xl p-6 pb-10 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
-        >
-          <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
-
-          <div className="flex items-start gap-4 mb-6 border-b border-gray-100 pb-6">
-            {photo.url && !brokenPhotoIds.has(photo.id) ? (
-              <img
-                src={photo.url}
-                className="w-16 h-16 rounded-lg object-cover bg-gray-100"
-                alt={photo.filename}
-                loading="lazy"
-                onError={() => handleAssetImageError(photo.id)}
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
-                <ImageIcon size={20} />
-              </div>
-            )}
-            <div className="min-w-0">
-              <h3 id="client-preview-selection-sheet-title" className="font-bold text-lg text-gray-900">
-                {t("sessionDetail.gallery.clientPreview.labels.addToLists")}
-              </h3>
-              <p className="text-sm text-gray-500">{t("sessionDetail.gallery.lightbox.sidebar.client.description")}</p>
-            </div>
-          </div>
-
-	          <div className="space-y-3">
-	            {selectionRules.map((rule) => {
-	              const selectionIds = photo.selections;
-	              const isSelected = selectionIds.includes(rule.id);
-	              const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
-	              const isDisabled = !isSelected && isFull;
-                const serviceName = rule.serviceName?.trim() ?? "";
-
-	              return (
-	                <button
-	                  key={rule.id}
-                  type="button"
-                  disabled={isDisabled}
-                  onClick={() => {
-                    if (!isDisabled) toggleRuleSelect(photo.id, rule.id);
-                  }}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left
-                    ${isSelected ? "bg-brand-50 border-brand-200 shadow-sm" : "bg-white border-gray-100 active:bg-gray-50"}
-                    ${isDisabled ? "opacity-50 grayscale cursor-not-allowed" : ""}
-                  `}
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors
-                        ${isSelected ? "bg-brand-500 text-white" : "bg-gray-100 text-gray-400"}
-                      `}
-                    >
-                      {isSelected ? <Check size={18} strokeWidth={3} /> : <ListPlus size={18} />}
-	                    </div>
-	                    <div className="min-w-0">
-                        {serviceName ? (
-                          <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 truncate">
-                            {serviceName}
-                          </div>
-                        ) : null}
-	                      <div className={`font-bold text-sm truncate ${isSelected ? "text-brand-900" : "text-gray-900"}`}>
-	                        {rule.title}
-	                      </div>
-	                      <div className="text-xs text-gray-500">
-	                        {rule.currentCount} / {rule.maxCount || "∞"}
-                      </div>
-                    </div>
-                  </div>
-
-                  {isDisabled && !isSelected ? (
-                    <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-1 rounded">
-                      {t("sessionDetail.gallery.clientPreview.labels.limitFull")}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            type="button"
-            onClick={closeSheet}
-            className="w-full mt-6 bg-gray-900 text-white py-4 rounded-xl font-bold text-sm"
-          >
-            {tCommon("buttons.close")}
-          </button>
-        </div>
-      </div>
+      <MobilePhotoSelectionSheet
+        open
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) closeSheet();
+        }}
+        photo={{ id: photo.id, url: photo.url, filename: photo.filename }}
+        rules={selectionRules.map((rule) => ({
+          id: rule.id,
+          title: rule.title,
+          serviceName: rule.serviceName,
+          currentCount: rule.currentCount,
+          maxCount: rule.maxCount,
+        }))}
+        selectedRuleIds={photo.selections}
+        onToggleRule={(ruleId) => toggleRuleSelect(photo.id, ruleId)}
+        photoImageBroken={brokenPhotoIds.has(photo.id)}
+        onPhotoImageError={() => handleAssetImageError(photo.id)}
+        zIndexClassName="z-[200]"
+      />
     );
   };
 
@@ -1628,7 +1550,7 @@ export default function GalleryClientPreview() {
               onClick={() => {
                 setActiveFilter("unselected");
                 setMobileTab("gallery");
-                scrollToTop();
+                scrollToContentStart();
               }}
               className="w-full bg-white p-5 rounded-2xl border border-gray-200 flex items-center gap-4 shadow-sm active:scale-[0.99] transition-transform"
             >
@@ -1899,7 +1821,7 @@ export default function GalleryClientPreview() {
                 data-touch-target="compact"
                 onClick={() => {
                   setActiveFilter("all");
-                  scrollToTop();
+                  scrollToContentStart();
                 }}
                 className="flex items-center gap-1.5 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-xs font-bold"
               >

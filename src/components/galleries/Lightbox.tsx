@@ -17,6 +17,22 @@ import {
   X,
 } from "lucide-react";
 
+type SlideDirection = "next" | "prev";
+type SlidePhase = "from" | "to";
+
+type SlideTransition = {
+  from: LightboxPhoto;
+  to: LightboxPhoto;
+  direction: SlideDirection;
+  phase: SlidePhase;
+};
+
+type ZoomState = {
+  scale: number;
+  translateX: number;
+  translateY: number;
+};
+
 export type LightboxPhoto = {
   id: string;
   url: string;
@@ -74,6 +90,38 @@ export function Lightbox({
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const touchEndRef = useRef<{ x: number; y: number } | null>(null);
   const minSwipeDistance = 50;
+  const mobileStageRef = useRef<HTMLDivElement>(null);
+  const pinchRef = useRef<{
+    startDistance: number;
+    startScale: number;
+    startTranslateX: number;
+    startTranslateY: number;
+    startCenterX: number;
+    startCenterY: number;
+  } | null>(null);
+  const panRef = useRef<{
+    startX: number;
+    startY: number;
+    startTranslateX: number;
+    startTranslateY: number;
+  } | null>(null);
+  const mobileZoomRef = useRef<ZoomState>({ scale: 1, translateX: 0, translateY: 0 });
+  const [mobileZoom, setMobileZoom] = useState<ZoomState>(() => mobileZoomRef.current);
+  const [isMobileGestureActive, setIsMobileGestureActive] = useState(false);
+  const slideTimeoutRef = useRef<number | null>(null);
+  const slideRafRef = useRef<number | null>(null);
+  const lastSlideIndexRef = useRef(currentIndex);
+  const lastSlidePhotoRef = useRef<LightboxPhoto | null>(null);
+  const [slideTransition, setSlideTransition] = useState<SlideTransition | null>(null);
+
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    if (typeof window.matchMedia !== "function") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+
+  const SLIDE_ANIMATION_MS = prefersReducedMotion ? 0 : 240;
+  const MAX_MOBILE_ZOOM = 3;
 
   const activeRule = useMemo(
     () => (activeRuleId ? rules.find((rule) => rule.id === activeRuleId) ?? null : null),
@@ -90,8 +138,96 @@ export function Lightbox({
       if (mode === "client") {
         setIsMobileSelectionPanelOpen(false);
       }
+      lastSlideIndexRef.current = currentIndex;
+      lastSlidePhotoRef.current = currentPhoto ?? null;
+      setSlideTransition(null);
+
+      mobileZoomRef.current = { scale: 1, translateX: 0, translateY: 0 };
+      setMobileZoom(mobileZoomRef.current);
+      setIsMobileGestureActive(false);
+      pinchRef.current = null;
+      panRef.current = null;
     }
   }, [isOpen, mode]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      lastSlideIndexRef.current = currentIndex;
+      lastSlidePhotoRef.current = null;
+      setSlideTransition(null);
+      if (slideTimeoutRef.current != null) {
+        window.clearTimeout(slideTimeoutRef.current);
+        slideTimeoutRef.current = null;
+      }
+      if (slideRafRef.current != null) {
+        window.cancelAnimationFrame(slideRafRef.current);
+        slideRafRef.current = null;
+      }
+
+      mobileZoomRef.current = { scale: 1, translateX: 0, translateY: 0 };
+      setMobileZoom(mobileZoomRef.current);
+      setIsMobileGestureActive(false);
+      pinchRef.current = null;
+      panRef.current = null;
+      touchStartRef.current = null;
+      touchEndRef.current = null;
+    }
+  }, [currentIndex, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    mobileZoomRef.current = { scale: 1, translateX: 0, translateY: 0 };
+    setMobileZoom(mobileZoomRef.current);
+    setIsMobileGestureActive(false);
+    pinchRef.current = null;
+    panRef.current = null;
+    touchStartRef.current = null;
+    touchEndRef.current = null;
+  }, [currentPhoto?.id, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!currentPhoto) return;
+    if (prefersReducedMotion || SLIDE_ANIMATION_MS === 0) {
+      lastSlideIndexRef.current = currentIndex;
+      lastSlidePhotoRef.current = currentPhoto;
+      setSlideTransition(null);
+      return;
+    }
+
+    const prevPhoto = lastSlidePhotoRef.current;
+    const prevIndex = lastSlideIndexRef.current;
+
+    lastSlideIndexRef.current = currentIndex;
+    lastSlidePhotoRef.current = currentPhoto;
+
+    if (!prevPhoto) return;
+    if (prevPhoto.id === currentPhoto.id) return;
+
+    const direction: SlideDirection = currentIndex > prevIndex ? "next" : "prev";
+
+    if (slideTimeoutRef.current != null) {
+      window.clearTimeout(slideTimeoutRef.current);
+      slideTimeoutRef.current = null;
+    }
+    if (slideRafRef.current != null) {
+      window.cancelAnimationFrame(slideRafRef.current);
+      slideRafRef.current = null;
+    }
+
+    setSlideTransition({ from: prevPhoto, to: currentPhoto, direction, phase: "from" });
+
+    slideRafRef.current = window.requestAnimationFrame(() => {
+      setSlideTransition((prev) => (prev ? { ...prev, phase: "to" } : null));
+      slideRafRef.current = null;
+    });
+
+    slideTimeoutRef.current = window.setTimeout(() => {
+      setSlideTransition(null);
+      slideTimeoutRef.current = null;
+    }, SLIDE_ANIMATION_MS + 40);
+  }, [SLIDE_ANIMATION_MS, currentIndex, currentPhoto, isOpen, prefersReducedMotion]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -159,6 +295,90 @@ export function Lightbox({
     shouldRenderMobileAddButton &&
     (isMobileSelectionPanelOpen || currentPhoto.selections.length > 0);
 
+  const getSlideLayerStyle = (layer: "from" | "to") => {
+    if (!slideTransition) return undefined;
+
+    const startX = layer === "to" ? (slideTransition.direction === "next" ? 100 : -100) : 0;
+    const endX =
+      layer === "to" ? 0 : slideTransition.direction === "next" ? -100 : 100;
+    const translateX = slideTransition.phase === "from" ? startX : endX;
+
+    const startOpacity = layer === "to" ? 0.7 : 1;
+    const endOpacity = layer === "to" ? 1 : 0.4;
+    const opacity = slideTransition.phase === "from" ? startOpacity : endOpacity;
+
+    return {
+      transform: `translate3d(${translateX}%, 0, 0)`,
+      opacity,
+      transition: `transform ${SLIDE_ANIMATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1), opacity ${SLIDE_ANIMATION_MS}ms ease-out`,
+      willChange: "transform, opacity",
+    } as const;
+  };
+
+  const renderSlidePhoto = (photo: LightboxPhoto, layer: "from" | "to", imageClassName: string) => {
+    return (
+      <div
+        className="absolute inset-0 flex items-center justify-center relative"
+        style={getSlideLayerStyle(layer)}
+        aria-hidden={layer === "from"}
+      >
+        {photo.url ? (
+          <img
+            src={photo.url}
+            alt={photo.filename}
+            className={imageClassName}
+            onError={() => onImageError?.(photo.id)}
+          />
+        ) : (
+          <div className="text-sm text-white/60">{t("sessionDetail.gallery.lightbox.noPreview")}</div>
+        )}
+
+        {mode === "client" && watermark ? (
+          <GalleryWatermarkOverlay watermark={watermark} variant="lightbox" className="z-10" />
+        ) : null}
+      </div>
+    );
+  };
+
+  const renderStagePhotos = (imageClassName: string, options?: { imageStyle?: React.CSSProperties }) => {
+    if (!slideTransition) {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center relative">
+          {currentPhoto.url ? (
+            <div className="relative" style={options?.imageStyle}>
+              <img
+                src={currentPhoto.url}
+                alt={currentPhoto.filename}
+                className={imageClassName}
+                onError={() => onImageError?.(currentPhoto.id)}
+              />
+
+              {mode === "client" && watermark ? (
+                <GalleryWatermarkOverlay watermark={watermark} variant="lightbox" className="z-10" />
+              ) : null}
+            </div>
+          ) : (
+            <div className="text-sm text-white/60">{t("sessionDetail.gallery.lightbox.noPreview")}</div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {renderSlidePhoto(slideTransition.from, "from", imageClassName)}
+        {renderSlidePhoto(slideTransition.to, "to", imageClassName)}
+      </>
+    );
+  };
+
+  const mobileImageStyle = {
+    transform: `translate3d(${mobileZoom.translateX}px, ${mobileZoom.translateY}px, 0) scale(${mobileZoom.scale})`,
+    transition: isMobileGestureActive ? "none" : "transform 200ms ease-out",
+    transformOrigin: "center",
+    willChange: "transform",
+  } as const;
+
   return (
     <>
       {mode === "client" ? (
@@ -173,8 +393,13 @@ export function Lightbox({
               >
                 <X size={24} />
               </button>
-              <div className="text-sm font-medium text-white/80">
-                {currentIndex + 1} / {photos.length}
+              <div className="flex flex-col items-center min-w-0 px-2">
+                <div className="text-sm font-medium text-white/80 tabular-nums">
+                  {currentIndex + 1} / {photos.length}
+                </div>
+                <div className="mt-0.5 text-[11px] text-white/60 font-mono max-w-[70vw] truncate">
+                  {currentPhoto.filename}
+                </div>
               </div>
               <div className="w-11" />
             </div>
@@ -189,21 +414,194 @@ export function Lightbox({
             ) : null}
 
             <div
+              ref={mobileStageRef}
               className="relative flex-1 flex items-center justify-center w-full h-full overflow-hidden"
+              style={{ touchAction: "none" }}
               onTouchStart={(event) => {
-                const touch = event.targetTouches[0];
+                if (slideTransition) return;
+                const touches = event.targetTouches;
+
+                if (touches.length === 2) {
+                  const [touchA, touchB] = [touches[0], touches[1]];
+                  if (!touchA || !touchB) return;
+
+                  const distance = Math.hypot(touchA.clientX - touchB.clientX, touchA.clientY - touchB.clientY);
+                  if (!Number.isFinite(distance) || distance <= 0) return;
+
+                  const centerX = (touchA.clientX + touchB.clientX) / 2;
+                  const centerY = (touchA.clientY + touchB.clientY) / 2;
+                  const { scale, translateX, translateY } = mobileZoomRef.current;
+
+                  pinchRef.current = {
+                    startDistance: distance,
+                    startScale: scale,
+                    startTranslateX: translateX,
+                    startTranslateY: translateY,
+                    startCenterX: centerX,
+                    startCenterY: centerY,
+                  };
+                  panRef.current = null;
+                  touchStartRef.current = null;
+                  touchEndRef.current = null;
+                  setIsMobileGestureActive(true);
+                  return;
+                }
+
+                if (touches.length !== 1) return;
+                const touch = touches[0];
                 if (!touch) return;
+
+                if (mobileZoomRef.current.scale > 1) {
+                  const { translateX, translateY } = mobileZoomRef.current;
+                  panRef.current = {
+                    startX: touch.clientX,
+                    startY: touch.clientY,
+                    startTranslateX: translateX,
+                    startTranslateY: translateY,
+                  };
+                  pinchRef.current = null;
+                  touchStartRef.current = null;
+                  touchEndRef.current = null;
+                  setIsMobileGestureActive(true);
+                  return;
+                }
+
                 touchStartRef.current = { x: touch.clientX, y: touch.clientY };
                 touchEndRef.current = null;
               }}
               onTouchMove={(event) => {
-                const touch = event.targetTouches[0];
-                if (!touch) return;
-                touchEndRef.current = { x: touch.clientX, y: touch.clientY };
+                if (slideTransition) return;
+                const touches = event.targetTouches;
+
+                const clampValue = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+                const clampZoom = (next: ZoomState) => {
+                  const scale = clampValue(next.scale, 1, MAX_MOBILE_ZOOM);
+                  if (scale <= 1) return { scale: 1, translateX: 0, translateY: 0 };
+
+                  const bounds = mobileStageRef.current?.getBoundingClientRect();
+                  if (!bounds) return { ...next, scale };
+
+                  const maxX = (bounds.width * (scale - 1)) / 2;
+                  const maxY = (bounds.height * (scale - 1)) / 2;
+                  return {
+                    scale,
+                    translateX: clampValue(next.translateX, -maxX, maxX),
+                    translateY: clampValue(next.translateY, -maxY, maxY),
+                  };
+                };
+
+                const applyZoom = (next: ZoomState) => {
+                  const clamped = clampZoom(next);
+                  mobileZoomRef.current = clamped;
+                  setMobileZoom(clamped);
+                };
+
+                if (pinchRef.current && touches.length >= 2) {
+                  const [touchA, touchB] = [touches[0], touches[1]];
+                  if (!touchA || !touchB) return;
+
+                  const distance = Math.hypot(touchA.clientX - touchB.clientX, touchA.clientY - touchB.clientY);
+                  if (!Number.isFinite(distance) || distance <= 0) return;
+
+                  const centerX = (touchA.clientX + touchB.clientX) / 2;
+                  const centerY = (touchA.clientY + touchB.clientY) / 2;
+                  const ratio = distance / pinchRef.current.startDistance;
+                  const nextScale = pinchRef.current.startScale * ratio;
+
+                  const nextTranslateX = pinchRef.current.startTranslateX + (centerX - pinchRef.current.startCenterX);
+                  const nextTranslateY = pinchRef.current.startTranslateY + (centerY - pinchRef.current.startCenterY);
+
+                  applyZoom({
+                    scale: nextScale,
+                    translateX: nextTranslateX,
+                    translateY: nextTranslateY,
+                  });
+                  return;
+                }
+
+                if (panRef.current && touches.length === 1 && mobileZoomRef.current.scale > 1) {
+                  const touch = touches[0];
+                  if (!touch) return;
+
+                  const nextTranslateX = panRef.current.startTranslateX + (touch.clientX - panRef.current.startX);
+                  const nextTranslateY = panRef.current.startTranslateY + (touch.clientY - panRef.current.startY);
+
+                  applyZoom({
+                    scale: mobileZoomRef.current.scale,
+                    translateX: nextTranslateX,
+                    translateY: nextTranslateY,
+                  });
+                  return;
+                }
+
+                if (touches.length === 1 && mobileZoomRef.current.scale <= 1) {
+                  const touch = touches[0];
+                  if (!touch) return;
+                  touchEndRef.current = { x: touch.clientX, y: touch.clientY };
+                }
               }}
-              onTouchEnd={() => {
+              onTouchEnd={(event) => {
+                if (slideTransition) return;
                 const start = touchStartRef.current;
                 const end = touchEndRef.current;
+                const touches = event.targetTouches;
+
+                const clampValue = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+                const clampZoom = (next: ZoomState) => {
+                  const scale = clampValue(next.scale, 1, MAX_MOBILE_ZOOM);
+                  if (scale <= 1) return { scale: 1, translateX: 0, translateY: 0 };
+
+                  const bounds = mobileStageRef.current?.getBoundingClientRect();
+                  if (!bounds) return { ...next, scale };
+
+                  const maxX = (bounds.width * (scale - 1)) / 2;
+                  const maxY = (bounds.height * (scale - 1)) / 2;
+                  return {
+                    scale,
+                    translateX: clampValue(next.translateX, -maxX, maxX),
+                    translateY: clampValue(next.translateY, -maxY, maxY),
+                  };
+                };
+
+                const applyZoom = (next: ZoomState) => {
+                  const clamped = clampZoom(next);
+                  mobileZoomRef.current = clamped;
+                  setMobileZoom(clamped);
+                };
+
+                if (pinchRef.current) {
+                  if (touches.length < 2) {
+                    pinchRef.current = null;
+                  }
+                  if (touches.length === 1 && mobileZoomRef.current.scale > 1) {
+                    const touch = touches[0];
+                    if (touch) {
+                      panRef.current = {
+                        startX: touch.clientX,
+                        startY: touch.clientY,
+                        startTranslateX: mobileZoomRef.current.translateX,
+                        startTranslateY: mobileZoomRef.current.translateY,
+                      };
+                    }
+                  }
+                }
+
+                if (panRef.current && touches.length === 0) {
+                  panRef.current = null;
+                }
+
+                if (touches.length === 0) {
+                  setIsMobileGestureActive(false);
+                  const scale = mobileZoomRef.current.scale;
+                  if (scale <= 1.02) {
+                    applyZoom({ scale: 1, translateX: 0, translateY: 0 });
+                  } else {
+                    applyZoom(mobileZoomRef.current);
+                  }
+                }
+
+                if (mobileZoomRef.current.scale > 1) return;
+                if (pinchRef.current || panRef.current) return;
                 if (!start || !end) return;
 
                 const deltaX = start.x - end.x;
@@ -215,20 +613,33 @@ export function Lightbox({
                 if (deltaX < 0 && currentIndex > 0) onNavigate(currentIndex - 1);
               }}
             >
-              {currentPhoto.url ? (
-                <img
-                  src={currentPhoto.url}
-                  alt={currentPhoto.filename}
-                  className="max-w-full max-h-full object-contain"
-                  onError={() => onImageError?.(currentPhoto.id)}
-                />
-              ) : (
-                <div className="text-sm text-white/60">{t("sessionDetail.gallery.lightbox.noPreview")}</div>
-              )}
+              {photos.length > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate(currentIndex - 1)}
+                    disabled={currentIndex === 0}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/[0.14] hover:bg-white/[0.2] backdrop-blur-md border border-white/10 flex items-center justify-center transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-20"
+                    aria-label={t("sessionDetail.gallery.lightbox.previous")}
+                    data-testid="lightbox-mobile-prev"
+                  >
+                    <ChevronLeft size={28} />
+                  </button>
 
-              {mode === "client" && watermark ? (
-                <GalleryWatermarkOverlay watermark={watermark} variant="lightbox" className="z-10" />
+                  <button
+                    type="button"
+                    onClick={() => onNavigate(currentIndex + 1)}
+                    disabled={currentIndex === photos.length - 1}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/[0.14] hover:bg-white/[0.2] backdrop-blur-md border border-white/10 flex items-center justify-center transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-20"
+                    aria-label={t("sessionDetail.gallery.lightbox.next")}
+                    data-testid="lightbox-mobile-next"
+                  >
+                    <ChevronRight size={28} />
+                  </button>
+                </>
               ) : null}
+
+              {renderStagePhotos("max-w-full max-h-full object-contain", { imageStyle: mobileImageStyle })}
             </div>
 
             <div className="absolute bottom-0 left-0 right-0 p-6 pb-10 bg-gradient-to-t from-black/90 via-black/70 to-transparent flex items-end justify-center gap-10">
@@ -429,7 +840,7 @@ export function Lightbox({
             type="button"
             onClick={() => onNavigate(currentIndex - 1)}
             disabled={currentIndex === 0}
-            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 hover:bg-white/10 rounded-full transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-10"
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/[0.14] hover:bg-white/[0.2] backdrop-blur-md border border-white/10 flex items-center justify-center transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-20"
             aria-label={t("sessionDetail.gallery.lightbox.previous")}
           >
             <ChevronLeft size={32} />
@@ -439,7 +850,7 @@ export function Lightbox({
             type="button"
             onClick={() => onNavigate(currentIndex + 1)}
             disabled={currentIndex === photos.length - 1}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 hover:bg-white/10 rounded-full transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-10"
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/[0.14] hover:bg-white/[0.2] backdrop-blur-md border border-white/10 flex items-center justify-center transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-20"
             aria-label={t("sessionDetail.gallery.lightbox.next")}
           >
             <ChevronRight size={32} />
@@ -468,24 +879,11 @@ export function Lightbox({
               if (Math.abs(deltaX) < minSwipeDistance) return;
               if (Math.abs(deltaY) > Math.abs(deltaX)) return;
 
-              if (deltaX > 0 && currentIndex < photos.length - 1) onNavigate(currentIndex + 1);
-              if (deltaX < 0 && currentIndex > 0) onNavigate(currentIndex - 1);
-            }}
-          >
-            {currentPhoto.url ? (
-              <img
-                src={currentPhoto.url}
-                alt={currentPhoto.filename}
-                className="max-w-full max-h-full object-contain shadow-2xl"
-                onError={() => onImageError?.(currentPhoto.id)}
-              />
-	            ) : (
-	              <div className="text-sm text-white/60">{t("sessionDetail.gallery.lightbox.noPreview")}</div>
-	            )}
-
-              {mode === "client" && watermark ? (
-                <GalleryWatermarkOverlay watermark={watermark} variant="lightbox" className="z-10" />
-              ) : null}
+	              if (deltaX > 0 && currentIndex < photos.length - 1) onNavigate(currentIndex + 1);
+	              if (deltaX < 0 && currentIndex > 0) onNavigate(currentIndex - 1);
+	            }}
+	          >
+              {renderStagePhotos("max-w-full max-h-full object-contain shadow-2xl")}
 	          </div>
 	        </div>
 

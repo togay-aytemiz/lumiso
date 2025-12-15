@@ -118,7 +118,7 @@ describe("Lightbox", () => {
       />
     );
 
-    expect(screen.getByText("1.jpg")).toBeInTheDocument();
+    expect(screen.getAllByText("1.jpg")[0]).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: "ArrowRight" });
     expect(onNavigate).toHaveBeenCalledWith(1);
@@ -216,6 +216,44 @@ describe("Lightbox", () => {
     });
     fireEvent.touchEnd(image);
 
+    expect(onNavigate).toHaveBeenCalledWith(1);
+  });
+
+  it("shows mobile navigation arrows", () => {
+    const onNavigate = jest.fn();
+
+    render(
+      <Lightbox
+        isOpen
+        onClose={jest.fn()}
+        photos={[
+          {
+            id: "photo-1",
+            url: "https://example.com/1.jpg",
+            filename: "1.jpg",
+            isFavorite: false,
+            isStarred: false,
+            selections: [],
+          },
+          {
+            id: "photo-2",
+            url: "https://example.com/2.jpg",
+            filename: "2.jpg",
+            isFavorite: false,
+            isStarred: false,
+            selections: [],
+          },
+        ]}
+        currentIndex={0}
+        onNavigate={onNavigate}
+        rules={[]}
+        onToggleRule={jest.fn()}
+        onToggleStar={jest.fn()}
+        mode="client"
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("lightbox-mobile-next"));
     expect(onNavigate).toHaveBeenCalledWith(1);
   });
 });

@@ -1744,8 +1744,12 @@ export default function GalleryClientPreview() {
     if (activeLightboxRuleId) {
       return selectionRules.find((rule) => rule.id === activeLightboxRuleId)?.title || heroTitle;
     }
+    if (activeFilter === "favorites") return t("sessionDetail.gallery.clientPreview.filters.favorites");
+    if (activeFilter === "starred") return t("sessionDetail.gallery.clientPreview.filters.starred");
+    if (activeFilter === "unselected") return t("sessionDetail.gallery.clientPreview.filters.unselected");
+    if (activeFilter === "selected") return t("sessionDetail.gallery.clientPreview.filters.selected");
     return heroTitle;
-  }, [activeLightboxRuleId, heroTitle, isMobile, mobileTab, selectionRules, t]);
+  }, [activeFilter, activeLightboxRuleId, heroTitle, isMobile, mobileTab, selectionRules, t]);
 
   if (isLoading) {
     return (
@@ -1889,11 +1893,14 @@ export default function GalleryClientPreview() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-4 md:gap-6 shrink-0">
-            {isMobile && mobileTab === "gallery" && activeLightboxRuleId ? (
+            {isMobile && mobileTab === "gallery" && activeFilter !== "all" ? (
               <button
                 type="button"
                 data-touch-target="compact"
-                onClick={() => setActiveFilter("all")}
+                onClick={() => {
+                  setActiveFilter("all");
+                  scrollToTop();
+                }}
                 className="flex items-center gap-1.5 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-xs font-bold"
               >
                 {tCommon("buttons.clear")}

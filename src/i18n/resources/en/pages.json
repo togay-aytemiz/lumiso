@@ -812,14 +812,15 @@
           "gridMedium": "Medium grid",
           "gridSmall": "Small grid"
         },
-        "filters": {
-          "label": "View:",
-          "all": "All",
-          "starred": "Photographer's choice",
-          "starredShort": "Pick",
-          "favorites": "Favorites",
-          "unselected": "Unselected"
-        },
+          "filters": {
+            "label": "View:",
+            "all": "All",
+            "starred": "Photographer's choice",
+            "starredShort": "Pick",
+            "favorites": "Favorites",
+            "unselected": "Unselected",
+            "selected": "Selected"
+          },
         "bottomNav": {
           "ariaLabel": "Gallery navigation",
           "gallery": "Gallery",

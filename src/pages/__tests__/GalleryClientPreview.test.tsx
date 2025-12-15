@@ -706,6 +706,9 @@ describe("GalleryClientPreview", () => {
         expect(screen.queryByAltText("a.jpg")).not.toBeInTheDocument();
       });
       expect(await screen.findByAltText("b.jpg")).toBeInTheDocument();
+
+      fireEvent.click(await screen.findByRole("button", { name: /clear|temizle/i }));
+      expect(await screen.findByAltText("a.jpg")).toBeInTheDocument();
     } finally {
       window.innerWidth = originalInnerWidth;
     }

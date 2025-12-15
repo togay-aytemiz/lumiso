@@ -827,14 +827,15 @@
           "gridMedium": "Orta grid",
           "gridSmall": "Küçük grid"
         },
-        "filters": {
-          "label": "Görünüm:",
-          "all": "Tümü",
-          "starred": "Fotoğrafçı Önerisi",
-          "starredShort": "Öneri",
-          "favorites": "Favoriler",
-          "unselected": "Seçilmeyenler"
-        },
+          "filters": {
+            "label": "Görünüm:",
+            "all": "Tümü",
+            "starred": "Fotoğrafçı Önerisi",
+            "starredShort": "Öneri",
+            "favorites": "Favoriler",
+            "unselected": "Seçilmeyenler",
+            "selected": "Seçilenler"
+          },
         "bottomNav": {
           "ariaLabel": "Galeri sekmeleri",
           "gallery": "Galeri",

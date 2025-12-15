@@ -359,6 +359,26 @@ All colors MUST be HSL.
   animation: float-slow 10s ease-in-out infinite;
 }
 
+@keyframes hero-scroll-indicator {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+.hero-scroll-indicator {
+  animation: hero-scroll-indicator 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-scroll-indicator {
+    animation: none;
+  }
+}
+
 @keyframes fade-in-up {
   0% {
     opacity: 0;

@@ -1079,12 +1079,20 @@ export default function GalleryClientPreview() {
   };
 
   const renderEmptyState = () => {
+    const resetToAll = () => {
+      if (isMobile) {
+        handleMobileTabChange("gallery");
+        return;
+      }
+      setActiveFilter("all");
+    };
+
     let content = {
       icon: SearchX,
       title: t("sessionDetail.gallery.clientPreview.empty.noPhotos.title"),
       desc: t("sessionDetail.gallery.clientPreview.empty.noPhotos.description"),
       actionLabel: t("sessionDetail.gallery.clientPreview.empty.noPhotos.action"),
-      action: () => setActiveFilter("all"),
+      action: resetToAll,
       color: "text-gray-400",
     };
 
@@ -1094,7 +1102,7 @@ export default function GalleryClientPreview() {
         title: t("sessionDetail.gallery.clientPreview.empty.favorites.title"),
         desc: t("sessionDetail.gallery.clientPreview.empty.favorites.description"),
         actionLabel: t("sessionDetail.gallery.clientPreview.empty.favorites.action"),
-        action: () => setActiveFilter("all"),
+        action: resetToAll,
         color: "text-red-400",
       };
     } else if (activeFilter === "starred") {
@@ -1103,7 +1111,7 @@ export default function GalleryClientPreview() {
         title: t("sessionDetail.gallery.clientPreview.empty.starred.title"),
         desc: t("sessionDetail.gallery.clientPreview.empty.starred.description"),
         actionLabel: t("sessionDetail.gallery.clientPreview.empty.starred.action"),
-        action: () => setActiveFilter("all"),
+        action: resetToAll,
         color: "text-amber-400",
       };
     } else if (activeFilter === "unselected") {
@@ -1112,7 +1120,7 @@ export default function GalleryClientPreview() {
         title: t("sessionDetail.gallery.clientPreview.empty.unselected.title"),
         desc: t("sessionDetail.gallery.clientPreview.empty.unselected.description"),
         actionLabel: t("sessionDetail.gallery.clientPreview.empty.unselected.action"),
-        action: () => setActiveFilter("all"),
+        action: resetToAll,
         color: "text-green-500",
       };
     } else if (activeFilter === "selected") {
@@ -1121,7 +1129,7 @@ export default function GalleryClientPreview() {
         title: t("sessionDetail.gallery.clientPreview.empty.selected.title"),
         desc: t("sessionDetail.gallery.clientPreview.empty.selected.description"),
         actionLabel: t("sessionDetail.gallery.clientPreview.empty.selected.action"),
-        action: () => setActiveFilter("all"),
+        action: resetToAll,
         color: "text-brand-500",
       };
     } else if (activeFilter !== "all") {
@@ -1132,7 +1140,7 @@ export default function GalleryClientPreview() {
           title: t("sessionDetail.gallery.clientPreview.empty.rule.title", { rule: rule.title }),
           desc: t("sessionDetail.gallery.clientPreview.empty.rule.description", { rule: rule.title }),
           actionLabel: t("sessionDetail.gallery.clientPreview.empty.rule.action"),
-          action: () => setActiveFilter("all"),
+          action: resetToAll,
           color: "text-indigo-400",
         };
       }
@@ -1520,16 +1528,10 @@ export default function GalleryClientPreview() {
 
   const renderMobileTasksScreen = () => {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
-        <header className="mb-6">
-          <h2 className="font-playfair text-2xl font-semibold text-gray-900 tracking-tight">
-            {t("sessionDetail.gallery.clientPreview.selections.title")}
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            {t("sessionDetail.gallery.clientPreview.selections.subtitle")}
-          </p>
-        </header>
-
+      <div className="min-h-screen bg-gray-50 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+        <p className="mb-6 text-sm text-gray-500">
+          {t("sessionDetail.gallery.clientPreview.selections.subtitle")}
+        </p>
         <div className="space-y-3">
           <button
             type="button"
@@ -1547,6 +1549,30 @@ export default function GalleryClientPreview() {
             </div>
             <ArrowRight size={16} className="text-gray-300 shrink-0" />
           </button>
+
+          {unselectedCount > 0 ? (
+            <button
+              type="button"
+              data-testid="gallery-client-preview-unselected-shortcut"
+              onClick={() => {
+                setActiveFilter("unselected");
+                setMobileTab("gallery");
+                scrollToTop();
+              }}
+              className="w-full bg-white p-5 rounded-2xl border border-gray-200 flex items-center gap-4 shadow-sm active:scale-[0.99] transition-transform"
+            >
+              <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 shrink-0">
+                <CircleDashed size={20} />
+              </div>
+              <div className="flex-1 text-left min-w-0">
+                <h3 className="font-bold text-gray-900 truncate">
+                  {t("sessionDetail.gallery.clientPreview.filters.unselected")}
+                </h3>
+                <p className="text-xs text-gray-500">{unselectedCount}</p>
+              </div>
+              <ArrowRight size={16} className="text-gray-300 shrink-0" />
+            </button>
+          ) : null}
 
           <div className="pt-4">
             <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest px-1">
@@ -1629,6 +1655,10 @@ export default function GalleryClientPreview() {
     () => resolvedPhotos.filter((photo) => photo.selections.length > 0).length,
     [resolvedPhotos]
   );
+  const unselectedCount = useMemo(
+    () => resolvedPhotos.filter((photo) => photo.selections.length === 0).length,
+    [resolvedPhotos]
+  );
 
   const isLoading = galleryLoading || setsLoading || photosLoading;
   const heroTitle = gallery?.title || t("sessionDetail.gallery.clientPreview.hero.untitled");
@@ -1658,7 +1688,7 @@ export default function GalleryClientPreview() {
     <div className="bg-white min-h-screen font-sans text-gray-900 relative">
       {/* --- HERO SECTION --- */}
       {showHero ? (
-        <div className="relative h-screen w-full overflow-hidden bg-gray-900">
+        <div className={`relative ${isMobile ? "h-[100dvh]" : "h-screen"} w-full overflow-hidden bg-gray-900`}>
           <div className="absolute inset-0">
             {coverUrl ? (
               <img
@@ -1714,16 +1744,27 @@ export default function GalleryClientPreview() {
               {t(`sessionDetail.gallery.clientPreview.hero.badge.${heroMode}.description`)}
             </p>
 
-            <button
-              type="button"
-              onClick={scrollToGallery}
-              className="group flex flex-col items-center gap-2 text-[10px] uppercase tracking-[0.2em] hover:text-white/80 transition-colors cursor-pointer mt-10"
-            >
-              <span>{t("sessionDetail.gallery.clientPreview.hero.scrollCta")}</span>
-              <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center group-hover:bg-white/10 transition-all mt-2">
-                <ArrowDown size={14} className="animate-bounce" />
-              </div>
-            </button>
+            {isMobile ? (
+              <button
+                type="button"
+                onClick={scrollToGallery}
+                aria-label={t("sessionDetail.gallery.clientPreview.hero.scrollCta")}
+                className="hero-scroll-indicator absolute inset-x-0 mx-auto bottom-[calc(env(safe-area-inset-bottom,0px)+24px)] w-14 h-14 rounded-full border border-white/40 bg-white/20 backdrop-blur-md shadow-lg shadow-black/20 flex items-center justify-center text-white hover:bg-white/30 hover:border-white/50 transition-colors duration-300 cursor-pointer"
+              >
+                <ArrowDown size={24} className="translate-y-px" aria-hidden="true" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={scrollToGallery}
+                className="group flex flex-col items-center gap-2 text-[10px] uppercase tracking-[0.2em] hover:text-white/80 transition-colors cursor-pointer mt-10"
+              >
+                <span>{t("sessionDetail.gallery.clientPreview.hero.scrollCta")}</span>
+                <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center group-hover:bg-white/10 transition-all mt-2">
+                  <ArrowDown size={14} className="animate-bounce" />
+                </div>
+              </button>
+            )}
           </div>
         </div>
       ) : null}
@@ -1889,6 +1930,33 @@ export default function GalleryClientPreview() {
 	                </div>
 	              </button>
 
+                {unselectedCount > 0 ? (
+                  <button
+                    type="button"
+                    data-touch-target="compact"
+                    onClick={() => setActiveFilter("unselected")}
+                    data-testid="gallery-client-preview-unselected-shortcut"
+                    className={`w-[220px] md:w-[200px] shrink-0 rounded-2xl border bg-white px-5 py-4 md:px-3 md:py-2.5 text-left shadow-sm transition-colors ${
+                      activeFilter === "unselected"
+                        ? "border-gray-900"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-500 truncate md:hidden">
+                      {heroTitle}
+                    </p>
+                    <div className="mt-4 md:mt-0 flex items-center gap-3">
+                      <CircleDashed size={18} className="text-gray-900" aria-hidden="true" />
+                      <span className="text-sm font-bold text-gray-900">
+                        {t("sessionDetail.gallery.clientPreview.filters.unselected")}
+                      </span>
+                    </div>
+                    <div className="mt-4 md:mt-2 text-xs font-semibold text-gray-400 tabular-nums">
+                      {unselectedCount}
+                    </div>
+                  </button>
+                ) : null}
+
 		              {selectionRules.map((rule) => {
 		                const isActive = activeFilter === rule.id;
 		                const isComplete = rule.currentCount >= rule.minCount;
@@ -2050,8 +2118,11 @@ export default function GalleryClientPreview() {
           <div ref={galleryRef} className="bg-white min-h-screen pt-4 md:pt-6 px-4 md:px-8 pb-32 md:pb-12">
             <div className="w-full">
               {hasMultipleSets ? (
-                <div className="space-y-16">
-                  {orderedSets.map((set) => {
+                filteredPhotos.length === 0 && (activeFilter === "favorites" || activeFilter === "starred") ? (
+                  renderEmptyState()
+                ) : (
+                  <div className="space-y-16">
+                    {orderedSets.map((set) => {
 	                const setPhotos = filteredPhotosBySetId[set.id] ?? [];
 	                const visibleSetCount = visibleCountBySetId[set.id] ?? 0;
 	                const visibleSetPhotos = setPhotos.slice(0, visibleSetCount);
@@ -2100,7 +2171,8 @@ export default function GalleryClientPreview() {
                   </section>
                 );
               })}
-                </div>
+                  </div>
+                )
               ) : visiblePhotos.length === 0 ? (
                 renderEmptyState()
               ) : (

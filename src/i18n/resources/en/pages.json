@@ -827,8 +827,8 @@
           "starred": "Recommended"
         },
         "selections": {
-          "title": "Selection lists",
-          "subtitle": "Complete the lists below.",
+          "title": "Selections",
+          "subtitle": "Tap a task to view your selections.",
           "allPhotos": "All photos",
           "tasksLabel": "TASKS",
           "empty": "No selection lists configured yet."

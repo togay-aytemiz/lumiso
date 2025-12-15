@@ -842,8 +842,8 @@
           "starred": "Önerilen"
         },
         "selections": {
-          "title": "Seçim Listeleri",
-          "subtitle": "Aşağıdaki listeleri tamamlayın.",
+          "title": "Seçimlerim",
+          "subtitle": "Seçimlerinizi görüntülemek için ilgili göreve dokunun.",
           "allPhotos": "Tüm Fotoğraflar",
           "tasksLabel": "GÖREVLER",
           "empty": "Henüz seçim listeniz yok."

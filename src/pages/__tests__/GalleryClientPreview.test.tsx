@@ -625,6 +625,80 @@ describe("GalleryClientPreview", () => {
     });
   });
 
+  it("offers an unselected shortcut from desktop selections", async () => {
+    supabaseMock.storage.from.mockImplementation(() => ({
+      createSignedUrl: jest.fn().mockImplementation((path: string) => {
+        const url = path.includes("asset-2") ? "https://example.com/asset-2" : "https://example.com/asset-1";
+        return Promise.resolve({ data: { signedUrl: url }, error: null });
+      }),
+    }));
+
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            type: "proof",
+            branding: {
+              selectionSettings: { enabled: true, allowFavorites: true },
+              selectionTemplate: [{ part: "Cover", min: 1, max: 1, required: true }],
+            },
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              status: "ready",
+              metadata: { originalName: "a.jpg", setId: "set-1", starred: false },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+            {
+              id: "asset-2",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-2.webp",
+              status: "ready",
+              metadata: { originalName: "b.jpg", setId: "set-1", starred: false },
+              created_at: "2025-01-02T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({
+          data: [{ id: "selection-1", asset_id: "asset-1", selection_part: "cover", client_id: "client-1" }],
+          error: null,
+        });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+    expect(await screen.findByAltText("a.jpg")).toBeInTheDocument();
+    expect(await screen.findByAltText("b.jpg")).toBeInTheDocument();
+
+    fireEvent.click(await screen.findByTestId("gallery-client-preview-unselected-shortcut"));
+
+    await waitFor(() => {
+      expect(screen.queryByAltText("a.jpg")).not.toBeInTheDocument();
+    });
+    expect(await screen.findByAltText("b.jpg")).toBeInTheDocument();
+  });
+
   it("shows a mobile bottom nav with a selections tab", async () => {
     const originalInnerWidth = window.innerWidth;
     window.innerWidth = 375;
@@ -668,7 +742,12 @@ describe("GalleryClientPreview", () => {
       const selectionsTab = await screen.findByRole("button", { name: /selections|seçimlerim/i });
       fireEvent.click(selectionsTab);
 
-      expect(await screen.findByRole("heading", { name: /selection lists|seçim listeleri/i })).toBeInTheDocument();
+      expect(await screen.findByTitle(/selections|seçimlerim/i)).toBeInTheDocument();
+      expect(
+        await screen.findByText(
+          /tap a task to view your selections|seçimlerinizi görüntülemek için ilgili göreve dokunun/i
+        )
+      ).toBeInTheDocument();
       expect(await screen.findByRole("button", { name: /cover/i })).toBeInTheDocument();
     } finally {
       window.innerWidth = originalInnerWidth;

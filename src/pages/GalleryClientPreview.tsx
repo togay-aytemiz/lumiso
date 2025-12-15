@@ -143,6 +143,9 @@ export default function GalleryClientPreview() {
   const [activeCategoryId, setActiveCategoryId] = useState<string>("");
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [sheetPhotoId, setSheetPhotoId] = useState<string | null>(null);
+  const [brokenPhotoIds, setBrokenPhotoIds] = useState<Set<string>>(() => new Set());
+  const lastSignedUrlRefreshAtRef = useRef(0);
+  const lastPhotoUrlByIdRef = useRef<Map<string, string>>(new Map());
 
   const [favoritePhotoIds, setFavoritePhotoIds] = useState<Set<string>>(() => new Set());
   const favoritesTouchedRef = useRef(false);
@@ -188,6 +191,8 @@ export default function GalleryClientPreview() {
   const { data: photosBase, isLoading: photosLoading } = useQuery({
     queryKey: ["gallery_client_preview_photos", id],
     enabled: Boolean(id),
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async (): Promise<ClientPreviewPhotoBase[]> => {
       if (!id) return [];
       const { data, error } = await supabase
@@ -287,6 +292,8 @@ export default function GalleryClientPreview() {
     setFavoritePhotoIds(new Set());
     selectionsTouchedRef.current = false;
     setPhotoSelectionsById({});
+    setBrokenPhotoIds(new Set());
+    lastPhotoUrlByIdRef.current = new Map();
   }, [id]);
 
   useEffect(() => {
@@ -542,6 +549,24 @@ export default function GalleryClientPreview() {
     const first = resolvedPhotos.find((photo) => Boolean(photo.url));
     return first?.url ?? "";
   }, [brandingData.coverAssetId, brandingData.coverUrl, resolvedPhotos]);
+
+  useEffect(() => {
+    if (!photosBase) return;
+
+    setBrokenPhotoIds((prev) => {
+      const next = prev.size === 0 ? prev : new Set(prev);
+
+      photosBase.forEach((photo) => {
+        const prevUrl = lastPhotoUrlByIdRef.current.get(photo.id);
+        if (prevUrl && prevUrl !== photo.url) {
+          next.delete(photo.id);
+        }
+        lastPhotoUrlByIdRef.current.set(photo.id, photo.url);
+      });
+
+      return next;
+    });
+  }, [photosBase]);
 
   // Scroll to top on mount
   useEffect(() => {
@@ -965,6 +990,25 @@ export default function GalleryClientPreview() {
     [favoritePhotoIds, favoritesEnabled, i18nToast, t, updateFavoriteMutation]
   );
 
+  const handleAssetImageError = useCallback(
+    (photoId: string) => {
+      setBrokenPhotoIds((prev) => {
+        if (prev.has(photoId)) return prev;
+        const next = new Set(prev);
+        next.add(photoId);
+        return next;
+      });
+
+      if (!id) return;
+      const now = Date.now();
+      if (now - lastSignedUrlRefreshAtRef.current < 1500) return;
+      lastSignedUrlRefreshAtRef.current = now;
+
+      queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_photos", id] });
+    },
+    [id, queryClient]
+  );
+
   const handleExit = useCallback(() => {
     if (id) {
       navigate(`/galleries/${id}`);
@@ -1143,13 +1187,14 @@ export default function GalleryClientPreview() {
               onClick={() => openViewer(photo.id)}
               className="overflow-hidden rounded-sm bg-gray-100 relative cursor-pointer"
             >
-              {photo.url ? (
+              {photo.url && !brokenPhotoIds.has(photo.id) ? (
                 <img
                   src={photo.url}
                   alt={photo.filename}
                   loading="lazy"
                   decoding="async"
                   className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
+                  onError={() => handleAssetImageError(photo.id)}
                 />
               ) : (
                 <div className="w-full aspect-[3/4] bg-gray-200 flex items-center justify-center text-gray-500">
@@ -1386,12 +1431,13 @@ export default function GalleryClientPreview() {
           <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
 
           <div className="flex items-start gap-4 mb-6 border-b border-gray-100 pb-6">
-            {photo.url ? (
+            {photo.url && !brokenPhotoIds.has(photo.id) ? (
               <img
                 src={photo.url}
                 className="w-16 h-16 rounded-lg object-cover bg-gray-100"
                 alt={photo.filename}
                 loading="lazy"
+                onError={() => handleAssetImageError(photo.id)}
               />
             ) : (
               <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
@@ -2200,6 +2246,7 @@ export default function GalleryClientPreview() {
 	        mode="client"
 	        activeRuleId={activeLightboxRuleId}
 	        favoritesEnabled={favoritesEnabled}
+          onImageError={handleAssetImageError}
 	        watermark={watermark}
 	      />
 

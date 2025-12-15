@@ -63,10 +63,9 @@ export function SelectionDashboard({
           {onEditRules ? (
             <Button
               type="button"
-              variant="outline"
+              variant="surface"
               size="sm"
               onClick={onEditRules}
-              className="h-8 gap-2"
             >
               <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
               {t("sessionDetail.gallery.selection.open")}

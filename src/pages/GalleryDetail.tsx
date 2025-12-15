@@ -398,7 +398,16 @@ export default function GalleryDetail() {
     selectionTemplateGroups: [] as SelectionTemplateGroupForm[],
   });
   const autoSaveTimerRef = useRef<number | null>(null);
+  const pendingSavePayloadRef = useRef<UpdatePayload | null>(null);
   const attemptedDefaultSetRef = useRef(false);
+  const isMountedRef = useRef(false);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -1366,29 +1375,37 @@ export default function GalleryDetail() {
     },
     onSuccess: (_, payload) => {
       const parsedTemplateGroups = parseSelectionTemplateGroups(payload.branding);
-      setBaseline({
-        title: payload.title,
-        type: payload.type,
-        status: payload.status,
-        eventDate: typeof payload.branding.eventDate === "string" ? (payload.branding.eventDate as string) : "",
-        customType: typeof payload.branding.customType === "string" ? (payload.branding.customType as string) : "",
-        coverAssetId: typeof payload.branding.coverAssetId === "string" ? (payload.branding.coverAssetId as string) : null,
-        selectionSettings: (payload.branding.selectionSettings || {
-          enabled: false,
-          limit: null,
-          deadline: null,
-          allowFavorites: true,
-        }) as SelectionSettings,
-        selectionTemplateGroups: parsedTemplateGroups,
-      });
-      setSelectionTemplateGroups(parsedTemplateGroups);
-      setSelectionTemplateDraft(cloneSelectionTemplateGroups(parsedTemplateGroups));
-      setLastSavedAt(new Date().toISOString());
+      if (isMountedRef.current) {
+        setBaseline({
+          title: payload.title,
+          type: payload.type,
+          status: payload.status,
+          eventDate: typeof payload.branding.eventDate === "string" ? (payload.branding.eventDate as string) : "",
+          customType: typeof payload.branding.customType === "string" ? (payload.branding.customType as string) : "",
+          coverAssetId: typeof payload.branding.coverAssetId === "string" ? (payload.branding.coverAssetId as string) : null,
+          selectionSettings: (payload.branding.selectionSettings || {
+            enabled: false,
+            limit: null,
+            deadline: null,
+            allowFavorites: true,
+          }) as SelectionSettings,
+          selectionTemplateGroups: parsedTemplateGroups,
+        });
+        setSelectionTemplateGroups(parsedTemplateGroups);
+        setSelectionTemplateDraft(cloneSelectionTemplateGroups(parsedTemplateGroups));
+        setLastSavedAt(new Date().toISOString());
+      }
       queryClient.invalidateQueries({ queryKey: ["gallery", id] });
       queryClient.invalidateQueries({ queryKey: ["galleries"] });
       if (data?.session_id) {
         queryClient.invalidateQueries({ queryKey: ["galleries", data.session_id] });
       }
+    },
+    onSettled: () => {
+      const pendingPayload = pendingSavePayloadRef.current;
+      if (!pendingPayload) return;
+      pendingSavePayloadRef.current = null;
+      updateMutation.mutate(pendingPayload);
     },
     onError: (error) => {
       toast({
@@ -1398,6 +1415,71 @@ export default function GalleryDetail() {
       });
     },
   });
+
+  const buildAutoSavePayload = useCallback(
+    (nextCoverPhotoId: string | null): UpdatePayload | null => {
+      if (!data) return null;
+      if (!id) return null;
+      if (!title.trim()) return null;
+      if (type === "other" && !customType.trim()) return null;
+
+      const branding: Record<string, unknown> = { ...(data.branding ?? {}) };
+      if (eventDate) {
+        branding.eventDate = eventDate;
+      } else {
+        delete branding.eventDate;
+      }
+      if (type === "other" && customType.trim()) {
+        branding.customType = customType.trim();
+      } else {
+        delete branding.customType;
+      }
+      branding.selectionSettings = selectionSettings;
+
+      const normalizedTemplateGroups = selectionTemplateGroups
+        .map((group) => {
+          const rules = normalizeSelectionTemplate(group.rules) ?? [];
+          return {
+            serviceId: group.serviceId ?? null,
+            serviceName: group.serviceName ?? null,
+            billingType: group.billingType ?? null,
+            disabled: group.disabled === true,
+            rules,
+          };
+        })
+        .filter((group) => group.disabled || group.rules.length > 0);
+
+      if (normalizedTemplateGroups.length > 0) {
+        branding.selectionTemplateGroups = normalizedTemplateGroups.map((group) => ({
+          serviceId: group.serviceId,
+          serviceName: group.serviceName,
+          billingType: group.billingType,
+          rules: group.rules,
+          disabled: group.disabled,
+        }));
+        branding.selectionTemplate = normalizedTemplateGroups.flatMap((group) => group.rules ?? []);
+      } else {
+        delete branding.selectionTemplateGroups;
+        delete branding.selectionTemplate;
+      }
+
+      if (nextCoverPhotoId) {
+        branding.coverAssetId = nextCoverPhotoId;
+      } else {
+        delete branding.coverAssetId;
+      }
+
+      return {
+        title: title.trim(),
+        type,
+        status,
+        branding,
+        publishedAt:
+          status === "published" ? data.published_at ?? new Date().toISOString() : data.published_at ?? null,
+      };
+    },
+    [customType, data, eventDate, id, selectionSettings, selectionTemplateGroups, status, title, type]
+  );
 
   const isSaving = updateMutation.isPending;
   const saveGallery = updateMutation.mutate;
@@ -1464,56 +1546,8 @@ export default function GalleryDetail() {
     }
 
     autoSaveTimerRef.current = window.setTimeout(() => {
-      const branding: Record<string, unknown> = { ...(data?.branding ?? {}) };
-      if (eventDate) {
-        branding.eventDate = eventDate;
-      } else {
-        delete branding.eventDate;
-      }
-      if (type === "other" && customType.trim()) {
-        branding.customType = customType.trim();
-      } else {
-        delete branding.customType;
-      }
-      branding.selectionSettings = selectionSettings;
-      const normalizedTemplateGroups = selectionTemplateGroups
-        .map((group) => {
-          const rules = normalizeSelectionTemplate(group.rules) ?? [];
-          return {
-            serviceId: group.serviceId ?? null,
-            serviceName: group.serviceName ?? null,
-            billingType: group.billingType ?? null,
-            disabled: group.disabled === true,
-            rules,
-          };
-        })
-        .filter((group) => group.disabled || group.rules.length > 0);
-
-      if (normalizedTemplateGroups.length > 0) {
-        branding.selectionTemplateGroups = normalizedTemplateGroups.map((group) => ({
-          serviceId: group.serviceId,
-          serviceName: group.serviceName,
-          billingType: group.billingType,
-          rules: group.rules,
-          disabled: group.disabled,
-        }));
-        branding.selectionTemplate = normalizedTemplateGroups.flatMap((group) => group.rules ?? []);
-      } else {
-        delete branding.selectionTemplateGroups;
-        delete branding.selectionTemplate;
-      }
-      if (coverPhotoId) {
-        branding.coverAssetId = coverPhotoId;
-      } else {
-        delete branding.coverAssetId;
-      }
-      const payload: UpdatePayload = {
-        title: title.trim(),
-        type,
-        status,
-        branding,
-        publishedAt: status === "published" ? data.published_at ?? new Date().toISOString() : data?.published_at ?? null,
-      };
+      const payload = buildAutoSavePayload(coverPhotoId);
+      if (!payload) return;
       saveGallery(payload);
     }, AUTO_SAVE_DELAY);
 
@@ -1534,6 +1568,7 @@ export default function GalleryDetail() {
     coverPhotoId,
     selectionSettings,
     selectionTemplateGroups,
+    buildAutoSavePayload,
     saveGallery,
     isSaving,
   ]);
@@ -2333,9 +2368,40 @@ export default function GalleryDetail() {
     [clearUploadTimer, deleteGalleryAssets, t, toast]
   );
 
-  const handleSetCover = useCallback((photoId: string) => {
-    setCoverPhotoId(photoId);
-  }, []);
+  const handleSetCover = useCallback(
+    (photoId: string) => {
+      setCoverPhotoId(photoId);
+
+      if (!id) return;
+      if (autoSaveTimerRef.current) {
+        window.clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+
+      queryClient.setQueryData(["gallery", id], (previous: GalleryDetailRow | null | undefined) => {
+        if (!previous) return previous;
+        const previousBranding = (previous.branding ?? {}) as Record<string, unknown>;
+        return {
+          ...previous,
+          branding: {
+            ...previousBranding,
+            coverAssetId: photoId,
+          },
+        };
+      });
+
+      const payload = buildAutoSavePayload(photoId);
+      if (!payload) return;
+
+      if (updateMutation.isPending) {
+        pendingSavePayloadRef.current = payload;
+        return;
+      }
+
+      saveGallery(payload);
+    },
+    [buildAutoSavePayload, id, queryClient, saveGallery, updateMutation.isPending]
+  );
 
   const refreshPreviewUrl = useCallback(
     (photoId: string) => {
@@ -4072,10 +4138,10 @@ export default function GalleryDetail() {
 	                                    {selectedRuleLabels.map((label) => (
 	                                      <div
 	                                        key={`${item.id}-${label}`}
-	                                        className="flex items-center gap-1.5 rounded-md border border-gray-100 bg-white/95 px-2 py-1 shadow-sm animate-in fade-in slide-in-from-left-2 duration-200"
+	                                        className="flex items-center gap-1.5 rounded-md border border-white/10 bg-slate-950/60 px-2 py-1 shadow-sm backdrop-blur-md animate-in fade-in slide-in-from-left-2 duration-200"
 	                                      >
                                         <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                                        <span className="truncate text-[10px] font-bold leading-none text-slate-800">
+                                        <span className="truncate text-[10px] font-bold leading-none text-white/90">
                                           {label}
                                         </span>
                                       </div>

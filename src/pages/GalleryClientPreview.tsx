@@ -1637,28 +1637,28 @@ export default function GalleryClientPreview() {
 
 	        {/* ROW 3: Tasks */}
 	        {selectionRules.length > 0 ? (
-	          <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-3">
+	          <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-2">
 	            <div className="flex items-stretch gap-4 md:gap-3 min-w-max">
 	              <button
 	                type="button"
 	                data-touch-target="compact"
 	                onClick={() => setActiveFilter("all")}
-	                className={`w-[220px] shrink-0 rounded-2xl border bg-white px-5 py-4 md:px-4 md:py-3 text-left shadow-sm transition-colors ${
+	                className={`w-[220px] md:w-[200px] shrink-0 rounded-2xl border bg-white px-5 py-4 md:px-3 md:py-2.5 text-left shadow-sm transition-colors ${
 	                  activeFilter === "all"
 	                    ? "border-gray-900"
 	                    : "border-gray-200 hover:border-gray-300"
 	                }`}
 	              >
-	                <p className="text-xs font-bold uppercase tracking-widest text-gray-500 truncate">
+	                <p className="text-xs font-bold uppercase tracking-widest text-gray-500 truncate md:hidden">
 	                  {heroTitle}
 	                </p>
-	                <div className="mt-4 flex items-center gap-3">
+	                <div className="mt-4 md:mt-0 flex items-center gap-3">
 	                  <LayoutGrid size={18} className="text-gray-900" aria-hidden="true" />
 	                  <span className="text-sm font-bold text-gray-900">
 	                    {t("sessionDetail.gallery.clientPreview.filters.all")}
 	                  </span>
 	                </div>
-	                <div className="mt-4 text-xs font-semibold text-gray-400">
+	                <div className="mt-4 md:mt-2 text-xs font-semibold text-gray-400 tabular-nums">
 	                  {totalPhotoCount}
 	                </div>
 	              </button>
@@ -1683,7 +1683,7 @@ export default function GalleryClientPreview() {
 	                    type="button"
 	                    data-touch-target="compact"
 	                    onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
-	                    className={`w-[240px] shrink-0 rounded-2xl border bg-white px-5 py-4 md:px-4 md:py-3 text-left shadow-sm transition-colors ${
+	                    className={`w-[240px] md:w-[220px] shrink-0 rounded-2xl border bg-white px-5 py-4 md:px-3 md:py-2.5 text-left shadow-sm transition-colors ${
 	                      isActive
 	                        ? "border-gray-900"
 	                        : isComplete

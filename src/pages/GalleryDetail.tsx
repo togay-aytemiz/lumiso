@@ -303,6 +303,7 @@ export default function GalleryDetail() {
   const isMobile = useIsMobile();
   const { t } = useTranslation("pages");
   const { t: tForms } = useTranslation("forms");
+  const { t: tCommon } = useTranslation("common");
   const { toast } = useToast();
   const { activeOrganizationId } = useOrganization();
   const { timezone, timeFormat } = useOrganizationTimezone();
@@ -399,6 +400,7 @@ export default function GalleryDetail() {
   });
   const autoSaveTimerRef = useRef<number | null>(null);
   const pendingSavePayloadRef = useRef<UpdatePayload | null>(null);
+  const galleryAssetsSyncTimerRef = useRef<number | null>(null);
   const attemptedDefaultSetRef = useRef(false);
   const isMountedRef = useRef(false);
 
@@ -677,7 +679,11 @@ export default function GalleryDetail() {
     });
   }, [data, parseSelectionTemplateGroups]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (galleryAssetsSyncTimerRef.current) {
+      window.clearTimeout(galleryAssetsSyncTimerRef.current);
+      galleryAssetsSyncTimerRef.current = null;
+    }
     setCoverPhotoId(null);
     setUploadQueue([]);
     setSelectedBatchIds(new Set());
@@ -735,9 +741,15 @@ export default function GalleryDetail() {
     },
   });
 
-  const { data: storedAssets, isLoading: storedAssetsLoading } = useQuery({
+  const {
+    data: storedAssets,
+    isLoading: storedAssetsLoading,
+    isError: storedAssetsLoadError,
+    refetch: refetchStoredAssets,
+  } = useQuery({
     queryKey: ["gallery_assets", id],
     enabled: Boolean(id),
+    refetchOnMount: "always",
     queryFn: async (): Promise<UploadItem[]> => {
       if (!id) return [];
       const { data, error } = await supabase
@@ -2011,6 +2023,18 @@ export default function GalleryDetail() {
     }
   }, []);
 
+  const scheduleGalleryAssetsSync = useCallback(() => {
+    if (!id) return;
+    if (galleryAssetsSyncTimerRef.current) return;
+
+    galleryAssetsSyncTimerRef.current = window.setTimeout(() => {
+      galleryAssetsSyncTimerRef.current = null;
+      queryClient.invalidateQueries({ queryKey: ["gallery_assets", id] });
+      queryClient.invalidateQueries({ queryKey: ["gallery_storage_usage", id] });
+      queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_photos", id] });
+    }, 400);
+  }, [id, queryClient]);
+
   useEffect(() => {
     Object.keys(uploadTimersRef.current).forEach((uploadId) => clearUploadTimer(uploadId));
   }, [id, clearUploadTimer]);
@@ -2151,6 +2175,7 @@ export default function GalleryDetail() {
             };
           })
         );
+        scheduleGalleryAssetsSync();
       } catch (error: unknown) {
         clearUploadTimer(assetId);
         const message =
@@ -2164,7 +2189,7 @@ export default function GalleryDetail() {
         );
       }
     },
-    [activeOrganizationId, clearUploadTimer, id, t]
+    [activeOrganizationId, clearUploadTimer, id, scheduleGalleryAssetsSync, t]
   );
 
   const handleCancelUpload = useCallback(
@@ -3676,6 +3701,59 @@ export default function GalleryDetail() {
 	                      ) : null}
 	
 			                    {!activeSelectionRuleId && uploadsForActiveSet.length === 0 ? (
+                          storedAssetsLoading || setsLoading || isLoading ? (
+                            viewMode === "list" ? (
+                              <div className="space-y-3 rounded-3xl border border-border/60 bg-white px-6 py-10 animate-in fade-in duration-300">
+                                {Array.from({ length: 6 }).map((_, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background p-3 shadow-sm"
+                                  >
+                                    <Skeleton className="h-12 w-12 rounded-xl" />
+                                    <div className="min-w-0 flex-1 space-y-2">
+                                      <Skeleton className="h-4 w-1/3" />
+                                      <Skeleton className="h-3 w-1/4" />
+                                    </div>
+                                    <Skeleton className="h-8 w-20 rounded-lg" />
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="rounded-3xl border border-border/60 bg-white px-6 py-10 animate-in fade-in duration-300">
+                                <div className="grid w-full gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                                  {Array.from({ length: 10 }).map((_, index) => (
+                                    <div
+                                      key={index}
+                                      className="relative aspect-[3/4] overflow-hidden rounded-xl border border-border/60 bg-muted/20"
+                                    >
+                                      <Skeleton className="h-full w-full" />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          ) : storedAssetsLoadError ? (
+                            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-24 text-center animate-in fade-in zoom-in duration-300">
+                              <div className="btn-surface-action mb-4 !rounded-full p-6">
+                                <RotateCcw size={48} />
+                              </div>
+                              <h3 className="mb-2 text-lg font-bold text-gray-800">
+                                {tCommon("errorBoundary.entityDefaultTitle")}
+                              </h3>
+                              <p className="mx-auto max-w-sm text-sm leading-relaxed text-gray-500">
+                                {tCommon("messages.error.generic")}
+                              </p>
+                              <Button
+                                variant="surface"
+                                size="sm"
+                                className="mt-8 gap-2"
+                                onClick={() => void refetchStoredAssets()}
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                                {tCommon("buttons.tryAgain")}
+                              </Button>
+                            </div>
+                          ) : (
 	                          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-24 text-center animate-in fade-in zoom-in duration-300">
 	                            <div className="btn-surface-action btn-surface-accent mb-4 !rounded-full p-6">
 	                              <Upload size={48} />
@@ -3702,6 +3780,7 @@ export default function GalleryDetail() {
                               {t("sessionDetail.gallery.labels.addMedia")}
                             </Button>
                           </div>
+                          )
 		                    ) : null}
 
                         {activeSelectionRuleId && filteredUploads.length === 0 ? (() => {

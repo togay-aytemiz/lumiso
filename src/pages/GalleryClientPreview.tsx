@@ -55,6 +55,8 @@ type GallerySetRow = {
 type GalleryAssetRow = {
   id: string;
   storage_path_web: string | null;
+  width: number | null;
+  height: number | null;
   status: "processing" | "ready" | "failed";
   metadata: Record<string, unknown> | null;
   created_at: string;
@@ -66,6 +68,8 @@ type ClientPreviewPhotoBase = {
   filename: string;
   setId: string | null;
   isStarred: boolean;
+  width: number | null;
+  height: number | null;
 };
 
 type ClientPreviewPhoto = ClientPreviewPhotoBase & {
@@ -111,6 +115,15 @@ const SECTION_SKELETON_COUNT = 10;
 
 const normalizeSelectionPartKey = (value: unknown) =>
   typeof value === "string" ? value.trim().toLowerCase() : "";
+
+const parsePositiveNumber = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) return value;
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  return null;
+};
 
 const parseCountValue = (value: unknown): number | null => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -191,13 +204,13 @@ export default function GalleryClientPreview() {
   const { data: photosBase, isLoading: photosLoading } = useQuery({
     queryKey: ["gallery_client_preview_photos", id],
     enabled: Boolean(id),
-    refetchOnMount: "always",
     refetchOnWindowFocus: true,
+    staleTime: (GALLERY_ASSET_SIGNED_URL_TTL_SECONDS - 5 * 60) * 1000,
     queryFn: async (): Promise<ClientPreviewPhotoBase[]> => {
       if (!id) return [];
       const { data, error } = await supabase
         .from("gallery_assets")
-        .select("id,storage_path_web,status,metadata,created_at")
+        .select("id,storage_path_web,status,metadata,created_at,width,height")
         .eq("gallery_id", id)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -241,6 +254,8 @@ export default function GalleryClientPreview() {
           originalName || (row.storage_path_web ? getStorageBasename(row.storage_path_web) : "photo");
         const isStarred = metadata.starred === true;
         const url = signedUrlById.get(row.id) ?? "";
+        const width = parsePositiveNumber(row.width) ?? parsePositiveNumber(metadata.width);
+        const height = parsePositiveNumber(row.height) ?? parsePositiveNumber(metadata.height);
 
         return {
           id: row.id,
@@ -248,6 +263,8 @@ export default function GalleryClientPreview() {
           filename,
           setId,
           isStarred,
+          width,
+          height,
         };
       });
     },
@@ -682,12 +699,13 @@ export default function GalleryClientPreview() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting && visibleCount < filteredPhotos.length) {
-          setTimeout(() => {
-            setVisibleCount((prev) => Math.min(prev + ITEMS_PER_PAGE, filteredPhotos.length));
-          }, 100);
+          setVisibleCount((prev) => {
+            if (prev >= filteredPhotos.length) return prev;
+            return Math.min(prev + ITEMS_PER_PAGE, filteredPhotos.length);
+          });
         }
       },
-      { threshold: 0.1, rootMargin: "200px" }
+      { threshold: 0.01, rootMargin: "800px 0px" }
     );
 
     if (observerTarget.current) {
@@ -1121,11 +1139,11 @@ export default function GalleryClientPreview() {
   const getGridClass = () => {
     switch (gridSize) {
       case "large":
-        return "columns-1 md:columns-2 gap-4 space-y-4";
+        return "grid items-start grid-cols-1 md:grid-cols-2 gap-4";
       case "small":
-        return "columns-2 md:columns-4 lg:columns-5 gap-4 space-y-4";
+        return "grid items-start grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4";
       default:
-        return "columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4";
+        return "grid items-start grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4";
     }
   };
 
@@ -1221,9 +1239,9 @@ export default function GalleryClientPreview() {
   };
 
   const renderSkeletonGrid = (keyPrefix: string) => (
-    <div className={getGridClass()} aria-hidden="true">
+    <div className={getGridClass()} aria-hidden="true" data-testid="gallery-client-preview-skeleton-grid">
       {Array.from({ length: SECTION_SKELETON_COUNT }).map((_, index) => (
-        <div key={`${keyPrefix}-${index}`} className="break-inside-avoid mb-4">
+        <div key={`${keyPrefix}-${index}`}>
           <Skeleton className="w-full aspect-[3/4] rounded-sm" />
         </div>
       ))}
@@ -1231,7 +1249,7 @@ export default function GalleryClientPreview() {
   );
 
   const renderPhotoGrid = (photos: ClientPreviewPhoto[]) => (
-    <div className={getGridClass()}>
+    <div className={getGridClass()} data-testid="gallery-client-preview-photo-grid">
       {photos.map((photo) => {
         const isMenuOpen = activeMenuId === photo.id;
         const selectionIds = photo.selections;
@@ -1241,7 +1259,7 @@ export default function GalleryClientPreview() {
         const remainingSelectionCount = Math.max(0, resolvedSelectionIds.length - visibleSelectionIds.length);
 
         return (
-          <div key={photo.id} className="break-inside-avoid group relative mb-4 z-0" style={{ zIndex: isMenuOpen ? 50 : 0 }}>
+          <div key={photo.id} className="group relative z-0" style={{ zIndex: isMenuOpen ? 50 : 0 }}>
             <div
               onClick={() => openViewer(photo.id)}
               className="overflow-hidden rounded-sm bg-gray-100 relative cursor-pointer"
@@ -1250,6 +1268,8 @@ export default function GalleryClientPreview() {
                 <img
                   src={photo.url}
                   alt={photo.filename}
+                  width={photo.width && photo.width > 0 ? photo.width : 3}
+                  height={photo.height && photo.height > 0 ? photo.height : 4}
                   loading="lazy"
                   decoding="async"
                   className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"

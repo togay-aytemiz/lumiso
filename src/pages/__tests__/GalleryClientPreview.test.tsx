@@ -113,7 +113,13 @@ describe("GalleryClientPreview", () => {
     render(<GalleryClientPreview />);
 
     expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
-    expect(await screen.findByAltText("a.jpg")).toBeInTheDocument();
+    const thumbnail = await screen.findByAltText("a.jpg");
+    expect(thumbnail).toBeInTheDocument();
+    expect(thumbnail).toHaveAttribute("width");
+    expect(thumbnail).toHaveAttribute("height");
+    const grid = await screen.findByTestId("gallery-client-preview-photo-grid");
+    expect(grid).toHaveClass("grid");
+    expect(grid.className).not.toMatch(/columns-/);
     expect(await screen.findByText("Studio")).toBeInTheDocument();
   });
 

@@ -572,6 +572,7 @@
         "previewLabel": "Gallery preview",
         "passwordBadge": "Locked",
         "publicLinkLabel": "Gallery link",
+        "publicLinkCardTitle": "Share link",
         "publicLinkPlaceholder": "—",
         "publicLinkAria": "Gallery link",
         "generatingLink": "Generating link…",
@@ -590,8 +591,8 @@
         "email": "Email",
         "emailSubject": "{{title}} - Photo gallery",
         "footerPublicLabel": "Public",
-        "openLink": "Test link",
-        "messageTemplate": "Hi {{clientName}}, your photos are ready!\\n\\n👉🏻 Your gallery: {{url}}\\n🔒 Access password: {{pin}}\\n",
+        "openLink": "Test",
+        "messageTemplate": "Hi {{clientName}}, your photos are ready!\n\n👉 Your gallery: {{url}}\n🔒 Access password: {{pin}}",
         "errors": {
           "missingGalleryId": "Gallery id is missing.",
           "generateFailed": "Could not generate a public link."

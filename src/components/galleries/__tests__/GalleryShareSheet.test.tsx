@@ -40,7 +40,7 @@ describe("GalleryShareSheet", () => {
     );
 
     const expectedUrl = "http://localhost/g/PUB123";
-    expect(screen.getByDisplayValue(expectedUrl)).toBeInTheDocument();
+    expect(screen.getByText(expectedUrl)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
 
@@ -63,6 +63,27 @@ describe("GalleryShareSheet", () => {
     );
 
     expect(screen.getByRole("button", { name: "Copy" })).toBeDisabled();
-    expect(screen.getByDisplayValue("Generating link…")).toBeInTheDocument();
+    expect(screen.getByText("Generating link…")).toBeInTheDocument();
+  });
+
+  it("initializes the message with real line breaks", async () => {
+    render(
+      <GalleryShareSheet
+        open
+        onOpenChange={jest.fn()}
+        title="My gallery"
+        clientName="Ayse"
+        publicId="PUB123"
+        pin="4T0PXF"
+      />
+    );
+
+    const messageBox = screen.getByRole("textbox");
+
+    await waitFor(() => {
+      expect((messageBox as HTMLTextAreaElement).value).toMatch(/\r?\n\r?\n/);
+    });
+
+    expect((messageBox as HTMLTextAreaElement).value).not.toContain("\\n");
   });
 });

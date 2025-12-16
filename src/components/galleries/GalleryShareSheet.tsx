@@ -7,6 +7,7 @@ import {
   ExternalLink,
   Globe,
   Info,
+  Link2,
   Loader2,
   Lock,
   Mail,
@@ -15,7 +16,6 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -270,46 +270,58 @@ export function GalleryShareSheet({
               <label className={cn(sectionLabelClassName, "mb-3")}>
                 {t("sessionDetail.gallery.shareSheet.publicLinkLabel")}
               </label>
-              <div className="flex gap-2 h-12">
-                <div className="flex-1 relative h-full">
-                  <Input
-                    type="text"
-                    readOnly
-                    value={linkValue}
-                    onFocus={(event) => event.currentTarget.select()}
-                    className={cn(
-                      "w-full h-full pl-4 pr-10 bg-muted/30 border-border rounded-xl text-sm text-foreground focus-visible:ring-brand-500",
-                      linkCopyDisabled && "text-muted-foreground"
-                    )}
-                    aria-label={t("sessionDetail.gallery.shareSheet.publicLinkAria")}
-                    disabled={linkCopyDisabled}
-                  />
-                  {generatingPublicId ? (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              <div className="space-y-3">
+                <div className="rounded-xl border border-border bg-muted/20 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 h-10 w-10 rounded-lg border border-border bg-background/70 flex items-center justify-center text-muted-foreground">
+                      <Link2 className="h-5 w-5" aria-hidden="true" />
                     </div>
-                  ) : (
-                    <div
-                      className={cn(
-                        "absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500 transition-opacity duration-300",
-                        copiedLink ? "opacity-100" : "opacity-0"
-                      )}
-                    >
-                      <Check className="h-4 w-4" aria-hidden="true" />
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                          {t("sessionDetail.gallery.shareSheet.publicLinkCardTitle")}
+                        </span>
+                        {generatingPublicId ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
+                        ) : null}
+                      </div>
+                      <div
+                        className={cn(
+                          "mt-1 font-mono text-base sm:text-lg text-foreground break-all select-text",
+                          !publicUrl && "text-muted-foreground"
+                        )}
+                        aria-label={t("sessionDetail.gallery.shareSheet.publicLinkAria")}
+                      >
+                        {linkValue}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
 
-                <Button
-                  type="button"
-                  onClick={handleCopyLink}
-                  disabled={linkCopyDisabled}
-                  className="h-full px-6 bg-gray-900 hover:bg-black text-white rounded-xl font-medium text-sm flex items-center gap-2 transition-colors active:scale-95 transform whitespace-nowrap"
-                >
-                  {copiedLink ? t("sessionDetail.gallery.shareSheet.copied") : t("sessionDetail.gallery.shareSheet.copyLink")}
-                  {!copiedLink && <Copy className="h-4 w-4" aria-hidden="true" />}
-                  {copiedLink && <Check className="h-4 w-4" aria-hidden="true" />}
-                </Button>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant="surface"
+                    onClick={handleOpenLink}
+                    disabled={!publicUrl}
+                    className="w-full justify-center"
+                  >
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    {t("sessionDetail.gallery.shareSheet.openLink")}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="surface"
+                    onClick={handleCopyLink}
+                    disabled={linkCopyDisabled}
+                    className={cn("btn-surface-accent w-full justify-center", copiedLink && "pointer-events-none")}
+                  >
+                    {copiedLink ? t("sessionDetail.gallery.shareSheet.copied") : t("sessionDetail.gallery.shareSheet.copyLink")}
+                    {copiedLink ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -426,24 +438,10 @@ export function GalleryShareSheet({
 
         <div className="border-t pt-4 bg-muted/20">
           <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1 text-muted-foreground/80">
-                <Globe className="h-3 w-3" aria-hidden="true" />
-                {t("sessionDetail.gallery.shareSheet.footerPublicLabel")}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={handleOpenLink}
-              disabled={!publicUrl}
-              className={cn(
-                "flex items-center gap-1 hover:text-foreground transition-colors",
-                !publicUrl && "opacity-50 cursor-not-allowed hover:text-muted-foreground"
-              )}
-            >
-              {t("sessionDetail.gallery.shareSheet.openLink")}
-              <ExternalLink className="h-3 w-3" aria-hidden="true" />
-            </button>
+            <span className="flex items-center gap-1 text-muted-foreground/80">
+              <Globe className="h-3 w-3" aria-hidden="true" />
+              {t("sessionDetail.gallery.shareSheet.footerPublicLabel")}
+            </span>
           </div>
         </div>
       </SheetContent>

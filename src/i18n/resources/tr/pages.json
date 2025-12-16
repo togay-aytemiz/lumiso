@@ -587,6 +587,7 @@
         "previewLabel": "Galeri Önizlemesi",
         "passwordBadge": "Şifreli",
         "publicLinkLabel": "Galeri Bağlantısı",
+        "publicLinkCardTitle": "Paylaşım Linki",
         "publicLinkPlaceholder": "—",
         "publicLinkAria": "Galeri bağlantısı",
         "generatingLink": "Link oluşturuluyor…",
@@ -605,8 +606,8 @@
         "email": "E-Posta",
         "emailSubject": "{{title}} - Fotoğraf Galerisi",
         "footerPublicLabel": "Herkese Açık",
-        "openLink": "Linki test et",
-        "messageTemplate": "Merhaba {{clientName}}, fotoğraflarınız hazır!\\n\\n👉🏻 Galeriniz: {{url}}\\n🔒 Giriş Şifresi: {{pin}}\\n",
+        "openLink": "Test Et",
+        "messageTemplate": "Merhaba {{clientName}}, fotoğraflarınız hazır!\n\n👉 Galeriniz: {{url}}\n🔒 Giriş Şifresi: {{pin}}",
         "errors": {
           "missingGalleryId": "Galeri kimliği bulunamadı.",
           "generateFailed": "Paylaşım linki oluşturulamadı."

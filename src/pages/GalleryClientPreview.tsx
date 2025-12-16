@@ -2194,124 +2194,99 @@ export default function GalleryClientPreview() {
         {/* ROW 3: Tasks + Filters */}
         {!isMobile ? (
           <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-2">
-            <div className="flex items-stretch gap-4 md:gap-3 min-w-max">
-              {activeFilter !== "all" ? (
-                <button
-                  type="button"
-                  data-touch-target="compact"
-                  aria-label={t("sessionDetail.gallery.clientPreview.filters.all")}
-                  onClick={() => setActiveFilter("all")}
-                  className={`group relative flex flex-col justify-between w-[220px] md:w-[200px] shrink-0 rounded-2xl border-2 bg-white px-5 py-4 md:px-3 md:py-2.5 text-left shadow-sm transition-all duration-300 ${activeFilter === "all"
-                    ? "border-emerald-600 shadow-md"
-                    : "border-gray-200 hover:border-emerald-300 hover:shadow-md"
-                    }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <LayoutGrid size={18} className="text-gray-900" aria-hidden="true" />
-                    <span className="text-sm font-bold text-gray-900">
-                      {t("sessionDetail.gallery.clientPreview.filters.all")}
+            <div className="flex items-start gap-4 md:gap-3 min-w-max">
+              <div className="flex flex-col gap-3 w-[220px] md:w-[200px] shrink-0">
+                {activeFilter !== "all" ? (
+                  <button
+                    type="button"
+                    data-touch-target="compact"
+                    aria-label={t("sessionDetail.gallery.clientPreview.filters.all")}
+                    onClick={() => setActiveFilter("all")}
+                    className="group flex items-center justify-between w-full rounded-2xl border-2 border-emerald-200 bg-white px-4 py-3 text-left shadow-sm transition-all hover:border-emerald-300 hover:shadow-md"
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <LayoutGrid size={18} className="text-gray-900 shrink-0" aria-hidden="true" />
+                      <span className="text-sm font-bold text-gray-900 truncate">
+                        {t("sessionDetail.gallery.clientPreview.filters.all")}
+                      </span>
                     </span>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-xs font-semibold text-gray-500 tabular-nums">
-                    <span>
-                      {totalPhotoCount} {t("sessionDetail.gallery.clientPreview.selections.allPhotos")}
+                    <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700 tabular-nums">
+                      {totalPhotoCount}
                     </span>
-                    <span className="flex items-center gap-1 text-emerald-600">
-                      <Check size={14} strokeWidth={3} />
-                      {t("sessionDetail.gallery.clientPreview.labels.validSelection")}
-                    </span>
-                  </div>
-                </button>
-              ) : null}
+                  </button>
+                ) : null}
 
-              {favoritesEnabled ? (
-                <button
-                  type="button"
-                  data-touch-target="compact"
-                  aria-label={t("sessionDetail.gallery.clientPreview.filters.favorites")}
-                  onClick={() => setActiveFilter(activeFilter === "favorites" ? "all" : "favorites")}
-                  className={`group relative flex flex-col justify-between w-[220px] md:w-[200px] shrink-0 rounded-2xl border-2 transition-all text-left overflow-hidden ${activeFilter === "favorites"
-                    ? "border-rose-300 bg-rose-50 shadow-md"
-                    : "border-rose-100 bg-white hover:border-rose-200 hover:shadow-md"
-                    }`}
-                >
-                  <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
-                      <Heart size={16} fill="currentColor" aria-hidden="true" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-gray-900 truncate">
+                {favoritesEnabled ? (
+                  <button
+                    type="button"
+                    data-touch-target="compact"
+                    aria-label={t("sessionDetail.gallery.clientPreview.filters.favorites")}
+                    onClick={() => setActiveFilter(activeFilter === "favorites" ? "all" : "favorites")}
+                    className={`group flex items-center justify-between w-full rounded-2xl border-2 px-4 py-3 text-left shadow-sm transition-all ${activeFilter === "favorites"
+                      ? "border-rose-300 bg-rose-50 shadow-md ring-1 ring-rose-200"
+                      : "border-rose-100 bg-white hover:border-rose-200 hover:shadow-md"
+                      }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-100 text-rose-600 shrink-0">
+                        <Heart size={16} fill="currentColor" aria-hidden="true" />
+                      </span>
+                      <span className="text-sm font-bold text-gray-900 truncate">
                         {t("sessionDetail.gallery.clientPreview.filters.favorites")}
-                      </p>
-                      <p className="text-[11px] text-rose-600 font-semibold">
-                        {favoritePhotoIds.size} {t("sessionDetail.gallery.clientPreview.selections.title")}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="px-4 pb-4 text-[11px] font-semibold text-rose-700 flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-rose-300" />
-                    {t("sessionDetail.gallery.clientPreview.filters.favorites")}
-                  </div>
-                </button>
-              ) : null}
+                      </span>
+                    </span>
+                    <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-rose-100 px-2 py-1 text-xs font-bold text-rose-700 tabular-nums">
+                      {favoritePhotoIds.size}
+                    </span>
+                  </button>
+                ) : null}
 
-              <button
-                type="button"
-                data-touch-target="compact"
-                aria-label={t("sessionDetail.gallery.clientPreview.filters.starred")}
-                onClick={() => setActiveFilter(activeFilter === "starred" ? "all" : "starred")}
-                className={`group relative flex flex-col justify-between w-[220px] md:w-[200px] shrink-0 rounded-2xl border-2 transition-all text-left overflow-hidden ${activeFilter === "starred"
-                  ? "border-amber-300 bg-amber-50 shadow-md"
-                  : "border-amber-100 bg-white hover:border-amber-200 hover:shadow-md"
-                  }`}
-              >
-                <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
-                    <Star size={16} fill="currentColor" aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-gray-900 truncate">
+                <button
+                  type="button"
+                  data-touch-target="compact"
+                  aria-label={t("sessionDetail.gallery.clientPreview.filters.starred")}
+                  onClick={() => setActiveFilter(activeFilter === "starred" ? "all" : "starred")}
+                  className={`group flex items-center justify-between w-full rounded-2xl border-2 px-4 py-3 text-left shadow-sm transition-all ${activeFilter === "starred"
+                    ? "border-amber-300 bg-amber-50 shadow-md ring-1 ring-amber-200"
+                    : "border-amber-100 bg-white hover:border-amber-200 hover:shadow-md"
+                    }`}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-600 shrink-0">
+                      <Star size={16} fill="currentColor" aria-hidden="true" />
+                    </span>
+                    <span className="text-sm font-bold text-gray-900 truncate">
                       {t("sessionDetail.gallery.clientPreview.filters.starred")}
-                    </p>
-                    <p className="text-[11px] text-amber-700 font-semibold">
-                      {starredCount} {t("sessionDetail.gallery.clientPreview.selections.title")}
-                    </p>
-                  </div>
-                </div>
-                <div className="px-4 pb-4 text-[11px] font-semibold text-amber-700 flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-amber-300" />
-                  {t("sessionDetail.gallery.clientPreview.filters.starred")}
-                </div>
-              </button>
-
-              <button
-                type="button"
-                data-touch-target="compact"
-                aria-label={t("sessionDetail.gallery.clientPreview.filters.unselected")}
-                onClick={() => setActiveFilter(activeFilter === "unselected" ? "all" : "unselected")}
-                className={`group relative flex flex-col justify-between w-[220px] md:w-[200px] shrink-0 rounded-2xl border-2 transition-all text-left overflow-hidden ${activeFilter === "unselected"
-                  ? "border-gray-400 bg-gray-100 shadow-md"
-                  : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
-                  }`}
-              >
-                <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
-                    <CircleDashed size={16} aria-hidden="true" />
+                    </span>
                   </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-gray-900 truncate">
+                  <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800 tabular-nums">
+                    {starredCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  data-touch-target="compact"
+                  aria-label={t("sessionDetail.gallery.clientPreview.filters.unselected")}
+                  onClick={() => setActiveFilter(activeFilter === "unselected" ? "all" : "unselected")}
+                  className={`group flex items-center justify-between w-full rounded-2xl border-2 px-4 py-3 text-left shadow-sm transition-all ${activeFilter === "unselected"
+                    ? "border-gray-400 bg-gray-100 shadow-md ring-1 ring-gray-300"
+                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
+                    }`}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gray-100 text-gray-500 shrink-0">
+                      <CircleDashed size={16} aria-hidden="true" />
+                    </span>
+                    <span className="text-sm font-bold text-gray-900 truncate">
                       {t("sessionDetail.gallery.clientPreview.filters.unselected")}
-                    </p>
-                    <p className="text-[11px] text-gray-600 font-semibold">
-                      {unselectedCount} {t("sessionDetail.gallery.clientPreview.selections.title")}
-                    </p>
-                  </div>
-                </div>
-                <div className="px-4 pb-4 text-[11px] font-semibold text-gray-600 flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-gray-300" />
-                  {t("sessionDetail.gallery.clientPreview.filters.unselected")}
-                </div>
-              </button>
+                    </span>
+                  </span>
+                  <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-gray-100 px-2 py-1 text-xs font-bold text-gray-700 tabular-nums">
+                    {unselectedCount}
+                  </span>
+                </button>
+              </div>
 
               {selectionRules.map((rule) => {
                 const isActive = activeFilter === rule.id;

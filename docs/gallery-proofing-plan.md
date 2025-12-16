@@ -7,7 +7,9 @@
 ## Current Snapshot (Lumiso)
 - Session detail: gallery create sheet + per-session gallery list shipped; gallery detail supports uploads into sets (Supabase Storage proofs).
 - Services: deliverable selection template UI shipped (EN/TR).
-- Supabase: tables + private `gallery-assets` bucket with org-scoped RLS shipped; client share/PIN + client view still pending.
+- Client view: `/galleries/:id/preview` (internal) + `/g/:publicId` (public) shipped with PIN gate, responsive desktop/mobile UI, selections/favorites, and watermark overlay.
+- Supabase: tables + private `gallery-assets` bucket with org-scoped RLS shipped; public access uses `galleries.public_id` + `gallery_access` PIN + `gallery_access_grants` viewer sessions.
+- Edge: Supabase functions (`gallery-access`, `gallery-branding`) + Netlify Edge Functions for share-link OG previews (`/g/*`, `/og/g/*`).
 
 ## Competitive Notes (Picflow, Pixpa, CloudSpot, ShootProof, Pixieset, SmugMug, Zenfolio, Lightfolio, N-Vu, Online Picture Proof)
 - Client galleries with proof/final states, password/PIN, optional expiration, and share links per gallery.
@@ -27,12 +29,14 @@
 - Client can select/favorite photos up to configured limits per deliverable requirement (album pages, cover, back cover, prints). Counts enforced and visible.
 - Photographer sees selections inside the service/session context and can override/adjust before final delivery.
 
-## Data Model v1 (proposed)
-- `galleries`: `id`, `session_id`, `project_id`, `type` (`proof|retouch|final|other`), `title`, `status` (`draft|published|archived`), `pin_hash`, `expires_at?`, `watermark_settings` (logo text/url, opacity, position), `branding` (name/logo), timestamps, `published_at`.
-- `gallery_assets`: `id`, `gallery_id`, `storage_path_web`, `storage_path_original?` (Phase 2), `width`, `height`, `content_hash`, `order_index`, `status` (`processing|ready|failed`), `metadata` (color profile, tags), timestamps.
-- `gallery_clients` (optional Phase 2): `gallery_id`, `client_id|email`, `pin_hash_override?`, `access_role` (`view|download|owner`), `viewed_at`, `downloaded_at`.
-- `deliverable_selection_templates`: linked to `service_id` (or package line item), stores rows like `{part, min, max, required, notes, aspect_ratio?, output_type}` to express “Album: 30 spreads, 1 cover, 1 back cover”.
-- `client_selections`: `id`, `gallery_id`, `asset_id`, `selection_part` (e.g., `spread`, `cover`), `client_id|email`, `note?`, timestamps. Supports multiple selection rounds.
+## Data Model v1 (current)
+- `galleries`: `id`, `session_id`, `project_id`, `type` (`proof|retouch|final|other`), `title`, `status` (`draft|published|archived`), `public_id` (share token), `branding` (selection rules/settings, watermark config, coverAssetId, eventDate), timestamps, `published_at?`, `expires_at?`.
+- `gallery_access`: `gallery_id`, `pin` (6 chars), `pin_hash`, timestamps. *(PIN is readable only by org owners; used by `gallery-access`.)*
+- `gallery_access_grants`: `gallery_id`, `viewer_id` (`auth.uid()`), `expires_at`, timestamps. *(Issued after PIN check; used by RLS + Storage policies.)*
+- `gallery_sets`: `id`, `gallery_id`, `name`, `description?`, `order_index`, timestamps.
+- `gallery_assets`: `id`, `gallery_id`, `storage_path_web`, `storage_path_original?` (Phase 2), `width`, `height`, `content_hash`, `order_index`, `status` (`processing|ready|failed`), `metadata`, timestamps.
+- `services.selection_template` (jsonb): rows like `{id, part, min, max, required}` for deliverable selection rules (copied onto `galleries.branding.selectionTemplateGroups`).
+- `client_selections`: `id`, `gallery_id`, `asset_id`, `selection_part` (rule id or `"favorites"`), `client_id?` (viewer), timestamps. *(Owner overrides can be stored with `client_id` null.)*
 
 ### Example selection template (album)
 | Service | Part | Min | Max | Required | Notes |
@@ -44,7 +48,7 @@
 Templates attach to services/packages; when a session includes that deliverable, the gallery auto-loads its selection rules. Photographer can edit per gallery.
 
 ## Configuring Services for Selection Counts (how the system knows “what/How many”)
-- Where to store rules: attach a selection template to each deliverable-type service (or package line item) that requires client picks. Use `deliverable_selection_templates` as the source of truth; copy it onto the session when that service is included.
+- Where to store rules (current): use `services.selection_template` (jsonb) on deliverable-type services; when a gallery is created, copy into `galleries.branding.selectionTemplateGroups` + flattened `branding.selectionTemplate`.
 - Shape to capture: `part` (Spread/Cover/Back cover/Print), `min`, `max`, `required` (bool), `notes`, optional `aspect_ratio` and `output_type` (e.g., `spread`, `single`, `cover`).
 - Defaults and overrides:
   - **Service level**: define the template once per service (e.g., Album 30x30 → 30 spreads, 1 cover, 1 back cover).
@@ -54,7 +58,8 @@ Templates attach to services/packages; when a session includes that deliverable,
   - Client gallery reads the session-level template to render counters (remaining/selected) and blocks extra selections beyond `max`; required parts must be filled before submission/approval.
   - Photographer can override client picks (swap images or adjust counts) inside the session’s gallery admin view.
 - Backward compatibility/migration:
-  - Add a nullable `selection_template` jsonb to `services` (cached copy of the template rows) OR rely solely on `deliverable_selection_templates` table keyed by `service_id`.
+  - Keep `services.selection_template` nullable; existing orgs stay untouched until enabled.
+  - Rule IDs are persisted (`{id, part, ...}`) so renames don’t break existing `client_selections.selection_part` mappings.
   - Migration step: seed templates for existing deliverable services (albums, print packs, wall art) using sensible defaults; leave coverage-only services without templates.
 - Example mappings:
   - “Album 30x30” → `{part: "Spread", min:20, max:30, required:true}`, `{part:"Cover", min:1, max:1, required:true}`, `{part:"Back cover", min:1, max:1, required:true}`
@@ -65,7 +70,7 @@ Templates attach to services/packages; when a session includes that deliverable,
 
 ### Phase 0 — Design & Contract (1 week)
 - [x] Finalize gallery types/states (proof, retouch, final) and copy (EN/TR).
-- [x] Approve data model (tables above) with Supabase; confirm **single private proof bucket** + PIN-gated signed URL edge function.
+- [x] Approve data model (tables above) with Supabase; confirm **single private proof bucket** + PIN gate via `gallery-access` + RLS-backed signed URLs.
 - [x] Wireframes: session detail gallery block (create/list), client gallery view, selection counters, watermark toggle modal.
 - [x] Decide watermark source priority: uploaded logo vs. business name text.
 
@@ -78,19 +83,23 @@ Templates attach to services/packages; when a session includes that deliverable,
     - [x] Progress UX: per-set progress bar (sidebar) + active-set banner in right panel (`uploaded/total` + ETA); completion chip shown only until set content changes.
     - [ ] Server/edge transcode fallback (if needed for legacy browsers / hardening).
   - [x] Destructive deletes: set delete confirms and deletes assets (DB + storage) without fallback; gallery delete button (typed-name) fully removes sets/assets/client selections + storage objects.
-  - [ ] Client preview (“Önizle”): open client-mode UI for photographers (no PIN yet) so they can see the exact client experience and interact like a client (favorite/select, counters, submit simulation).
-  - [ ] Watermark settings: toggle on/off, choose source (logo/text), opacity/placement presets.
-  - [ ] Share (real client): generate public link + PIN; copy-to-clipboard; optional expiry date.
-    - PIN settings live under Gallery “Ayarlar” tab → “Paylaşım & PIN” section (set/change/disable/regenerate).
-    - Share button in header uses this config and copies the real client URL (+ optionally the PIN).
-  - [ ] Client view (real client): responsive grid, lazy load, favorite/select buttons with remaining counts, PIN gate, branding header.
+  - [x] Client preview (“Önizle”): `/galleries/:id/preview` renders the exact client UI for internal users (favorite/select, counters, submit simulation).
+  - [x] Watermark settings: toggle on/off, choose source (logo/text), opacity/placement presets (client-side overlay; not baked into files).
+  - [x] Share (real client): stable public link + PIN; share sheet with copy-to-clipboard + WhatsApp/email quick actions.
+    - PIN lives under Gallery “Ayarlar” tab → “Gizlilik” section; share uses `/g/:publicId` (public) + PIN gate.
+    - Optional follow-ups: `expires_at` enforcement + require `status=published` for public access.
+  - [x] Client view (real client): `/g/:publicId` PIN gate → client-mode UI (responsive grid, lazy paging, lightbox, favorites/selections, counters).
 - Data & services
   - [x] Supabase Storage: **single private bucket** for proofs (Phase 1), object paths prefixed by `organization_id/` for RLS.
-  - [ ] Edge function: validate `share_link + PIN` and return signed URLs (optionally also does transcode).
+  - [x] Edge functions:
+    - `gallery-access`: validate `public_id + PIN`, then issue/refresh a `gallery_access_grants` row (used by RLS + Storage select policy).
+    - `gallery-branding`: return safe branding payload (logo/name/title) for the public PIN gate (no-store).
+  - [x] Netlify Edge Functions for social previews: `gallery-og` injects OG tags for `/g/*`, `gallery-og-image` redirects `/og/g/*` to a signed cover image.
   - [x] Tables (`galleries`, `gallery_assets`, `client_selections`) landed; `gallery_sets` added for multiple sets within a gallery; `selection_template` nullable on services for deliverable rules.
-  - [ ] API endpoints/queries to persist client selections/overrides + share/PIN fields. *(Session list + gallery detail CRUD + uploads exist; client selections + client view pending.)*
+  - [x] Queries to persist client selections/overrides + share/PIN fields. *(Client selections are stored in `client_selections`; public access is via `public_id` + `gallery_access`.)*
 - Validation & QA
-  - [ ] Component/integration tests for upload queue states, watermark toggles, PIN gate, selection limits.
+  - [x] Basic tests: `src/pages/__tests__/GalleryPublic.test.tsx`, `src/components/galleries/__tests__/GalleryShareSheet.test.tsx`, `src/components/galleries/__tests__/GalleryDetailSettings.test.tsx`, `src/components/galleries/__tests__/Lightbox.test.tsx`, plus Deno tests for Supabase functions (`supabase/functions/tests/gallery-access.test.ts`, `supabase/functions/tests/gallery-branding.test.ts`).
+  - [ ] Extend coverage: upload queue states, selection limit enforcement, and regressions around signed URL refresh.
   - [ ] Performance check on client view (web-size assets, lazy load).
   - [ ] Accessibility: keyboard selection, focus after PIN, alt text per asset.
 - Release
@@ -117,11 +126,11 @@ Templates attach to services/packages; when a session includes that deliverable,
 - Should selection templates live on services or packages (line items) given the new services revamp? Recommendation: store on services and copy onto package line items during package creation.
 
 ## Immediate Next Steps
-1) Wire “Önizle” → client preview route (no PIN) and implement the full client-mode UX/actions for internal users.
-2) Add “Paylaşım & PIN” settings in gallery Ayarlar + store PIN/share token.
-3) Implement real client URL + PIN gate + edge function (signed URLs) and ship the public client view.
-4) Add watermark controls + publish flow.
-5) Add feature flag `galleries.m1` + help docs + basic QA.
+1) Persist “seçim gönderildi/confirm” state (DB) + surface it in admin (and optionally notify photographer).
+2) Enforce `status=published` + `expires_at` for `/g/:publicId` and OG edge responses (fallback meta/image when gated).
+3) Add stronger privacy controls: optional “hide cover preview in OG” toggle for strict clients.
+4) Hardening: server-side transcode fallback + (optional) server-side watermarking for downloadable proofs.
+5) QA pass: accessibility + performance + expand tests around selection limits and upload queue.
 
 ## Phase 1 UI status (services/settings)
 - ✅ Optional selection template UI shipped in Services (deliverable-only): indigo-styled card, toggle off by default, single-line rule rows (Part, Min, Max, Required checkbox, Delete).
@@ -137,8 +146,8 @@ Templates attach to services/packages; when a session includes that deliverable,
 - Gallery create sheet (max-w-3xl) mirrors the selection schema UI used in services: service groups show service name input, “Kural ekle” for service-scoped rules, and “Seçime aç/kapat” to disable a service; a manual “İlave kurallar” block sits underneath with a pill + add button. Saving seeds `branding.selectionTemplateGroups` and a flattened `selectionTemplate`.
 - Gallery detail admin focuses on upload + per‑photo selection: grid/list views with batch select, safe two‑step deselect, and a lightbox with filename header, photographer star in right rail, and read‑only client favorite indicator.
 - Multi-set workflow: uploads are scoped to the active set like folders; sets show per-set photo counts + upload progress; empty states are contextual; set deletion is guarded and deletes all contained media (DB + storage) without fallback.
-- Gallery header: “Önizle” (client preview wiring pending) + “Galeriyi sil” (typed-name confirm).
-- Selection dashboard/filters: visible on proof galleries; filter-mode hides set actions. Client selections wiring is still pending.
+- Gallery header: “Önizle” (client preview), “Paylaş” (share sheet), + “Galeriyi sil” (typed-name confirm).
+- Selection dashboard/filters: visible on proof galleries; filter-mode hides set actions. Client selections (favorites + per-rule selections) are persisted in `client_selections`.
 - Branding payload now carries both `selectionTemplateGroups` (grouped) and `selectionTemplate` (flattened). Required is persisted per rule.
 
 ### Manual/general rules UI (hizmetten bağımsız)
@@ -154,12 +163,10 @@ Templates attach to services/packages; when a session includes that deliverable,
 - Rows added here default to `Genel` scope and save with the new gallery so the detail page shows both service and manual rules.
 - Keep the block collapsible to avoid sheet bloat; when expanded, show min/max/required badges and inline validation on new manual rows.
 
-## Client View (inspired by Picflow / Pixpa / ShootProof / Pixieset / SmugMug)
-- **Access & branding**: Share link + PIN gate; show studio logo/name; minimal header; optional expiry tag.
-- **Layout & performance**: Masonry/grid with responsive breakpoints; lazy load & prefetch; WebP proofs + JPEG fallback; smooth lightbox with keyboard/swipe.
-- **Selection UX**: Favorite/select toggle per image; remaining/selected counters; clear CTA (“Gönder/Onayla”); error state if required slots unmet; cover/back-cover flags.
-- **Watermark & download**: Proofs watermarked; downloads off for proof; finals (Phase 2) allow original/zip per gallery policy.
-- **Sorting & focus**: Optional cover badge pin; drag-to-reorder (Phase 2); spotlight mode for hero images (cover).
-- **Activity & reminders**: Track viewed/selected (Phase 2); send reminder email for incomplete selections (Phase 2).
-- **Mobile polish**: Single column, sticky bottom action bar (remaining count + submit), big tap targets.
-- **Delight**: Soft transitions, hover states, and lightweight color theme that matches studio branding.
+## Client View (shipped + remaining)
+- ✅ **Access & branding**: `/g/:publicId` + PIN gate (anonymous session); optional studio logo/name via `gallery-branding`; tab title set from gallery + business name.
+- ✅ **Layout & performance**: responsive grid with lazy paging per set; signed URLs via `createSignedUrl` and auto-refresh on broken images; lightbox with keyboard/swipe + improved mobile zoom/slide.
+- ✅ **Selection UX**: favorites + per-rule selections persisted to `client_selections`; counters + “selected/unselected” filters; mobile tasks sheet; “Gönder/Onayla” locks actions in UI (not yet persisted).
+- ✅ **Watermark**: configurable overlay (text/logo, opacity, placement) rendered client-side (not baked into files).
+- ⚠️ **Privacy note**: OG previews use `/og/g/:publicId` to show a cover image via a service-role signed URL redirect; consider a “no cover preview” option for stricter privacy.
+- 🔜 **Next**: persist selection submission state + admin visibility/notifications; enforce `published`/`expires_at`; delivery downloads/zip + activity tracking.

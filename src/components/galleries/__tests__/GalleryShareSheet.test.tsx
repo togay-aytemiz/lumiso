@@ -66,7 +66,11 @@ describe("GalleryShareSheet", () => {
     expect(screen.getByText("Generating link…")).toBeInTheDocument();
   });
 
-  it("initializes the message with real line breaks", async () => {
+  it("opens WhatsApp with the default message", async () => {
+    const openSpy = jest
+      .spyOn(window, "open")
+      .mockImplementation(() => ({ focus: jest.fn() }) as unknown as Window);
+
     render(
       <GalleryShareSheet
         open
@@ -78,14 +82,22 @@ describe("GalleryShareSheet", () => {
       />
     );
 
-    const messageBox = screen.getByRole("textbox");
     const expectedUrl = "https://my.lumiso.app/g/PUB123";
 
+    fireEvent.click(screen.getByRole("button", { name: "WhatsApp" }));
+
     await waitFor(() => {
-      const normalizedValue = (messageBox as HTMLTextAreaElement).value.replace(/\r\n/g, "\n");
-      expect(normalizedValue).toContain(`👉 Your gallery: ${expectedUrl}\n\n🔒`);
+      expect(openSpy).toHaveBeenCalled();
     });
 
-    expect((messageBox as HTMLTextAreaElement).value).not.toContain("\\n");
+    const openedUrl = String(openSpy.mock.calls[0]?.[0] ?? "");
+    const parsed = new URL(openedUrl);
+    const textParam = parsed.searchParams.get("text") ?? "";
+    const normalizedText = textParam.replace(/\r\n/g, "\n");
+
+    expect(normalizedText).toContain(`👉 Your gallery: ${expectedUrl}\n\n🔒 Access password: 4T0PXF`);
+    expect(normalizedText).not.toContain("\\n");
+
+    openSpy.mockRestore();
   });
 });

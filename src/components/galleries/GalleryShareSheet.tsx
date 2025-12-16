@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -50,9 +49,6 @@ export function GalleryShareSheet({
   const { t: tCommon } = useTranslation("common");
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedPin, setCopiedPin] = useState(false);
-  const [customMessage, setCustomMessage] = useState("");
-  const messageTouchedRef = useRef(false);
-  const messageInitRef = useRef(false);
   const copyLinkTimeoutRef = useRef<number | null>(null);
   const copyPinTimeoutRef = useRef<number | null>(null);
 
@@ -94,11 +90,7 @@ export function GalleryShareSheet({
   }, [messagePinValue, messageUrlValue, resolvedClientName, t]);
 
   useEffect(() => {
-    if (!open) {
-      messageInitRef.current = false;
-      return;
-    }
-    messageInitRef.current = true;
+    if (!open) return;
     if (copyLinkTimeoutRef.current) {
       window.clearTimeout(copyLinkTimeoutRef.current);
       copyLinkTimeoutRef.current = null;
@@ -107,19 +99,9 @@ export function GalleryShareSheet({
       window.clearTimeout(copyPinTimeoutRef.current);
       copyPinTimeoutRef.current = null;
     }
-    messageTouchedRef.current = false;
     setCopiedLink(false);
     setCopiedPin(false);
-    setCustomMessage("");
   }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (!messageInitRef.current) return;
-    if (!defaultMessage) return;
-    if (messageTouchedRef.current) return;
-    setCustomMessage(defaultMessage);
-  }, [defaultMessage, open]);
 
   useEffect(() => {
     return () => {
@@ -166,12 +148,7 @@ export function GalleryShareSheet({
     win?.focus?.();
   }, [publicUrl]);
 
-  const resetToDefaultMessage = useCallback(() => {
-    messageTouchedRef.current = false;
-    setCustomMessage(defaultMessage);
-  }, [defaultMessage]);
-
-  const whatsappUrl = useMemo(() => `https://wa.me/?text=${encodeURIComponent(customMessage)}`, [customMessage]);
+  const whatsappUrl = useMemo(() => `https://wa.me/?text=${encodeURIComponent(defaultMessage)}`, [defaultMessage]);
 
   const mailSubject = useMemo(
     () => t("sessionDetail.gallery.shareSheet.emailSubject", { title: title.trim() }),
@@ -180,9 +157,9 @@ export function GalleryShareSheet({
 
   const mailUrl = useMemo(() => {
     const subject = encodeURIComponent(mailSubject);
-    const body = encodeURIComponent(customMessage);
+    const body = encodeURIComponent(defaultMessage);
     return `mailto:?subject=${subject}&body=${body}`;
-  }, [customMessage, mailSubject]);
+  }, [defaultMessage, mailSubject]);
 
   const linkValue = messageUrlValue;
 
@@ -197,7 +174,7 @@ export function GalleryShareSheet({
     isMobile && cn("max-h-[85vh]", "h-[calc(100vh-12px)]", "rounded-t-xl")
   );
   const scrollContainerClassName = cn(
-    "flex-1 overflow-y-auto pb-6 my-0 py-0",
+    "flex-1 overflow-y-auto pb-4 my-0 py-0",
     isMobile && "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
   );
 
@@ -229,7 +206,7 @@ export function GalleryShareSheet({
         </SheetHeader>
 
         <div className={scrollContainerClassName}>
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div>
               <label className={cn(sectionLabelClassName, "mb-3")}>
                 {t("sessionDetail.gallery.shareSheet.previewLabel")}
@@ -267,7 +244,7 @@ export function GalleryShareSheet({
             </div>
 
             <div className="bg-brand-50/30 border border-brand-100 rounded-xl p-5">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 rounded-lg bg-brand-100 text-brand-600">
                   <Link2 className="h-[18px] w-[18px]" aria-hidden="true" />
                 </div>
@@ -284,7 +261,7 @@ export function GalleryShareSheet({
                 ) : null}
               </div>
 
-              <div className="bg-background border border-brand-200 rounded-lg p-3 mb-4 shadow-sm">
+              <div className="bg-background border border-brand-200 rounded-lg p-3 mb-3 shadow-sm">
                 <div
                   className={cn(
                     "font-mono text-sm text-muted-foreground truncate select-all",
@@ -326,7 +303,7 @@ export function GalleryShareSheet({
 
             <div className="space-y-4">
               <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-5">
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-3">
                   <div className="p-2 rounded-lg bg-orange-100 text-orange-600">
                     <Lock className="h-[18px] w-[18px]" aria-hidden="true" />
                   </div>
@@ -367,31 +344,6 @@ export function GalleryShareSheet({
                   {t("sessionDetail.gallery.shareSheet.pinHint")}
                 </div>
               </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className={sectionLabelClassName}>
-                  {t("sessionDetail.gallery.shareSheet.messageLabel")}
-                </label>
-                <button
-                  type="button"
-                  onClick={resetToDefaultMessage}
-                  className="text-[10px] font-bold text-brand-600 hover:text-brand-700 hover:underline bg-brand-50 px-2 py-1 rounded transition-colors"
-                  disabled={!defaultMessage}
-                >
-                  {t("sessionDetail.gallery.shareSheet.resetMessage")}
-                </button>
-              </div>
-              <Textarea
-                value={customMessage}
-                onChange={(event) => {
-                  messageTouchedRef.current = true;
-                  setCustomMessage(event.target.value);
-                }}
-                className="w-full h-24 p-4 bg-muted/30 border border-border rounded-xl text-sm text-foreground focus-visible:ring-brand-500 resize-none leading-relaxed"
-                placeholder={t("sessionDetail.gallery.shareSheet.messagePlaceholder")}
-              />
             </div>
           </div>
         </div>

@@ -314,7 +314,7 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
   }, [isSelectionsConfirmed]);
 
   const { data: gallery, isLoading: galleryLoading } = useQuery({
-    queryKey: ["gallery", resolvedGalleryId],
+    queryKey: ["gallery_client_preview", resolvedGalleryId],
     enabled: Boolean(resolvedGalleryId),
     queryFn: async (): Promise<GalleryDetailRow | null> => {
       if (!resolvedGalleryId) return null;

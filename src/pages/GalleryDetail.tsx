@@ -1860,6 +1860,57 @@ export default function GalleryDetail() {
     setShareSheetOpen(true);
   }, []);
 
+  const publishFromShareMutation = useMutation({
+    mutationFn: async (_channel: "whatsapp" | "email") => {
+      if (!id) {
+        throw new Error(t("sessionDetail.gallery.shareSheet.errors.missingGalleryId"));
+      }
+
+      const sessionId = data?.session_id ?? null;
+      const now = new Date().toISOString();
+      const publishedAt = data?.published_at ?? now;
+
+      const { data: updatedRow, error } = await supabase
+        .from("galleries")
+        .update({ status: "published", published_at: publishedAt, updated_at: now })
+        .eq("id", id)
+        .eq("status", "draft")
+        .select("status,published_at")
+        .maybeSingle();
+      if (error) throw error;
+
+      const didUpdate = Boolean(updatedRow);
+      const resolvedPublishedAt = (updatedRow as { published_at?: string | null } | null)?.published_at ?? publishedAt;
+
+      return { didUpdate, publishedAt: resolvedPublishedAt, sessionId };
+    },
+    onSuccess: ({ didUpdate, publishedAt, sessionId }) => {
+      if (!id) return;
+
+      if (didUpdate) {
+        setStatus("published");
+        setBaseline((prev) => ({ ...prev, status: "published" }));
+        setLastSavedAt(new Date().toISOString());
+        queryClient.setQueryData(["gallery", id], (prev: GalleryDetailRow | null | undefined) =>
+          prev ? { ...prev, status: "published", published_at: publishedAt } : prev
+        );
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["gallery", id] });
+      queryClient.invalidateQueries({ queryKey: ["galleries"] });
+      if (sessionId) {
+        queryClient.invalidateQueries({ queryKey: ["galleries", sessionId] });
+      }
+    },
+    onError: (error: unknown) => {
+      toast({
+        title: t("sessionDetail.gallery.toast.errorTitle"),
+        description: error instanceof Error ? error.message : t("sessionDetail.gallery.toast.errorDesc"),
+        variant: "destructive",
+      });
+    },
+  });
+
   const generatePublicIdMutation = useMutation({
     mutationFn: async () => {
       if (!id) {
@@ -3348,6 +3399,7 @@ export default function GalleryDetail() {
       <GalleryShareSheet
         open={shareSheetOpen}
         onOpenChange={setShareSheetOpen}
+        onShare={(channel) => publishFromShareMutation.mutate(channel)}
         title={displayTitle}
         clientName={shareClientName}
         eventLabel={eventLabel}

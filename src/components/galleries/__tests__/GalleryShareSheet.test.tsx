@@ -39,7 +39,7 @@ describe("GalleryShareSheet", () => {
       />
     );
 
-    const expectedUrl = "https://my.lumiso.app/g/PUB123";
+    const expectedUrl = new URL("/g/PUB123", window.location.origin).toString();
     expect(screen.getByText(expectedUrl)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
@@ -70,11 +70,13 @@ describe("GalleryShareSheet", () => {
     const openSpy = jest
       .spyOn(window, "open")
       .mockImplementation(() => ({ focus: jest.fn() }) as unknown as Window);
+    const onShare = jest.fn();
 
     render(
       <GalleryShareSheet
         open
         onOpenChange={jest.fn()}
+        onShare={onShare}
         title="My gallery"
         clientName="Ayse"
         publicId="PUB123"
@@ -82,9 +84,11 @@ describe("GalleryShareSheet", () => {
       />
     );
 
-    const expectedUrl = "https://my.lumiso.app/g/PUB123";
+    const expectedUrl = new URL("/g/PUB123", window.location.origin).toString();
 
     fireEvent.click(screen.getByRole("button", { name: "WhatsApp" }));
+
+    expect(onShare).toHaveBeenCalledWith("whatsapp");
 
     await waitFor(() => {
       expect(openSpy).toHaveBeenCalled();

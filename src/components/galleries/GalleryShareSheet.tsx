@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 type GalleryShareSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onShare?: (channel: "whatsapp" | "email") => void;
   title: string;
   clientName: string;
   eventLabel?: string;
@@ -35,6 +36,7 @@ type GalleryShareSheetProps = {
 export function GalleryShareSheet({
   open,
   onOpenChange,
+  onShare,
   title,
   clientName,
   eventLabel,
@@ -57,7 +59,7 @@ export function GalleryShareSheet({
   const publicUrl = useMemo(() => {
     const normalized = publicId?.trim();
     if (!normalized) return "";
-    const origin = "https://my.lumiso.app";
+    const origin = window.location.origin;
     if (!origin) return "";
     try {
       return new URL(`/g/${normalized}`, origin).toString();
@@ -359,6 +361,7 @@ export function GalleryShareSheet({
                 disabled={quickActionsDisabled}
                 onClick={() => {
                   if (quickActionsDisabled) return;
+                  onShare?.("whatsapp");
                   const win = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
                   win?.focus?.();
                 }}
@@ -379,6 +382,7 @@ export function GalleryShareSheet({
                 disabled={quickActionsDisabled}
                 onClick={() => {
                   if (quickActionsDisabled) return;
+                  onShare?.("email");
                   window.location.href = mailUrl;
                 }}
                 className="w-full justify-center"

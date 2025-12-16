@@ -661,7 +661,13 @@
             "formDescription": "Set a password for this gallery before sharing.",
             "label": "Password",
             "placeholder": "Enter a password",
-            "generate": "Generate"
+            "generate": "Generate",
+            "alwaysEnabledTitle": "Password protected gallery",
+            "alwaysEnabledDescription": "This gallery is protected by a password by default. Visitors must use the password below to access it.",
+            "pinLabel": "Access password",
+            "copy": "Copy password",
+            "copied": "Copied",
+            "missing": "—"
           }
         }
       },
@@ -783,6 +789,21 @@
         "filterSelected": "Filtering selected items",
         "filterFavorites": "Filtering favorites",
         "filterAll": "Showing all items"
+      },
+      "publicAccess": {
+        "title": "Password protected gallery",
+        "description": "Enter the password your photographer shared to access this gallery.",
+        "pinLabel": "Access password",
+        "pinPlaceholder": "6 characters",
+        "pinHint": "Password is not case sensitive.",
+        "submit": "Continue",
+        "submitting": "Checking…",
+        "errors": {
+          "invalidPin": "Incorrect password",
+          "notFound": "Gallery not found",
+          "generic": "Something went wrong. Please try again.",
+          "authFailedTitle": "Could not start session"
+        }
       },
       "clientPreview": {
         "hero": {

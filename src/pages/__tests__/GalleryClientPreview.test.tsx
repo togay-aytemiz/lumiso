@@ -17,6 +17,9 @@ const mockUseParams = useParams as unknown as jest.Mock;
 
 const supabaseMock = supabase as unknown as {
   from: jest.Mock;
+  auth: {
+    getUser: jest.Mock;
+  };
   storage: {
     from: jest.Mock;
   };
@@ -32,6 +35,7 @@ describe("GalleryClientPreview", () => {
     jest.clearAllMocks();
     mockUseNavigate.mockReturnValue(mockNavigate);
     mockUseParams.mockReturnValue({ id: "gallery-123" });
+    supabaseMock.auth.getUser.mockResolvedValue({ data: { user: { id: "client-1" } }, error: null });
   });
 
   it("renders empty state when gallery has no photos", async () => {
@@ -378,7 +382,7 @@ describe("GalleryClientPreview", () => {
               id: "selection-1",
               asset_id: "asset-1",
               selection_part: "cover",
-              client_id: null,
+              client_id: "client-1",
             },
           ],
           error: null,

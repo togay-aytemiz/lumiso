@@ -273,6 +273,7 @@ export type Database = {
           id: string
           pin_hash: string | null
           project_id: string | null
+          public_id: string | null
           published_at: string | null
           session_id: string | null
           status: string
@@ -288,6 +289,7 @@ export type Database = {
           id?: string
           pin_hash?: string | null
           project_id?: string | null
+          public_id?: string | null
           published_at?: string | null
           session_id?: string | null
           status?: string
@@ -303,6 +305,7 @@ export type Database = {
           id?: string
           pin_hash?: string | null
           project_id?: string | null
+          public_id?: string | null
           published_at?: string | null
           session_id?: string | null
           status?: string
@@ -324,6 +327,73 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gallery_access: {
+        Row: {
+          created_at: string
+          gallery_id: string
+          pin: string
+          pin_hash: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gallery_id: string
+          pin: string
+          pin_hash: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gallery_id?: string
+          pin?: string
+          pin_hash?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_access_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: true
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gallery_access_grants: {
+        Row: {
+          created_at: string
+          expires_at: string
+          gallery_id: string
+          id: string
+          updated_at: string
+          viewer_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          gallery_id: string
+          id?: string
+          updated_at?: string
+          viewer_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          gallery_id?: string
+          id?: string
+          updated_at?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_access_grants_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
             referencedColumns: ["id"]
           },
         ]

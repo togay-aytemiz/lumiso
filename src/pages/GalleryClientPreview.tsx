@@ -130,7 +130,7 @@ const SECTION_SKELETON_COUNT = 10;
 // Helper to determine rule status
 const getRuleStatus = (
   rule: ClientPreviewRuleBase & { currentCount: number },
-  t: (key: string, options?: any) => string
+  t: (key: string, options?: Record<string, unknown>) => string
 ) => {
   const isRequired = rule.required;
   const currentCount = rule.currentCount;
@@ -240,8 +240,9 @@ const parseCountValue = (value: unknown): number | null => {
   return null;
 };
 
-export default function GalleryClientPreview() {
-  const { id } = useParams<{ id: string }>();
+export default function GalleryClientPreview({ galleryId }: { galleryId?: string } = {}) {
+  const { id: routeGalleryId } = useParams<{ id?: string }>();
+  const resolvedGalleryId = galleryId ?? routeGalleryId ?? "";
   const { t, i18n } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
   const i18nToast = useI18nToast();
@@ -287,6 +288,25 @@ export default function GalleryClientPreview() {
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [photographerNote, setPhotographerNote] = useState("");
 
+  const [viewerId, setViewerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setViewerId(data.user?.id ?? null);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setViewerId(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     if (!isSelectionsConfirmed) return;
     setActiveMenuId(null);
@@ -294,14 +314,14 @@ export default function GalleryClientPreview() {
   }, [isSelectionsConfirmed]);
 
   const { data: gallery, isLoading: galleryLoading } = useQuery({
-    queryKey: ["gallery", id],
-    enabled: Boolean(id),
+    queryKey: ["gallery", resolvedGalleryId],
+    enabled: Boolean(resolvedGalleryId),
     queryFn: async (): Promise<GalleryDetailRow | null> => {
-      if (!id) return null;
+      if (!resolvedGalleryId) return null;
       const { data, error } = await supabase
         .from("galleries")
         .select("id,title,type,branding")
-        .eq("id", id)
+        .eq("id", resolvedGalleryId)
         .single();
       if (error) throw error;
       return data as GalleryDetailRow;
@@ -309,14 +329,14 @@ export default function GalleryClientPreview() {
   });
 
   const { data: sets, isLoading: setsLoading } = useQuery({
-    queryKey: ["gallery_sets", id],
-    enabled: Boolean(id),
+    queryKey: ["gallery_sets", resolvedGalleryId],
+    enabled: Boolean(resolvedGalleryId),
     queryFn: async (): Promise<GallerySetRow[]> => {
-      if (!id) return [];
+      if (!resolvedGalleryId) return [];
       const { data, error } = await supabase
         .from("gallery_sets")
         .select("id,name,description,order_index")
-        .eq("gallery_id", id)
+        .eq("gallery_id", resolvedGalleryId)
         .order("order_index", { ascending: true });
       if (error) throw error;
       return (data as GallerySetRow[]) ?? [];
@@ -324,16 +344,16 @@ export default function GalleryClientPreview() {
   });
 
   const { data: photosBase, isLoading: photosLoading } = useQuery({
-    queryKey: ["gallery_client_preview_photos", id],
-    enabled: Boolean(id),
+    queryKey: ["gallery_client_preview_photos", resolvedGalleryId],
+    enabled: Boolean(resolvedGalleryId),
     refetchOnWindowFocus: true,
     staleTime: (GALLERY_ASSET_SIGNED_URL_TTL_SECONDS - 5 * 60) * 1000,
     queryFn: async (): Promise<ClientPreviewPhotoBase[]> => {
-      if (!id) return [];
+      if (!resolvedGalleryId) return [];
       const { data, error } = await supabase
         .from("gallery_assets")
         .select("id,storage_path_web,status,metadata,created_at,width,height")
-        .eq("gallery_id", id)
+        .eq("gallery_id", resolvedGalleryId)
         .order("created_at", { ascending: true });
       if (error) throw error;
 
@@ -358,7 +378,7 @@ export default function GalleryClientPreview() {
         const { error: cleanupError } = await supabase
           .from("gallery_assets")
           .delete()
-          .eq("gallery_id", id)
+          .eq("gallery_id", resolvedGalleryId)
           .in("id", missingAssetIds);
         if (cleanupError) {
           console.warn("GalleryClientPreview: Failed to clean up missing gallery assets", cleanupError);
@@ -423,14 +443,15 @@ export default function GalleryClientPreview() {
   const eventDate = typeof brandingData.eventDate === "string" ? brandingData.eventDate : "";
 
   const { data: persistedClientSelections } = useQuery({
-    queryKey: ["gallery_client_preview_client_selections", id],
-    enabled: Boolean(id),
+    queryKey: ["gallery_client_preview_client_selections", resolvedGalleryId, viewerId],
+    enabled: Boolean(resolvedGalleryId && viewerId),
     queryFn: async (): Promise<ClientSelectionRow[]> => {
-      if (!id) return [];
+      if (!resolvedGalleryId || !viewerId) return [];
       const { data, error } = await supabase
         .from("client_selections")
         .select("id,asset_id,selection_part,client_id")
-        .eq("gallery_id", id);
+        .eq("gallery_id", resolvedGalleryId)
+        .eq("client_id", viewerId);
       if (error) throw error;
       return (data as ClientSelectionRow[]) ?? [];
     },
@@ -457,7 +478,7 @@ export default function GalleryClientPreview() {
     setPhotoSelectionsById({});
     setBrokenPhotoIds(new Set());
     lastPhotoUrlByIdRef.current = new Map();
-  }, [id]);
+  }, [resolvedGalleryId]);
 
   useEffect(() => {
     if (!favoritesEnabled) return;
@@ -665,7 +686,7 @@ export default function GalleryClientPreview() {
       });
       return next;
     });
-  }, [activeFilter, hasMultipleSets, id, orderedSets]);
+  }, [activeFilter, hasMultipleSets, orderedSets, resolvedGalleryId]);
 
   const resolvedPhotos = useMemo<ClientPreviewPhoto[]>(() => {
     const fallbackSetId = orderedSets[0]?.id ?? null;
@@ -771,7 +792,7 @@ export default function GalleryClientPreview() {
   useEffect(() => {
     if (hasMultipleSets) return;
     setVisibleCount(ITEMS_PER_PAGE);
-  }, [activeFilter, hasMultipleSets, id]);
+  }, [activeFilter, hasMultipleSets, resolvedGalleryId]);
 
   // Sticky Nav Logic
   useEffect(() => {
@@ -1084,11 +1105,12 @@ export default function GalleryClientPreview() {
 
   const updateFavoriteMutation = useMutation({
     mutationFn: async ({ photoId, nextIsFavorite }: { photoId: string; nextIsFavorite: boolean }) => {
-      if (!id) return;
+      if (!resolvedGalleryId || !viewerId) return;
       const { error: deleteError } = await supabase
         .from("client_selections")
         .delete()
-        .eq("gallery_id", id)
+        .eq("gallery_id", resolvedGalleryId)
+        .eq("client_id", viewerId)
         .eq("asset_id", photoId)
         .eq("selection_part", "favorites");
       if (deleteError) throw deleteError;
@@ -1096,16 +1118,19 @@ export default function GalleryClientPreview() {
       if (!nextIsFavorite) return;
 
       const insertPayload = {
-        gallery_id: id,
+        gallery_id: resolvedGalleryId,
         asset_id: photoId,
         selection_part: "favorites",
+        client_id: viewerId,
       };
       const { error: insertError } = await supabase.from("client_selections").insert(insertPayload);
       if (insertError) throw insertError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_client_selections", id] });
-      queryClient.invalidateQueries({ queryKey: ["client_selections", id] });
+      queryClient.invalidateQueries({
+        queryKey: ["gallery_client_preview_client_selections", resolvedGalleryId, viewerId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["client_selections", resolvedGalleryId] });
     },
   });
 
@@ -1119,13 +1144,14 @@ export default function GalleryClientPreview() {
       selectionPartKey: string;
       nextIsSelected: boolean;
     }) => {
-      if (!id) return;
+      if (!resolvedGalleryId || !viewerId) return;
       if (!selectionPartKey) return;
 
       const { error: deleteError } = await supabase
         .from("client_selections")
         .delete()
-        .eq("gallery_id", id)
+        .eq("gallery_id", resolvedGalleryId)
+        .eq("client_id", viewerId)
         .eq("asset_id", photoId)
         .eq("selection_part", selectionPartKey);
       if (deleteError) throw deleteError;
@@ -1133,15 +1159,18 @@ export default function GalleryClientPreview() {
       if (!nextIsSelected) return;
 
       const { error: insertError } = await supabase.from("client_selections").insert({
-        gallery_id: id,
+        gallery_id: resolvedGalleryId,
         asset_id: photoId,
         selection_part: selectionPartKey,
+        client_id: viewerId,
       });
       if (insertError) throw insertError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_client_selections", id] });
-      queryClient.invalidateQueries({ queryKey: ["client_selections", id] });
+      queryClient.invalidateQueries({
+        queryKey: ["gallery_client_preview_client_selections", resolvedGalleryId, viewerId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["client_selections", resolvedGalleryId] });
     },
   });
 
@@ -1194,23 +1223,23 @@ export default function GalleryClientPreview() {
         return next;
       });
 
-      if (!id) return;
+      if (!resolvedGalleryId) return;
       const now = Date.now();
       if (now - lastSignedUrlRefreshAtRef.current < 1500) return;
       lastSignedUrlRefreshAtRef.current = now;
 
-      queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_photos", id] });
+      queryClient.invalidateQueries({ queryKey: ["gallery_client_preview_photos", resolvedGalleryId] });
     },
-    [id, queryClient]
+    [queryClient, resolvedGalleryId]
   );
 
   const handleExit = useCallback(() => {
-    if (id) {
-      navigate(`/galleries/${id}`);
+    if (routeGalleryId) {
+      navigate(`/galleries/${routeGalleryId}`);
       return;
     }
     navigate(-1);
-  }, [id, navigate]);
+  }, [navigate, routeGalleryId]);
 
   const handleOpenConfirmation = () => {
     setIsConfirmationModalOpen(true);

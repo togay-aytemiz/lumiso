@@ -1,14 +1,18 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   CornerDownRight,
   Crosshair,
   Grid3x3,
   Image as ImageIcon,
+  Check,
+  Copy,
   Settings,
   Shield,
+  ShieldCheck,
   Stamp,
   Type,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { settingsClasses } from "@/theme/settingsTokens";
@@ -31,8 +35,9 @@ export type GallerySettingsTab = "general" | "watermark" | "privacy";
 
 export type { GalleryWatermarkPlacement, GalleryWatermarkSettings, GalleryWatermarkType };
 
-export type GalleryPrivacySettings = {
-  passwordEnabled: boolean;
+export type GalleryPrivacyInfo = {
+  pin: string;
+  isLoading?: boolean;
 };
 
 export function GallerySettingsRail({
@@ -130,11 +135,8 @@ type GallerySettingsWatermarkModel = {
 };
 
 type GallerySettingsPrivacyModel = {
-  settings: GalleryPrivacySettings;
-  onSettingsChange: (updates: Partial<GalleryPrivacySettings>) => void;
-  passwordDraft: string;
-  onPasswordDraftChange: (value: string) => void;
-  onGeneratePassword?: () => void;
+  pin: string;
+  isLoading?: boolean;
 };
 
 export function GallerySettingsContent({
@@ -152,9 +154,25 @@ export function GallerySettingsContent({
 }) {
   const { t } = useTranslation("pages");
   const { t: tForms } = useTranslation("forms");
+  const [pinCopied, setPinCopied] = useState(false);
 
   const watermarkTextFallback =
     watermark.textDraft.trim() || watermark.businessName?.trim() || t("sessionDetail.gallery.settings.watermark.text.fallback");
+
+  const normalizedPin = privacy.pin.trim();
+  const pinDisplayValue =
+    normalizedPin || t("sessionDetail.gallery.settings.privacy.password.missing", { defaultValue: "—" });
+
+  const handleCopyPin = useCallback(async () => {
+    if (!normalizedPin) return;
+    try {
+      await navigator.clipboard.writeText(normalizedPin);
+      setPinCopied(true);
+      window.setTimeout(() => setPinCopied(false), 2000);
+    } catch {
+      // Ignore clipboard failures (non-secure contexts, permissions).
+    }
+  }, [normalizedPin]);
 
   if (activeTab === "general") {
     return (
@@ -597,54 +615,58 @@ export function GallerySettingsContent({
         description={t("sessionDetail.gallery.settings.privacy.header.description")}
       />
 
-      <div className="space-y-10">
-        <SettingsToggleSection
-          layout="two-column"
-          sectionId="privacy-access"
-          title={t("sessionDetail.gallery.settings.privacy.access.title")}
-          description={t("sessionDetail.gallery.settings.privacy.access.description")}
-          items={[
-            {
-              id: "gallery-password",
-              title: t("sessionDetail.gallery.settings.privacy.password.toggleTitle"),
-              description: t("sessionDetail.gallery.settings.privacy.password.toggleDescription"),
-              control: (
-                <Switch
-                  id="gallery-password"
-                  checked={privacy.settings.passwordEnabled}
-                  onCheckedChange={(checked) => privacy.onSettingsChange({ passwordEnabled: checked })}
-                  aria-label={t("sessionDetail.gallery.settings.privacy.password.toggleTitle")}
-                />
-              ),
-            },
-          ]}
-        />
+      <div className="space-y-6">
+        <div className="bg-background border border-border rounded-2xl p-8 shadow-sm">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+              <ShieldCheck className="h-7 w-7" aria-hidden="true" />
+            </div>
 
-        {privacy.settings.passwordEnabled ? (
-          <SettingsFormSection
-            sectionId="privacy-password"
-            title={t("sessionDetail.gallery.settings.privacy.password.formTitle")}
-            description={t("sessionDetail.gallery.settings.privacy.password.formDescription")}
-            fieldColumns={2}
-          >
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="gallery-password-input">{t("sessionDetail.gallery.settings.privacy.password.label")}</Label>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Input
-                  id="gallery-password-input"
-                  value={privacy.passwordDraft}
-                  onChange={(event) => privacy.onPasswordDraftChange(event.target.value)}
-                  placeholder={t("sessionDetail.gallery.settings.privacy.password.placeholder")}
-                />
-                {privacy.onGeneratePassword ? (
-                  <Button type="button" variant="outline" onClick={privacy.onGeneratePassword} className="sm:w-auto">
-                    {t("sessionDetail.gallery.settings.privacy.password.generate")}
-                  </Button>
-                ) : null}
+            <h3 className="text-lg font-bold text-foreground mb-2">
+              {t("sessionDetail.gallery.settings.privacy.password.alwaysEnabledTitle", {
+                defaultValue: "Galeri Şifre Korumalı",
+              })}
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md mb-8">
+              {t("sessionDetail.gallery.settings.privacy.password.alwaysEnabledDescription", {
+                defaultValue:
+                  "Bu galeriye erişim standart olarak şifre ile korunmaktadır. Ziyaretçileriniz giriş yapmak için aşağıdaki şifreyi kullanmalıdır.",
+              })}
+            </p>
+
+            <div className="w-full max-w-md bg-muted/40 border border-border rounded-2xl p-6 flex flex-col items-center gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-[0.04] pointer-events-none">
+                <Lock className="h-24 w-24" aria-hidden="true" />
+              </div>
+
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.28em]">
+                {t("sessionDetail.gallery.settings.privacy.password.pinLabel", { defaultValue: "Giriş Şifresi" })}
+              </div>
+
+              <div className="text-4xl font-mono font-bold text-foreground tracking-[0.2em] select-all">
+                {privacy.isLoading ? "••••••" : pinDisplayValue}
+              </div>
+
+              <div className="w-full flex justify-center pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCopyPin}
+                  disabled={!normalizedPin || privacy.isLoading}
+                  className={cn(
+                    "rounded-full px-6",
+                    pinCopied ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-border bg-background"
+                  )}
+                >
+                  {pinCopied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
+                  {pinCopied
+                    ? t("sessionDetail.gallery.settings.privacy.password.copied", { defaultValue: "Kopyalandı" })
+                    : t("sessionDetail.gallery.settings.privacy.password.copy", { defaultValue: "Şifreyi Kopyala" })}
+                </Button>
               </div>
             </div>
-          </SettingsFormSection>
-        ) : null}
+          </div>
+        </div>
       </div>
 
       <SettingsStickyFooter

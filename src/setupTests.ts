@@ -96,7 +96,9 @@ const createSupabaseMock = () => {
     from: jest.fn(() => createQueryBuilder()),
     auth: {
       getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
       signIn: jest.fn(),
+      signInAnonymously: jest.fn().mockResolvedValue({ data: { user: { id: "anon-user" } }, error: null }),
       signOut: jest.fn(),
       onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
     },

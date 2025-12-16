@@ -676,7 +676,13 @@
             "formDescription": "Paylaşmadan önce galeriniz için bir şifre belirleyin.",
             "label": "Şifre",
             "placeholder": "Şifre belirleyin",
-            "generate": "Oluştur"
+            "generate": "Oluştur",
+            "alwaysEnabledTitle": "Galeri Şifre Korumalı",
+            "alwaysEnabledDescription": "Bu galeriye erişim standart olarak şifre ile korunmaktadır. Ziyaretçileriniz giriş yapmak için aşağıdaki şifreyi kullanmalıdır.",
+            "pinLabel": "Giriş Şifresi",
+            "copy": "Şifreyi Kopyala",
+            "copied": "Kopyalandı",
+            "missing": "—"
           }
         }
       },
@@ -798,6 +804,21 @@
         "filterSelected": "Seçilenler filtreleniyor",
         "filterFavorites": "Favoriler filtreleniyor",
         "filterAll": "Tüm öğeler gösteriliyor"
+      },
+      "publicAccess": {
+        "title": "Galeri Şifre Korumalı",
+        "description": "Bu galeriye erişmek için fotoğrafçınızın paylaştığı şifreyi girin.",
+        "pinLabel": "Giriş Şifresi",
+        "pinPlaceholder": "6 karakter",
+        "pinHint": "Şifre büyük/küçük harf duyarlı değildir.",
+        "submit": "Devam et",
+        "submitting": "Kontrol ediliyor…",
+        "errors": {
+          "invalidPin": "Şifre hatalı",
+          "notFound": "Galeri bulunamadı",
+          "generic": "Bir sorun oluştu. Lütfen tekrar deneyin.",
+          "authFailedTitle": "Giriş başlatılamadı"
+        }
       },
       "clientPreview": {
         "hero": {

@@ -14,7 +14,7 @@ import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDial
 import {
   GallerySettingsContent,
   GallerySettingsRail,
-  type GalleryPrivacySettings,
+  type GalleryPrivacyInfo,
   type GallerySettingsTab,
   type GalleryWatermarkSettings,
 } from "@/components/galleries/GalleryDetailSettings";
@@ -327,11 +327,6 @@ export default function GalleryDetail() {
   );
   const [watermarkTextSaved, setWatermarkTextSaved] = useState("");
   const [watermarkTextDraft, setWatermarkTextDraft] = useState("");
-  const [privacySettings, setPrivacySettings] = useState<GalleryPrivacySettings>({
-    passwordEnabled: false,
-  });
-  const [privacyPasswordSaved, setPrivacyPasswordSaved] = useState("");
-  const [privacyPasswordDraft, setPrivacyPasswordDraft] = useState("");
   const [gallerySettingsSaving, setGallerySettingsSaving] = useState(false);
   const [gallerySettingsSaveSuccess, setGallerySettingsSaveSuccess] = useState(false);
   const gallerySettingsSuccessTimerRef = useRef<number | null>(null);
@@ -440,16 +435,6 @@ export default function GalleryDetail() {
     setWatermarkSettings((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  const updatePrivacySettings = useCallback(
-    (updates: Partial<GalleryPrivacySettings>) => {
-      setPrivacySettings((prev) => ({ ...prev, ...updates }));
-      if (updates.passwordEnabled === false) {
-        setPrivacyPasswordDraft(privacyPasswordSaved);
-      }
-    },
-    [privacyPasswordSaved]
-  );
-
   const hasGallerySettingsUnsavedChanges = useMemo(() => {
     const watermarkDirty =
       watermarkSettings.enabled !== watermarkSettingsSaved.enabled ||
@@ -458,17 +443,12 @@ export default function GalleryDetail() {
       watermarkSettings.opacity !== watermarkSettingsSaved.opacity ||
       watermarkSettings.scale !== watermarkSettingsSaved.scale ||
       watermarkTextDraft !== watermarkTextSaved;
-    const passwordDirty =
-      privacySettings.passwordEnabled && privacyPasswordDraft !== privacyPasswordSaved;
-    return watermarkDirty || passwordDirty;
+    return watermarkDirty;
   }, [
     watermarkSettings,
     watermarkSettingsSaved,
     watermarkTextDraft,
     watermarkTextSaved,
-    privacySettings.passwordEnabled,
-    privacyPasswordDraft,
-    privacyPasswordSaved,
   ]);
 
   const handleSaveGallerySettings = async () => {
@@ -544,9 +524,6 @@ export default function GalleryDetail() {
       setWatermarkSettingsSaved(watermarkSettings);
       setWatermarkTextSaved(watermarkText);
       setWatermarkTextDraft(watermarkText);
-      if (privacySettings.passwordEnabled) {
-        setPrivacyPasswordSaved(privacyPasswordDraft);
-      }
       setGallerySettingsSaveSuccess(true);
       if (gallerySettingsSuccessTimerRef.current) {
         window.clearTimeout(gallerySettingsSuccessTimerRef.current);
@@ -562,13 +539,8 @@ export default function GalleryDetail() {
   const handleCancelGallerySettings = useCallback(() => {
     setWatermarkSettings(watermarkSettingsSaved);
     setWatermarkTextDraft(watermarkTextSaved);
-    setPrivacyPasswordDraft(privacyPasswordSaved);
     setGallerySettingsSaveSuccess(false);
-  }, [privacyPasswordSaved, watermarkSettingsSaved, watermarkTextSaved]);
-
-  const handleGenerateGalleryPassword = useCallback(() => {
-    setPrivacyPasswordDraft(Math.random().toString(36).slice(-6).toUpperCase());
-  }, []);
+  }, [watermarkSettingsSaved, watermarkTextSaved]);
 
   const parseSelectionTemplateGroups = useCallback(
     (branding: Record<string, unknown> | null): SelectionTemplateGroupForm[] => {
@@ -631,6 +603,26 @@ export default function GalleryDetail() {
       return data as GalleryDetailRow;
     },
   });
+
+  const { data: galleryAccess, isLoading: galleryAccessLoading } = useQuery({
+    queryKey: ["gallery_access", id],
+    enabled: Boolean(id),
+    queryFn: async (): Promise<{ pin: string } | null> => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from("gallery_access")
+        .select("pin")
+        .eq("gallery_id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data && typeof data.pin === "string" ? { pin: data.pin } : null;
+    },
+  });
+
+  const privacyInfo = useMemo<GalleryPrivacyInfo>(
+    () => ({ pin: galleryAccess?.pin ?? "", isLoading: galleryAccessLoading }),
+    [galleryAccess?.pin, galleryAccessLoading]
+  );
 
   useEffect(() => {
     if (!data) return;
@@ -3508,13 +3500,7 @@ export default function GalleryDetail() {
 	                  previewBackgroundUrl: watermarkPreviewBackgroundUrl,
 	                  onOpenOrganizationBranding: handleOpenOrganizationBrandingSettings,
 	                }}
-	                privacy={{
-	                  settings: privacySettings,
-	                  onSettingsChange: updatePrivacySettings,
-	                  passwordDraft: privacyPasswordDraft,
-	                  onPasswordDraftChange: setPrivacyPasswordDraft,
-	                  onGeneratePassword: handleGenerateGalleryPassword,
-	                }}
+	                privacy={privacyInfo}
 	                saveBar={{
 	                  show: hasGallerySettingsUnsavedChanges,
 	                  isSaving: gallerySettingsSaving,

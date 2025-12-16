@@ -13,16 +13,18 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 type GalleryShareSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  clientName: string;
   eventLabel?: string;
   coverUrl?: string;
   publicId: string | null;
@@ -35,6 +37,7 @@ export function GalleryShareSheet({
   open,
   onOpenChange,
   title,
+  clientName,
   eventLabel,
   coverUrl,
   publicId,
@@ -42,6 +45,7 @@ export function GalleryShareSheet({
   pinLoading,
   generatingPublicId,
 }: GalleryShareSheetProps) {
+  const isMobile = useIsMobile();
   const { t } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
   const [copiedLink, setCopiedLink] = useState(false);
@@ -67,22 +71,27 @@ export function GalleryShareSheet({
   }, [publicId]);
 
   const normalizedPin = pin.trim();
-  const pinLine = useMemo(
-    () =>
-      normalizedPin
-        ? t("sessionDetail.gallery.shareSheet.pinLine", { pin: normalizedPin })
-        : "",
-    [normalizedPin, t]
-  );
+  const resolvedClientName = useMemo(() => clientName.trim() || t("sessionDetail.unknownClient"), [clientName, t]);
+
+  const messageUrlValue = useMemo(() => {
+    if (publicUrl) return publicUrl;
+    if (generatingPublicId) return t("sessionDetail.gallery.shareSheet.generatingLink");
+    return t("sessionDetail.gallery.shareSheet.publicLinkPlaceholder");
+  }, [generatingPublicId, publicUrl, t]);
+
+  const messagePinValue = useMemo(() => {
+    if (normalizedPin) return normalizedPin;
+    if (pinLoading) return "••••••";
+    return t("sessionDetail.gallery.shareSheet.pinPlaceholder");
+  }, [normalizedPin, pinLoading, t]);
 
   const defaultMessage = useMemo(() => {
-    if (!publicUrl) return "";
     return t("sessionDetail.gallery.shareSheet.messageTemplate", {
-      title: title.trim(),
-      url: publicUrl,
-      pinLine,
+      clientName: resolvedClientName,
+      url: messageUrlValue,
+      pin: messagePinValue,
     });
-  }, [pinLine, publicUrl, t, title]);
+  }, [messagePinValue, messageUrlValue, resolvedClientName, t]);
 
   useEffect(() => {
     if (!open) {
@@ -175,41 +184,51 @@ export function GalleryShareSheet({
     return `mailto:?subject=${subject}&body=${body}`;
   }, [customMessage, mailSubject]);
 
-  const linkValue = useMemo(() => {
-    if (publicUrl) return publicUrl;
-    if (generatingPublicId) return t("sessionDetail.gallery.shareSheet.generatingLink");
-    return t("sessionDetail.gallery.shareSheet.publicLinkPlaceholder");
-  }, [generatingPublicId, publicUrl, t]);
+  const linkValue = messageUrlValue;
 
   const linkCopyDisabled = !publicUrl || Boolean(generatingPublicId);
   const pinCopyDisabled = !normalizedPin || Boolean(pinLoading);
+  const quickActionsDisabled = linkCopyDisabled || pinCopyDisabled;
+
+  const sideVariant = isMobile ? "bottom" : "right";
+  const sheetContentClassName = cn(
+    "flex min-h-0 flex-col overflow-hidden w-full",
+    !isMobile && "sm:max-w-md",
+    isMobile && cn("max-h-[85vh]", "h-[calc(100vh-12px)]", "rounded-t-xl")
+  );
+  const scrollContainerClassName = cn(
+    "flex-1 overflow-y-auto pb-6 my-0 py-0",
+    isMobile && "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex h-full w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
-        <div className="flex items-center justify-between gap-4 border-b border-border/60 p-4">
-          <div className="min-w-0">
-            <SheetTitle className="text-xl font-playfair font-bold text-foreground">
-              {t("sessionDetail.gallery.shareSheet.title")}
-            </SheetTitle>
-            <SheetDescription className="mt-1 text-sm text-muted-foreground">
-              {t("sessionDetail.gallery.shareSheet.description")}
-            </SheetDescription>
+      <SheetContent side={sideVariant} className={sheetContentClassName}>
+        <SheetHeader className="border-b pb-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <SheetTitle className="text-lg font-semibold">
+                {t("sessionDetail.gallery.shareSheet.title")}
+              </SheetTitle>
+              <SheetDescription className="mt-1">
+                {t("sessionDetail.gallery.shareSheet.description")}
+              </SheetDescription>
+            </div>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              aria-label={tCommon("buttons.close")}
+              className="h-8 w-8 p-0 rounded-full shrink-0"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </Button>
           </div>
+        </SheetHeader>
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => onOpenChange(false)}
-            aria-label={tCommon("buttons.close")}
-            className="shrink-0"
-          >
-            <X className="h-5 w-5" aria-hidden="true" />
-          </Button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className={scrollContainerClassName}>
           <div className="space-y-8">
             <div>
               <label className={cn(sectionLabelClassName, "mb-3")}>
@@ -370,10 +389,15 @@ export function GalleryShareSheet({
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <a
-                  href={whatsappUrl}
+                  href={quickActionsDisabled ? undefined : whatsappUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-green-100 bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-200 transition-all group"
+                  aria-disabled={quickActionsDisabled}
+                  tabIndex={quickActionsDisabled ? -1 : 0}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-green-100 bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-200 transition-all group",
+                    quickActionsDisabled && "pointer-events-none opacity-50"
+                  )}
                 >
                   <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                     <MessageCircle className="h-5 w-5 fill-green-600 text-green-600" aria-hidden="true" />
@@ -382,8 +406,13 @@ export function GalleryShareSheet({
                 </a>
 
                 <a
-                  href={mailUrl}
-                  className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-200 transition-all group"
+                  href={quickActionsDisabled ? undefined : mailUrl}
+                  aria-disabled={quickActionsDisabled}
+                  tabIndex={quickActionsDisabled ? -1 : 0}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-200 transition-all group",
+                    quickActionsDisabled && "pointer-events-none opacity-50"
+                  )}
                 >
                   <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                     <Mail className="h-5 w-5 text-blue-600" aria-hidden="true" />
@@ -395,7 +424,7 @@ export function GalleryShareSheet({
           </div>
         </div>
 
-        <div className="p-4 bg-muted/20 border-t border-border/60">
+        <div className="border-t pt-4 bg-muted/20">
           <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 text-muted-foreground/80">

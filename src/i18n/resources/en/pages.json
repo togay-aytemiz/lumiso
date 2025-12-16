@@ -591,8 +591,7 @@
         "emailSubject": "{{title}} - Photo gallery",
         "footerPublicLabel": "Public",
         "openLink": "Test link",
-        "messageTemplate": "Hi, your photos are ready! You can view your gallery here: {{url}}{{pinLine}}",
-        "pinLine": "\\n\\nAccess password: {{pin}}",
+        "messageTemplate": "Hi {{clientName}}, your photos are ready!\\n\\n👉🏻 Your gallery: {{url}}\\n🔒 Access password: {{pin}}\\n",
         "errors": {
           "missingGalleryId": "Gallery id is missing.",
           "generateFailed": "Could not generate a public link."

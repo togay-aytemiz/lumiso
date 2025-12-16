@@ -33,6 +33,7 @@ describe("GalleryShareSheet", () => {
         open
         onOpenChange={jest.fn()}
         title="My gallery"
+        clientName="Ayse"
         publicId="PUB123"
         pin="4T0PXF"
       />
@@ -54,6 +55,7 @@ describe("GalleryShareSheet", () => {
         open
         onOpenChange={jest.fn()}
         title="My gallery"
+        clientName="Ayse"
         publicId={null}
         pin="4T0PXF"
         generatingPublicId

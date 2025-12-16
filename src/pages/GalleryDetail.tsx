@@ -97,7 +97,7 @@ import {
   Plus,
   PlusCircle,
   RotateCcw,
-  Share2,
+  Share,
   Star,
   Trash2,
   Upload,
@@ -608,6 +608,24 @@ export default function GalleryDetail() {
     },
   });
 
+  const { data: shareSessionClientName } = useQuery({
+    queryKey: ["gallery_share_client", data?.session_id],
+    enabled: Boolean(data?.session_id),
+    staleTime: 60_000,
+    queryFn: async (): Promise<string | null> => {
+      const sessionId = data?.session_id;
+      if (!sessionId) return null;
+      const { data: sessionRow, error } = await supabase
+        .from("sessions")
+        .select("id,leads(name)")
+        .eq("id", sessionId)
+        .maybeSingle();
+      if (error) throw error;
+      const clientName = (sessionRow as { leads?: { name?: string | null } | null } | null)?.leads?.name ?? null;
+      return typeof clientName === "string" ? clientName : null;
+    },
+  });
+
   const { data: galleryAccess, isLoading: galleryAccessLoading } = useQuery({
     queryKey: ["gallery_access", id],
     enabled: Boolean(id),
@@ -1038,6 +1056,12 @@ export default function GalleryDetail() {
     formattedEventDate || t("sessionDetail.gallery.labels.eventDateUnset", { defaultValue: "Event date not set" });
   const displayTitle =
     title.trim() || t("sessionDetail.gallery.form.titlePlaceholder", { defaultValue: "Untitled gallery" });
+  const shareClientName = useMemo(
+    () =>
+      shareSessionClientName?.trim() ||
+      t("sessionDetail.unknownClient", { defaultValue: "Unknown Client" }),
+    [shareSessionClientName, t]
+  );
   const brandingData = (data?.branding || {}) as Record<string, unknown>;
   const selectionTemplateHasRuleIds = useMemo(() => {
     const groupsRaw = Array.isArray(brandingData.selectionTemplateGroups)
@@ -3298,7 +3322,7 @@ export default function GalleryDetail() {
             className="btn-surface-accent gap-2"
             disabled={deleteGalleryMutation.isPending}
           >
-            <Share2 className="h-4 w-4" />
+            <Share className="h-4 w-4" />
             {t("sessionDetail.gallery.actions.share")}
           </Button>
         }
@@ -3308,6 +3332,7 @@ export default function GalleryDetail() {
         open={shareSheetOpen}
         onOpenChange={setShareSheetOpen}
         title={displayTitle}
+        clientName={shareClientName}
         eventLabel={eventLabel}
         coverUrl={coverUrl}
         publicId={data.public_id}

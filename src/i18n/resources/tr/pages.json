@@ -581,6 +581,38 @@
         "coverAfterUpload": "Yüklenen herhangi bir fotoğrafı kapak olarak seçebilirsin.",
         "coverEmptyHint": "Galeriye fotoğraf ekledikten sonra kapak fotoğrafını seçebilirsin."
       },
+      "shareSheet": {
+        "title": "Galeriyi Paylaş",
+        "description": "Müşterinize erişim linkini gönderin.",
+        "previewLabel": "Galeri Önizlemesi",
+        "passwordBadge": "Şifreli",
+        "publicLinkLabel": "Galeri Bağlantısı",
+        "publicLinkPlaceholder": "—",
+        "publicLinkAria": "Galeri bağlantısı",
+        "generatingLink": "Link oluşturuluyor…",
+        "copyLink": "Kopyala",
+        "pinPlaceholder": "—",
+        "copied": "Kopyalandı",
+        "passwordSectionTitle": "Şifre Koruması Aktif",
+        "passwordSectionDescription": "Galeri erişimi için bu şifre gereklidir.",
+        "copyPinTitle": "Şifreyi Kopyala",
+        "pinHint": "Paylaşım mesajına şifre otomatik eklendi.",
+        "messageLabel": "Paylaşım Mesajı",
+        "resetMessage": "Varsayılan Mesaj",
+        "messagePlaceholder": "Link ile birlikte göndermek için bir mesaj yazın…",
+        "quickActionsLabel": "Nasıl Paylaşmak İstersiniz?",
+        "whatsapp": "WhatsApp",
+        "email": "E-Posta",
+        "emailSubject": "{{title}} - Fotoğraf Galerisi",
+        "footerPublicLabel": "Herkese Açık",
+        "openLink": "Linki test et",
+        "messageTemplate": "Merhaba, fotoğraflarınız hazır! Galerinizi buradan inceleyebilirsiniz: {{url}}{{pinLine}}",
+        "pinLine": "\\n\\nGiriş Şifresi: {{pin}}",
+        "errors": {
+          "missingGalleryId": "Galeri kimliği bulunamadı.",
+          "generateFailed": "Paylaşım linki oluşturulamadı."
+        }
+      },
       "settings": {
         "header": {
           "eyebrow": "Galeri Ayarları"

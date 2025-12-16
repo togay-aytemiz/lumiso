@@ -25,6 +25,7 @@ import {
   type SelectionRule,
 } from "@/components/galleries/SelectionDashboard";
 import { Lightbox } from "@/components/galleries/Lightbox";
+import { GalleryShareSheet } from "@/components/galleries/GalleryShareSheet";
 import {
   SelectionTemplateSection,
   type SelectionTemplateRuleForm,
@@ -144,6 +145,7 @@ type UploadItem = {
 
 interface GalleryDetailRow {
   id: string;
+  public_id: string | null;
   title: string;
   type: GalleryType;
   status: GalleryStatus;
@@ -332,6 +334,7 @@ export default function GalleryDetail() {
   const gallerySettingsSuccessTimerRef = useRef<number | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [isSetSheetOpen, setIsSetSheetOpen] = useState(false);
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [activeSetId, setActiveSetId] = useState<string | null>(null);
   const [selectionSheetOpen, setSelectionSheetOpen] = useState(false);
@@ -378,6 +381,7 @@ export default function GalleryDetail() {
   const [setName, setSetName] = useState("");
   const [setDescription, setSetDescription] = useState("");
   const [isSetInfoSheetOpen, setIsSetInfoSheetOpen] = useState(false);
+  const shareSheetAutoGenerateRef = useRef(false);
   const [baseline, setBaseline] = useState({
     title: "",
     type: "proof" as GalleryType,
@@ -596,7 +600,7 @@ export default function GalleryDetail() {
       if (!id) return null;
       const { data, error } = await supabase
         .from("galleries")
-        .select("id,title,type,status,branding,session_id,updated_at,created_at,published_at")
+        .select("id,public_id,title,type,status,branding,session_id,updated_at,created_at,published_at")
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -689,6 +693,7 @@ export default function GalleryDetail() {
     setUploadBatchBySetId({});
     uploadBatchBySetIdRef.current = {};
     setUploadBatchSummaryBySetId({});
+    setShareSheetOpen(false);
   }, [id]);
 
   const { data: sets, isLoading: setsLoading } = useQuery({
@@ -1828,11 +1833,57 @@ export default function GalleryDetail() {
   }, [data?.session_id, navigate]);
 
   const handleShare = useCallback(() => {
-    toast({
-      title: t("sessionDetail.gallery.actions.share"),
-      description: t("sessionDetail.gallery.labels.shareSoon", { defaultValue: "Share link coming soon" }),
-    });
-  }, [t, toast]);
+    setShareSheetOpen(true);
+  }, []);
+
+  const generatePublicIdMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) {
+        throw new Error(t("sessionDetail.gallery.shareSheet.errors.missingGalleryId"));
+      }
+
+      const { data: generatedId, error: generateError } = await supabase.rpc("generate_gallery_public_id");
+      if (generateError) throw generateError;
+
+      const nextPublicId = typeof generatedId === "string" ? generatedId.trim().toUpperCase() : "";
+      if (!nextPublicId) {
+        throw new Error(t("sessionDetail.gallery.shareSheet.errors.generateFailed"));
+      }
+
+      const { error: updateError } = await supabase
+        .from("galleries")
+        .update({ public_id: nextPublicId })
+        .eq("id", id);
+      if (updateError) throw updateError;
+
+      return nextPublicId;
+    },
+    onSuccess: (nextPublicId) => {
+      if (!id) return;
+      queryClient.setQueryData(["gallery", id], (prev: GalleryDetailRow | null | undefined) =>
+        prev ? { ...prev, public_id: nextPublicId } : prev
+      );
+    },
+    onError: (error) => {
+      toast({
+        title: t("sessionDetail.gallery.toast.errorTitle"),
+        description: error instanceof Error ? error.message : t("sessionDetail.gallery.toast.errorDesc"),
+        variant: "destructive",
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!shareSheetOpen) {
+      shareSheetAutoGenerateRef.current = false;
+      return;
+    }
+    if (data?.public_id) return;
+    if (generatePublicIdMutation.isPending) return;
+    if (shareSheetAutoGenerateRef.current) return;
+    shareSheetAutoGenerateRef.current = true;
+    generatePublicIdMutation.mutate();
+  }, [data?.public_id, generatePublicIdMutation, shareSheetOpen]);
 
   const previewLabel = useMemo(
     () => t("sessionDetail.gallery.actions.preview", { defaultValue: "Önizle" }),
@@ -3251,6 +3302,18 @@ export default function GalleryDetail() {
             {t("sessionDetail.gallery.actions.share")}
           </Button>
         }
+      />
+
+      <GalleryShareSheet
+        open={shareSheetOpen}
+        onOpenChange={setShareSheetOpen}
+        title={displayTitle}
+        eventLabel={eventLabel}
+        coverUrl={coverUrl}
+        publicId={data.public_id}
+        pin={privacyInfo.pin}
+        pinLoading={privacyInfo.isLoading}
+        generatingPublicId={generatePublicIdMutation.isPending}
       />
 
       <div className="flex flex-col gap-6 px-4 py-6 lg:px-8">

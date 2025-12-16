@@ -566,6 +566,38 @@
         "coverAfterUpload": "Pick any uploaded photo as your cover.",
         "coverEmptyHint": "Add photos to this gallery, then pick your cover."
       },
+      "shareSheet": {
+        "title": "Share gallery",
+        "description": "Send the access link to your client.",
+        "previewLabel": "Gallery preview",
+        "passwordBadge": "Locked",
+        "publicLinkLabel": "Gallery link",
+        "publicLinkPlaceholder": "—",
+        "publicLinkAria": "Gallery link",
+        "generatingLink": "Generating link…",
+        "copyLink": "Copy",
+        "pinPlaceholder": "—",
+        "copied": "Copied",
+        "passwordSectionTitle": "Password protection active",
+        "passwordSectionDescription": "This password is required to access the gallery.",
+        "copyPinTitle": "Copy password",
+        "pinHint": "Password was automatically added to the share message.",
+        "messageLabel": "Share message",
+        "resetMessage": "Default message",
+        "messagePlaceholder": "Write a message to send with the link…",
+        "quickActionsLabel": "How would you like to share?",
+        "whatsapp": "WhatsApp",
+        "email": "Email",
+        "emailSubject": "{{title}} - Photo gallery",
+        "footerPublicLabel": "Public",
+        "openLink": "Test link",
+        "messageTemplate": "Hi, your photos are ready! You can view your gallery here: {{url}}{{pinLine}}",
+        "pinLine": "\\n\\nAccess password: {{pin}}",
+        "errors": {
+          "missingGalleryId": "Gallery id is missing.",
+          "generateFailed": "Could not generate a public link."
+        }
+      },
       "settings": {
         "header": {
           "eyebrow": "Gallery Settings"

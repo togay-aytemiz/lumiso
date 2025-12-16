@@ -855,6 +855,18 @@
         }
       },
       "clientPreview": {
+        "lockedBanner": {
+          "title": "Seçimleriniz iletildi!",
+          "subtitle": "Fotoğrafçıya bildirim gönderildi.",
+          "body": "Seçimlerinizi başarıyla tamamladınız. Galeri şu an kilitli moddadır, yani üzerinde değişiklik yapılamaz.\nFotoğrafçınız seçimlerinizi inceledikten sonra sizinle iletişime geçecektir.",
+          "noteLabel": "NOTUNUZ"
+        },
+        "reopenedBanner": {
+          "title": "Seçim yeniden açıldı",
+          "subtitle": "Fotoğrafçınız güncelleme istedi.",
+          "body": "Seçimlerinizi güncelleyip hazır olduğunuzda tekrar gönderebilirsiniz.",
+          "noteLabel": "SON NOTUNUZ"
+        },
         "hero": {
           "kicker": "Özel Koleksiyon",
           "scrollCta": "Galeriyi Görüntüle",
@@ -879,6 +891,7 @@
           "addToFavorites": "Favorilere Ekle",
           "removeFromFavorites": "Favorilerden Çıkar",
           "completeSelection": "Seçimi Tamamla",
+          "resendSelection": "Seçimleri Tekrar Gönder",
           "gridLarge": "Büyük grid",
           "gridMedium": "Orta grid",
           "gridSmall": "Küçük grid"
@@ -992,9 +1005,35 @@
           "title": "Müşteri Seçimlerini Tamamladı",
           "description": "Bu galeri onaylandı ve kilitlendi."
         },
+        "status": {
+          "waiting": {
+            "title": "Müşterinin seçimleri bekleniyor",
+            "description": "Müşteri hâlâ fotoğraf seçebilir ve seçimlerini gönderebilir."
+          },
+          "locked": {
+            "title": "Müşteri seçimleri gönderdi",
+            "description": "Seçimler kilitlendi. İnceleyebilir veya dışa aktarabilirsiniz."
+          },
+          "reopened": {
+            "title": "Güncellenmiş seçimler bekleniyor",
+            "description": "Seçimleri müşteri için yeniden açtınız. Galerinin tekrar kilitlenmesi için seçimlerini yeniden göndermesi gerekir."
+          },
+          "unlockedForMe": {
+            "title": "Sizin için kilit açıldı",
+            "description": "Müşteri galeriyi hâlâ kilitli görürken siz seçimleri düzenleyebilirsiniz."
+          }
+        },
         "actions": {
           "export": "Seçimleri Dışa Aktar",
-          "unlock": "Kilidi Aç"
+          "unlock": "Kilidi Aç",
+          "lockAgain": "Tekrar Kilitle"
+        },
+        "unlockConfirm": {
+          "title": "Kilidi açmak istiyor musunuz?",
+          "description": "Seçimleri kimin düzenleyebileceğini seçin.",
+          "cancel": "Vazgeç",
+          "unlockForMe": "Sadece Benim İçin Aç",
+          "unlockForClient": "Müşteri İçin Aç"
         },
         "noteLabel": "MÜŞTERİ NOTU",
         "toast": {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,8 @@ import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/
 import { GalleryWatermarkOverlay } from "@/components/galleries/GalleryWatermarkOverlay";
 import { Lightbox } from "@/components/galleries/Lightbox";
 import { MobilePhotoSelectionSheet } from "@/components/galleries/MobilePhotoSelectionSheet";
+import { ClientSelectionLockedBanner } from "@/components/galleries/ClientSelectionLockedBanner";
+import { ClientSelectionReopenedBanner } from "@/components/galleries/ClientSelectionReopenedBanner";
 import { SelectionLockBanner } from "@/components/galleries/SelectionLockBanner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -256,8 +258,13 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
   const { t: tCommon } = useTranslation("common");
   const i18nToast = useI18nToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const isInternalUserView = useMemo(
+    () => location.pathname.startsWith("/galleries/"),
+    [location.pathname]
+  );
 
   const galleryRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -350,6 +357,8 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
   });
 
   const isSelectionsLocked = selectionState?.is_locked ?? false;
+  const hasSubmittedSelections = Boolean(selectionState?.locked_at);
+  const showClientReopenedBanner = !isInternalUserView && !isSelectionsLocked && hasSubmittedSelections;
 
   useEffect(() => {
     if (!isSelectionsLocked) return;
@@ -1345,6 +1354,10 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
   }, [navigate, routeGalleryId]);
 
   const handleOpenConfirmation = () => {
+    setPhotographerNote((prev) => {
+      if (prev.trim().length > 0) return prev;
+      return typeof selectionState?.note === "string" ? selectionState.note : "";
+    });
     setIsConfirmationModalOpen(true);
   };
 
@@ -1844,32 +1857,50 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
           {t("sessionDetail.gallery.clientPreview.selections.subtitle")}
         </p>
         {/* COMPLETE / SENT SECTION - MOVED TO TOP */}
-        <div className="mb-4">
+        <div className="mb-4 space-y-3">
           {isSelectionsLocked ? (
-            <SelectionLockBanner
-              note={selectionState?.note ?? null}
-              onExport={handleExportSelections}
-              onUnlock={() => unlockSelectionsMutation.mutate()}
-              unlockDisabled={unlockSelectionsMutation.isPending}
-              className="animate-in zoom-in duration-300"
-            />
+            isInternalUserView ? (
+              <SelectionLockBanner
+                status="locked"
+                note={selectionState?.note ?? null}
+                onExport={handleExportSelections}
+                onUnlockForClient={() => unlockSelectionsMutation.mutate()}
+                unlockDisabled={unlockSelectionsMutation.isPending}
+                className="animate-in zoom-in duration-300"
+              />
+            ) : (
+              <ClientSelectionLockedBanner
+                note={selectionState?.note ?? null}
+                className="animate-in zoom-in duration-300"
+              />
+            )
           ) : (
-            selectionRules.length > 0 && (
-              <button
-                type="button"
-                disabled={!areAllMandatoryComplete}
-                onClick={handleOpenConfirmation}
-                className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm uppercase tracking-widest shadow-lg transition-all
+            <>
+              {showClientReopenedBanner ? (
+                <ClientSelectionReopenedBanner
+                  note={selectionState?.note ?? null}
+                  className="animate-in zoom-in duration-300"
+                />
+              ) : null}
+              {selectionRules.length > 0 ? (
+                <button
+                  type="button"
+                  disabled={!areAllMandatoryComplete}
+                  onClick={handleOpenConfirmation}
+                  className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm uppercase tracking-widest shadow-lg transition-all
                     ${areAllMandatoryComplete
                     ? "bg-gray-900 text-white hover:bg-black hover:scale-[1.02] active:scale-[0.98]"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                   }
                   `}
-              >
-                {t("sessionDetail.gallery.clientPreview.actions.completeSelection")}
-                {areAllMandatoryComplete ? <ArrowRight size={16} /> : <Lock size={14} />}
-              </button>
-            )
+                >
+                  {showClientReopenedBanner
+                    ? t("sessionDetail.gallery.clientPreview.actions.resendSelection")
+                    : t("sessionDetail.gallery.clientPreview.actions.completeSelection")}
+                  {areAllMandatoryComplete ? <ArrowRight size={16} /> : <Lock size={14} />}
+                </button>
+              ) : null}
+            </>
           )}
         </div>
 
@@ -2219,7 +2250,9 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
                     }
                    `}
                 >
-                  {t("sessionDetail.gallery.clientPreview.actions.completeSelection")}
+                  {showClientReopenedBanner
+                    ? t("sessionDetail.gallery.clientPreview.actions.resendSelection")
+                    : t("sessionDetail.gallery.clientPreview.actions.completeSelection")}
                   {areAllMandatoryComplete ? <ArrowRight size={14} /> : <Lock size={12} />}
                 </button>
               )
@@ -2375,14 +2408,23 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
           {/* --- GALLERY SECTION --- */}
           <div ref={galleryRef} className="bg-white min-h-screen pt-4 md:pt-6 px-4 md:px-8 pb-32 md:pb-12">
             <div className="w-full">
-              {heroMode === "selection" && isSelectionsLocked ? (
+              {heroMode === "selection" && (isSelectionsLocked || showClientReopenedBanner) ? (
                 <div className="mb-6">
-                  <SelectionLockBanner
-                    note={selectionState?.note ?? null}
-                    onExport={handleExportSelections}
-                    onUnlock={() => unlockSelectionsMutation.mutate()}
-                    unlockDisabled={unlockSelectionsMutation.isPending}
-                  />
+                  {isSelectionsLocked ? (
+                    isInternalUserView ? (
+                      <SelectionLockBanner
+                        status="locked"
+                        note={selectionState?.note ?? null}
+                        onExport={handleExportSelections}
+                        onUnlockForClient={() => unlockSelectionsMutation.mutate()}
+                        unlockDisabled={unlockSelectionsMutation.isPending}
+                      />
+                    ) : (
+                      <ClientSelectionLockedBanner note={selectionState?.note ?? null} />
+                    )
+                  ) : (
+                    <ClientSelectionReopenedBanner note={selectionState?.note ?? null} />
+                  )}
                 </div>
               ) : null}
               {hasMultipleSets ? (

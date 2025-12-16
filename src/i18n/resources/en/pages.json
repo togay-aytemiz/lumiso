@@ -840,6 +840,18 @@
         }
       },
       "clientPreview": {
+        "lockedBanner": {
+          "title": "Selections sent!",
+          "subtitle": "We notified the photographer.",
+          "body": "You successfully completed your selections. The gallery is currently locked, so no changes can be made.\nYour photographer will reach out after reviewing your selections.",
+          "noteLabel": "YOUR NOTE"
+        },
+        "reopenedBanner": {
+          "title": "Selection reopened",
+          "subtitle": "Your photographer asked for an update.",
+          "body": "You can make changes and send your selections again when you're ready.",
+          "noteLabel": "YOUR LAST NOTE"
+        },
         "hero": {
           "kicker": "Private collection",
           "scrollCta": "View gallery",
@@ -866,7 +878,8 @@
           "gridLarge": "Large grid",
           "gridMedium": "Medium grid",
           "gridSmall": "Small grid",
-          "completeSelection": "Complete Selection"
+          "completeSelection": "Complete Selection",
+          "resendSelection": "Resend Selections"
         },
         "filters": {
           "label": "View:",
@@ -976,9 +989,35 @@
           "title": "Client completed selections",
           "description": "This gallery is approved and locked."
         },
+        "status": {
+          "waiting": {
+            "title": "Waiting for client selections",
+            "description": "The client can still select photos and send their final picks."
+          },
+          "locked": {
+            "title": "Client sent selections",
+            "description": "Selections are locked. You can review or export them."
+          },
+          "reopened": {
+            "title": "Waiting for updated selections",
+            "description": "You reopened selections for the client. They will need to send again to lock the gallery."
+          },
+          "unlockedForMe": {
+            "title": "Unlocked for you",
+            "description": "You can edit selections while the client still sees the gallery as locked."
+          }
+        },
         "actions": {
           "export": "Export selections",
-          "unlock": "Unlock"
+          "unlock": "Unlock",
+          "lockAgain": "Lock again"
+        },
+        "unlockConfirm": {
+          "title": "Unlock selections?",
+          "description": "Choose who should be able to edit selections.",
+          "cancel": "Cancel",
+          "unlockForMe": "Unlock just for me",
+          "unlockForClient": "Unlock for client"
         },
         "noteLabel": "CLIENT NOTE",
         "toast": {

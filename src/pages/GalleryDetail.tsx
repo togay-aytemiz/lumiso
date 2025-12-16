@@ -637,6 +637,19 @@ export default function GalleryDetail() {
   });
 
   const isSelectionsLocked = selectionState?.is_locked ?? false;
+  const [isSelectionUnlockedForMe, setIsSelectionUnlockedForMe] = useState(false);
+  const selectionLockBannerStatus = useMemo(() => {
+    if (isSelectionsLocked) {
+      return isSelectionUnlockedForMe ? ("unlockedForMe" as const) : ("locked" as const);
+    }
+    return selectionState?.locked_at ? ("reopened" as const) : ("waiting" as const);
+  }, [isSelectionUnlockedForMe, isSelectionsLocked, selectionState?.locked_at]);
+
+  useEffect(() => {
+    if (!isSelectionsLocked) {
+      setIsSelectionUnlockedForMe(false);
+    }
+  }, [isSelectionsLocked]);
 
   const unlockSelectionsMutation = useMutation({
     mutationFn: async () => {
@@ -768,6 +781,7 @@ export default function GalleryDetail() {
     setSelectedBatchIds(new Set());
     setPhotoSelections({});
     photoSelectionsTouchedRef.current = false;
+    setIsSelectionUnlockedForMe(false);
     setActiveSelectionRuleId(null);
     setPendingSelectionRemovalId(null);
     setPendingBatchDeleteIds(null);
@@ -2816,7 +2830,7 @@ export default function GalleryDetail() {
 
   const togglePhotoRuleSelection = useCallback(
     (photoId: string, ruleId: string) => {
-      if (isSelectionsLocked) {
+      if (isSelectionsLocked && !isSelectionUnlockedForMe) {
         i18nToast.error(t("sessionDetail.gallery.clientPreview.toast.selectionsLocked"), {
           duration: 3000,
         });
@@ -2873,7 +2887,16 @@ export default function GalleryDetail() {
         }
       );
     },
-    [i18nToast, isSelectionsLocked, photoSelections, selectionPartKeyByRuleId, t, toast, updateClientSelectionMutation]
+    [
+      i18nToast,
+      isSelectionUnlockedForMe,
+      isSelectionsLocked,
+      photoSelections,
+      selectionPartKeyByRuleId,
+      t,
+      toast,
+      updateClientSelectionMutation,
+    ]
   );
 
   useEffect(() => {
@@ -3744,12 +3767,15 @@ export default function GalleryDetail() {
                 <div className="space-y-4">
                   {type === "proof" && totalPhotosCount > 0 ? (
                     <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-                      {isSelectionsLocked ? (
+                      {selectionRules.length > 0 || isSelectionsLocked || selectionState?.locked_at ? (
                         <div className="mb-4">
                           <SelectionLockBanner
+                            status={selectionLockBannerStatus}
                             note={selectionState?.note ?? null}
                             onExport={handleExportSelections}
-                            onUnlock={() => unlockSelectionsMutation.mutate()}
+                            onUnlockForClient={() => unlockSelectionsMutation.mutate()}
+                            onUnlockForMe={() => setIsSelectionUnlockedForMe(true)}
+                            onLockAgain={() => setIsSelectionUnlockedForMe(false)}
                             unlockDisabled={unlockSelectionsMutation.isPending}
                           />
                         </div>

@@ -187,7 +187,10 @@ describe("GalleryClientPreview", () => {
 
     expect(await screen.findByAltText("b.jpg")).toBeInTheDocument();
 
-    const favoritesFilter = await screen.findByRole("button", { name: /^(favorites|favoriler)$/i });
+    const favoriteButtons = await screen.findAllByRole("button", { name: /add to favorites|favorilere ekle/i });
+    fireEvent.click(favoriteButtons[0]);
+
+    const favoritesFilter = await screen.findByRole("button", { name: /favori$/i });
     fireEvent.click(favoritesFilter);
 
     expect(await screen.findAllByRole("button", { name: "Test 2" })).toHaveLength(test2Buttons.length);
@@ -251,12 +254,13 @@ describe("GalleryClientPreview", () => {
     const coverOption = within(menuContainer as HTMLElement).getByRole("button", { name: /cover/i });
     fireEvent.click(coverOption);
 
-    expect(await screen.findByText(/^(selected|seçildi)$/i)).toBeInTheDocument();
+    const chipsContainer = await screen.findByTestId("gallery-preview-selection-chips-asset-1");
+    expect(within(chipsContainer).getByText("Cover")).toBeInTheDocument();
 
     const favoriteButton = await screen.findByRole("button", { name: /add to favorites|favorilere ekle/i });
     fireEvent.click(favoriteButton);
 
-    const favoritesFilter = await screen.findByRole("button", { name: /^(favorites|favoriler)$/i });
+    const favoritesFilter = await screen.findByRole("button", { name: /favori$/i });
     fireEvent.click(favoritesFilter);
 
     await waitFor(() => {
@@ -771,5 +775,85 @@ describe("GalleryClientPreview", () => {
     } finally {
       window.innerWidth = originalInnerWidth;
     }
+  });
+
+  it("prefills the note with the latest saved note after the photographer reopens selections", async () => {
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            type: "proof",
+            branding: {
+              selectionSettings: { enabled: true, allowFavorites: true },
+              selectionTemplate: [{ part: "Cover", min: 1, max: 1, required: true }],
+            },
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              width: 1200,
+              height: 800,
+              status: "ready",
+              metadata: { originalName: "a.jpg", setId: "set-1", starred: false },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({
+          data: [{ id: "selection-1", asset_id: "asset-1", selection_part: "cover", client_id: "client-1" }],
+          error: null,
+        });
+      }
+      if (table === "gallery_selection_states") {
+        return builder.__setResponse({
+          data: {
+            gallery_id: "gallery-123",
+            is_locked: false,
+            note: "Keep this one",
+            locked_at: "2025-01-01T00:00:00Z",
+            unlocked_at: "2025-01-02T00:00:00Z",
+          },
+          error: null,
+        });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+
+    const resendButton = await screen.findByRole("button", { name: /resend selections|seçimleri tekrar gönder/i });
+
+    await waitFor(() => {
+      expect(resendButton).not.toBeDisabled();
+    });
+
+    fireEvent.click(resendButton);
+
+    const dialog = await screen.findByRole("dialog");
+    const textarea = within(dialog).getByRole("textbox");
+
+    await waitFor(() => {
+      expect(textarea).toHaveValue("Keep this one");
+    });
   });
 });

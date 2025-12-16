@@ -1874,11 +1874,27 @@ export default function GalleryDetail() {
         throw new Error(t("sessionDetail.gallery.shareSheet.errors.generateFailed"));
       }
 
-      const { error: updateError } = await supabase
+      const { data: updatedRow, error: updateError } = await supabase
         .from("galleries")
         .update({ public_id: nextPublicId })
-        .eq("id", id);
+        .eq("id", id)
+        .is("public_id", null)
+        .select("public_id")
+        .maybeSingle();
       if (updateError) throw updateError;
+
+      const maybeUpdatedPublicId = updatedRow?.public_id?.trim() ?? "";
+      if (maybeUpdatedPublicId) return maybeUpdatedPublicId;
+
+      const { data: existingRow, error: existingError } = await supabase
+        .from("galleries")
+        .select("public_id")
+        .eq("id", id)
+        .maybeSingle();
+      if (existingError) throw existingError;
+
+      const existingPublicId = existingRow?.public_id?.trim() ?? "";
+      if (existingPublicId) return existingPublicId;
 
       return nextPublicId;
     },
@@ -1902,12 +1918,13 @@ export default function GalleryDetail() {
       shareSheetAutoGenerateRef.current = false;
       return;
     }
-    if (data?.public_id) return;
+    if (isLoading) return;
+    if (data?.public_id?.trim()) return;
     if (generatePublicIdMutation.isPending) return;
     if (shareSheetAutoGenerateRef.current) return;
     shareSheetAutoGenerateRef.current = true;
     generatePublicIdMutation.mutate();
-  }, [data?.public_id, generatePublicIdMutation, shareSheetOpen]);
+  }, [data?.public_id, generatePublicIdMutation, isLoading, shareSheetOpen]);
 
   const previewLabel = useMemo(
     () => t("sessionDetail.gallery.actions.preview", { defaultValue: "Önizle" }),

@@ -11,7 +11,7 @@ import {
   Loader2,
   Lock,
   Mail,
-  MessageCircle,
+  MessageCircleHeart,
   X,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -61,7 +61,7 @@ export function GalleryShareSheet({
   const publicUrl = useMemo(() => {
     const normalized = publicId?.trim();
     if (!normalized) return "";
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const origin = "https://lumina.gallery";
     if (!origin) return "";
     try {
       return new URL(`/g/${normalized}`, origin).toString();
@@ -278,17 +278,9 @@ export function GalleryShareSheet({
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                          {t("sessionDetail.gallery.shareSheet.publicLinkCardTitle")}
-                        </span>
-                        {generatingPublicId ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
-                        ) : null}
-                      </div>
                       <div
                         className={cn(
-                          "mt-1 font-mono text-sm sm:text-base text-foreground break-all select-text",
+                          "text-sm text-foreground break-all select-text font-medium",
                           !publicUrl && "text-muted-foreground"
                         )}
                         aria-label={t("sessionDetail.gallery.shareSheet.publicLinkAria")}
@@ -296,6 +288,10 @@ export function GalleryShareSheet({
                         {linkValue}
                       </div>
                     </div>
+
+                    {generatingPublicId ? (
+                      <Loader2 className="mt-1.5 h-4 w-4 animate-spin text-muted-foreground shrink-0" aria-hidden="true" />
+                    ) : null}
                   </div>
                 </div>
 
@@ -397,7 +393,7 @@ export function GalleryShareSheet({
           </div>
         </div>
 
-        <div className="border-t pt-4 sm:pt-5 sticky bottom-0 bg-background z-10 shadow-[0_-8px_24px_rgba(0,0,0,0.06)]">
+        <div className="border-t pt-4 sm:pt-5">
           <div className="space-y-2">
             <label className={sectionLabelClassName}>{t("sessionDetail.gallery.shareSheet.quickActionsLabel")}</label>
 
@@ -416,7 +412,7 @@ export function GalleryShareSheet({
                   quickActionsDisabled && "shadow-none"
                 )}
               >
-                <MessageCircle className="h-4 w-4 fill-white text-white" aria-hidden="true" />
+                <MessageCircleHeart className="h-4 w-4 text-white" aria-hidden="true" />
                 {t("sessionDetail.gallery.shareSheet.whatsapp")}
               </Button>
 

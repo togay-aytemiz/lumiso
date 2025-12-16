@@ -1916,7 +1916,6 @@ export default function GalleryClientPreview() {
   const heroTitle = gallery?.title || t("sessionDetail.gallery.clientPreview.hero.untitled");
   const heroMode: HeroMode = gallery?.type === "final" ? "delivery" : "selection";
   const showHero = !isMobile || (mobileTab === "gallery" && activeFilter === "all");
-  const isSelectionRuleFilterActive = selectionPartKeyByRuleId.has(activeFilter);
 
   const navTitle = useMemo(() => {
     if (!isMobile) return heroTitle;
@@ -2192,40 +2191,127 @@ export default function GalleryClientPreview() {
           </div>
         ) : null}
 
-        {/* ROW 3: Tasks */}
-	        {!isMobile && selectionRules.length > 0 ? (
-	          <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-2">
-	            <div className="flex items-stretch gap-4 md:gap-3 min-w-max">
-	              <div
-	                className={`shrink-0 overflow-hidden transition-[max-width,opacity] duration-300 ease-out ${isSelectionRuleFilterActive ? "max-w-[220px] md:max-w-[200px] opacity-100" : "max-w-0 opacity-0"
-	                  }`}
-	                aria-hidden={!isSelectionRuleFilterActive}
-	              >
-	                <button
-	                  type="button"
-	                  data-touch-target="compact"
-	                  onClick={() => setActiveFilter("all")}
-	                  disabled={!isSelectionRuleFilterActive}
-	                  className={`w-[220px] md:w-[200px] shrink-0 rounded-2xl border bg-white px-5 py-4 md:px-3 md:py-2.5 text-left shadow-sm transition-all duration-300 ${isSelectionRuleFilterActive ? "translate-x-0" : "-translate-x-2"
-	                    } ${activeFilter === "all"
-	                      ? "border-gray-900"
-	                      : "border-gray-200 hover:border-gray-300"}
-	                  `}
-	                >
-	                  <p className="text-xs font-bold uppercase tracking-widest text-gray-500 truncate md:hidden">
-	                    {heroTitle}
-	                  </p>
-	                  <div className="mt-4 md:mt-0 flex items-center gap-3">
-	                    <LayoutGrid size={18} className="text-gray-900" aria-hidden="true" />
-	                    <span className="text-sm font-bold text-gray-900">
-	                      {t("sessionDetail.gallery.clientPreview.filters.all")}
-	                    </span>
-	                  </div>
-	                  <div className="mt-4 md:mt-2 text-xs font-semibold text-gray-400 tabular-nums">
-	                    {totalPhotoCount}
-	                  </div>
-	                </button>
-	              </div>
+        {/* ROW 3: Tasks + Filters */}
+        {!isMobile ? (
+          <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-2">
+            <div className="flex items-stretch gap-4 md:gap-3 min-w-max">
+              {activeFilter !== "all" ? (
+                <button
+                  type="button"
+                  data-touch-target="compact"
+                  aria-label={t("sessionDetail.gallery.clientPreview.filters.all")}
+                  onClick={() => setActiveFilter("all")}
+                  className={`group relative flex flex-col justify-between w-[220px] md:w-[200px] shrink-0 rounded-2xl border-2 bg-white px-5 py-4 md:px-3 md:py-2.5 text-left shadow-sm transition-all duration-300 ${activeFilter === "all"
+                    ? "border-emerald-600 shadow-md"
+                    : "border-gray-200 hover:border-emerald-300 hover:shadow-md"
+                    }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <LayoutGrid size={18} className="text-gray-900" aria-hidden="true" />
+                    <span className="text-sm font-bold text-gray-900">
+                      {t("sessionDetail.gallery.clientPreview.filters.all")}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-xs font-semibold text-gray-500 tabular-nums">
+                    <span>
+                      {totalPhotoCount} {t("sessionDetail.gallery.clientPreview.selections.allPhotos")}
+                    </span>
+                    <span className="flex items-center gap-1 text-emerald-600">
+                      <Check size={14} strokeWidth={3} />
+                      {t("sessionDetail.gallery.clientPreview.labels.validSelection")}
+                    </span>
+                  </div>
+                </button>
+              ) : null}
+
+              {favoritesEnabled ? (
+                <button
+                  type="button"
+                  data-touch-target="compact"
+                  aria-label={t("sessionDetail.gallery.clientPreview.filters.favorites")}
+                  onClick={() => setActiveFilter(activeFilter === "favorites" ? "all" : "favorites")}
+                  className={`group relative flex flex-col justify-between w-[220px] md:w-[200px] shrink-0 rounded-2xl border-2 transition-all text-left overflow-hidden ${activeFilter === "favorites"
+                    ? "border-rose-300 bg-rose-50 shadow-md"
+                    : "border-rose-100 bg-white hover:border-rose-200 hover:shadow-md"
+                    }`}
+                >
+                  <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+                      <Heart size={16} fill="currentColor" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900 truncate">
+                        {t("sessionDetail.gallery.clientPreview.filters.favorites")}
+                      </p>
+                      <p className="text-[11px] text-rose-600 font-semibold">
+                        {favoritePhotoIds.size} {t("sessionDetail.gallery.clientPreview.selections.title")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="px-4 pb-4 text-[11px] font-semibold text-rose-700 flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-rose-300" />
+                    {t("sessionDetail.gallery.clientPreview.filters.favorites")}
+                  </div>
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                data-touch-target="compact"
+                aria-label={t("sessionDetail.gallery.clientPreview.filters.starred")}
+                onClick={() => setActiveFilter(activeFilter === "starred" ? "all" : "starred")}
+                className={`group relative flex flex-col justify-between w-[220px] md:w-[200px] shrink-0 rounded-2xl border-2 transition-all text-left overflow-hidden ${activeFilter === "starred"
+                  ? "border-amber-300 bg-amber-50 shadow-md"
+                  : "border-amber-100 bg-white hover:border-amber-200 hover:shadow-md"
+                  }`}
+              >
+                <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                    <Star size={16} fill="currentColor" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-gray-900 truncate">
+                      {t("sessionDetail.gallery.clientPreview.filters.starred")}
+                    </p>
+                    <p className="text-[11px] text-amber-700 font-semibold">
+                      {starredCount} {t("sessionDetail.gallery.clientPreview.selections.title")}
+                    </p>
+                  </div>
+                </div>
+                <div className="px-4 pb-4 text-[11px] font-semibold text-amber-700 flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-amber-300" />
+                  {t("sessionDetail.gallery.clientPreview.filters.starred")}
+                </div>
+              </button>
+
+              <button
+                type="button"
+                data-touch-target="compact"
+                aria-label={t("sessionDetail.gallery.clientPreview.filters.unselected")}
+                onClick={() => setActiveFilter(activeFilter === "unselected" ? "all" : "unselected")}
+                className={`group relative flex flex-col justify-between w-[220px] md:w-[200px] shrink-0 rounded-2xl border-2 transition-all text-left overflow-hidden ${activeFilter === "unselected"
+                  ? "border-gray-400 bg-gray-100 shadow-md"
+                  : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
+                  }`}
+              >
+                <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
+                    <CircleDashed size={16} aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-gray-900 truncate">
+                      {t("sessionDetail.gallery.clientPreview.filters.unselected")}
+                    </p>
+                    <p className="text-[11px] text-gray-600 font-semibold">
+                      {unselectedCount} {t("sessionDetail.gallery.clientPreview.selections.title")}
+                    </p>
+                  </div>
+                </div>
+                <div className="px-4 pb-4 text-[11px] font-semibold text-gray-600 flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-gray-300" />
+                  {t("sessionDetail.gallery.clientPreview.filters.unselected")}
+                </div>
+              </button>
 
               {selectionRules.map((rule) => {
                 const isActive = activeFilter === rule.id;
@@ -2241,7 +2327,7 @@ export default function GalleryClientPreview() {
 	                    data-touch-target="compact"
 	                    onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
 	                    className={`group relative flex flex-col justify-between w-[260px] md:w-[280px] shrink-0 rounded-2xl border bg-white transition-all text-left overflow-hidden hover:shadow-md ${isActive
-	                      ? "border-gray-900 shadow-sm"
+	                      ? "border-emerald-600 bg-emerald-50/80 shadow-md ring-1 ring-emerald-300"
 	                      : status.borderColor
 	                      }`}
 	                  >
@@ -2282,7 +2368,7 @@ export default function GalleryClientPreview() {
 
 	                      <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
 	                        <div
-	                          className={`h-full transition-all duration-500 ease-out ${isActive ? "bg-brand-500" : status.progressColor}`}
+	                          className={`h-full transition-all duration-500 ease-out ${isActive ? "bg-emerald-600" : status.progressColor}`}
 	                          style={{ width: `${status.progress * 100}%` }}
 	                        />
 	                      </div>
@@ -2290,80 +2376,6 @@ export default function GalleryClientPreview() {
                   </button>
                 );
               })}
-            </div>
-          </div>
-        ) : null}
-
-        {/* ROW 4: Filters */}
-        {!isMobile ? (
-          <div className="w-full border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm overflow-x-auto no-scrollbar py-3 px-4 md:px-12 flex items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
-                {t("sessionDetail.gallery.clientPreview.filters.label")}
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  data-touch-target="compact"
-                  onClick={() => setActiveFilter("all")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${activeFilter === "all"
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-200"
-                    }`}
-                >
-                  {t("sessionDetail.gallery.clientPreview.filters.all")}
-                </button>
-
-                <button
-                  type="button"
-                  data-touch-target="compact"
-                  onClick={() => setActiveFilter("starred")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all border ${activeFilter === "starred"
-                    ? "bg-amber-100 text-amber-700 border-amber-200 shadow-sm"
-                    : "bg-white border-transparent text-gray-500 hover:text-amber-600 hover:bg-amber-50"
-                    }`}
-                >
-                  <Star
-                    size={12}
-                    fill="currentColor"
-                    className={activeFilter === "starred" ? "text-amber-700" : "text-amber-400"}
-                  />
-                  <span className="md:hidden">{t("sessionDetail.gallery.clientPreview.filters.starredShort")}</span>
-                  <span className="hidden md:inline">{t("sessionDetail.gallery.clientPreview.filters.starred")}</span>
-                  {starredCount > 0 ? <span className="ml-0.5 opacity-60">({starredCount})</span> : null}
-                </button>
-
-                {favoritesEnabled ? (
-                  <>
-                    <div className="w-px h-4 bg-gray-300 mx-1" />
-                    <button
-                      type="button"
-                      data-touch-target="compact"
-                      onClick={() => setActiveFilter("favorites")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${activeFilter === "favorites"
-                        ? "bg-red-50 text-red-600 border border-red-100"
-                        : "text-gray-500 hover:text-red-500"
-                        }`}
-                    >
-                      <Heart size={12} fill={activeFilter === "favorites" ? "currentColor" : "none"} />
-                      {t("sessionDetail.gallery.clientPreview.filters.favorites")}
-                    </button>
-                  </>
-                ) : null}
-
-                <button
-                  type="button"
-                  data-touch-target="compact"
-                  onClick={() => setActiveFilter("unselected")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${activeFilter === "unselected"
-                    ? "bg-gray-200 text-gray-900"
-                    : "text-gray-400 hover:text-gray-600"
-                    }`}
-                >
-                  <CircleDashed size={12} />
-                  {t("sessionDetail.gallery.clientPreview.filters.unselected")}
-                </button>
-              </div>
             </div>
           </div>
         ) : null}

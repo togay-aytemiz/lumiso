@@ -61,7 +61,7 @@ export function GalleryShareSheet({
   const publicUrl = useMemo(() => {
     const normalized = publicId?.trim();
     if (!normalized) return "";
-    const origin = "https://lumina.gallery";
+    const origin = "https://my.lumiso.app";
     if (!origin) return "";
     try {
       return new URL(`/g/${normalized}`, origin).toString();
@@ -266,58 +266,61 @@ export function GalleryShareSheet({
               </div>
             </div>
 
-            <div>
-              <label className={cn(sectionLabelClassName, "mb-3")}>
-                {t("sessionDetail.gallery.shareSheet.publicLinkLabel")}
-              </label>
-              <div className="space-y-3">
-                <div className="rounded-xl border border-border bg-muted/20 p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-10 w-10 rounded-lg border border-border bg-background/70 flex items-center justify-center text-muted-foreground">
-                      <Link2 className="h-5 w-5" aria-hidden="true" />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div
-                        className={cn(
-                          "text-sm text-foreground break-all select-text font-medium",
-                          !publicUrl && "text-muted-foreground"
-                        )}
-                        aria-label={t("sessionDetail.gallery.shareSheet.publicLinkAria")}
-                      >
-                        {linkValue}
-                      </div>
-                    </div>
-
-                    {generatingPublicId ? (
-                      <Loader2 className="mt-1.5 h-4 w-4 animate-spin text-muted-foreground shrink-0" aria-hidden="true" />
-                    ) : null}
-                  </div>
+            <div className="bg-brand-50/30 border border-brand-100 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg bg-brand-100 text-brand-600">
+                  <Link2 className="h-[18px] w-[18px]" aria-hidden="true" />
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    type="button"
-                    variant="surface"
-                    onClick={handleOpenLink}
-                    disabled={!publicUrl}
-                    className="w-full justify-center"
-                  >
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                    {t("sessionDetail.gallery.shareSheet.openLink")}
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="surface"
-                    onClick={handleCopyLink}
-                    disabled={linkCopyDisabled}
-                    className={cn("btn-surface-accent w-full justify-center", copiedLink && "pointer-events-none")}
-                  >
-                    {copiedLink ? t("sessionDetail.gallery.shareSheet.copied") : t("sessionDetail.gallery.shareSheet.copyLink")}
-                    {copiedLink ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
-                  </Button>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-sm font-bold text-foreground">
+                    {t("sessionDetail.gallery.shareSheet.publicLinkLabel")}
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    {t("sessionDetail.gallery.shareSheet.publicLinkDescription")}
+                  </p>
                 </div>
+                {generatingPublicId ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" aria-hidden="true" />
+                ) : null}
+              </div>
+
+              <div className="bg-background border border-brand-200 rounded-lg p-3 mb-4 shadow-sm">
+                <div
+                  className={cn(
+                    "font-mono text-sm text-muted-foreground truncate select-all",
+                    !publicUrl && "text-muted-foreground"
+                  )}
+                  aria-label={t("sessionDetail.gallery.shareSheet.publicLinkAria")}
+                >
+                  {linkValue}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleOpenLink}
+                  disabled={!publicUrl}
+                  className="w-full justify-center rounded-lg border-brand-200 text-brand-700 hover:bg-brand-50 hover:border-brand-300 active:scale-95 transition-transform"
+                >
+                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                  {t("sessionDetail.gallery.shareSheet.openLink")}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="default"
+                  onClick={handleCopyLink}
+                  disabled={linkCopyDisabled}
+                  className={cn(
+                    "w-full justify-center rounded-lg bg-brand-600 hover:bg-brand-700 text-white shadow-sm shadow-brand-200 active:scale-95 transition-transform",
+                    copiedLink && "pointer-events-none"
+                  )}
+                >
+                  {copiedLink ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
+                  {copiedLink ? t("sessionDetail.gallery.shareSheet.copied") : t("sessionDetail.gallery.shareSheet.copyLink")}
+                </Button>
               </div>
             </div>
 
@@ -337,7 +340,7 @@ export function GalleryShareSheet({
                   </div>
                 </div>
 
-                <div className="bg-background border border-orange-200 rounded-lg p-1.5 flex items-center justify-between pl-4">
+                <div className="bg-background border border-orange-200 rounded-lg p-1.5 flex items-center justify-between pl-4 shadow-sm">
                   <span className="font-mono text-lg font-bold text-foreground tracking-widest">
                     {pinLoading ? "••••••" : normalizedPin || t("sessionDetail.gallery.shareSheet.pinPlaceholder")}
                   </span>

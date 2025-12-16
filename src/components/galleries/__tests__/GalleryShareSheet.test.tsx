@@ -39,7 +39,7 @@ describe("GalleryShareSheet", () => {
       />
     );
 
-    const expectedUrl = "https://lumina.gallery/g/PUB123";
+    const expectedUrl = "https://my.lumiso.app/g/PUB123";
     expect(screen.getByText(expectedUrl)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
@@ -79,7 +79,7 @@ describe("GalleryShareSheet", () => {
     );
 
     const messageBox = screen.getByRole("textbox");
-    const expectedUrl = "https://lumina.gallery/g/PUB123";
+    const expectedUrl = "https://my.lumiso.app/g/PUB123";
 
     await waitFor(() => {
       const normalizedValue = (messageBox as HTMLTextAreaElement).value.replace(/\r\n/g, "\n");

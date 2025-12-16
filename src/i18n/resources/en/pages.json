@@ -572,6 +572,7 @@
         "previewLabel": "Gallery preview",
         "passwordBadge": "Locked",
         "publicLinkLabel": "Gallery link",
+        "publicLinkDescription": "Active link for client access.",
         "publicLinkCardTitle": "Share link",
         "publicLinkPlaceholder": "—",
         "publicLinkAria": "Gallery link",

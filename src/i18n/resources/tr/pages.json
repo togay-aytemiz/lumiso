@@ -587,6 +587,7 @@
         "previewLabel": "Galeri Önizlemesi",
         "passwordBadge": "Şifreli",
         "publicLinkLabel": "Galeri Bağlantısı",
+        "publicLinkDescription": "Müşteri erişimi için aktif link.",
         "publicLinkCardTitle": "Paylaşım Linki",
         "publicLinkPlaceholder": "—",
         "publicLinkAria": "Galeri bağlantısı",

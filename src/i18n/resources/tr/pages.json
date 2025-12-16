@@ -608,7 +608,7 @@
         "emailSubject": "{{title}} - Fotoğraf Galerisi",
         "footerPublicLabel": "Herkese Açık",
         "openLink": "Test Et",
-        "messageTemplate": "Merhaba {{clientName}}, fotoğraflarınız hazır!\n\n👉 Galeriniz: {{url}}\n\n🔒 Giriş Şifresi: {{pin}}",
+        "messageTemplate": "Merhaba {{clientName}}, fotoğraflarınız seçim için hazır!\n\nGaleriniz: {{url}}\n\nGiriş Şifresi: {{pin}}",
         "errors": {
           "missingGalleryId": "Galeri kimliği bulunamadı.",
           "generateFailed": "Paylaşım linki oluşturulamadı."

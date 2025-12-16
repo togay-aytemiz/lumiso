@@ -13,6 +13,44 @@ const ACCESS_STORAGE_PREFIX = "gallery-access:";
 
 const normalizePin = (value: string) => value.replaceAll(/\s+/g, "").toUpperCase();
 
+type GalleryBranding = {
+  logoUrl: string | null;
+  businessName: string | null;
+};
+
+function GalleryBrandingFooter({
+  branding,
+  logoAlt,
+}: {
+  branding: GalleryBranding;
+  logoAlt: string;
+}) {
+  const shouldShowBranding = Boolean(branding.logoUrl || branding.businessName);
+
+  if (!shouldShowBranding) return null;
+
+  return (
+    <footer className="px-4 pb-8">
+      <div className="mx-auto max-w-md flex flex-col items-center gap-2 text-center">
+        {branding.logoUrl ? (
+          <img
+            src={branding.logoUrl}
+            alt={branding.businessName ? "" : logoAlt}
+            className="max-h-10 w-auto max-w-[180px] object-contain"
+            loading="lazy"
+            decoding="async"
+          />
+        ) : null}
+        {branding.businessName ? (
+          <p className="text-xs font-medium text-muted-foreground break-words leading-tight">
+            {branding.businessName}
+          </p>
+        ) : null}
+      </div>
+    </footer>
+  );
+}
+
 export default function GalleryPublic() {
   const { publicId = "" } = useParams<{ publicId: string }>();
   const { t } = useTranslation("pages");
@@ -23,6 +61,7 @@ export default function GalleryPublic() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [resolvedGalleryId, setResolvedGalleryId] = useState<string | null>(null);
+  const [branding, setBranding] = useState<GalleryBranding | null>(null);
 
   const accessStorageKey = useMemo(() => `${ACCESS_STORAGE_PREFIX}${normalizedPublicId}`, [normalizedPublicId]);
 
@@ -64,6 +103,40 @@ export default function GalleryPublic() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!normalizedPublicId) return;
+    let cancelled = false;
+
+    const loadBranding = async () => {
+      const { data, error } = await supabase.functions.invoke("gallery-branding", {
+        body: { publicId: normalizedPublicId },
+      });
+
+      if (cancelled) return;
+      if (error) {
+        setBranding(null);
+        return;
+      }
+
+      const response = data as Partial<GalleryBranding> | null;
+      const logoUrlRaw = typeof response?.logoUrl === "string" ? response.logoUrl.trim() : "";
+      const businessNameRaw = typeof response?.businessName === "string" ? response.businessName.trim() : "";
+      setBranding({
+        logoUrl: logoUrlRaw ? logoUrlRaw : null,
+        businessName: businessNameRaw ? businessNameRaw : null,
+      });
+    };
+
+    loadBranding().catch(() => {
+      if (cancelled) return;
+      setBranding(null);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [normalizedPublicId]);
 
   const canSubmit = useMemo(() => normalizePin(pinInput).length === 6 && authReady && !submitting, [
     authReady,
@@ -125,85 +198,98 @@ export default function GalleryPublic() {
     return <GalleryClientPreview galleryId={resolvedGalleryId} />;
   }
 
+  const brandingFooter = branding ? (
+    <GalleryBrandingFooter
+      branding={branding}
+      logoAlt={t("sessionDetail.gallery.publicAccess.brandingLogoAlt")}
+    />
+  ) : null;
+
   if (authError) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 space-y-2 text-sm text-muted-foreground">
-            <p className="font-semibold text-foreground">
-              {t("sessionDetail.gallery.publicAccess.errors.authFailedTitle", { defaultValue: "Giriş başlatılamadı" })}
-            </p>
-            <p>{authError}</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex-1 flex items-center justify-center px-4 py-10">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-6 space-y-2 text-sm text-muted-foreground">
+              <p className="font-semibold text-foreground">
+                {t("sessionDetail.gallery.publicAccess.errors.authFailedTitle", { defaultValue: "Giriş başlatılamadı" })}
+              </p>
+              <p>{authError}</p>
+            </CardContent>
+          </Card>
+        </div>
+        {brandingFooter}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
-      <Card className="w-full max-w-md">
-        <CardContent className="p-7 sm:p-8">
-          <div className="flex flex-col items-center text-center">
-            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4">
-              <ShieldCheck className="h-7 w-7" aria-hidden="true" />
-            </div>
-            <h1 className="text-lg font-bold text-foreground mb-2">
-              {t("sessionDetail.gallery.publicAccess.title", { defaultValue: "Galeri Şifre Korumalı" })}
-            </h1>
-            <p className="text-sm text-muted-foreground max-w-sm mb-6">
-              {t("sessionDetail.gallery.publicAccess.description", {
-                defaultValue: "Bu galeriye erişmek için fotoğrafçınızın paylaştığı şifreyi girin.",
-              })}
-            </p>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex-1 flex items-center justify-center px-4 py-10">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-7 sm:p-8">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+                <ShieldCheck className="h-7 w-7" aria-hidden="true" />
+              </div>
+              <h1 className="text-lg font-bold text-foreground mb-2">
+                {t("sessionDetail.gallery.publicAccess.title", { defaultValue: "Galeri Şifre Korumalı" })}
+              </h1>
+              <p className="text-sm text-muted-foreground max-w-sm mb-6">
+                {t("sessionDetail.gallery.publicAccess.description", {
+                  defaultValue: "Bu galeriye erişmek için fotoğrafçınızın paylaştığı şifreyi girin.",
+                })}
+              </p>
 
-            <div className="w-full space-y-2 text-left">
-              <Label htmlFor="gallery-pin">
-                {t("sessionDetail.gallery.publicAccess.pinLabel", { defaultValue: "Giriş Şifresi" })}
-              </Label>
-              <Input
-                id="gallery-pin"
-                value={pinInput}
-                onChange={(event) => {
-                  setSubmitError(null);
-                  setPinInput(event.target.value);
-                }}
-                placeholder={t("sessionDetail.gallery.publicAccess.pinPlaceholder", { defaultValue: "6 karakter" })}
-                disabled={!authReady || submitting}
-                autoComplete="one-time-code"
-                inputMode="text"
-                autoCapitalize="characters"
-                className="text-center tracking-[0.35em] font-mono"
-              />
-              {submitError ? (
-                <p className="text-sm text-destructive">{submitError}</p>
-              ) : (
-                <p className="text-[11px] text-muted-foreground">
-                  {t("sessionDetail.gallery.publicAccess.pinHint", {
-                    defaultValue: "Şifre büyük/küçük harf duyarlı değildir.",
-                  })}
-                </p>
-              )}
-            </div>
+              <div className="w-full space-y-2 text-left">
+                <Label htmlFor="gallery-pin">
+                  {t("sessionDetail.gallery.publicAccess.pinLabel", { defaultValue: "Giriş Şifresi" })}
+                </Label>
+                <Input
+                  id="gallery-pin"
+                  value={pinInput}
+                  onChange={(event) => {
+                    setSubmitError(null);
+                    setPinInput(event.target.value);
+                  }}
+                  placeholder={t("sessionDetail.gallery.publicAccess.pinPlaceholder", { defaultValue: "6 karakter" })}
+                  disabled={!authReady || submitting}
+                  autoComplete="one-time-code"
+                  inputMode="text"
+                  autoCapitalize="characters"
+                  className="text-center tracking-[0.35em] font-mono"
+                />
+                {submitError ? (
+                  <p className="text-sm text-destructive">{submitError}</p>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    {t("sessionDetail.gallery.publicAccess.pinHint", {
+                      defaultValue: "Şifre büyük/küçük harf duyarlı değildir.",
+                    })}
+                  </p>
+                )}
+              </div>
 
-            <Button
-              type="button"
-              className="mt-6 w-full"
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  {t("sessionDetail.gallery.publicAccess.submitting", { defaultValue: "Kontrol ediliyor…" })}
-                </>
-              ) : (
-                t("sessionDetail.gallery.publicAccess.submit", { defaultValue: "Devam et" })
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <Button
+                type="button"
+                className="mt-6 w-full"
+                onClick={handleSubmit}
+                disabled={!canSubmit}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    {t("sessionDetail.gallery.publicAccess.submitting", { defaultValue: "Kontrol ediliyor…" })}
+                  </>
+                ) : (
+                  t("sessionDetail.gallery.publicAccess.submit", { defaultValue: "Devam et" })
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      {brandingFooter}
     </div>
   );
 }

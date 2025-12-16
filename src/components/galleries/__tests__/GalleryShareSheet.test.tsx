@@ -99,7 +99,7 @@ describe("GalleryShareSheet", () => {
     const textParam = parsed.searchParams.get("text") ?? "";
     const normalizedText = textParam.replace(/\r\n/g, "\n");
 
-    expect(normalizedText).toContain(`👉 Your gallery: ${expectedUrl}\n\n🔒 Access password: 4T0PXF`);
+    expect(normalizedText).toContain(`Your gallery: ${expectedUrl}\n\nAccess password: 4T0PXF`);
     expect(normalizedText).not.toContain("\\n");
 
     openSpy.mockRestore();

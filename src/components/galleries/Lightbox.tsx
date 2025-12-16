@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { GalleryWatermarkConfig } from "@/lib/galleryWatermark";
 import { GalleryWatermarkOverlay } from "./GalleryWatermarkOverlay";
@@ -142,6 +142,12 @@ export function Lightbox({
   // Carousel State
   const [mobileApi, setMobileApi] = useState<CarouselApi>();
   const [desktopApi, setDesktopApi] = useState<CarouselApi>();
+  const swipeStartXRef = useRef<number | null>(null);
+  const swipeStartYRef = useRef<number | null>(null);
+  const swipeLastXRef = useRef<number | null>(null);
+  const swipeLastYRef = useRef<number | null>(null);
+  const swipeStartIndexRef = useRef<number>(0);
+  const swipeStartCarouselIndexRef = useRef<number | null>(null);
 
   const activeRule = useMemo(
     () => (activeRuleId ? rules.find((rule) => rule.id === activeRuleId) ?? null : null),
@@ -151,6 +157,67 @@ export function Lightbox({
   const activeRuleIsFull = activeRule?.maxCount != null ? activeRule.currentCount >= activeRule.maxCount : false;
   const isActiveRuleDisabled = Boolean(activeRule && activeRuleIsFull && !isSelectedForActiveRule) || isSelectionsLocked;
   const hasSelections = (currentPhoto?.selections.length ?? 0) > 0;
+  const isFavoriteToggleDisabled = mode === "client" && isSelectionsLocked;
+
+  const handleMobileSwipeTouchStart = useMemo(
+    () => (event: React.TouchEvent<HTMLImageElement>) => {
+      const touch = event.targetTouches?.[0];
+      if (!touch) return;
+      swipeStartXRef.current = touch.clientX;
+      swipeStartYRef.current = touch.clientY;
+      swipeLastXRef.current = touch.clientX;
+      swipeLastYRef.current = touch.clientY;
+      swipeStartIndexRef.current = currentIndex;
+      swipeStartCarouselIndexRef.current = mobileApi ? mobileApi.selectedScrollSnap() : null;
+    },
+    [currentIndex, mobileApi]
+  );
+
+  const handleMobileSwipeTouchMove = useMemo(
+    () => (event: React.TouchEvent<HTMLImageElement>) => {
+      const touch = event.targetTouches?.[0];
+      if (!touch) return;
+      swipeLastXRef.current = touch.clientX;
+      swipeLastYRef.current = touch.clientY;
+    },
+    []
+  );
+
+  const handleMobileSwipeTouchEnd = useMemo(
+    () => (event: React.TouchEvent<HTMLImageElement>) => {
+      const startX = swipeStartXRef.current;
+      const startY = swipeStartYRef.current;
+      if (startX == null || startY == null) return;
+
+      const changedTouch = event.changedTouches?.[0];
+      const endX = changedTouch?.clientX ?? swipeLastXRef.current ?? startX;
+      const endY = changedTouch?.clientY ?? swipeLastYRef.current ?? startY;
+      const deltaX = endX - startX;
+      const deltaY = endY - startY;
+
+      swipeStartXRef.current = null;
+      swipeStartYRef.current = null;
+      swipeLastXRef.current = null;
+      swipeLastYRef.current = null;
+
+      const threshold = 50;
+      if (Math.abs(deltaX) < threshold || Math.abs(deltaX) < Math.abs(deltaY)) return;
+      if (photos.length < 2) return;
+
+      const startingCarouselIndex = swipeStartCarouselIndexRef.current;
+      if (mobileApi && startingCarouselIndex != null && mobileApi.selectedScrollSnap() !== startingCarouselIndex) {
+        return;
+      }
+
+      const direction = deltaX < 0 ? 1 : -1;
+      const baseIndex = swipeStartIndexRef.current;
+      const nextIndex = Math.max(0, Math.min(baseIndex + direction, photos.length - 1));
+      if (nextIndex !== baseIndex) {
+        onNavigate(nextIndex);
+      }
+    },
+    [mobileApi, onNavigate, photos.length]
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -213,7 +280,7 @@ export function Lightbox({
       if (key === "arrowright") onNavigate(currentIndex + 1);
 
       if (!currentPhoto) return;
-      if (mode === "client" && favoritesEnabled && key === "f") onToggleStar(currentPhoto.id);
+      if (mode === "client" && favoritesEnabled && key === "f" && !isSelectionsLocked) onToggleStar(currentPhoto.id);
       if (mode === "admin" && key === "s") onToggleStar(currentPhoto.id);
 
       if (mode === "client" && activeRuleId && event.code === "Space" && !isActiveRuleDisabled) {
@@ -236,6 +303,7 @@ export function Lightbox({
     onToggleRule,
     isActiveRuleDisabled,
     favoritesEnabled,
+    isSelectionsLocked,
   ]);
 
   if (!isOpen || !currentPhoto) return null;
@@ -327,6 +395,9 @@ export function Lightbox({
                             alt={photo.filename}
                             className="max-w-full max-h-full object-contain"
                             onError={() => onImageError?.(photo.id)}
+                            onTouchStart={handleMobileSwipeTouchStart}
+                            onTouchMove={handleMobileSwipeTouchMove}
+                            onTouchEnd={handleMobileSwipeTouchEnd}
                           />
                           {mode === "client" && watermark ? (
                             <GalleryWatermarkOverlay
@@ -350,6 +421,7 @@ export function Lightbox({
                     disabled={currentIndex === 0}
                     className="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/[0.14] hover:bg-white/[0.2] backdrop-blur-md border border-white/10 flex items-center justify-center transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-20"
                     aria-label={t("sessionDetail.gallery.lightbox.previous")}
+                    data-testid="lightbox-mobile-prev"
                   >
                     <ChevronLeft size={28} />
                   </button>
@@ -360,6 +432,7 @@ export function Lightbox({
                     disabled={currentIndex === photos.length - 1}
                     className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/[0.14] hover:bg-white/[0.2] backdrop-blur-md border border-white/10 flex items-center justify-center transition-colors disabled:opacity-20 disabled:cursor-not-allowed z-20"
                     aria-label={t("sessionDetail.gallery.lightbox.next")}
+                    data-testid="lightbox-mobile-next"
                   >
                     <ChevronRight size={28} />
                   </button>
@@ -372,7 +445,8 @@ export function Lightbox({
                 <button
                   type="button"
                   onClick={() => onToggleStar(currentPhoto.id)}
-                  className="flex flex-col items-center gap-2"
+                  disabled={isFavoriteToggleDisabled}
+                  className="flex flex-col items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <div
                     className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 ${currentPhoto.isFavorite
@@ -392,7 +466,8 @@ export function Lightbox({
                 <button
                   type="button"
                   onClick={() => setIsMobileSelectionPanelOpen((prev) => !prev)}
-                  className="flex flex-col items-center gap-2"
+                  disabled={isSelectionsLocked}
+                  className="flex flex-col items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <div
                     className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 relative ${addButtonActive ? "bg-brand-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.35)]" : "bg-white/10 text-white hover:bg-white/20"
@@ -442,7 +517,10 @@ export function Lightbox({
             required: rule.required,
           }))}
           selectedRuleIds={currentPhoto.selections}
-          onToggleRule={(ruleId) => onToggleRule(currentPhoto.id, ruleId)}
+          onToggleRule={(ruleId) => {
+            if (isSelectionsLocked) return;
+            onToggleRule(currentPhoto.id, ruleId);
+          }}
           onPhotoImageError={() => onImageError?.(currentPhoto.id)}
           zIndexClassName="z-[210]"
         />
@@ -611,10 +689,11 @@ export function Lightbox({
                     <button
                       type="button"
                       onClick={() => onToggleStar(currentPhoto.id)}
+                      disabled={isFavoriteToggleDisabled}
                       className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-200 group ${currentPhoto.isFavorite
                         ? "bg-red-500 text-white border-red-600 shadow-lg shadow-red-900/20"
                         : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-800/80 hover:border-gray-600"
-                        }`}
+                        } disabled:opacity-60 disabled:cursor-not-allowed`}
                     >
                       <span className="font-semibold flex items-center gap-3">
                         <Heart
@@ -710,6 +789,7 @@ export function Lightbox({
                     const isSelected = currentPhoto.selections.includes(rule.id);
                     const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
                     const isDisabled = !isSelected && isFull;
+                    const isRuleToggleDisabled = isDisabled || isSelectionsLocked;
                     const serviceName = rule.serviceName || t("sessionDetail.gallery.lightbox.lists.generalService");
                     const ruleStatus = getLightboxRuleStatus(rule, t);
 
@@ -717,12 +797,12 @@ export function Lightbox({
                       <button
                         key={rule.id}
                         type="button"
-                        onClick={() => !isDisabled && onToggleRule(currentPhoto.id, rule.id)}
-                        disabled={isDisabled}
+                        onClick={() => !isRuleToggleDisabled && onToggleRule(currentPhoto.id, rule.id)}
+                        disabled={isRuleToggleDisabled}
                         className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all text-left group disabled:opacity-50 ${isSelected
                           ? "bg-brand-900/30 border-brand-500/50 shadow-[0_0_15px_rgba(14,165,233,0.1)]"
                           : "bg-transparent border-gray-700 hover:bg-gray-800 hover:border-gray-600"
-                          } ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+                          } ${isRuleToggleDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
                         title={isDisabled ? t("sessionDetail.gallery.lightbox.limitFull") : undefined}
                       >
                         <div className="flex-1 min-w-0 pr-3">

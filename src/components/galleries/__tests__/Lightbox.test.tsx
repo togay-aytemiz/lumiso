@@ -172,6 +172,50 @@ describe("Lightbox", () => {
     expect(onToggleRule).not.toHaveBeenCalled();
   });
 
+  it("does not allow toggling when selections are locked", () => {
+    const onToggleRule = jest.fn();
+    const onToggleStar = jest.fn();
+
+    render(
+      <Lightbox
+        isOpen
+        onClose={jest.fn()}
+        photos={[
+          {
+            id: "photo-1",
+            url: "https://example.com/1.jpg",
+            filename: "1.jpg",
+            isFavorite: false,
+            isStarred: false,
+            selections: [],
+          },
+        ]}
+        currentIndex={0}
+        onNavigate={jest.fn()}
+        rules={[
+          {
+            id: "rule-1",
+            title: "Cover",
+            serviceName: null,
+            currentCount: 0,
+            maxCount: 1,
+          },
+        ]}
+        onToggleRule={onToggleRule}
+        onToggleStar={onToggleStar}
+        mode="client"
+        activeRuleId="rule-1"
+        isSelectionsLocked
+      />
+    );
+
+    fireEvent.keyDown(window, { key: "f" });
+    fireEvent.keyDown(window, { key: " ", code: "Space" });
+
+    expect(onToggleStar).not.toHaveBeenCalled();
+    expect(onToggleRule).not.toHaveBeenCalled();
+  });
+
   it("navigates with swipe gestures", () => {
     const onNavigate = jest.fn();
 

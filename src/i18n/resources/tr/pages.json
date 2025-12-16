@@ -987,6 +987,22 @@
           "copyright": "© 2025 Tüm Hakları Saklıdır"
         }
       },
+      "selectionLock": {
+        "banner": {
+          "title": "Müşteri Seçimlerini Tamamladı",
+          "description": "Bu galeri onaylandı ve kilitlendi."
+        },
+        "actions": {
+          "export": "Seçimleri Dışa Aktar",
+          "unlock": "Kilidi Aç"
+        },
+        "noteLabel": "MÜŞTERİ NOTU",
+        "toast": {
+          "exportComingSoon": "Dışa aktarma yakında.",
+          "unlocked": "Kilit açıldı. Artık değişiklik yapabilirsiniz.",
+          "locked": "Seçimler kilitlendi."
+        }
+      },
       "lightbox": {
         "close": "Kapat",
         "previous": "Önceki",

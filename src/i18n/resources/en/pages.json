@@ -971,6 +971,22 @@
           "copyright": "© 2025 All Rights Reserved"
         }
       },
+      "selectionLock": {
+        "banner": {
+          "title": "Client completed selections",
+          "description": "This gallery is approved and locked."
+        },
+        "actions": {
+          "export": "Export selections",
+          "unlock": "Unlock"
+        },
+        "noteLabel": "CLIENT NOTE",
+        "toast": {
+          "exportComingSoon": "Export is coming soon.",
+          "unlocked": "Selections unlocked. You can make changes now.",
+          "locked": "Selections are now locked."
+        }
+      },
       "lightbox": {
         "close": "Close",
         "previous": "Previous",

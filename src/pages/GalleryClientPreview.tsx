@@ -8,6 +8,7 @@ import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/
 import { GalleryWatermarkOverlay } from "@/components/galleries/GalleryWatermarkOverlay";
 import { Lightbox } from "@/components/galleries/Lightbox";
 import { MobilePhotoSelectionSheet } from "@/components/galleries/MobilePhotoSelectionSheet";
+import { SelectionLockBanner } from "@/components/galleries/SelectionLockBanner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GALLERY_ASSETS_BUCKET, getStorageBasename, isSupabaseStorageObjectMissingError } from "@/lib/galleryAssets";
@@ -119,6 +120,14 @@ type ClientSelectionRow = {
   asset_id: string | null;
   selection_part: string | null;
   client_id: string | null;
+};
+
+type GallerySelectionStateRow = {
+  gallery_id: string;
+  is_locked: boolean;
+  note: string | null;
+  locked_at: string | null;
+  unlocked_at: string | null;
 };
 
 const ITEMS_PER_PAGE = 60;
@@ -283,8 +292,6 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
 
   const [visibleCountBySetId, setVisibleCountBySetId] = useState<Record<string, number>>({});
 
-  // Selection Confirmation State
-  const [isSelectionsConfirmed, setIsSelectionsConfirmed] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [photographerNote, setPhotographerNote] = useState("");
 
@@ -307,12 +314,6 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
     };
   }, []);
 
-  useEffect(() => {
-    if (!isSelectionsConfirmed) return;
-    setActiveMenuId(null);
-    setSheetPhotoId(null);
-  }, [isSelectionsConfirmed]);
-
   const { data: gallery, isLoading: galleryLoading } = useQuery({
     queryKey: ["gallery_client_preview", resolvedGalleryId],
     enabled: Boolean(resolvedGalleryId),
@@ -327,6 +328,34 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
       return data as GalleryDetailRow;
     },
   });
+
+  const selectionStateQueryKey = useMemo(
+    () => ["gallery_selection_state", resolvedGalleryId],
+    [resolvedGalleryId]
+  );
+
+  const { data: selectionState } = useQuery({
+    queryKey: selectionStateQueryKey,
+    enabled: Boolean(resolvedGalleryId),
+    queryFn: async (): Promise<GallerySelectionStateRow | null> => {
+      if (!resolvedGalleryId) return null;
+      const { data, error } = await supabase
+        .from("gallery_selection_states")
+        .select("gallery_id,is_locked,note,locked_at,unlocked_at")
+        .eq("gallery_id", resolvedGalleryId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as GallerySelectionStateRow | null) ?? null;
+    },
+  });
+
+  const isSelectionsLocked = selectionState?.is_locked ?? false;
+
+  useEffect(() => {
+    if (!isSelectionsLocked) return;
+    setActiveMenuId(null);
+    setSheetPhotoId(null);
+  }, [isSelectionsLocked]);
 
   const { data: sets, isLoading: setsLoading } = useQuery({
     queryKey: ["gallery_sets", resolvedGalleryId],
@@ -1174,9 +1203,83 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
     },
   });
 
+  const lockSelectionsMutation = useMutation({
+    mutationFn: async ({ note }: { note: string }) => {
+      if (!resolvedGalleryId) return;
+      if (!viewerId) throw new Error("Missing viewer session");
+      const now = new Date().toISOString();
+      const resolvedNote = note.trim();
+
+      const { error } = await supabase
+        .from("gallery_selection_states")
+        .upsert(
+          {
+            gallery_id: resolvedGalleryId,
+            is_locked: true,
+            note: resolvedNote ? resolvedNote : null,
+            locked_at: now,
+            locked_by: viewerId,
+            unlocked_at: null,
+            unlocked_by: null,
+            updated_at: now,
+          },
+          { onConflict: "gallery_id" }
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
+      i18nToast.success(t("sessionDetail.gallery.selectionLock.toast.locked"), { duration: 2500 });
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
+      i18nToast.error(t("sessionDetail.gallery.toast.errorDesc"), { duration: 2500 });
+    },
+  });
+
+  const unlockSelectionsMutation = useMutation({
+    mutationFn: async () => {
+      if (!resolvedGalleryId) return;
+      if (!viewerId) throw new Error("Missing viewer session");
+      const now = new Date().toISOString();
+
+      const { error } = await supabase
+        .from("gallery_selection_states")
+        .upsert(
+          {
+            gallery_id: resolvedGalleryId,
+            is_locked: false,
+            unlocked_at: now,
+            unlocked_by: viewerId,
+            updated_at: now,
+          },
+          { onConflict: "gallery_id" }
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
+      i18nToast.success(t("sessionDetail.gallery.selectionLock.toast.unlocked"), { duration: 2500 });
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
+      i18nToast.error(t("sessionDetail.gallery.toast.errorDesc"), { duration: 2500 });
+    },
+  });
+
+  const handleExportSelections = useCallback(() => {
+    i18nToast.info(t("sessionDetail.gallery.selectionLock.toast.exportComingSoon"), { duration: 2500 });
+  }, [i18nToast, t]);
+
   const handleToggleFavorite = useCallback(
     (photoId: string) => {
       if (!favoritesEnabled) return;
+      if (isSelectionsLocked) {
+        i18nToast.error(t("sessionDetail.gallery.clientPreview.toast.selectionsLocked"), {
+          duration: 3000,
+        });
+        return;
+      }
       favoritesTouchedRef.current = true;
       const wasFavorite = favoritePhotoIds.has(photoId);
       const nextIsFavorite = !wasFavorite;
@@ -1211,7 +1314,7 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
         }
       );
     },
-    [favoritePhotoIds, favoritesEnabled, i18nToast, t, updateFavoriteMutation]
+    [favoritePhotoIds, favoritesEnabled, i18nToast, isSelectionsLocked, t, updateFavoriteMutation]
   );
 
   const handleAssetImageError = useCallback(
@@ -1247,14 +1350,13 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
 
   const handleConfirmSelections = () => {
     setIsConfirmationModalOpen(false);
-    setIsSelectionsConfirmed(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    lockSelectionsMutation.mutate({ note: photographerNote });
   };
 
 
   const toggleRuleSelect = useCallback(
     (photoId: string, ruleId: string) => {
-      if (isSelectionsConfirmed) {
+      if (isSelectionsLocked) {
         i18nToast.error(t("sessionDetail.gallery.clientPreview.toast.selectionsLocked"), {
           duration: 3000,
         });
@@ -1306,7 +1408,7 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
         }
       );
     },
-    [i18nToast, isSelectionsConfirmed, photoSelectionsById, selectionPartKeyByRuleId, t, updateRuleSelectionMutation]
+    [i18nToast, isSelectionsLocked, photoSelectionsById, selectionPartKeyByRuleId, t, updateRuleSelectionMutation]
   );
 
   const getGridClass = () => {
@@ -1462,10 +1564,10 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
                   <div className="relative">
                     <button
                       type="button"
-                      disabled={isSelectionsConfirmed}
+                      disabled={isSelectionsLocked}
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (isSelectionsConfirmed) return;
+                        if (isSelectionsLocked) return;
                         setSheetPhotoId((prev) => (prev === photo.id ? null : photo.id));
                       }}
                       aria-label={
@@ -1474,14 +1576,14 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
                           : t("sessionDetail.gallery.clientPreview.labels.add")
                       }
                       className={`md:hidden w-11 h-11 rounded-full flex items-center justify-center shadow-md backdrop-blur-md transition-all duration-200 active:scale-95
-                        ${isSelectionsConfirmed
+                        ${isSelectionsLocked
                           ? "bg-gray-100 text-gray-400 cursor-not-allowed opacity-50"
                           : hasSelections
                             ? "bg-brand-500 text-white"
                             : "bg-white/90 text-gray-900"}
                       `}
                     >
-                      {isSelectionsConfirmed ? (
+                      {isSelectionsLocked ? (
                         <Lock size={16} />
                       ) : (
                         hasSelections ? <Check size={16} strokeWidth={3} /> : <ListPlus size={18} />
@@ -1492,21 +1594,21 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          disabled={isSelectionsConfirmed}
+                          disabled={isSelectionsLocked}
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (isSelectionsConfirmed) return;
+                            if (isSelectionsLocked) return;
                             setActiveMenuId(isMenuOpen ? null : photo.id);
                           }}
                           className={`hidden md:flex h-9 px-3 rounded-full items-center justify-center gap-2 shadow-sm backdrop-blur-md transition-all duration-200 border
-	                        ${isSelectionsConfirmed
+	                        ${isSelectionsLocked
                               ? "bg-gray-700/50 text-white/50 border-transparent cursor-not-allowed"
                               : hasSelections
                                 ? "bg-brand-600 text-white border-brand-500 hover:bg-brand-700 hover:scale-105"
                                 : "bg-white/90 text-gray-700 border-white/50 hover:bg-white hover:text-gray-900 hover:scale-105"}
 	                      `}
                         >
-                          {isSelectionsConfirmed ? (
+                          {isSelectionsLocked ? (
                             <>
                               <Lock size={14} className="opacity-70" />
                               <span className="text-[10px] font-bold uppercase tracking-wider">{t("sessionDetail.gallery.clientPreview.status.confirmed")}</span>
@@ -1743,18 +1845,14 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
         </p>
         {/* COMPLETE / SENT SECTION - MOVED TO TOP */}
         <div className="mb-4">
-          {isSelectionsConfirmed ? (
-            <div className="mb-4 bg-emerald-50 border border-emerald-100 rounded-2xl p-6 text-center animate-in zoom-in duration-300">
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-600">
-                <CheckCircle2 size={32} strokeWidth={2} />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">
-                {t("sessionDetail.gallery.clientPreview.selections.sentTitle")}
-              </h3>
-              <p className="text-sm text-gray-600 leading-relaxed max-w-xs mx-auto">
-                {t("sessionDetail.gallery.clientPreview.selections.sentDesc")}
-              </p>
-            </div>
+          {isSelectionsLocked ? (
+            <SelectionLockBanner
+              note={selectionState?.note ?? null}
+              onExport={handleExportSelections}
+              onUnlock={() => unlockSelectionsMutation.mutate()}
+              unlockDisabled={unlockSelectionsMutation.isPending}
+              className="animate-in zoom-in duration-300"
+            />
           ) : (
             selectionRules.length > 0 && (
               <button
@@ -1973,18 +2071,6 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
 
   return (
     <div className="bg-white min-h-screen font-sans text-gray-900 relative">
-      {/* --- LOCKED BANNER (Sticky Top) --- */}
-      {isSelectionsConfirmed ? (
-        <div className="sticky top-0 z-[100] bg-emerald-600 text-white px-4 py-3 shadow-md flex items-center justify-center gap-3 animate-in slide-in-from-top duration-500">
-          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-            <CheckCircle2 size={16} className="text-white" strokeWidth={3} />
-          </div>
-          <p className="text-sm font-bold tracking-wide">
-            {t("sessionDetail.gallery.clientPreview.banner.lockedMessage")}
-          </p>
-        </div>
-      ) : null}
-
       {/* --- HERO SECTION --- */}
       {showHero ? (
         <div className={`relative ${isMobile ? "h-[100dvh]" : "h-screen"} w-full overflow-hidden bg-gray-900`}>
@@ -2114,7 +2200,7 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
           <div className="flex items-center gap-4 md:gap-6 shrink-0">
             {/* Desktop Complete Button */}
             {!isMobile && selectionRules.length > 0 ? (
-              isSelectionsConfirmed ? (
+              isSelectionsLocked ? (
                 <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
                   <CheckCircle2 size={16} />
                   <span className="text-xs font-bold uppercase tracking-wider">
@@ -2289,6 +2375,16 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
           {/* --- GALLERY SECTION --- */}
           <div ref={galleryRef} className="bg-white min-h-screen pt-4 md:pt-6 px-4 md:px-8 pb-32 md:pb-12">
             <div className="w-full">
+              {heroMode === "selection" && isSelectionsLocked ? (
+                <div className="mb-6">
+                  <SelectionLockBanner
+                    note={selectionState?.note ?? null}
+                    onExport={handleExportSelections}
+                    onUnlock={() => unlockSelectionsMutation.mutate()}
+                    unlockDisabled={unlockSelectionsMutation.isPending}
+                  />
+                </div>
+              ) : null}
               {hasMultipleSets ? (
                 filteredPhotos.length === 0 && (activeFilter === "favorites" || activeFilter === "starred") ? (
                   renderEmptyState()
@@ -2520,7 +2616,7 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
         favoritesEnabled={favoritesEnabled}
         onImageError={handleAssetImageError}
         watermark={watermark}
-        isSelectionsLocked={isSelectionsConfirmed}
+        isSelectionsLocked={isSelectionsLocked}
       />
 
       {renderSelectionSheet()}

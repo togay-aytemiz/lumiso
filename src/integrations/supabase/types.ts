@@ -489,6 +489,50 @@ export type Database = {
           },
         ]
       }
+      gallery_selection_states: {
+        Row: {
+          created_at: string
+          gallery_id: string
+          is_locked: boolean
+          locked_at: string | null
+          locked_by: string | null
+          note: string | null
+          unlocked_at: string | null
+          unlocked_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gallery_id: string
+          is_locked?: boolean
+          locked_at?: string | null
+          locked_by?: string | null
+          note?: string | null
+          unlocked_at?: string | null
+          unlocked_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gallery_id?: string
+          is_locked?: boolean
+          locked_at?: string | null
+          locked_by?: string | null
+          note?: string | null
+          unlocked_at?: string | null
+          unlocked_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_selection_states_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: true
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       default_message_template_templates: {
         Row: {
           blocks: Json | null

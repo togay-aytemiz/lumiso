@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
@@ -24,6 +25,7 @@ import {
   SelectionDashboard,
   type SelectionRule,
 } from "@/components/galleries/SelectionDashboard";
+import { SelectionLockBanner } from "@/components/galleries/SelectionLockBanner";
 import { Lightbox } from "@/components/galleries/Lightbox";
 import { GalleryShareSheet } from "@/components/galleries/GalleryShareSheet";
 import {
@@ -161,6 +163,14 @@ interface GallerySetRow {
   name: string;
   description: string | null;
   order_index: number | null;
+}
+
+interface GallerySelectionStateRow {
+  gallery_id: string;
+  is_locked: boolean;
+  note: string | null;
+  locked_at: string | null;
+  unlocked_at: string | null;
 }
 
 interface ClientSelectionRow {
@@ -307,6 +317,7 @@ export default function GalleryDetail() {
   const { t: tForms } = useTranslation("forms");
   const { t: tCommon } = useTranslation("common");
   const { toast } = useToast();
+  const i18nToast = useI18nToast();
   const { activeOrganizationId } = useOrganization();
   const { timezone, timeFormat } = useOrganizationTimezone();
   const { settings: organizationSettings } = useOrganizationSettings();
@@ -607,6 +618,60 @@ export default function GalleryDetail() {
       return data as GalleryDetailRow;
     },
   });
+
+  const selectionStateQueryKey = useMemo(() => ["gallery_selection_state", id], [id]);
+
+  const { data: selectionState } = useQuery({
+    queryKey: selectionStateQueryKey,
+    enabled: Boolean(id),
+    queryFn: async (): Promise<GallerySelectionStateRow | null> => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from("gallery_selection_states")
+        .select("gallery_id,is_locked,note,locked_at,unlocked_at")
+        .eq("gallery_id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as GallerySelectionStateRow | null) ?? null;
+    },
+  });
+
+  const isSelectionsLocked = selectionState?.is_locked ?? false;
+
+  const unlockSelectionsMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) return;
+      const now = new Date().toISOString();
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id ?? null;
+
+      const { error } = await supabase
+        .from("gallery_selection_states")
+        .upsert(
+          {
+            gallery_id: id,
+            is_locked: false,
+            unlocked_at: now,
+            unlocked_by: userId,
+            updated_at: now,
+          },
+          { onConflict: "gallery_id" }
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
+      i18nToast.success(t("sessionDetail.gallery.selectionLock.toast.unlocked"), { duration: 2500 });
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
+      i18nToast.error(t("sessionDetail.gallery.toast.errorDesc"), { duration: 2500 });
+    },
+  });
+
+  const handleExportSelections = useCallback(() => {
+    i18nToast.info(t("sessionDetail.gallery.selectionLock.toast.exportComingSoon"), { duration: 2500 });
+  }, [i18nToast, t]);
 
   const { data: shareSessionClientName } = useQuery({
     queryKey: ["gallery_share_client", data?.session_id],
@@ -2751,6 +2816,13 @@ export default function GalleryDetail() {
 
   const togglePhotoRuleSelection = useCallback(
     (photoId: string, ruleId: string) => {
+      if (isSelectionsLocked) {
+        i18nToast.error(t("sessionDetail.gallery.clientPreview.toast.selectionsLocked"), {
+          duration: 3000,
+        });
+        return;
+      }
+
       const selectionPartKey = selectionPartKeyByRuleId.get(ruleId) ?? "";
       if (!selectionPartKey) return;
 
@@ -2801,7 +2873,7 @@ export default function GalleryDetail() {
         }
       );
     },
-    [photoSelections, selectionPartKeyByRuleId, t, toast, updateClientSelectionMutation]
+    [i18nToast, isSelectionsLocked, photoSelections, selectionPartKeyByRuleId, t, toast, updateClientSelectionMutation]
   );
 
   useEffect(() => {
@@ -3672,6 +3744,16 @@ export default function GalleryDetail() {
                 <div className="space-y-4">
                   {type === "proof" && totalPhotosCount > 0 ? (
                     <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+                      {isSelectionsLocked ? (
+                        <div className="mb-4">
+                          <SelectionLockBanner
+                            note={selectionState?.note ?? null}
+                            onExport={handleExportSelections}
+                            onUnlock={() => unlockSelectionsMutation.mutate()}
+                            unlockDisabled={unlockSelectionsMutation.isPending}
+                          />
+                        </div>
+                      ) : null}
                       <SelectionDashboard
                         rules={selectionRules}
                         favoritesCount={favoritesCount}
@@ -4777,6 +4859,7 @@ export default function GalleryDetail() {
         onToggleStar={handleToggleStar}
         mode="admin"
         onImageError={refreshPreviewUrl}
+        isSelectionsLocked={isSelectionsLocked}
       />
 
       <Sheet

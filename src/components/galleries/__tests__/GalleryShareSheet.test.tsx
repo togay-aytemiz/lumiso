@@ -79,9 +79,11 @@ describe("GalleryShareSheet", () => {
     );
 
     const messageBox = screen.getByRole("textbox");
+    const expectedUrl = "http://localhost/g/PUB123";
 
     await waitFor(() => {
-      expect((messageBox as HTMLTextAreaElement).value).toMatch(/\r?\n\r?\n/);
+      const normalizedValue = (messageBox as HTMLTextAreaElement).value.replace(/\r\n/g, "\n");
+      expect(normalizedValue).toContain(`👉 Your gallery: ${expectedUrl}\n\n🔒`);
     });
 
     expect((messageBox as HTMLTextAreaElement).value).not.toContain("\\n");

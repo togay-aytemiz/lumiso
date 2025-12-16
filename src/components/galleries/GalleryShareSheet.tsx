@@ -288,7 +288,7 @@ export function GalleryShareSheet({
                       </div>
                       <div
                         className={cn(
-                          "mt-1 font-mono text-base sm:text-lg text-foreground break-all select-text",
+                          "mt-1 font-mono text-sm sm:text-base text-foreground break-all select-text",
                           !publicUrl && "text-muted-foreground"
                         )}
                         aria-label={t("sessionDetail.gallery.shareSheet.publicLinkAria")}
@@ -394,54 +394,46 @@ export function GalleryShareSheet({
                 placeholder={t("sessionDetail.gallery.shareSheet.messagePlaceholder")}
               />
             </div>
-
-            <div>
-              <label className={cn(sectionLabelClassName, "mb-3")}>
-                {t("sessionDetail.gallery.shareSheet.quickActionsLabel")}
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <a
-                  href={quickActionsDisabled ? undefined : whatsappUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-disabled={quickActionsDisabled}
-                  tabIndex={quickActionsDisabled ? -1 : 0}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-green-100 bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-200 transition-all group",
-                    quickActionsDisabled && "pointer-events-none opacity-50"
-                  )}
-                >
-                  <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                    <MessageCircle className="h-5 w-5 fill-green-600 text-green-600" aria-hidden="true" />
-                  </div>
-                  <span className="text-sm font-bold">{t("sessionDetail.gallery.shareSheet.whatsapp")}</span>
-                </a>
-
-                <a
-                  href={quickActionsDisabled ? undefined : mailUrl}
-                  aria-disabled={quickActionsDisabled}
-                  tabIndex={quickActionsDisabled ? -1 : 0}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-200 transition-all group",
-                    quickActionsDisabled && "pointer-events-none opacity-50"
-                  )}
-                >
-                  <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                    <Mail className="h-5 w-5 text-blue-600" aria-hidden="true" />
-                  </div>
-                  <span className="text-sm font-bold">{t("sessionDetail.gallery.shareSheet.email")}</span>
-                </a>
-              </div>
-            </div>
           </div>
         </div>
 
-        <div className="border-t pt-4 bg-muted/20">
-          <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-            <span className="flex items-center gap-1 text-muted-foreground/80">
-              <Globe className="h-3 w-3" aria-hidden="true" />
-              {t("sessionDetail.gallery.shareSheet.footerPublicLabel")}
-            </span>
+        <div className="border-t pt-4 sm:pt-5 sticky bottom-0 bg-background z-10 shadow-[0_-8px_24px_rgba(0,0,0,0.06)]">
+          <div className="space-y-2">
+            <label className={sectionLabelClassName}>{t("sessionDetail.gallery.shareSheet.quickActionsLabel")}</label>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                type="button"
+                variant="surface"
+                disabled={quickActionsDisabled}
+                onClick={() => {
+                  if (quickActionsDisabled) return;
+                  const win = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+                  win?.focus?.();
+                }}
+                className={cn(
+                  "w-full justify-center bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white shadow-sm",
+                  quickActionsDisabled && "shadow-none"
+                )}
+              >
+                <MessageCircle className="h-4 w-4 fill-white text-white" aria-hidden="true" />
+                {t("sessionDetail.gallery.shareSheet.whatsapp")}
+              </Button>
+
+              <Button
+                type="button"
+                variant="surface"
+                disabled={quickActionsDisabled}
+                onClick={() => {
+                  if (quickActionsDisabled) return;
+                  window.location.href = mailUrl;
+                }}
+                className="w-full justify-center"
+              >
+                <Mail className="h-4 w-4" aria-hidden="true" />
+                {t("sessionDetail.gallery.shareSheet.email")}
+              </Button>
+            </div>
           </div>
         </div>
       </SheetContent>

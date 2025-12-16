@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { GALLERY_ASSETS_BUCKET, getStorageBasename, isSupabaseStorageObjectMissingError } from "@/lib/galleryAssets";
 import { parseGalleryWatermarkFromBranding } from "@/lib/galleryWatermark";
 import { useI18nToast } from "@/lib/toastHelpers";
+import { FloatingActionBar } from "@/components/galleries/FloatingActionBar";
 import {
   ArrowDown,
   ArrowRight,
@@ -1391,6 +1392,7 @@ export default function GalleryClientPreview() {
     </div>
   );
 
+
   const renderPhotoGrid = (photos: ClientPreviewPhoto[]) => (
     <div className={getGridClass()} data-testid="gallery-client-preview-photo-grid">
       {photos.map((photo) => {
@@ -1429,16 +1431,16 @@ export default function GalleryClientPreview() {
               <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-2 max-w-[70%]">
                 {selectionRules.length > 0 ? (
                   <div className="relative">
-	                    <button
-	                      type="button"
-	                      disabled={isSelectionsConfirmed}
-	                      onClick={(e) => {
-	                        e.stopPropagation();
-	                        if (isSelectionsConfirmed) return;
-	                        setSheetPhotoId((prev) => (prev === photo.id ? null : photo.id));
-	                      }}
-	                      aria-label={
-	                        hasSelections
+                    <button
+                      type="button"
+                      disabled={isSelectionsConfirmed}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isSelectionsConfirmed) return;
+                        setSheetPhotoId((prev) => (prev === photo.id ? null : photo.id));
+                      }}
+                      aria-label={
+                        hasSelections
                           ? t("sessionDetail.gallery.clientPreview.labels.selected")
                           : t("sessionDetail.gallery.clientPreview.labels.add")
                       }
@@ -1462,37 +1464,37 @@ export default function GalleryClientPreview() {
                         <button
                           type="button"
                           disabled={isSelectionsConfirmed}
-	                          onClick={(e) => {
-	                            e.stopPropagation();
-	                            if (isSelectionsConfirmed) return;
-	                            setActiveMenuId(isMenuOpen ? null : photo.id);
-	                          }}
-	                          className={`hidden md:flex h-9 px-3 rounded-full items-center justify-center gap-2 shadow-sm backdrop-blur-md transition-all duration-200 border
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isSelectionsConfirmed) return;
+                            setActiveMenuId(isMenuOpen ? null : photo.id);
+                          }}
+                          className={`hidden md:flex h-9 px-3 rounded-full items-center justify-center gap-2 shadow-sm backdrop-blur-md transition-all duration-200 border
 	                        ${isSelectionsConfirmed
-	                              ? "bg-gray-700/50 text-white/50 border-transparent cursor-not-allowed"
-	                              : hasSelections
-	                                ? "bg-brand-600 text-white border-brand-500 hover:bg-brand-700 hover:scale-105"
-	                                : "bg-white/90 text-gray-700 border-white/50 hover:bg-white hover:text-gray-900 hover:scale-105"}
+                              ? "bg-gray-700/50 text-white/50 border-transparent cursor-not-allowed"
+                              : hasSelections
+                                ? "bg-brand-600 text-white border-brand-500 hover:bg-brand-700 hover:scale-105"
+                                : "bg-white/90 text-gray-700 border-white/50 hover:bg-white hover:text-gray-900 hover:scale-105"}
 	                      `}
-	                        >
+                        >
                           {isSelectionsConfirmed ? (
                             <>
                               <Lock size={14} className="opacity-70" />
                               <span className="text-[10px] font-bold uppercase tracking-wider">{t("sessionDetail.gallery.clientPreview.status.confirmed")}</span>
                             </>
                           ) : (
-	                            <>
-	                              {hasSelections ? <Check size={14} strokeWidth={3} /> : <ListPlus size={16} />}
-	                              <span className="text-[11px] font-bold uppercase tracking-wider">
-	                                {hasSelections
-	                                  ? t("sessionDetail.gallery.clientPreview.labels.selected")
-	                                  : t("sessionDetail.gallery.clientPreview.labels.add")}
-	                              </span>
-	                              <ChevronDown size={14} className="opacity-70" aria-hidden="true" />
-	                            </>
-	                          )}
-	                        </button>
-	                      </PopoverTrigger>
+                            <>
+                              {hasSelections ? <Check size={14} strokeWidth={3} /> : <ListPlus size={16} />}
+                              <span className="text-[11px] font-bold uppercase tracking-wider">
+                                {hasSelections
+                                  ? t("sessionDetail.gallery.clientPreview.labels.selected")
+                                  : t("sessionDetail.gallery.clientPreview.labels.add")}
+                              </span>
+                              <ChevronDown size={14} className="opacity-70" aria-hidden="true" />
+                            </>
+                          )}
+                        </button>
+                      </PopoverTrigger>
 
                       <PopoverContent
                         align="start"
@@ -1526,71 +1528,71 @@ export default function GalleryClientPreview() {
                             const desktopDenominator = showRange ? `${rule.minCount}-${rule.maxCount}` : `${rule.maxCount ?? rule.maxCount}`;
 
                             return (
-	                              <button
-	                                key={rule.id}
-	                                type="button"
-	                                onClick={() => {
-	                                  if (!isDisabled) toggleRuleSelect(photo.id, rule.id);
-	                                }}
-	                                disabled={isDisabled}
-	                                className={`relative w-full flex items-start justify-between gap-3 px-4 py-3 rounded-xl text-sm transition-all border text-left group
+                              <button
+                                key={rule.id}
+                                type="button"
+                                onClick={() => {
+                                  if (!isDisabled) toggleRuleSelect(photo.id, rule.id);
+                                }}
+                                disabled={isDisabled}
+                                className={`relative w-full flex items-start justify-between gap-3 px-4 py-3 rounded-xl text-sm transition-all border text-left group
 	                                  ${isSelected
-	                                    ? "bg-sky-50 border-sky-200 text-sky-900"
-	                                    : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50"
-	                                  }
+                                    ? "bg-sky-50 border-sky-200 text-sky-900"
+                                    : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50"
+                                  }
 	                                  ${isDisabled ? "opacity-50 cursor-not-allowed bg-gray-50" : ""}
 	                                `}
-	                              >
-	                                <span
-	                                  className={`absolute top-2 right-3 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${rule.required
-	                                    ? "bg-brand-50 text-brand-600 border border-brand-100"
-	                                    : "bg-gray-100 text-gray-500 border border-gray-200"
-	                                    }`}
-	                                >
-	                                  {rule.required
-	                                    ? t("sessionDetail.gallery.clientPreview.labels.mandatory")
-	                                    : t("sessionDetail.gallery.clientPreview.labels.optional")}
-	                                </span>
+                              >
+                                <span
+                                  className={`absolute top-2 right-3 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${rule.required
+                                    ? "bg-brand-50 text-brand-600 border border-brand-100"
+                                    : "bg-gray-100 text-gray-500 border border-gray-200"
+                                    }`}
+                                >
+                                  {rule.required
+                                    ? t("sessionDetail.gallery.clientPreview.labels.mandatory")
+                                    : t("sessionDetail.gallery.clientPreview.labels.optional")}
+                                </span>
 
-	                                <div className="min-w-0 flex-1 flex flex-col gap-0.5 pt-6 pr-16">
-	                                  <div className={`text-sm font-semibold text-left truncate ${isSelected ? "text-brand-900" : "text-gray-900"}`}>
-	                                    {rule.title}
-	                                  </div>
-	                                  {serviceName ? (
-	                                    <div className="text-[10px] text-gray-400 text-left truncate">
-	                                      {serviceName}
-	                                    </div>
-	                                  ) : null}
-	                                  <div className={`text-[11px] font-medium text-left ${isFull && !isSelected ? "text-orange-500" : "text-gray-500"}`}>
-	                                    {rule.currentCount} / {desktopDenominator}
-	                                    {isFull && !isSelected ? (
-	                                      <span className="ml-2 text-[10px] font-bold uppercase tracking-wider opacity-80 text-orange-600">
-	                                        {t("sessionDetail.gallery.clientPreview.labels.limitFull")}
-	                                      </span>
-	                                    ) : null}
-	                                    <span className="mx-1.5 opacity-30">•</span>
-	                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${ruleStatus.statusColor}`}>
-	                                      {ruleStatus.statusLabel}
-	                                    </span>
-	                                  </div>
-	                                </div>
+                                <div className="min-w-0 flex-1 flex flex-col gap-0.5 pt-6 pr-16">
+                                  <div className={`text-sm font-semibold text-left truncate ${isSelected ? "text-brand-900" : "text-gray-900"}`}>
+                                    {rule.title}
+                                  </div>
+                                  {serviceName ? (
+                                    <div className="text-[10px] text-gray-400 text-left truncate">
+                                      {serviceName}
+                                    </div>
+                                  ) : null}
+                                  <div className={`text-[11px] font-medium text-left ${isFull && !isSelected ? "text-orange-500" : "text-gray-500"}`}>
+                                    {rule.currentCount} / {desktopDenominator}
+                                    {isFull && !isSelected ? (
+                                      <span className="ml-2 text-[10px] font-bold uppercase tracking-wider opacity-80 text-orange-600">
+                                        {t("sessionDetail.gallery.clientPreview.labels.limitFull")}
+                                      </span>
+                                    ) : null}
+                                    <span className="mx-1.5 opacity-30">•</span>
+                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${ruleStatus.statusColor}`}>
+                                      {ruleStatus.statusLabel}
+                                    </span>
+                                  </div>
+                                </div>
 
-	                                <div className="shrink-0 pt-6">
-	                                  <div
-	                                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
+                                <div className="shrink-0 pt-6">
+                                  <div
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
 	                                      ${isSelected
-	                                        ? "bg-sky-500 text-white shadow-sm shadow-sky-200"
-	                                        : "bg-gray-100 text-gray-300 group-hover:bg-white group-hover:border group-hover:border-gray-200"
-	                                      }
+                                        ? "bg-sky-500 text-white shadow-sm shadow-sky-200"
+                                        : "bg-gray-100 text-gray-300 group-hover:bg-white group-hover:border group-hover:border-gray-200"
+                                      }
 	                                    `}
-	                                  >
-	                                    {isSelected ? <Check size={14} strokeWidth={3} /> : <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />}
-	                                  </div>
-	                                </div>
-	                              </button>
-	                            );
-	                          })}
-	                        </div>
+                                  >
+                                    {isSelected ? <Check size={14} strokeWidth={3} /> : <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </PopoverContent>
                     </Popover>
                   </div>
@@ -1726,10 +1728,10 @@ export default function GalleryClientPreview() {
             </div>
           ) : (
             selectionRules.length > 0 && (
-	                <button
-	                  type="button"
-	                  disabled={!areAllMandatoryComplete}
-	                  onClick={handleOpenConfirmation}
+              <button
+                type="button"
+                disabled={!areAllMandatoryComplete}
+                onClick={handleOpenConfirmation}
                 className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm uppercase tracking-widest shadow-lg transition-all
                     ${areAllMandatoryComplete
                     ? "bg-gray-900 text-white hover:bg-black hover:scale-[1.02] active:scale-[0.98]"
@@ -2101,12 +2103,12 @@ export default function GalleryClientPreview() {
                       : "bg-gray-100 text-gray-400 cursor-not-allowed"
                     }
                    `}
-	                >
-	                  {t("sessionDetail.gallery.clientPreview.actions.completeSelection")}
-	                  {areAllMandatoryComplete ? <ArrowRight size={14} /> : <Lock size={12} />}
-	                </button>
-	              )
-	            ) : null}
+                >
+                  {t("sessionDetail.gallery.clientPreview.actions.completeSelection")}
+                  {areAllMandatoryComplete ? <ArrowRight size={14} /> : <Lock size={12} />}
+                </button>
+              )
+            ) : null}
 
             {isMobile && mobileTab === "gallery" && activeFilter !== "all" ? (
               <button
@@ -2195,98 +2197,7 @@ export default function GalleryClientPreview() {
         {!isMobile ? (
           <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-2">
             <div className="flex items-start gap-4 md:gap-3 min-w-max">
-              <div className="flex flex-col gap-3 w-[220px] md:w-[200px] shrink-0">
-                {activeFilter !== "all" ? (
-                  <button
-                    type="button"
-                    data-touch-target="compact"
-                    aria-label={t("sessionDetail.gallery.clientPreview.filters.all")}
-                    onClick={() => setActiveFilter("all")}
-                    className="group flex items-center justify-between w-full rounded-2xl border-2 border-emerald-200 bg-white px-4 py-3 text-left shadow-sm transition-all hover:border-emerald-300 hover:shadow-md"
-                  >
-                    <span className="flex min-w-0 items-center gap-2">
-                      <LayoutGrid size={18} className="text-gray-900 shrink-0" aria-hidden="true" />
-                      <span className="text-sm font-bold text-gray-900 truncate">
-                        {t("sessionDetail.gallery.clientPreview.filters.all")}
-                      </span>
-                    </span>
-                    <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700 tabular-nums">
-                      {totalPhotoCount}
-                    </span>
-                  </button>
-                ) : null}
 
-                {favoritesEnabled ? (
-                  <button
-                    type="button"
-                    data-touch-target="compact"
-                    aria-label={t("sessionDetail.gallery.clientPreview.filters.favorites")}
-                    onClick={() => setActiveFilter(activeFilter === "favorites" ? "all" : "favorites")}
-                    className={`group flex items-center justify-between w-full rounded-2xl border-2 px-4 py-3 text-left shadow-sm transition-all ${activeFilter === "favorites"
-                      ? "border-rose-300 bg-rose-50 shadow-md ring-1 ring-rose-200"
-                      : "border-rose-100 bg-white hover:border-rose-200 hover:shadow-md"
-                      }`}
-                  >
-                    <span className="flex min-w-0 items-center gap-2">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-100 text-rose-600 shrink-0">
-                        <Heart size={16} fill="currentColor" aria-hidden="true" />
-                      </span>
-                      <span className="text-sm font-bold text-gray-900 truncate">
-                        {t("sessionDetail.gallery.clientPreview.filters.favorites")}
-                      </span>
-                    </span>
-                    <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-rose-100 px-2 py-1 text-xs font-bold text-rose-700 tabular-nums">
-                      {favoritePhotoIds.size}
-                    </span>
-                  </button>
-                ) : null}
-
-                <button
-                  type="button"
-                  data-touch-target="compact"
-                  aria-label={t("sessionDetail.gallery.clientPreview.filters.starred")}
-                  onClick={() => setActiveFilter(activeFilter === "starred" ? "all" : "starred")}
-                  className={`group flex items-center justify-between w-full rounded-2xl border-2 px-4 py-3 text-left shadow-sm transition-all ${activeFilter === "starred"
-                    ? "border-amber-300 bg-amber-50 shadow-md ring-1 ring-amber-200"
-                    : "border-amber-100 bg-white hover:border-amber-200 hover:shadow-md"
-                    }`}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-600 shrink-0">
-                      <Star size={16} fill="currentColor" aria-hidden="true" />
-                    </span>
-                    <span className="text-sm font-bold text-gray-900 truncate">
-                      {t("sessionDetail.gallery.clientPreview.filters.starred")}
-                    </span>
-                  </span>
-                  <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800 tabular-nums">
-                    {starredCount}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  data-touch-target="compact"
-                  aria-label={t("sessionDetail.gallery.clientPreview.filters.unselected")}
-                  onClick={() => setActiveFilter(activeFilter === "unselected" ? "all" : "unselected")}
-                  className={`group flex items-center justify-between w-full rounded-2xl border-2 px-4 py-3 text-left shadow-sm transition-all ${activeFilter === "unselected"
-                    ? "border-gray-400 bg-gray-100 shadow-md ring-1 ring-gray-300"
-                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
-                    }`}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gray-100 text-gray-500 shrink-0">
-                      <CircleDashed size={16} aria-hidden="true" />
-                    </span>
-                    <span className="text-sm font-bold text-gray-900 truncate">
-                      {t("sessionDetail.gallery.clientPreview.filters.unselected")}
-                    </span>
-                  </span>
-                  <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-gray-100 px-2 py-1 text-xs font-bold text-gray-700 tabular-nums">
-                    {unselectedCount}
-                  </span>
-                </button>
-              </div>
 
               {selectionRules.map((rule) => {
                 const isActive = activeFilter === rule.id;
@@ -2295,58 +2206,58 @@ export default function GalleryClientPreview() {
                 const showRange = rule.minCount > 0 && rule.maxCount != null && rule.maxCount !== rule.minCount;
                 const desktopDenominator = showRange ? `${rule.minCount}-${rule.maxCount}` : `${rule.maxCount ?? rule.maxCount}`;
 
-	                return (
-	                  <button
-	                    key={rule.id}
-	                    type="button"
-	                    data-touch-target="compact"
-	                    onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
-	                    className={`group relative flex flex-col justify-between w-[260px] md:w-[280px] shrink-0 rounded-2xl border bg-white transition-all text-left overflow-hidden hover:shadow-md ${isActive
-	                      ? "border-emerald-600 bg-emerald-50/80 shadow-md ring-1 ring-emerald-300"
-	                      : status.borderColor
-	                      }`}
-	                  >
-	                    {/* Top Content */}
-	                    <span className={`absolute top-2 right-3 inline-block px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${rule.required
-	                          ? "bg-brand-50 text-brand-600 border border-brand-100"
-	                          : "bg-gray-100 text-gray-500 border border-gray-200"
-	                          }`}>
-	                      {rule.required
-	                        ? t("sessionDetail.gallery.clientPreview.labels.mandatory")
-	                        : t("sessionDetail.gallery.clientPreview.labels.optional")}
-	                    </span>
+                return (
+                  <button
+                    key={rule.id}
+                    type="button"
+                    data-touch-target="compact"
+                    onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
+                    className={`group relative flex flex-col justify-between w-[260px] md:w-[280px] shrink-0 rounded-2xl border bg-white transition-all text-left overflow-hidden hover:shadow-md ${isActive
+                      ? "border-emerald-600 bg-emerald-50/80 shadow-md ring-1 ring-emerald-300"
+                      : status.borderColor
+                      }`}
+                  >
+                    {/* Top Content */}
+                    <span className={`absolute top-2 right-3 inline-block px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${rule.required
+                      ? "bg-brand-50 text-brand-600 border border-brand-100"
+                      : "bg-gray-100 text-gray-500 border border-gray-200"
+                      }`}>
+                      {rule.required
+                        ? t("sessionDetail.gallery.clientPreview.labels.mandatory")
+                        : t("sessionDetail.gallery.clientPreview.labels.optional")}
+                    </span>
 
-	                    <div className="px-4 pt-7 pb-2 pr-16 w-full">
-	                      <div className="min-w-0">
-	                        <h4 className="font-bold text-gray-900 text-sm truncate leading-snug">{rule.title}</h4>
-	                        {serviceName ? (
-	                          <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider truncate">{serviceName}</p>
-	                        ) : null}
-	                        <p className={`text-[11px] font-bold mt-1 transition-colors ${status.statusColor}`}>
-	                          {status.statusLabel}
-	                        </p>
-	                      </div>
-	                    </div>
+                    <div className="px-4 pt-7 pb-2 pr-16 w-full">
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-gray-900 text-sm truncate leading-snug">{rule.title}</h4>
+                        {serviceName ? (
+                          <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider truncate">{serviceName}</p>
+                        ) : null}
+                        <p className={`text-[11px] font-bold mt-1 transition-colors ${status.statusColor}`}>
+                          {status.statusLabel}
+                        </p>
+                      </div>
+                    </div>
 
-	                    {/* Footer Content */}
-	                    <div className="px-4 pb-2 w-full mt-auto">
-	                      <div className="flex items-end justify-between mb-2">
-	                        <div className="flex items-baseline gap-1">
-	                          <span className="text-xl font-bold text-gray-900 tabular-nums leading-none">{rule.currentCount}</span>
-	                          <span className="text-xs font-semibold text-gray-400 tabular-nums">/{desktopDenominator}</span>
-	                        </div>
-	                        <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-colors ${status.isComplete ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-200 text-transparent"
-	                          }`}>
-	                          <Check size={14} strokeWidth={4} />
-	                        </div>
-	                      </div>
+                    {/* Footer Content */}
+                    <div className="px-4 pb-2 w-full mt-auto">
+                      <div className="flex items-end justify-between mb-2">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl font-bold text-gray-900 tabular-nums leading-none">{rule.currentCount}</span>
+                          <span className="text-xs font-semibold text-gray-400 tabular-nums">/{desktopDenominator}</span>
+                        </div>
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-colors ${status.isComplete ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-200 text-transparent"
+                          }`}>
+                          <Check size={14} strokeWidth={4} />
+                        </div>
+                      </div>
 
-	                      <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
-	                        <div
-	                          className={`h-full transition-all duration-500 ease-out ${isActive ? "bg-emerald-600" : status.progressColor}`}
-	                          style={{ width: `${status.progress * 100}%` }}
-	                        />
-	                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-500 ease-out ${isActive ? "bg-emerald-600" : status.progressColor}`}
+                          style={{ width: `${status.progress * 100}%` }}
+                        />
+                      </div>
                     </div>
                   </button>
                 );
@@ -2446,30 +2357,25 @@ export default function GalleryClientPreview() {
         </p>
       </footer>
 
-      {
-        !isMobile && totalSelectedCount > 0 && activeFilter !== "selected" ? (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-6 duration-500">
-            <button
-              type="button"
-              onClick={() => setActiveFilter("selected")}
-              className="bg-gray-900 text-white pl-4 pr-6 py-3 rounded-full shadow-2xl flex items-center gap-3 hover:scale-105 transition-transform"
-            >
-              <div className="w-8 h-8 rounded-full bg-white text-gray-900 flex items-center justify-center text-sm font-bold">
-                {totalSelectedCount}
-              </div>
-              <div className="text-left">
-                <div className="text-[10px] opacity-70 uppercase tracking-wider font-medium">
-                  {t("sessionDetail.gallery.clientPreview.floatingSelections.kicker")}
-                </div>
-                <div className="text-xs font-bold uppercase tracking-wider">
-                  {t("sessionDetail.gallery.clientPreview.floatingSelections.title")}
-                </div>
-              </div>
-              <ArrowRight size={16} className="ml-2" />
-            </button>
-          </div>
-        ) : null
-      }
+      {!isMobile && (
+        <FloatingActionBar
+          selectedCount={0}
+          onClearSelection={() => { }}
+          onSelectAll={() => { }}
+          onDelete={() => { }}
+          onStar={() => { }}
+          mode="client"
+          totalRuleSelectedCount={totalSelectedCount}
+          unselectedCount={unselectedCount}
+          favoritesCount={favoritePhotoIds.size}
+          starredCount={starredCount}
+          activeFilter={activeFilter}
+          onFilter={(filter) => {
+            setActiveFilter(filter);
+            scrollToContentStart();
+          }}
+        />
+      )}
 
       {
         isMobile ? (
@@ -2651,13 +2557,13 @@ export default function GalleryClientPreview() {
               type="button"
               onClick={handleConfirmSelections}
               className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors text-sm flex items-center justify-center gap-2 shadow-sm"
-	            >
-	              <SendHorizontal size={16} />
-	              {t("sessionDetail.gallery.clientPreview.confirmation.confirm")}
-	            </button>
-	          </DialogFooter>
-	        </DialogContent>
-	      </Dialog>
+            >
+              <SendHorizontal size={16} />
+              {t("sessionDetail.gallery.clientPreview.confirmation.confirm")}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div >
   );
 }

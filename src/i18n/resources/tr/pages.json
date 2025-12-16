@@ -842,10 +842,11 @@
         "title": "Galeri Şifre Korumalı",
         "description": "Bu galeriye erişmek için fotoğrafçınızın paylaştığı şifreyi girin.",
         "pinLabel": "Giriş Şifresi",
-        "pinPlaceholder": "6 karakter",
+        "pinPlaceholder": "Şifrenizi buraya yazın",
         "pinHint": "Şifre büyük/küçük harf duyarlı değildir.",
         "submit": "Devam et",
         "submitting": "Kontrol ediliyor…",
+        "brandingLogoAlt": "İşletme logosu",
         "errors": {
           "invalidPin": "Şifre hatalı",
           "notFound": "Galeri bulunamadı",

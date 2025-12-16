@@ -827,10 +827,11 @@
         "title": "Password protected gallery",
         "description": "Enter the password your photographer shared to access this gallery.",
         "pinLabel": "Access password",
-        "pinPlaceholder": "6 characters",
+        "pinPlaceholder": "Enter your password",
         "pinHint": "Password is not case sensitive.",
         "submit": "Continue",
         "submitting": "Checking…",
+        "brandingLogoAlt": "Business logo",
         "errors": {
           "invalidPin": "Incorrect password",
           "notFound": "Gallery not found",

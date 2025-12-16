@@ -16,9 +16,10 @@ const normalizePin = (value: string) => value.replaceAll(/\s+/g, "").toUpperCase
 type GalleryBranding = {
   logoUrl: string | null;
   businessName: string | null;
+  galleryTitle: string | null;
 };
 
-function GalleryBrandingFooter({
+function GalleryBrandingBlock({
   branding,
   logoAlt,
 }: {
@@ -30,8 +31,7 @@ function GalleryBrandingFooter({
   if (!shouldShowBranding) return null;
 
   return (
-    <footer className="px-4 pb-8">
-      <div className="mx-auto max-w-md flex flex-col items-center gap-2 text-center">
+    <div className="mt-4 flex flex-col items-center gap-2 text-center">
         {branding.logoUrl ? (
           <img
             src={branding.logoUrl}
@@ -46,8 +46,7 @@ function GalleryBrandingFooter({
             {branding.businessName}
           </p>
         ) : null}
-      </div>
-    </footer>
+    </div>
   );
 }
 
@@ -122,9 +121,11 @@ export default function GalleryPublic() {
       const response = data as Partial<GalleryBranding> | null;
       const logoUrlRaw = typeof response?.logoUrl === "string" ? response.logoUrl.trim() : "";
       const businessNameRaw = typeof response?.businessName === "string" ? response.businessName.trim() : "";
+      const galleryTitleRaw = typeof response?.galleryTitle === "string" ? response.galleryTitle.trim() : "";
       setBranding({
         logoUrl: logoUrlRaw ? logoUrlRaw : null,
         businessName: businessNameRaw ? businessNameRaw : null,
+        galleryTitle: galleryTitleRaw ? galleryTitleRaw : null,
       });
     };
 
@@ -137,6 +138,14 @@ export default function GalleryPublic() {
       cancelled = true;
     };
   }, [normalizedPublicId]);
+
+  useEffect(() => {
+    const galleryTitle = branding?.galleryTitle?.trim() ?? "";
+    const businessName = branding?.businessName?.trim() ?? "";
+    const title = [galleryTitle, businessName].filter(Boolean).join(" | ");
+    if (!title) return;
+    document.title = title;
+  }, [branding?.businessName, branding?.galleryTitle]);
 
   const canSubmit = useMemo(() => normalizePin(pinInput).length === 6 && authReady && !submitting, [
     authReady,
@@ -198,8 +207,8 @@ export default function GalleryPublic() {
     return <GalleryClientPreview galleryId={resolvedGalleryId} />;
   }
 
-  const brandingFooter = branding ? (
-    <GalleryBrandingFooter
+  const brandingBlock = branding ? (
+    <GalleryBrandingBlock
       branding={branding}
       logoAlt={t("sessionDetail.gallery.publicAccess.brandingLogoAlt")}
     />
@@ -207,26 +216,29 @@ export default function GalleryPublic() {
 
   if (authError) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <div className="flex-1 flex items-center justify-center px-4 py-10">
-          <Card className="w-full max-w-md">
-            <CardContent className="p-6 space-y-2 text-sm text-muted-foreground">
-              <p className="font-semibold text-foreground">
-                {t("sessionDetail.gallery.publicAccess.errors.authFailedTitle", { defaultValue: "Giriş başlatılamadı" })}
-              </p>
-              <p>{authError}</p>
-            </CardContent>
-          </Card>
-        </div>
-        {brandingFooter}
+      <div
+        className="min-h-screen flex items-center justify-center px-4 py-10 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/authbg.webp')" }}
+      >
+        <Card className="w-full max-w-md border-0 bg-background/90 backdrop-blur-sm shadow-lg">
+          <CardContent className="p-6 space-y-2 text-sm text-muted-foreground">
+            <p className="font-semibold text-foreground">
+              {t("sessionDetail.gallery.publicAccess.errors.authFailedTitle", { defaultValue: "Giriş başlatılamadı" })}
+            </p>
+            <p>{authError}</p>
+            {brandingBlock}
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex-1 flex items-center justify-center px-4 py-10">
-        <Card className="w-full max-w-md">
+    <div
+      className="min-h-screen flex items-center justify-center px-4 py-10 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/authbg.webp')" }}
+    >
+      <Card className="w-full max-w-md border-0 bg-background/90 backdrop-blur-sm shadow-lg">
           <CardContent className="p-7 sm:p-8">
             <div className="flex flex-col items-center text-center">
               <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4">
@@ -252,12 +264,12 @@ export default function GalleryPublic() {
                     setSubmitError(null);
                     setPinInput(event.target.value);
                   }}
-                  placeholder={t("sessionDetail.gallery.publicAccess.pinPlaceholder", { defaultValue: "6 karakter" })}
+                  placeholder={t("sessionDetail.gallery.publicAccess.pinPlaceholder", { defaultValue: "Şifrenizi buraya yazın" })}
                   disabled={!authReady || submitting}
                   autoComplete="one-time-code"
                   inputMode="text"
                   autoCapitalize="characters"
-                  className="text-center tracking-[0.35em] font-mono"
+                  className="text-center"
                 />
                 {submitError ? (
                   <p className="text-sm text-destructive">{submitError}</p>
@@ -285,11 +297,10 @@ export default function GalleryPublic() {
                   t("sessionDetail.gallery.publicAccess.submit", { defaultValue: "Devam et" })
                 )}
               </Button>
+              {brandingBlock}
             </div>
           </CardContent>
         </Card>
-      </div>
-      {brandingFooter}
     </div>
   );
 }

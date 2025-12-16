@@ -2196,15 +2196,19 @@ export default function GalleryClientPreview() {
         {/* ROW 3: Tasks + Filters */}
         {!isMobile ? (
           <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-2">
-            <div className="flex items-start gap-4 md:gap-3 min-w-max">
-
-
+            <div className="flex items-start gap-3 min-w-max">
               {selectionRules.map((rule) => {
                 const isActive = activeFilter === rule.id;
                 const status = getRuleStatus(rule, t);
                 const serviceName = rule.serviceName?.trim() ?? "";
                 const showRange = rule.minCount > 0 && rule.maxCount != null && rule.maxCount !== rule.minCount;
-                const desktopDenominator = showRange ? `${rule.minCount}-${rule.maxCount}` : `${rule.maxCount ?? rule.maxCount}`;
+                const desktopDenominator = rule.maxCount != null
+                  ? showRange
+                    ? `${rule.minCount}-${rule.maxCount}`
+                    : `${rule.maxCount}`
+                  : rule.minCount > 0
+                    ? `${rule.minCount}+`
+                    : "0";
 
                 return (
                   <button
@@ -2212,51 +2216,33 @@ export default function GalleryClientPreview() {
                     type="button"
                     data-touch-target="compact"
                     onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
-                    className={`group relative flex flex-col justify-between w-[260px] md:w-[280px] shrink-0 rounded-2xl border bg-white transition-all text-left overflow-hidden hover:shadow-md ${isActive
-                      ? "border-emerald-600 bg-emerald-50/80 shadow-md ring-1 ring-emerald-300"
+                    className={`group relative flex items-center gap-3 min-w-[240px] shrink-0 rounded-full border bg-white px-4 py-2 transition-all text-left hover:shadow-sm ${isActive
+                      ? "border-emerald-600 bg-emerald-50 ring-1 ring-emerald-200"
                       : status.borderColor
                       }`}
                   >
-                    {/* Top Content */}
-                    <span className={`absolute top-2 right-3 inline-block px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${rule.required
-                      ? "bg-brand-50 text-brand-600 border border-brand-100"
-                      : "bg-gray-100 text-gray-500 border border-gray-200"
-                      }`}>
-                      {rule.required
-                        ? t("sessionDetail.gallery.clientPreview.labels.mandatory")
-                        : t("sessionDetail.gallery.clientPreview.labels.optional")}
-                    </span>
-
-                    <div className="px-4 pt-7 pb-2 pr-16 w-full">
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-gray-900 text-sm truncate leading-snug">{rule.title}</h4>
-                        {serviceName ? (
-                          <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider truncate">{serviceName}</p>
-                        ) : null}
-                        <p className={`text-[11px] font-bold mt-1 transition-colors ${status.statusColor}`}>
-                          {status.statusLabel}
-                        </p>
-                      </div>
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-full border ${status.isComplete ? "bg-emerald-500 border-emerald-500 text-white" : "bg-gray-50 border-gray-200 text-gray-300"}`}>
+                      {status.isComplete ? <Check size={16} strokeWidth={3} /> : <div className="h-2 w-2 rounded-full bg-gray-300" />}
                     </div>
 
-                    {/* Footer Content */}
-                    <div className="px-4 pb-2 w-full mt-auto">
-                      <div className="flex items-end justify-between mb-2">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-xl font-bold text-gray-900 tabular-nums leading-none">{rule.currentCount}</span>
-                          <span className="text-xs font-semibold text-gray-400 tabular-nums">/{desktopDenominator}</span>
-                        </div>
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-colors ${status.isComplete ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-200 text-transparent"
-                          }`}>
-                          <Check size={14} strokeWidth={4} />
-                        </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 text-sm font-semibold text-gray-900 leading-snug truncate">
+                        <span className="truncate">{rule.title}</span>
+                        {rule.required ? <span className="text-red-500">*</span> : null}
                       </div>
+                      {serviceName ? (
+                        <p className="text-xs text-gray-500 truncate">{serviceName}</p>
+                      ) : null}
+                    </div>
 
-                      <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
-                        <div
-                          className={`h-full transition-all duration-500 ease-out ${isActive ? "bg-emerald-600" : status.progressColor}`}
-                          style={{ width: `${status.progress * 100}%` }}
-                        />
+                    <div className="text-right">
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className="text-base font-bold text-gray-900 tabular-nums leading-none">
+                          {rule.currentCount}
+                        </span>
+                        <span className="text-xs font-semibold text-gray-500 tabular-nums">
+                          / {desktopDenominator}
+                        </span>
                       </div>
                     </div>
                   </button>

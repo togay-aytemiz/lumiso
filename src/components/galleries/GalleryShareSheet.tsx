@@ -279,7 +279,7 @@ export function GalleryShareSheet({
                   variant="outline"
                   onClick={handleOpenLink}
                   disabled={!publicUrl}
-                  className="w-full justify-center rounded-lg border-brand-200 text-brand-700 hover:bg-brand-50 hover:border-brand-300 active:scale-95 transition-transform"
+                  className="w-full justify-center rounded-lg border-brand-200 text-brand-700 hover:bg-brand-50 hover:border-brand-300 hover:text-brand-800 active:scale-95 transition-transform"
                 >
                   <ExternalLink className="h-4 w-4" aria-hidden="true" />
                   {t("sessionDetail.gallery.shareSheet.openLink")}
@@ -363,11 +363,13 @@ export function GalleryShareSheet({
                   win?.focus?.();
                 }}
                 className={cn(
-                  "w-full justify-center bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white shadow-sm",
-                  quickActionsDisabled && "shadow-none"
+                  "w-full justify-center",
+                  quickActionsDisabled
+                    ? "shadow-none"
+                    : "bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white shadow-sm"
                 )}
               >
-                <MessageCircleHeart className="h-4 w-4 text-white" aria-hidden="true" />
+                <MessageCircleHeart className="h-4 w-4" aria-hidden="true" />
                 {t("sessionDetail.gallery.shareSheet.whatsapp")}
               </Button>
 

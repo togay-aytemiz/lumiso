@@ -4885,7 +4885,7 @@ export default function GalleryDetail() {
         onToggleStar={handleToggleStar}
         mode="admin"
         onImageError={refreshPreviewUrl}
-        isSelectionsLocked={isSelectionsLocked}
+        isSelectionsLocked={isSelectionsLocked && !isSelectionUnlockedForMe}
       />
 
       <Sheet

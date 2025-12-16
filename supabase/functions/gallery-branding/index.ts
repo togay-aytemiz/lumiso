@@ -8,6 +8,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const jsonHeaders = {
+  ...corsHeaders,
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store, max-age=0",
+};
+
 type GalleryBrandingRequest = {
   publicId?: string;
 };
@@ -63,7 +69,7 @@ export const handler = async (
         JSON.stringify({ error: "publicId is required" }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: jsonHeaders,
         },
       );
     }
@@ -83,7 +89,7 @@ export const handler = async (
     if (!galleryRow) {
       return new Response(
         JSON.stringify({ logoUrl: null, businessName: null, galleryTitle: null }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 200, headers: jsonHeaders },
       );
     }
 
@@ -118,7 +124,7 @@ export const handler = async (
     if (!organizationId) {
       return new Response(
         JSON.stringify({ logoUrl: null, businessName: null, galleryTitle: galleryRow.title ?? null }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 200, headers: jsonHeaders },
       );
     }
 
@@ -138,13 +144,13 @@ export const handler = async (
         businessName: settingsRow?.photography_business_name ?? null,
         galleryTitle: galleryRow.title ?? null,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 200, headers: jsonHeaders },
     );
   } catch (error: unknown) {
     console.error("Error in gallery-branding function:", error);
     return new Response(
       JSON.stringify({ error: getErrorMessage(error) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 500, headers: jsonHeaders },
     );
   }
 };

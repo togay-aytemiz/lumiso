@@ -119,14 +119,25 @@ export default function GalleryPublic() {
       }
 
       const response = data as Partial<GalleryBranding> | null;
+      const fallbackTitle =
+        typeof (response as { title?: unknown } | null)?.title === "string"
+          ? ((response as { title: string }).title ?? "").trim()
+          : "";
       const logoUrlRaw = typeof response?.logoUrl === "string" ? response.logoUrl.trim() : "";
       const businessNameRaw = typeof response?.businessName === "string" ? response.businessName.trim() : "";
-      const galleryTitleRaw = typeof response?.galleryTitle === "string" ? response.galleryTitle.trim() : "";
-      setBranding({
+      const galleryTitleRaw =
+        typeof response?.galleryTitle === "string" ? response.galleryTitle.trim() : fallbackTitle;
+      const nextBranding: GalleryBranding = {
         logoUrl: logoUrlRaw ? logoUrlRaw : null,
         businessName: businessNameRaw ? businessNameRaw : null,
         galleryTitle: galleryTitleRaw ? galleryTitleRaw : null,
-      });
+      };
+      setBranding(nextBranding);
+
+      const title = [nextBranding.galleryTitle, nextBranding.businessName].filter(Boolean).join(" | ");
+      if (title) {
+        document.title = title;
+      }
     };
 
     loadBranding().catch(() => {
@@ -138,14 +149,6 @@ export default function GalleryPublic() {
       cancelled = true;
     };
   }, [normalizedPublicId]);
-
-  useEffect(() => {
-    const galleryTitle = branding?.galleryTitle?.trim() ?? "";
-    const businessName = branding?.businessName?.trim() ?? "";
-    const title = [galleryTitle, businessName].filter(Boolean).join(" | ");
-    if (!title) return;
-    document.title = title;
-  }, [branding?.businessName, branding?.galleryTitle]);
 
   const canSubmit = useMemo(() => normalizePin(pinInput).length === 6 && authReady && !submitting, [
     authReady,

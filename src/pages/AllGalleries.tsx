@@ -10,13 +10,14 @@ import {
   type AdvancedDataTableSortState,
   type AdvancedTableColumn,
 } from "@/components/data-table";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader, PageHeaderActions, PageHeaderSearch } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { KpiCard } from "@/components/ui/kpi-card";
+import { getKpiIconPreset } from "@/components/ui/kpi-presets";
 import { supabase } from "@/integrations/supabase/client";
 import { GalleryStatusChip, type GalleryStatus } from "@/components/galleries/GalleryStatusChip";
 import { cn, formatDate } from "@/lib/utils";
@@ -24,7 +25,21 @@ import { countUniqueSelectedAssets } from "@/lib/gallerySelections";
 import { SelectionExportSheet, type SelectionExportPhoto, type SelectionExportRule } from "@/components/galleries/SelectionExportSheet";
 import { FAVORITES_FILTER_ID } from "@/components/galleries/SelectionDashboard";
 import { GALLERY_ASSETS_BUCKET } from "@/lib/galleryAssets";
-import { Clock, Download, ExternalLink, Images, Link as LinkIcon, MessageSquare, MoreHorizontal } from "lucide-react";
+import {
+  AlertTriangle,
+  Archive,
+  CheckCircle2,
+  Clock,
+  Download,
+  ExternalLink,
+  Images,
+  Layers,
+  Link as LinkIcon,
+  MessageSquare,
+  MoreHorizontal,
+  Plus,
+  Search,
+} from "lucide-react";
 
 interface GalleryRow {
   id: string;
@@ -340,6 +355,7 @@ export default function AllGalleries() {
   const { t, i18n } = useTranslation("pages");
   const navigate = useNavigate();
   const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en").startsWith("tr") ? tr : enUS;
+  const numberFormatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
 
   const [segment, setSegment] = useState<SegmentFilter>("active");
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
@@ -402,6 +418,12 @@ export default function AllGalleries() {
     const filteredRows = galleries.filter((gallery) => matchesSegment(gallery) && matchesSearch(gallery));
 
     const sorted = [...filteredRows].sort((a, b) => {
+      const approvedRank = (row: GalleryListItem) => (row.isLocked || row.status === "approved" ? 0 : 1);
+      if (segment === "active") {
+        const rankDifference = approvedRank(a) - approvedRank(b);
+        if (rankDifference !== 0) return rankDifference;
+      }
+
       const direction = sortState.direction === "asc" ? 1 : -1;
       switch (sortState.columnId) {
         case "title":
@@ -456,16 +478,25 @@ export default function AllGalleries() {
         sortable: true,
         sortId: "client",
         render: (row) => (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8 border bg-muted/60">
-              <AvatarFallback>{(row.session?.lead?.name ?? "?").charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">{row.session?.lead?.name ?? t("galleries.table.noClient")}</span>
-              <span className="text-[11px] text-muted-foreground">
-                {row.session?.lead?.email || row.session?.lead?.phone || ""}
-              </span>
-            </div>
+          <div className="flex flex-col gap-0.5">
+            <button
+              type="button"
+              className={cn(
+                "text-left text-sm font-semibold text-primary hover:underline",
+                !row.session?.lead?.id && "cursor-not-allowed text-muted-foreground hover:no-underline"
+              )}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (!row.session?.lead?.id) return;
+                navigate(`/leads/${row.session.lead.id}`);
+              }}
+              disabled={!row.session?.lead?.id}
+            >
+              {row.session?.lead?.name ?? t("galleries.table.noClient")}
+            </button>
+            <span className="text-[11px] text-muted-foreground">
+              {row.session?.lead?.email || row.session?.lead?.phone || ""}
+            </span>
           </div>
         ),
       },
@@ -582,79 +613,83 @@ export default function AllGalleries() {
   const exportTarget = useMemo(() => filtered.find((gallery) => gallery.id === exportGalleryId) ?? null, [exportGalleryId, filtered]);
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title={t("galleries.title")}
-        description={t("galleries.description")}
-        actions={
-          <Button variant="outline" onClick={() => navigate("/sessions")}>{t("galleries.actions.create")}</Button>
-        }
-      />
+    <div className="min-h-screen bg-background">
+      <PageHeader title={t("galleries.title")}> 
+        <PageHeaderSearch>
+          <div className="relative">
+            <Input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder={t("galleries.search") ?? undefined}
+              className="h-11 rounded-xl bg-white pr-11"
+              type="search"
+            />
+            <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
+        </PageHeaderSearch>
+        <PageHeaderActions>
+          <Button onClick={() => navigate("/sessions")} className="h-11 rounded-xl px-4">
+            <Plus className="mr-2 h-4 w-4" />
+            {t("galleries.actions.create")}
+          </Button>
+        </PageHeaderActions>
+      </PageHeader>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {([
-          { id: "action", label: t("galleries.stats.actionNeeded"), value: stats.actionNeeded },
-          { id: "approved", label: t("galleries.stats.approved"), value: stats.approved },
-          { id: "active", label: t("galleries.stats.active"), value: stats.active },
-          { id: "archived", label: t("galleries.stats.archived"), value: stats.archived },
-        ] as const).map((card) => (
-          <Card key={card.id} className="shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground font-semibold">
-                {card.label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-3xl font-bold text-foreground">{card.value}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <div className="space-y-6 p-4 sm:p-6">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {([
+            { id: "action", label: t("galleries.stats.actionNeeded"), value: stats.actionNeeded, icon: AlertTriangle, preset: getKpiIconPreset("amber") },
+            { id: "approved", label: t("galleries.stats.approved"), value: stats.approved, icon: CheckCircle2, preset: getKpiIconPreset("emerald") },
+            { id: "active", label: t("galleries.stats.active"), value: stats.active, icon: Layers, preset: getKpiIconPreset("indigo") },
+            { id: "archived", label: t("galleries.stats.archived"), value: stats.archived, icon: Archive, preset: getKpiIconPreset("slate") },
+          ] as const).map((card) => (
+            <KpiCard
+              key={card.id}
+              className="h-full"
+              density="compact"
+              icon={card.icon}
+              title={card.label}
+              value={numberFormatter.format(card.value)}
+              {...card.preset}
+            />
+          ))}
+        </section>
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <SegmentedControl
-          value={segment}
-          onValueChange={(value) => setSegment(value as SegmentFilter)}
-          options={[
-            { label: t("galleries.segments.active"), value: "active" },
-            { label: t("galleries.segments.action"), value: "action" },
-            { label: t("galleries.segments.approved"), value: "approved" },
-            { label: t("galleries.segments.archived"), value: "archived" },
-          ]}
-        />
-        <div className="flex items-center gap-2">
-          <input
-            type="search"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder={t("galleries.search") ?? undefined}
-            className="h-10 w-full lg:w-72 rounded-lg border border-input bg-background px-3 text-sm"
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <SegmentedControl
+            value={segment}
+            onValueChange={(value) => setSegment(value as SegmentFilter)}
+            options={[
+              { label: t("galleries.segments.active"), value: "active" },
+              { label: t("galleries.segments.action"), value: "action" },
+              { label: t("galleries.segments.approved"), value: "approved" },
+              { label: t("galleries.segments.archived"), value: "archived" },
+            ]}
           />
         </div>
+
+        <AdvancedDataTable
+          data={filtered}
+          columns={columns}
+          rowKey={(row) => row.id}
+          isLoading={isLoading}
+          summary={{ text: summaryText }}
+          sortState={sortState}
+          onSortChange={setSortState}
+          onRowClick={(row) => navigate(`/galleries/${row.id}`)}
+          className="rounded-2xl border border-border/60 bg-white shadow-sm"
+          emptyState={
+            <div className="py-12 text-center text-muted-foreground">{t("galleries.empty")}</div>
+          }
+        />
+
+        <SelectionExportSheet
+          open={Boolean(exportTarget)}
+          onOpenChange={(open) => setExportGalleryId(open ? exportGalleryId : null)}
+          photos={exportTarget?.exportPhotos ?? []}
+          rules={exportTarget?.exportRules ?? []}
+        />
       </div>
-
-      <AdvancedDataTable
-        data={filtered}
-        columns={columns}
-        rowKey={(row) => row.id}
-        isLoading={isLoading}
-        summary={{ text: summaryText }}
-        sortState={sortState}
-        onSortChange={setSortState}
-        onRowClick={(row) => navigate(`/galleries/${row.id}`)}
-        searchPlaceholder={t("galleries.search")}
-        className="bg-background"
-        emptyState={
-          <div className="text-center py-12 text-muted-foreground">{t("galleries.empty")}</div>
-        }
-      />
-
-      <SelectionExportSheet
-        open={Boolean(exportTarget)}
-        onOpenChange={(open) => setExportGalleryId(open ? exportGalleryId : null)}
-        photos={exportTarget?.exportPhotos ?? []}
-        rules={exportTarget?.exportRules ?? []}
-      />
     </div>
   );
 }

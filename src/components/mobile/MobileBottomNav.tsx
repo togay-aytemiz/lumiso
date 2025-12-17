@@ -321,9 +321,10 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
   const tabs: NavTab[] = [
     { key: "dashboard", title: t("menu.dashboard"), icon: LayoutDashboard, path: '/' },
     { key: "leads", title: t("menu.leads"), icon: Users, path: '/leads' },
-  { key: "projects", title: t("menu.projects"), icon: FolderOpen, path: '/projects' },
-  { key: "bookings", title: t("menu.sessions"), icon: CalendarRange, action: () => setBookingsOpen(true) },
-  { key: "more", title: t("menu.more"), icon: MoreHorizontal, action: () => setMoreOpen(true) }
+    { key: "projects", title: t("menu.projects"), icon: FolderOpen, path: '/projects' },
+    { key: "galleries", title: t("menu.galleries"), icon: Images, path: '/galleries' },
+    { key: "bookings", title: t("menu.sessions"), icon: CalendarRange, action: () => setBookingsOpen(true) },
+    { key: "more", title: t("menu.more"), icon: MoreHorizontal, action: () => setMoreOpen(true) }
   ];
 
   const bookingItems = [
@@ -336,11 +337,6 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
       title: t("menu.sessions"),
       icon: Calendar,
       onClick: () => navigate('/sessions')
-    },
-    {
-      title: t("menu.galleries"),
-      icon: Images,
-      onClick: () => navigate('/galleries')
     },
     {
       title: t("menu.reminders"),
@@ -404,7 +400,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     return location.pathname.startsWith(path);
   };
 
-  const isBookingsActive = ['/calendar', '/sessions', '/galleries', '/reminders'].some(path =>
+  const isBookingsActive = ['/calendar', '/sessions', '/reminders'].some(path =>
     location.pathname.startsWith(path)
   );
 

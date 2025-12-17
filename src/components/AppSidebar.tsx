@@ -76,7 +76,6 @@ export function AppSidebar() {
     () => [
       { title: t("menu.calendar"), url: "/calendar", icon: CalendarDays },
       { title: t("menu.sessions"), url: "/sessions", icon: Calendar },
-      { title: t("menu.galleries"), url: "/galleries", icon: Images },
       { title: t("menu.reminders"), url: "/reminders", icon: Bell },
     ],
     [t]
@@ -111,7 +110,7 @@ export function AppSidebar() {
     return currentPath.startsWith(path);
   };
 
-  const isBookingsChildActive = ["/calendar", "/sessions", "/galleries", "/reminders"].some(
+  const isBookingsChildActive = ["/calendar", "/sessions", "/reminders"].some(
     (path) => currentPath.startsWith(path)
   );
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
@@ -357,6 +356,16 @@ export function AppSidebar() {
                 </SidebarMenu>
               </div>
             </SidebarNavItem>
+
+            <SidebarNavItem
+              title={t("menu.galleries")}
+              url="/galleries"
+              icon={Images}
+              isActive={isActive("/galleries")}
+              isLocked={isItemLocked("/galleries")}
+              onLockedClick={handleLockedItemClick}
+              onClick={handleNavClick}
+            />
           </SidebarCategory>
 
           <SidebarSeparator className="my-4 opacity-70 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-8" />

@@ -314,10 +314,12 @@ export default function GalleryDetail() {
   const { t: tCommon } = useTranslation("common");
   const { toast } = useToast();
   const i18nToast = useI18nToast();
-  const { activeOrganizationId } = useOrganization();
+  const { activeOrganizationId, activeOrganization } = useOrganization();
   const { timezone, timeFormat } = useOrganizationTimezone();
   const { settings: organizationSettings } = useOrganizationSettings();
   const queryClient = useQueryClient();
+  const galleryStorageLimitBytes =
+    activeOrganization?.gallery_storage_limit_bytes ?? ORG_GALLERY_STORAGE_LIMIT_BYTES;
 
   const signedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
   const signedUrlRefreshInFlightRef = useRef<Set<string>>(new Set());
@@ -2339,12 +2341,12 @@ export default function GalleryDetail() {
         if (!Number.isFinite(item.size) || item.size <= 0) return sum;
         return sum + item.size;
       }, 0);
-      const remainingBytes = ORG_GALLERY_STORAGE_LIMIT_BYTES - usedBytes - reservedBytes;
+      const remainingBytes = galleryStorageLimitBytes - usedBytes - reservedBytes;
       if (remainingBytes <= 0) {
         toast({
           title: t("sessionDetail.gallery.toast.storageLimitTitle"),
           description: t("sessionDetail.gallery.toast.storageLimitDesc", {
-            limit: formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES),
+            limit: formatBytes(galleryStorageLimitBytes),
           }),
         });
         return;
@@ -2363,7 +2365,7 @@ export default function GalleryDetail() {
         }),
       });
     },
-    [isReadOnly, orgBytes, t, toast]
+    [galleryStorageLimitBytes, isReadOnly, orgBytes, t, toast]
   );
 
   const enqueueUploads = useCallback(
@@ -2395,12 +2397,12 @@ export default function GalleryDetail() {
         return sum + item.size;
       }, 0);
 
-      let remainingBytes = ORG_GALLERY_STORAGE_LIMIT_BYTES - usedBytes - reservedBytes;
+      let remainingBytes = galleryStorageLimitBytes - usedBytes - reservedBytes;
       if (remainingBytes <= 0) {
         toast({
           title: t("sessionDetail.gallery.toast.storageLimitTitle"),
           description: t("sessionDetail.gallery.toast.storageLimitDesc", {
-            limit: formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES),
+            limit: formatBytes(galleryStorageLimitBytes),
           }),
         });
         return;
@@ -2421,7 +2423,7 @@ export default function GalleryDetail() {
         toast({
           title: t("sessionDetail.gallery.toast.storageLimitTitle"),
           description: t("sessionDetail.gallery.toast.storageLimitDesc", {
-            limit: formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES),
+            limit: formatBytes(galleryStorageLimitBytes),
           }),
         });
         return;
@@ -2432,7 +2434,7 @@ export default function GalleryDetail() {
           title: t("sessionDetail.gallery.toast.storageLimitTitle"),
           description: t("sessionDetail.gallery.toast.storageLimitSkippedDesc", {
             count: storageSkippedCount,
-            limit: formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES),
+            limit: formatBytes(galleryStorageLimitBytes),
           }),
         });
       }
@@ -2489,7 +2491,7 @@ export default function GalleryDetail() {
         }),
       ]);
     },
-    [isReadOnly, orgBytes, t, toast]
+    [galleryStorageLimitBytes, isReadOnly, orgBytes, t, toast]
   );
 
   const clearUploadTimer = useCallback((id: string) => {
@@ -2569,13 +2571,13 @@ export default function GalleryDetail() {
           if (!Number.isFinite(item.size) || item.size <= 0) return sum;
           return sum + item.size;
         }, 0);
-        const remainingBytes = ORG_GALLERY_STORAGE_LIMIT_BYTES - usedBytes - reservedBytes;
+        const remainingBytes = galleryStorageLimitBytes - usedBytes - reservedBytes;
         if (proof.blob.size > remainingBytes) {
           clearUploadTimer(assetId);
           toast({
             title: t("sessionDetail.gallery.toast.storageLimitTitle"),
             description: t("sessionDetail.gallery.toast.storageLimitDesc", {
-              limit: formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES),
+              limit: formatBytes(galleryStorageLimitBytes),
             }),
           });
           setUploadQueue((prev) =>
@@ -2586,7 +2588,7 @@ export default function GalleryDetail() {
                     status: "error",
                     progress: 0,
                     error: t("sessionDetail.gallery.toast.storageLimitDesc", {
-                      limit: formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES),
+                      limit: formatBytes(galleryStorageLimitBytes),
                     }),
                   }
                 : entry
@@ -2699,7 +2701,16 @@ export default function GalleryDetail() {
         );
       }
     },
-    [activeOrganizationId, clearUploadTimer, id, orgBytes, scheduleGalleryAssetsSync, t, toast]
+    [
+      activeOrganizationId,
+      clearUploadTimer,
+      galleryStorageLimitBytes,
+      id,
+      orgBytes,
+      scheduleGalleryAssetsSync,
+      t,
+      toast,
+    ]
   );
 
   const handleCancelUpload = useCallback(

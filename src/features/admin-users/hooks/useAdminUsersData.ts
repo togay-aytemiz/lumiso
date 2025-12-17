@@ -153,6 +153,7 @@ const fetchAdminAccounts = async ({
         "owner_id",
         "created_at",
         "updated_at",
+        "gallery_storage_limit_bytes",
         "membership_status",
         "trial_started_at",
         "trial_expires_at",
@@ -464,6 +465,7 @@ const fetchAdminAccounts = async ({
 
 
   return activeOrganizations.map<AdminUserAccount>((organization) => {
+    const organizationWithLimits = organization as OrganizationRow & { gallery_storage_limit_bytes?: number | null };
     const owner = profileMap.get(organization.owner_id) as ProfileRow | undefined;
     const settings = organizationSettingsMap.get(organization.id) as OrganizationSettingsRow | undefined;
     const organizationEmail = settings?.email ?? null;
@@ -601,6 +603,7 @@ const fetchAdminAccounts = async ({
       name: organization.name,
       email: organizationEmail ?? "",
       company: organization.name,
+      galleryStorageLimitBytes: organizationWithLimits.gallery_storage_limit_bytes ?? null,
       status,
       planName,
       membershipStartedAt: trialStartedAt,

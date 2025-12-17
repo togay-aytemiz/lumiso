@@ -1477,6 +1477,7 @@
         "subtitle": "Drill into trial status, usage, payments, and admin actions.",
         "tabs": {
           "overview": "Overview",
+          "gallery": "Gallery",
           "kisiler": "Kişiler",
           "projects": "Projects",
           "sessions": "Sessions",
@@ -1485,6 +1486,23 @@
           "services": "Services",
           "packages": "Packages",
           "sessionTypes": "Session types"
+        },
+        "gallery": {
+          "title": "Gallery storage",
+          "description": "Configure the maximum gallery storage allowed for this account.",
+          "limitLabel": "Allowed storage (GB)",
+          "limitHint": "Default: {{default}} GB",
+          "currentLimit": "Current limit",
+          "actions": {
+            "reset": "Reset to default",
+            "save": "Save",
+            "saving": "Saving..."
+          },
+          "toasts": {
+            "invalidLimit": "Enter a valid limit greater than 0.",
+            "saveSuccess": "Gallery storage limit updated.",
+            "saveError": "Could not update the gallery storage limit."
+          }
         },
         "membership": {
           "title": "Membership status",

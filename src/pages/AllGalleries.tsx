@@ -33,6 +33,7 @@ import { countUniqueSelectedAssets } from "@/lib/gallerySelections";
 import { SelectionExportSheet, type SelectionExportPhoto, type SelectionExportRule } from "@/components/galleries/SelectionExportSheet";
 import { FAVORITES_FILTER_ID } from "@/components/galleries/SelectionDashboard";
 import { GALLERY_ASSETS_BUCKET } from "@/lib/galleryAssets";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { ORG_GALLERY_STORAGE_LIMIT_BYTES } from "@/lib/storageLimits";
 import {
   AlertTriangle,
@@ -362,6 +363,7 @@ const formatRelativeTime = (value: string | null, locale: Locale) => {
 export default function AllGalleries() {
   const { t, i18n } = useTranslation("pages");
   const navigate = useNavigate();
+  const { activeOrganization } = useOrganization();
   const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en").startsWith("tr") ? tr : enUS;
   const numberFormatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
 
@@ -400,6 +402,7 @@ export default function AllGalleries() {
   });
 
   const orgUsedBytes = !isLoading && galleries.length === 0 ? 0 : orgGalleryBytes;
+  const orgLimitBytes = activeOrganization?.gallery_storage_limit_bytes ?? ORG_GALLERY_STORAGE_LIMIT_BYTES;
 
   const galleryIdsForSize = useMemo(
     () => Array.from(new Set(galleries.map((gallery) => gallery.id))).sort(),
@@ -737,7 +740,7 @@ export default function AllGalleries() {
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
           <StorageWidget
             usedBytes={orgUsedBytes}
-            totalBytes={ORG_GALLERY_STORAGE_LIMIT_BYTES}
+            totalBytes={orgLimitBytes}
             isLoading={isLoading || orgGalleryBytesLoading}
           />
           {([

@@ -33,6 +33,7 @@ interface Organization {
   premium_plan: string | null;
   premium_activated_at: string | null;
   premium_expires_at: string | null;
+  gallery_storage_limit_bytes?: number | null;
   created_at: string | null;
   computed_trial_started_at: string | null;
   computed_trial_ends_at: string | null;
@@ -106,6 +107,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
             'premium_plan',
             'premium_activated_at',
             'premium_expires_at',
+            'gallery_storage_limit_bytes',
           ].join(', ')
         )
         .eq('id', orgId)

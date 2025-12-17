@@ -1493,6 +1493,7 @@
         "subtitle": "Deneme durumu, kullanım, ödemeler ve aksiyonları incele.",
         "tabs": {
           "overview": "Genel",
+          "gallery": "Galeri",
           "kisiler": "Kişiler",
           "projects": "Projeler",
           "sessions": "Seanslar",
@@ -1501,6 +1502,23 @@
           "services": "Servisler",
           "packages": "Paketler",
           "sessionTypes": "Seans tipleri"
+        },
+        "gallery": {
+          "title": "Galeri depolama",
+          "description": "Bu hesap için izin verilen maksimum galeri depolama alanını ayarlayın.",
+          "limitLabel": "İzin verilen depolama (GB)",
+          "limitHint": "Varsayılan: {{default}} GB",
+          "currentLimit": "Mevcut limit",
+          "actions": {
+            "reset": "Varsayılana sıfırla",
+            "save": "Kaydet",
+            "saving": "Kaydediliyor..."
+          },
+          "toasts": {
+            "invalidLimit": "0'dan büyük geçerli bir limit girin.",
+            "saveSuccess": "Galeri depolama limiti güncellendi.",
+            "saveError": "Galeri depolama limiti güncellenemedi."
+          }
         },
         "membership": {
           "title": "Üyelik durumu",

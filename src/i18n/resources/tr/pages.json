@@ -3957,14 +3957,14 @@
       "create": "Yeni galeri"
     },
     "stats": {
-      "actionNeeded": "Aksiyon bekleyen",
+      "actionNeeded": "Bekleyen",
       "approved": "Onaylanan",
       "active": "Aktif",
       "archived": "Arşiv"
     },
     "segments": {
       "active": "Aktif",
-      "action": "Aksiyon bekleyen",
+      "action": "Bekleyen",
       "approved": "Onaylanan",
       "archived": "Arşiv"
     },
@@ -3975,6 +3975,10 @@
       "client": "Kişi",
       "links": "Hızlı erişim",
       "quickAccess": "Git",
+      "linkTypes": {
+        "session": "Seans",
+        "project": "Proje"
+      },
       "noSession": "Seans yok",
       "noProject": "Proje yok",
       "openGallery": "Galeriyi aç",

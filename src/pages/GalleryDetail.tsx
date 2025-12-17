@@ -2056,14 +2056,23 @@ export default function GalleryDetail() {
   });
 
   const backLabel = t("sessionDetail.gallery.actions.back", { defaultValue: "Back" });
+  const backTarget = (location.state as { from?: string } | null | undefined)?.from;
+  const getFallbackRoute = useCallback(() => {
+    if (backTarget) return backTarget;
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      return -1;
+    }
+    return "/galleries";
+  }, [backTarget]);
 
   const handleBack = useCallback(() => {
-    if (data?.session_id) {
-      navigate(`/sessions/${data.session_id}`);
+    const fallback = getFallbackRoute();
+    if (typeof fallback === "number") {
+      navigate(fallback);
     } else {
-      navigate(-1);
+      navigate(fallback);
     }
-  }, [data?.session_id, navigate]);
+  }, [getFallbackRoute, navigate]);
 
   const handleShare = useCallback(() => {
     setShareSheetOpen(true);

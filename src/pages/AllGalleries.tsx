@@ -10,11 +10,18 @@ import {
   type AdvancedDataTableSortState,
   type AdvancedTableColumn,
 } from "@/components/data-table";
-import { PageHeader, PageHeaderActions, PageHeaderSearch } from "@/components/ui/page-header";
+import GlobalSearch from "@/components/GlobalSearch";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset } from "@/components/ui/kpi-presets";
@@ -29,16 +36,14 @@ import {
   AlertTriangle,
   Archive,
   CheckCircle2,
+  ChevronDown,
   Clock,
   Download,
   ExternalLink,
   Images,
   Layers,
-  Link as LinkIcon,
   MessageSquare,
   MoreHorizontal,
-  Plus,
-  Search,
 } from "lucide-react";
 
 interface GalleryRow {
@@ -466,7 +471,7 @@ export default function AllGalleries() {
             <div className="flex flex-col">
               <span className="font-semibold text-foreground">{row.title}</span>
               <span className="text-xs text-muted-foreground">
-                {row.eventDate ? formatDate(row.eventDate, "PPP") : t("galleries.table.noEvent")}
+                {row.eventDate ? formatDate(row.eventDate) : t("galleries.table.noEvent")}
               </span>
             </div>
           </div>
@@ -506,20 +511,27 @@ export default function AllGalleries() {
         render: (row) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9">
-                <LinkIcon className="h-4 w-4 mr-2" />
+              <Button variant="surface" size="sm" className="btn-surface-accent h-9">
                 {t("galleries.table.quickAccess")}
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuContent align="start" className="w-72">
+              <DropdownMenuLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("galleries.table.linkTypes.session")}
+              </DropdownMenuLabel>
               <DropdownMenuItem onClick={() => navigate(`/sessions/${row.session?.id ?? ""}`)} disabled={!row.session}>
                 <ExternalLink className="h-4 w-4 mr-2" />
                 {row.session?.session_name || t("galleries.table.noSession")}
               </DropdownMenuItem>
+              <DropdownMenuLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("galleries.table.linkTypes.project")}
+              </DropdownMenuLabel>
               <DropdownMenuItem onClick={() => navigate(`/projects/${row.project?.id ?? ""}`)} disabled={!row.project}>
                 <ExternalLink className="h-4 w-4 mr-2" />
                 {row.project?.name || t("galleries.table.noProject")}
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate(`/galleries/${row.id}`)}>
                 <ExternalLink className="h-4 w-4 mr-2" />
                 {t("galleries.table.openGallery")}
@@ -578,7 +590,7 @@ export default function AllGalleries() {
             <div className="flex flex-col text-sm">
               <div className="flex items-center gap-1 text-foreground">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                {row.lockedAt ? formatDate(row.lockedAt, "PPP") : t("galleries.table.noApproval")}
+                {row.lockedAt ? formatDate(row.lockedAt) : t("galleries.table.noApproval")}
               </div>
               {relative && <span className="text-[11px] text-muted-foreground pl-5">{relative}</span>}
             </div>
@@ -614,25 +626,10 @@ export default function AllGalleries() {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title={t("galleries.title")}> 
+      <PageHeader title={t("galleries.title")}>
         <PageHeaderSearch>
-          <div className="relative">
-            <Input
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder={t("galleries.search") ?? undefined}
-              className="h-11 rounded-xl bg-white pr-11"
-              type="search"
-            />
-            <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          </div>
+          <GlobalSearch variant="header" />
         </PageHeaderSearch>
-        <PageHeaderActions>
-          <Button onClick={() => navigate("/sessions")} className="h-11 rounded-xl px-4">
-            <Plus className="mr-2 h-4 w-4" />
-            {t("galleries.actions.create")}
-          </Button>
-        </PageHeaderActions>
       </PageHeader>
 
       <div className="space-y-6 p-4 sm:p-6">
@@ -674,6 +671,9 @@ export default function AllGalleries() {
           rowKey={(row) => row.id}
           isLoading={isLoading}
           summary={{ text: summaryText }}
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder={t("galleries.search")}
           sortState={sortState}
           onSortChange={setSortState}
           onRowClick={(row) => navigate(`/galleries/${row.id}`)}

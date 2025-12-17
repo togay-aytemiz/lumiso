@@ -33,6 +33,12 @@ export function StorageWidget({ usedBytes, totalBytes, isLoading = false, classN
   }, [percentRaw]);
 
   const colorConfig = useMemo(() => {
+    if (isLoading) {
+      return {
+        gradient: "from-slate-700 to-slate-900",
+        icon: CloudLightning,
+      };
+    }
     switch (tone) {
       case "safe":
         return {
@@ -56,7 +62,7 @@ export function StorageWidget({ usedBytes, totalBytes, isLoading = false, classN
           icon: AlertTriangle,
         };
     }
-  }, [tone]);
+  }, [isLoading, tone]);
 
   const statusLabel = useMemo(() => {
     if (tone === "safe") return t("storage.widget.status.safe");
@@ -105,7 +111,11 @@ export function StorageWidget({ usedBytes, totalBytes, isLoading = false, classN
               <span className="mb-1 text-[10px] font-bold uppercase tracking-wider opacity-80 leading-none">
                 {t("storage.widget.kicker")}
               </span>
-              <span className="text-sm font-bold leading-none">{statusLabel}</span>
+              {isLoading ? (
+                <span className="inline-block h-4 w-28 animate-pulse rounded bg-white/15" aria-hidden />
+              ) : (
+                <span className="text-sm font-bold leading-none">{statusLabel}</span>
+              )}
             </div>
           </div>
 

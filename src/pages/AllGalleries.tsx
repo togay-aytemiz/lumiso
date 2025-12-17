@@ -363,7 +363,7 @@ const formatRelativeTime = (value: string | null, locale: Locale) => {
 export default function AllGalleries() {
   const { t, i18n } = useTranslation("pages");
   const navigate = useNavigate();
-  const { activeOrganization } = useOrganization();
+  const { activeOrganization, loading: organizationLoading } = useOrganization();
   const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en").startsWith("tr") ? tr : enUS;
   const numberFormatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
 
@@ -741,7 +741,7 @@ export default function AllGalleries() {
           <StorageWidget
             usedBytes={orgUsedBytes}
             totalBytes={orgLimitBytes}
-            isLoading={isLoading || orgGalleryBytesLoading}
+            isLoading={isLoading || orgGalleryBytesLoading || organizationLoading}
           />
           {([
             { id: "action", label: t("galleries.stats.actionNeeded"), value: stats.actionNeeded, icon: AlertTriangle, preset: getKpiIconPreset("amber") },

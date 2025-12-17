@@ -663,6 +663,11 @@ export default function AllGalleries() {
               { label: t("galleries.segments.archived"), value: "archived" },
             ]}
           />
+
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-primary/80" aria-hidden />
+            <span>{summaryText}</span>
+          </div>
         </div>
 
         <AdvancedDataTable
@@ -670,7 +675,6 @@ export default function AllGalleries() {
           columns={columns}
           rowKey={(row) => row.id}
           isLoading={isLoading}
-          summary={{ text: summaryText }}
           searchValue={searchTerm}
           onSearchChange={setSearchTerm}
           searchPlaceholder={t("galleries.search")}

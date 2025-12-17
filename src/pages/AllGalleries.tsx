@@ -14,6 +14,7 @@ import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StorageWidget } from "@/components/ui/storage-widget";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,11 +28,12 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset } from "@/components/ui/kpi-presets";
 import { supabase } from "@/integrations/supabase/client";
 import { GalleryStatusChip, type GalleryStatus } from "@/components/galleries/GalleryStatusChip";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, formatBytes, formatDate } from "@/lib/utils";
 import { countUniqueSelectedAssets } from "@/lib/gallerySelections";
 import { SelectionExportSheet, type SelectionExportPhoto, type SelectionExportRule } from "@/components/galleries/SelectionExportSheet";
 import { FAVORITES_FILTER_ID } from "@/components/galleries/SelectionDashboard";
 import { GALLERY_ASSETS_BUCKET } from "@/lib/galleryAssets";
+import { ORG_GALLERY_STORAGE_LIMIT_BYTES } from "@/lib/storageLimits";
 import {
   AlertTriangle,
   Archive,
@@ -107,6 +109,7 @@ interface GalleryListItem {
   lockedAt: string | null;
   selectionCount: number;
   requiredCount: number;
+  sizeBytes?: number | null;
   coverUrl: string;
   exportPhotos: SelectionExportPhoto[];
   exportRules: SelectionExportRule[];
@@ -372,6 +375,83 @@ export default function AllGalleries() {
 
   const { data: galleries = [], isLoading } = useGalleryList();
 
+  const storageAnchorGalleryId = useMemo(() => galleries[0]?.id ?? null, [galleries]);
+
+  const { data: orgGalleryBytes, isLoading: orgGalleryBytesLoading } = useQuery({
+    queryKey: ["galleries", "org_gallery_bytes", storageAnchorGalleryId],
+    enabled: Boolean(storageAnchorGalleryId),
+    staleTime: 60_000,
+    queryFn: async (): Promise<number | null> => {
+      if (!storageAnchorGalleryId) return 0;
+      try {
+        const { data, error } = await supabase.rpc("get_gallery_storage_usage", { gallery_uuid: storageAnchorGalleryId });
+        if (error) {
+          console.warn("AllGalleries: Failed to fetch organization storage usage", { galleryId: storageAnchorGalleryId, error });
+          return null;
+        }
+        const row = Array.isArray(data) ? data[0] : null;
+        const bytes = row?.org_bytes;
+        return typeof bytes === "number" && Number.isFinite(bytes) ? bytes : null;
+      } catch (error) {
+        console.warn("AllGalleries: Failed to fetch organization storage usage", { galleryId: storageAnchorGalleryId, error });
+        return null;
+      }
+    },
+  });
+
+  const orgUsedBytes = !isLoading && galleries.length === 0 ? 0 : orgGalleryBytes;
+
+  const galleryIdsForSize = useMemo(
+    () => Array.from(new Set(galleries.map((gallery) => gallery.id))).sort(),
+    [galleries]
+  );
+
+  const { data: gallerySizeBytesById, isLoading: isGallerySizeLoading } = useQuery({
+    queryKey: ["galleries", "size_bytes", galleryIdsForSize],
+    enabled: galleryIdsForSize.length > 0,
+    staleTime: 60_000,
+    queryFn: async (): Promise<Record<string, number | null>> => {
+      const results: Record<string, number | null> = {};
+
+      const fetchGalleryBytes = async (galleryId: string) => {
+        try {
+          const { data, error } = await supabase.rpc("get_gallery_storage_usage", { gallery_uuid: galleryId });
+          if (error) {
+            console.warn("AllGalleries: Failed to fetch gallery storage usage", { galleryId, error });
+            return null;
+          }
+          const row = Array.isArray(data) ? data[0] : null;
+          const bytes = row?.gallery_bytes;
+          return typeof bytes === "number" && Number.isFinite(bytes) ? bytes : null;
+        } catch (error) {
+          console.warn("AllGalleries: Failed to fetch gallery storage usage", { galleryId, error });
+          return null;
+        }
+      };
+
+      const chunkSize = 12;
+      for (let index = 0; index < galleryIdsForSize.length; index += chunkSize) {
+        const chunk = galleryIdsForSize.slice(index, index + chunkSize);
+        const chunkResults = await Promise.all(chunk.map(async (galleryId) => [galleryId, await fetchGalleryBytes(galleryId)] as const));
+        chunkResults.forEach(([galleryId, bytes]) => {
+          results[galleryId] = bytes;
+        });
+      }
+
+      return results;
+    },
+  });
+
+  const galleriesWithSize = useMemo(
+    () =>
+      galleries.map((gallery) => {
+        const sizeBytes = gallerySizeBytesById?.[gallery.id];
+        if (sizeBytes === undefined) return gallery;
+        return { ...gallery, sizeBytes };
+      }),
+    [galleries, gallerySizeBytesById]
+  );
+
   const stats = useMemo(() => {
     const base = { active: 0, actionNeeded: 0, approved: 0, archived: 0 };
     galleries.forEach((gallery) => {
@@ -420,7 +500,7 @@ export default function AllGalleries() {
       );
     };
 
-    const filteredRows = galleries.filter((gallery) => matchesSegment(gallery) && matchesSearch(gallery));
+    const filteredRows = galleriesWithSize.filter((gallery) => matchesSegment(gallery) && matchesSearch(gallery));
 
     const sorted = [...filteredRows].sort((a, b) => {
       const approvedRank = (row: GalleryListItem) => (row.isLocked || row.status === "approved" ? 0 : 1);
@@ -438,6 +518,14 @@ export default function AllGalleries() {
           const bName = b.session?.lead?.name ?? "";
           return aName.localeCompare(bName) * direction;
         }
+        case "sizeBytes": {
+          const aSize = typeof a.sizeBytes === "number" && Number.isFinite(a.sizeBytes) ? a.sizeBytes : null;
+          const bSize = typeof b.sizeBytes === "number" && Number.isFinite(b.sizeBytes) ? b.sizeBytes : null;
+          if (aSize === null && bSize === null) return 0;
+          if (aSize === null) return 1;
+          if (bSize === null) return -1;
+          return (aSize - bSize) * direction;
+        }
         case "updatedAt":
         default: {
           const aTime = new Date(a.updatedAt).getTime();
@@ -448,7 +536,7 @@ export default function AllGalleries() {
     });
 
     return sorted;
-  }, [galleries, segment, sortState, searchTerm]);
+  }, [galleriesWithSize, segment, sortState, searchTerm]);
 
   const columns = useMemo<AdvancedTableColumn<GalleryListItem>[]>(
     () => [
@@ -598,6 +686,19 @@ export default function AllGalleries() {
         },
       },
       {
+        id: "size",
+        label: t("galleries.table.size"),
+        sortable: true,
+        sortId: "sizeBytes",
+        align: "right",
+        render: (row) =>
+          isGallerySizeLoading && row.sizeBytes === undefined ? (
+            <span className="ml-auto inline-block h-4 w-16 animate-pulse rounded bg-muted" aria-hidden />
+          ) : (
+            <span className="tabular-nums">{formatBytes(row.sizeBytes, i18n.language)}</span>
+          ),
+      },
+      {
         id: "actions",
         label: t("galleries.table.actions"),
         align: "right",
@@ -615,7 +716,7 @@ export default function AllGalleries() {
         ),
       },
     ],
-    [locale, navigate, t]
+    [i18n.language, isGallerySizeLoading, locale, navigate, t]
   );
 
   const summaryText = useMemo(() => {
@@ -633,7 +734,12 @@ export default function AllGalleries() {
       </PageHeader>
 
       <div className="space-y-6 p-4 sm:p-6">
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <StorageWidget
+            usedBytes={orgUsedBytes}
+            totalBytes={ORG_GALLERY_STORAGE_LIMIT_BYTES}
+            isLoading={isLoading || orgGalleryBytesLoading}
+          />
           {([
             { id: "action", label: t("galleries.stats.actionNeeded"), value: stats.actionNeeded, icon: AlertTriangle, preset: getKpiIconPreset("amber") },
             { id: "approved", label: t("galleries.stats.approved"), value: stats.approved, icon: CheckCircle2, preset: getKpiIconPreset("emerald") },
@@ -652,7 +758,7 @@ export default function AllGalleries() {
           ))}
         </section>
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <SegmentedControl
             value={segment}
             onValueChange={(value) => setSegment(value as SegmentFilter)}
@@ -663,11 +769,6 @@ export default function AllGalleries() {
               { label: t("galleries.segments.archived"), value: "archived" },
             ]}
           />
-
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="h-2 w-2 rounded-full bg-primary/80" aria-hidden />
-            <span>{summaryText}</span>
-          </div>
         </div>
 
         <AdvancedDataTable
@@ -675,6 +776,12 @@ export default function AllGalleries() {
           columns={columns}
           rowKey={(row) => row.id}
           isLoading={isLoading}
+          actions={
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="h-2 w-2 rounded-full bg-primary/80" aria-hidden />
+              <span>{summaryText}</span>
+            </div>
+          }
           searchValue={searchTerm}
           onSearchChange={setSearchTerm}
           searchPlaceholder={t("galleries.search")}

@@ -723,6 +723,10 @@
         "unsupportedFilesTitle": "Some files were skipped",
         "unsupportedFilesDesc_one": "1 file wasn't added because only images are supported right now.",
         "unsupportedFilesDesc_other": "{{count}} files weren't added because only images are supported right now.",
+        "storageLimitTitle": "Storage limit reached",
+        "storageLimitDesc": "Uploads are limited to {{limit}} per organization. Delete old galleries to free up space.",
+        "storageLimitSkippedDesc_one": "1 file wasn't added because it would exceed your {{limit}} storage limit.",
+        "storageLimitSkippedDesc_other": "{{count}} files weren't added because it would exceed your {{limit}} storage limit.",
         "updatedTitle": "Gallery saved",
         "updatedDesc": "Changes applied.",
         "saveCta": "Save"
@@ -3971,6 +3975,7 @@
       "selected": "{{count}} selected",
       "required": "{{count}} required",
       "approval": "Last approval",
+      "size": "Size",
       "noApproval": "No approval yet",
       "actions": "Actions",
       "export": "Export selections",

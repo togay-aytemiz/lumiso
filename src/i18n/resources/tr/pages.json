@@ -738,6 +738,10 @@
         "unsupportedFilesTitle": "Bazı dosyalar atlandı",
         "unsupportedFilesDesc_one": "Sadece görseller destekleniyor. 1 dosya eklenmedi.",
         "unsupportedFilesDesc_other": "Sadece görseller destekleniyor. {{count}} dosya eklenmedi.",
+        "storageLimitTitle": "Depolama limiti doldu",
+        "storageLimitDesc": "Kuruluş başına en fazla {{limit}} yükleme yapılabilir. Devam etmek için eski galerileri silerek alan açın.",
+        "storageLimitSkippedDesc_one": "1 dosya, {{limit}} depolama limitini aşacağı için eklenmedi.",
+        "storageLimitSkippedDesc_other": "{{count}} dosya, {{limit}} depolama limitini aşacağı için eklenmedi.",
         "updatedTitle": "Galeri kaydedildi",
         "updatedDesc": "Değişiklikler uygulandı.",
         "saveCta": "Kaydet"
@@ -3987,6 +3991,7 @@
       "selected": "{{count}} seçildi",
       "required": "{{count}} zorunlu",
       "approval": "Son onay",
+      "size": "Boyut",
       "noApproval": "Henüz onay yok",
       "actions": "İşlemler",
       "export": "Seçimleri dışa aktar",

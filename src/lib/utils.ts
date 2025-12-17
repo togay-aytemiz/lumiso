@@ -113,6 +113,18 @@ export const formatGroupDate = (dateString: string | Date, locale?: string): str
   }).format(date);
 };
 
+export const formatBytes = (bytes: number | null | undefined, locale?: string): string => {
+  if (typeof bytes !== "number" || !Number.isFinite(bytes)) return "—";
+  if (bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const index = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+  const value = bytes / 1024 ** index;
+  const formatter = new Intl.NumberFormat(locale ?? getUserLocale(), {
+    maximumFractionDigits: value >= 100 ? 0 : value >= 10 ? 1 : 2,
+  });
+  return `${formatter.format(value)} ${units[index]}`;
+};
+
 // Locale-aware week utilities
 export const getStartOfWeek = (date: Date, locale?: string): Date => {
   const userLocale = locale || getUserLocale();

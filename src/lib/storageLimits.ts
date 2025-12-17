@@ -1,0 +1,1 @@
+export const ORG_GALLERY_STORAGE_LIMIT_BYTES = 3 * 1024 ** 3;

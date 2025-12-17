@@ -66,7 +66,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
-import { cn, getUserLocale } from "@/lib/utils";
+import { cn, formatBytes, getUserLocale } from "@/lib/utils";
 import {
   buildGalleryProofPath,
   convertImageToProof,
@@ -81,6 +81,7 @@ import {
   parseGalleryWatermarkFromBranding,
 } from "@/lib/galleryWatermark";
 import { shouldKeepLocalUploadItem } from "@/lib/galleryUploadQueue";
+import { ORG_GALLERY_STORAGE_LIMIT_BYTES } from "@/lib/storageLimits";
 import {
   CalendarRange,
   Archive,
@@ -247,18 +248,6 @@ const isUploadInProgress = (status: UploadStatus) =>
 
 const isUploadTerminal = (status: UploadStatus) =>
   status === "done" || status === "error" || status === "canceled";
-
-const formatBytes = (bytes: number | null | undefined) => {
-  if (typeof bytes !== "number" || !Number.isFinite(bytes)) return "—";
-  if (bytes <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  const index = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
-  const value = bytes / 1024 ** index;
-  const formatter = new Intl.NumberFormat(getUserLocale(), {
-    maximumFractionDigits: value >= 100 ? 0 : value >= 10 ? 1 : 2,
-  });
-  return `${formatter.format(value)} ${units[index]}`;
-};
 
 const formatDurationShortTR = (milliseconds: number) => {
   const totalSeconds = Math.max(0, Math.round(milliseconds / 1000));
@@ -2343,6 +2332,24 @@ export default function GalleryDetail() {
         });
         return;
       }
+
+      const usedBytes = typeof orgBytes === "number" && Number.isFinite(orgBytes) ? orgBytes : 0;
+      const reservedBytes = uploadQueueRef.current.reduce((sum, item) => {
+        if (item.status !== "queued" && item.status !== "processing" && item.status !== "uploading") return sum;
+        if (!Number.isFinite(item.size) || item.size <= 0) return sum;
+        return sum + item.size;
+      }, 0);
+      const remainingBytes = ORG_GALLERY_STORAGE_LIMIT_BYTES - usedBytes - reservedBytes;
+      if (remainingBytes <= 0) {
+        toast({
+          title: t("sessionDetail.gallery.toast.storageLimitTitle"),
+          description: t("sessionDetail.gallery.toast.storageLimitDesc", {
+            limit: formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES),
+          }),
+        });
+        return;
+      }
+
       pendingSetIdRef.current = setId ?? null;
       const target = fileInputRef.current;
       if (target) {
@@ -2356,7 +2363,7 @@ export default function GalleryDetail() {
         }),
       });
     },
-    [isReadOnly, t, toast]
+    [isReadOnly, orgBytes, t, toast]
   );
 
   const enqueueUploads = useCallback(
@@ -2380,6 +2387,56 @@ export default function GalleryDetail() {
       }
 
       if (supportedFiles.length === 0) return;
+
+      const usedBytes = typeof orgBytes === "number" && Number.isFinite(orgBytes) ? orgBytes : 0;
+      const reservedBytes = uploadQueueRef.current.reduce((sum, item) => {
+        if (item.status !== "queued" && item.status !== "processing" && item.status !== "uploading") return sum;
+        if (!Number.isFinite(item.size) || item.size <= 0) return sum;
+        return sum + item.size;
+      }, 0);
+
+      let remainingBytes = ORG_GALLERY_STORAGE_LIMIT_BYTES - usedBytes - reservedBytes;
+      if (remainingBytes <= 0) {
+        toast({
+          title: t("sessionDetail.gallery.toast.storageLimitTitle"),
+          description: t("sessionDetail.gallery.toast.storageLimitDesc", {
+            limit: formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES),
+          }),
+        });
+        return;
+      }
+
+      const allowedFiles: File[] = [];
+      let storageSkippedCount = 0;
+      supportedFiles.forEach((file) => {
+        if (file.size <= remainingBytes) {
+          allowedFiles.push(file);
+          remainingBytes -= file.size;
+        } else {
+          storageSkippedCount += 1;
+        }
+      });
+
+      if (allowedFiles.length === 0) {
+        toast({
+          title: t("sessionDetail.gallery.toast.storageLimitTitle"),
+          description: t("sessionDetail.gallery.toast.storageLimitDesc", {
+            limit: formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES),
+          }),
+        });
+        return;
+      }
+
+      if (storageSkippedCount > 0) {
+        toast({
+          title: t("sessionDetail.gallery.toast.storageLimitTitle"),
+          description: t("sessionDetail.gallery.toast.storageLimitSkippedDesc", {
+            count: storageSkippedCount,
+            limit: formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES),
+          }),
+        });
+      }
+
       const resolvedSetId = setId ?? null;
       const now = Date.now();
 
@@ -2413,7 +2470,7 @@ export default function GalleryDetail() {
 
       setUploadQueue((prev) => [
         ...prev,
-        ...supportedFiles.map((file) => {
+        ...allowedFiles.map((file) => {
           const id = crypto.randomUUID?.() ?? Math.random().toString(16).slice(2);
           return {
             id,
@@ -2432,7 +2489,7 @@ export default function GalleryDetail() {
         }),
       ]);
     },
-    [isReadOnly, t, toast]
+    [isReadOnly, orgBytes, t, toast]
   );
 
   const clearUploadTimer = useCallback((id: string) => {
@@ -2504,6 +2561,39 @@ export default function GalleryDetail() {
       try {
         const proof = await convertImageToProof(sourceFile);
         if (canceledUploadIdsRef.current.has(assetId)) return;
+
+        const usedBytes = typeof orgBytes === "number" && Number.isFinite(orgBytes) ? orgBytes : 0;
+        const reservedBytes = uploadQueueRef.current.reduce((sum, item) => {
+          if (item.id === assetId) return sum;
+          if (item.status !== "queued" && item.status !== "processing" && item.status !== "uploading") return sum;
+          if (!Number.isFinite(item.size) || item.size <= 0) return sum;
+          return sum + item.size;
+        }, 0);
+        const remainingBytes = ORG_GALLERY_STORAGE_LIMIT_BYTES - usedBytes - reservedBytes;
+        if (proof.blob.size > remainingBytes) {
+          clearUploadTimer(assetId);
+          toast({
+            title: t("sessionDetail.gallery.toast.storageLimitTitle"),
+            description: t("sessionDetail.gallery.toast.storageLimitDesc", {
+              limit: formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES),
+            }),
+          });
+          setUploadQueue((prev) =>
+            prev.map((entry) =>
+              entry.id === assetId
+                ? {
+                    ...entry,
+                    status: "error",
+                    progress: 0,
+                    error: t("sessionDetail.gallery.toast.storageLimitDesc", {
+                      limit: formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES),
+                    }),
+                  }
+                : entry
+            )
+          );
+          return;
+        }
 
         const storagePathWeb = buildGalleryProofPath({
           organizationId: activeOrganizationId,
@@ -2609,7 +2699,7 @@ export default function GalleryDetail() {
         );
       }
     },
-    [activeOrganizationId, clearUploadTimer, id, scheduleGalleryAssetsSync, t]
+    [activeOrganizationId, clearUploadTimer, id, orgBytes, scheduleGalleryAssetsSync, t, toast]
   );
 
   const handleCancelUpload = useCallback(

@@ -46,7 +46,7 @@ interface SessionGalleryProps {
 }
 
 type GalleryType = "proof" | "retouch" | "final" | "other";
-type GalleryStatus = "draft" | "published" | "archived";
+type GalleryStatus = "draft" | "published" | "approved" | "archived";
 type FormGalleryType = GalleryType | "";
 
 interface GalleryRow {
@@ -624,7 +624,7 @@ export default function SessionGallery({
           );
 
           const statusClasses =
-            gallery.status === "published"
+            gallery.status === "published" || gallery.status === "approved"
               ? "border-emerald-100 bg-white/90 text-emerald-700"
               : gallery.status === "draft"
                 ? "border-white/10 bg-zinc-900/85 text-white"

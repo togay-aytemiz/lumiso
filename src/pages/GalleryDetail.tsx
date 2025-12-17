@@ -82,6 +82,7 @@ import {
 import { shouldKeepLocalUploadItem } from "@/lib/galleryUploadQueue";
 import {
   CalendarRange,
+  Archive,
   Check,
   CheckCircle2,
   ChevronLeft,
@@ -110,7 +111,7 @@ import {
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
 
 type GalleryType = "proof" | "retouch" | "final" | "other";
-type GalleryStatus = "draft" | "published" | "archived";
+type GalleryStatus = "draft" | "published" | "approved" | "archived";
 
 type SelectionSettings = {
   enabled: boolean;
@@ -535,7 +536,9 @@ export default function GalleryDetail() {
         status,
         branding: nextBranding,
         publishedAt:
-          status === "published" ? data.published_at ?? new Date().toISOString() : data?.published_at ?? null,
+          ["published", "approved"].includes(status)
+            ? data.published_at ?? new Date().toISOString()
+            : data?.published_at ?? null,
       };
 
       await updateMutation.mutateAsync(payload);
@@ -1121,6 +1124,7 @@ export default function GalleryDetail() {
     () => [
       { value: "draft", label: t("sessionDetail.gallery.statuses.draft") },
       { value: "published", label: t("sessionDetail.gallery.statuses.published") },
+      { value: "approved", label: t("sessionDetail.gallery.statuses.approved") },
       { value: "archived", label: t("sessionDetail.gallery.statuses.archived") },
     ],
     [t]
@@ -1524,12 +1528,10 @@ export default function GalleryDetail() {
   const draftLabel =
     statusOptions.find((option) => option.value === "draft")?.label ??
     t("sessionDetail.gallery.statuses.draft", { defaultValue: "Draft" });
-  const publishedOrArchivedLabel =
-    status === "archived"
-      ? statusOptions.find((option) => option.value === "archived")?.label ??
-        t("sessionDetail.gallery.statuses.archived", { defaultValue: "Archived" })
-      : statusOptions.find((option) => option.value === "published")?.label ??
-        t("sessionDetail.gallery.statuses.published", { defaultValue: "Published" });
+  const nonDraftStatusLabel =
+    statusOptions.find((option) => option.value === status)?.label ??
+    statusOptions.find((option) => option.value === "published")?.label ??
+    t("sessionDetail.gallery.statuses.published", { defaultValue: "Published" });
 
   const hasUnsavedChanges = useMemo(
     () =>
@@ -1637,7 +1639,7 @@ export default function GalleryDetail() {
   });
 
   const buildAutoSavePayload = useCallback(
-    (nextCoverPhotoId: string | null): UpdatePayload | null => {
+    (nextCoverPhotoId: string | null, nextStatus?: GalleryStatus): UpdatePayload | null => {
       if (!data) return null;
       if (!id) return null;
       if (!title.trim()) return null;
@@ -1689,13 +1691,17 @@ export default function GalleryDetail() {
         delete branding.coverAssetId;
       }
 
+      const resolvedStatus = nextStatus ?? status;
+
       return {
         title: title.trim(),
         type,
-        status,
+        status: resolvedStatus,
         branding,
         publishedAt:
-          status === "published" ? data.published_at ?? new Date().toISOString() : data.published_at ?? null,
+          ["published", "approved"].includes(resolvedStatus)
+            ? data.published_at ?? new Date().toISOString()
+            : data.published_at ?? null,
       };
     },
     [customType, data, eventDate, id, selectionSettings, selectionTemplateGroups, status, title, type]
@@ -1703,6 +1709,14 @@ export default function GalleryDetail() {
 
   const isSaving = updateMutation.isPending;
   const saveGallery = updateMutation.mutate;
+
+  const handleArchiveGallery = useCallback(() => {
+    if (isSaving) return;
+    const payload = buildAutoSavePayload(coverPhotoId, "archived");
+    if (!payload) return;
+    setStatus("archived");
+    saveGallery(payload);
+  }, [buildAutoSavePayload, coverPhotoId, isSaving, saveGallery]);
 
   const formattedLastSaved = useMemo(() => {
     if (!lastSavedAt) return "";
@@ -3493,12 +3507,12 @@ export default function GalleryDetail() {
 
   return (
     <>
-	      <TemplateBuilderHeader
-	        name={displayTitle}
-	        onNameChange={(value) => setTitle(value)}
-	        isDraft={status === "draft"}
-	        draftLabel={draftLabel}
-	        publishedLabel={publishedOrArchivedLabel}
+      <TemplateBuilderHeader
+        name={displayTitle}
+        onNameChange={(value) => setTitle(value)}
+        isDraft={status === "draft"}
+        draftLabel={draftLabel}
+        publishedLabel={nonDraftStatusLabel}
         backLabel={backLabel}
         publishLabel={previewLabel}
         doneLabel={previewLabel}
@@ -3506,19 +3520,6 @@ export default function GalleryDetail() {
         onPrimaryAction={handlePreview}
         primaryDisabled={deleteGalleryMutation.isPending}
         primaryClassName="hover:!bg-muted/80 hover:!text-foreground"
-        primaryLeftActions={
-          <Button
-            type="button"
-            onClick={openGalleryDeleteGuard}
-            variant="surface"
-            size="sm"
-            className="btn-surface-destructive"
-            disabled={deleteGalleryMutation.isPending}
-          >
-            <Trash2 className="h-4 w-4" />
-            {t("sessionDetail.gallery.actions.delete", { defaultValue: "Galeriyi sil" })}
-          </Button>
-        }
         eyebrow={typeLabel}
         subtitle={
           <>
@@ -3527,16 +3528,50 @@ export default function GalleryDetail() {
           </>
         }
         rightActions={
-          <Button
-            onClick={handleShare}
-            variant="surface"
-            size="sm"
-            className="btn-surface-accent gap-2"
-            disabled={deleteGalleryMutation.isPending}
-          >
-            <Share className="h-4 w-4" />
-            {t("sessionDetail.gallery.actions.share")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleShare}
+              variant="surface"
+              size="sm"
+              className="btn-surface-accent gap-2"
+              disabled={deleteGalleryMutation.isPending}
+            >
+              <Share className="h-4 w-4" />
+              {t("sessionDetail.gallery.actions.share")}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="surface"
+                  size="sm"
+                  className="gap-2"
+                  disabled={deleteGalleryMutation.isPending}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                  {t("sessionDetail.gallery.actions.more", { defaultValue: "More actions" })}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="gap-2"
+                  onSelect={handleArchiveGallery}
+                  disabled={status === "archived" || isSaving || deleteGalleryMutation.isPending}
+                >
+                  <Archive className="h-4 w-4" />
+                  {t("sessionDetail.gallery.actions.archive", { defaultValue: "Archive" })}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-2 text-destructive focus:text-destructive"
+                  onSelect={openGalleryDeleteGuard}
+                  disabled={deleteGalleryMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t("sessionDetail.gallery.actions.delete", { defaultValue: "Delete" })}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         }
       />
 

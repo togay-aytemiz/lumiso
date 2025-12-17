@@ -541,7 +541,10 @@
         "create": "Galeri oluştur",
         "share": "Paylaş",
         "manage": "Yönet",
-        "preview": "Önizle"
+        "preview": "Önizle",
+        "archive": "Arşivle",
+        "delete": "Sil",
+        "more": "Diğer işlemler"
       },
       "emptyState": {
         "title": "Henüz görsel yok",
@@ -560,6 +563,7 @@
       "statuses": {
         "draft": "Taslak",
         "published": "Paylaşıldı",
+        "approved": "Onaylandı",
         "archived": "Arşivde"
       },
       "labels": {

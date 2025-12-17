@@ -526,7 +526,10 @@
         "create": "Create gallery",
         "share": "Share",
         "manage": "Manage",
-        "preview": "Preview"
+        "preview": "Preview",
+        "archive": "Archive",
+        "delete": "Delete",
+        "more": "More actions"
       },
       "emptyState": {
         "title": "No images yet",
@@ -545,6 +548,7 @@
       "statuses": {
         "draft": "Draft",
         "published": "Published",
+        "approved": "Approved",
         "archived": "Archived"
       },
       "labels": {

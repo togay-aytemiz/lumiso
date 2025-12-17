@@ -222,7 +222,7 @@
       "kicker": "Depolama",
       "title": "Alan kullanımı",
       "capacity": "Toplam: {{total}}",
-      "used": "{{used}} kullanıldı",
+      "used": "Kullanılan: {{used}}",
       "percentFull": "%{{percent}}",
       "blocked": "Alan açana kadar yükleme yapılamaz.",
       "aria": {

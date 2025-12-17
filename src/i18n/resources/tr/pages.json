@@ -1523,6 +1523,17 @@
             "invalidLimit": "0'dan büyük geçerli bir limit girin.",
             "saveSuccess": "Galeri depolama limiti güncellendi.",
             "saveError": "Galeri depolama limiti güncellenemedi."
+          },
+          "galleries": {
+            "title": "Galeriler",
+            "description": "Galeri bazında durum ve depolama kullanımı.",
+            "empty": "Bu hesap için galeri bulunamadı.",
+            "error": "Bu hesap için galeriler yüklenemedi.",
+            "columns": {
+              "title": "Galeri",
+              "status": "Durum",
+              "size": "Kullanım"
+            }
           }
         },
         "membership": {

@@ -1507,6 +1507,17 @@
             "invalidLimit": "Enter a valid limit greater than 0.",
             "saveSuccess": "Gallery storage limit updated.",
             "saveError": "Could not update the gallery storage limit."
+          },
+          "galleries": {
+            "title": "Galleries",
+            "description": "Status and storage usage per gallery.",
+            "empty": "No galleries found for this account.",
+            "error": "Could not load galleries for this account.",
+            "columns": {
+              "title": "Gallery",
+              "status": "Status",
+              "size": "Usage"
+            }
           }
         },
         "membership": {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import { ORG_GALLERY_STORAGE_LIMIT_BYTES } from "@/lib/storageLimits";
@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { StorageWidget } from "@/components/ui/storage-widget";
+import { DataTable, type Column } from "@/components/ui/data-table";
+import { GalleryStatusChip, type GalleryStatus } from "@/components/galleries/GalleryStatusChip";
 
 type StorageUnit = "gb" | "mb";
 
@@ -43,6 +46,31 @@ const formatValueForInput = (bytes: number, unit: StorageUnit) => {
 const resolveUnitForBytes = (bytes: number): StorageUnit => (bytes < BYTES_PER_GB ? "mb" : "gb");
 
 const valueToBytes = (value: number, unit: StorageUnit) => (unit === "gb" ? gbToBytes(value) : mbToBytes(value));
+
+type AdminGalleryStorageRow = {
+  id: string;
+  title: string;
+  status: string;
+  type: string;
+  created_at: string | null;
+  updated_at: string | null;
+  gallery_bytes: number | null;
+};
+
+type AdminGalleryListItem = {
+  id: string;
+  title: string;
+  status: GalleryStatus;
+  galleryBytes: number;
+  updatedAt: string | null;
+};
+
+const normalizeGalleryStatus = (value: unknown): GalleryStatus | null => {
+  if (value === "draft" || value === "published" || value === "approved" || value === "archived") {
+    return value;
+  }
+  return null;
+};
 
 interface AdminUserGallerySettingsTabProps {
   organizationId: string;
@@ -135,83 +163,160 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
     }
   }, [i18nToast, limitValueInput, onSaved, organizationId, queryClient, t, unit]);
 
-  const currentLimitLabel = useMemo(
-    () => formatBytes(resolvedLimitBytes, locale),
-    [locale, resolvedLimitBytes]
-  );
-
   const defaultLimitLabel = useMemo(
     () => formatBytes(ORG_GALLERY_STORAGE_LIMIT_BYTES, locale),
     [locale]
   );
 
+  const galleriesQuery = useQuery({
+    queryKey: ["admin-users", organizationId, "galleries", "storage"],
+    enabled: Boolean(organizationId),
+    staleTime: 60_000,
+    queryFn: async (): Promise<AdminGalleryListItem[]> => {
+      const { data, error } = await (supabase as any).rpc("admin_list_galleries_with_storage", { org_uuid: organizationId });
+      if (error) throw error;
+      const rows = Array.isArray(data) ? (data as AdminGalleryStorageRow[]) : [];
+      return rows
+        .map((row) => {
+          const status = normalizeGalleryStatus(row.status) ?? "draft";
+          const galleryBytes = typeof row.gallery_bytes === "number" && Number.isFinite(row.gallery_bytes) ? row.gallery_bytes : 0;
+          return {
+            id: row.id,
+            title: row.title,
+            status,
+            galleryBytes,
+            updatedAt: row.updated_at,
+          };
+        })
+        .filter((row) => Boolean(row.id));
+    },
+  });
+
+  const galleries = galleriesQuery.data ?? [];
+  const orgUsedBytes = useMemo(
+    () => galleries.reduce((sum, row) => sum + (Number.isFinite(row.galleryBytes) ? row.galleryBytes : 0), 0),
+    [galleries]
+  );
+
+  const galleryColumns = useMemo<Column<AdminGalleryListItem>[]>(
+    () => [
+      {
+        key: "title",
+        header: t("admin.users.detail.gallery.galleries.columns.title"),
+        sortable: true,
+        render: (row) => row.title || "—",
+      },
+      {
+        key: "status",
+        header: t("admin.users.detail.gallery.galleries.columns.status"),
+        sortable: true,
+        render: (row) => <GalleryStatusChip status={row.status} />,
+      },
+      {
+        key: "galleryBytes",
+        header: t("admin.users.detail.gallery.galleries.columns.size"),
+        sortable: true,
+        render: (row) => formatBytes(row.galleryBytes, locale),
+      },
+    ],
+    [locale, t]
+  );
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("admin.users.detail.gallery.title")}</CardTitle>
-        <CardDescription>{t("admin.users.detail.gallery.description")}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="admin-gallery-limit-value">
-              {t("admin.users.detail.gallery.limitLabel")}
-            </Label>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Input
-                id="admin-gallery-limit-value"
-                type="number"
-                min={unit === "gb" ? 0.1 : 1}
-                step={unit === "gb" ? 0.1 : 1}
-                value={limitValueInput}
-                onChange={(event) => setLimitValueInput(event.target.value)}
-                inputMode="decimal"
-                disabled={isSaving}
-                className="sm:max-w-[180px]"
-              />
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">
-                  {t("admin.users.detail.gallery.unitLabel")}
-                </p>
-                <SegmentedControl
-                  value={unit}
-                  onValueChange={handleUnitChange}
-                  options={[
-                    { value: "mb", label: t("admin.users.detail.gallery.unit.mb") },
-                    { value: "gb", label: t("admin.users.detail.gallery.unit.gb") },
-                  ]}
-                  size="sm"
-                  className="w-fit"
-                  aria-label={t("admin.users.detail.gallery.unitLabel")}
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("admin.users.detail.gallery.title")}</CardTitle>
+          <CardDescription>{t("admin.users.detail.gallery.description")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="admin-gallery-limit-value">
+                {t("admin.users.detail.gallery.limitLabel")}
+              </Label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input
+                  id="admin-gallery-limit-value"
+                  type="number"
+                  min={unit === "gb" ? 0.1 : 1}
+                  step={unit === "gb" ? 0.1 : 1}
+                  value={limitValueInput}
+                  onChange={(event) => setLimitValueInput(event.target.value)}
+                  inputMode="decimal"
+                  disabled={isSaving}
+                  className="sm:max-w-[180px]"
                 />
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {t("admin.users.detail.gallery.unitLabel")}
+                  </p>
+                  <SegmentedControl
+                    value={unit}
+                    onValueChange={handleUnitChange}
+                    options={[
+                      { value: "mb", label: t("admin.users.detail.gallery.unit.mb") },
+                      { value: "gb", label: t("admin.users.detail.gallery.unit.gb") },
+                    ]}
+                    size="sm"
+                    className="w-fit"
+                    aria-label={t("admin.users.detail.gallery.unitLabel")}
+                  />
+                </div>
               </div>
+              <p className="text-xs text-muted-foreground">
+                {t("admin.users.detail.gallery.limitHint", { default: defaultLimitLabel })}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t("admin.users.detail.gallery.limitHint", { default: defaultLimitLabel })}
-            </p>
+
+            <StorageWidget
+              usedBytes={galleriesQuery.isLoading ? null : orgUsedBytes}
+              totalBytes={resolvedLimitBytes}
+              isLoading={galleriesQuery.isLoading}
+              className="h-full"
+            />
           </div>
 
-          <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("admin.users.detail.gallery.currentLimit")}
-            </p>
-            <p className="mt-2 text-lg font-semibold tabular-nums">{currentLimitLabel}</p>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button type="button" variant="outline" onClick={handleReset} disabled={isSaving}>
+              {t("admin.users.detail.gallery.actions.reset")}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={!isDirty || isSaving}
+            >
+              {isSaving ? t("admin.users.detail.gallery.actions.saving") : t("admin.users.detail.gallery.actions.save")}
+            </Button>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="outline" onClick={handleReset} disabled={isSaving}>
-            {t("admin.users.detail.gallery.actions.reset")}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={!isDirty || isSaving}
-          >
-            {isSaving ? t("admin.users.detail.gallery.actions.saving") : t("admin.users.detail.gallery.actions.save")}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("admin.users.detail.gallery.galleries.title")}</CardTitle>
+          <CardDescription>{t("admin.users.detail.gallery.galleries.description")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {galleriesQuery.isError ? (
+            <p className="text-sm text-destructive">
+              {t("admin.users.detail.gallery.galleries.error")}
+            </p>
+          ) : (
+            <DataTable
+              data={galleries}
+              columns={galleryColumns}
+              itemsPerPage={8}
+              className="max-w-full overflow-x-auto"
+              emptyState={
+                <span className="text-sm text-muted-foreground">
+                  {t("admin.users.detail.gallery.galleries.empty")}
+                </span>
+              }
+            />
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -222,7 +222,7 @@
       "kicker": "Storage",
       "title": "Storage usage",
       "capacity": "Total: {{total}}",
-      "used": "{{used}} used",
+      "used": "Used: {{used}}",
       "percentFull": "{{percent}}%",
       "blocked": "Uploads are blocked until you free up space.",
       "aria": {

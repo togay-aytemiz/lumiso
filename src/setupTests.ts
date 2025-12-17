@@ -30,6 +30,7 @@ const SUPABASE_CHAINABLE_METHODS = [
   'overlaps',
   'textSearch',
   'throwOnError',
+  'is',
 ] as const;
 
 type ChainableMethod = typeof SUPABASE_CHAINABLE_METHODS[number];

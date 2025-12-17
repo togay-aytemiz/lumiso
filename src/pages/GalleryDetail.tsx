@@ -171,6 +171,7 @@ interface GallerySelectionStateRow {
   is_locked: boolean;
   note: string | null;
   locked_at: string | null;
+  locked_by: string | null;
   unlocked_at: string | null;
 }
 
@@ -178,6 +179,7 @@ interface ClientSelectionRow {
   id: string;
   asset_id: string | null;
   selection_part: string | null;
+  client_id: string | null;
 }
 
 interface GalleryStorageUsageRow {
@@ -630,7 +632,7 @@ export default function GalleryDetail() {
       if (!id) return null;
       const { data, error } = await supabase
         .from("gallery_selection_states")
-        .select("gallery_id,is_locked,note,locked_at,unlocked_at")
+        .select("gallery_id,is_locked,note,locked_at,locked_by,unlocked_at")
         .eq("gallery_id", id)
         .maybeSingle();
       if (error) throw error;
@@ -817,7 +819,7 @@ export default function GalleryDetail() {
       if (!id) return [];
       const { data, error } = await supabase
         .from("client_selections")
-        .select("id,asset_id,selection_part")
+        .select("id,asset_id,selection_part,client_id")
         .eq("gallery_id", id);
       if (error) throw error;
       return (data as ClientSelectionRow[]) ?? [];
@@ -1227,6 +1229,24 @@ export default function GalleryDetail() {
     });
     return ids;
   }, [clientSelections]);
+
+  const selectionClientId = useMemo(() => {
+    const lockedBy = typeof selectionState?.locked_by === "string" ? selectionState.locked_by : null;
+    if (lockedBy) return lockedBy;
+    const counts = new Map<string, number>();
+    (clientSelections ?? []).forEach((row) => {
+      if (typeof row.client_id !== "string" || !row.client_id) return;
+      counts.set(row.client_id, (counts.get(row.client_id) ?? 0) + 1);
+    });
+    let selected: string | null = null;
+    let maxCount = 0;
+    counts.forEach((count, clientId) => {
+      if (count <= maxCount) return;
+      maxCount = count;
+      selected = clientId;
+    });
+    return selected;
+  }, [clientSelections, selectionState?.locked_by]);
 
   const exportPhotos = useMemo(() => {
     return uploadQueue
@@ -2820,20 +2840,24 @@ export default function GalleryDetail() {
       photoId,
       selectionPartKey,
       nextIsSelected,
+      clientId,
     }: {
       photoId: string;
       selectionPartKey: string;
       nextIsSelected: boolean;
+      clientId: string | null;
     }) => {
       if (!id) return;
       if (!selectionPartKey) return;
 
-      const { error: deleteError } = await supabase
+      let deleteQuery = supabase
         .from("client_selections")
         .delete()
         .eq("gallery_id", id)
         .eq("asset_id", photoId)
         .eq("selection_part", selectionPartKey);
+      deleteQuery = clientId ? deleteQuery.eq("client_id", clientId) : deleteQuery.is("client_id", null);
+      const { error: deleteError } = await deleteQuery;
       if (deleteError) throw deleteError;
 
       if (!nextIsSelected) return;
@@ -2842,6 +2866,7 @@ export default function GalleryDetail() {
         gallery_id: id,
         asset_id: photoId,
         selection_part: selectionPartKey,
+        client_id: clientId,
       });
       if (insertError) throw insertError;
     },
@@ -2881,12 +2906,8 @@ export default function GalleryDetail() {
         return { ...prev, [photoId]: [...current, ruleId] };
       });
 
-      if (isSelectionsLocked) {
-        return;
-      }
-
       updateClientSelectionMutation.mutate(
-        { photoId, selectionPartKey, nextIsSelected },
+        { photoId, selectionPartKey, nextIsSelected, clientId: selectionClientId },
         {
           onError: (error) => {
             setPhotoSelections((prev) => {
@@ -2919,18 +2940,13 @@ export default function GalleryDetail() {
       isSelectionUnlockedForMe,
       isSelectionsLocked,
       photoSelections,
+      selectionClientId,
       selectionPartKeyByRuleId,
       t,
       toast,
       updateClientSelectionMutation,
     ]
   );
-
-  const handleLockAgainForMe = useCallback(() => {
-    setIsSelectionUnlockedForMe(false);
-    photoSelectionsTouchedRef.current = false;
-    setPhotoSelections(persistedPhotoSelectionsById);
-  }, [persistedPhotoSelectionsById]);
 
   useEffect(() => {
     if (
@@ -3816,7 +3832,7 @@ export default function GalleryDetail() {
                             exportDisabled={exportDisabled}
                             onUnlockForClient={() => unlockSelectionsMutation.mutate()}
                             onUnlockForMe={() => setIsSelectionUnlockedForMe(true)}
-                            onLockAgain={handleLockAgainForMe}
+                            onLockAgain={() => setIsSelectionUnlockedForMe(false)}
                             unlockDisabled={unlockSelectionsMutation.isPending}
                           />
                         </div>

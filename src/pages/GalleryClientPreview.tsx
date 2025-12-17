@@ -1245,10 +1245,14 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["gallery", resolvedGalleryId] });
+      queryClient.invalidateQueries({ queryKey: ["galleries"] });
       i18nToast.success(t("sessionDetail.gallery.selectionLock.toast.locked"), { duration: 2500 });
     },
     onError: () => {
       queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["gallery", resolvedGalleryId] });
+      queryClient.invalidateQueries({ queryKey: ["galleries"] });
       i18nToast.error(t("sessionDetail.gallery.toast.errorDesc"), { duration: 2500 });
     },
   });
@@ -1275,10 +1279,14 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["gallery", resolvedGalleryId] });
+      queryClient.invalidateQueries({ queryKey: ["galleries"] });
       i18nToast.success(t("sessionDetail.gallery.selectionLock.toast.unlocked"), { duration: 2500 });
     },
     onError: () => {
       queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["gallery", resolvedGalleryId] });
+      queryClient.invalidateQueries({ queryKey: ["galleries"] });
       i18nToast.error(t("sessionDetail.gallery.toast.errorDesc"), { duration: 2500 });
     },
   });

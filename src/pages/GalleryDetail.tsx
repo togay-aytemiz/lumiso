@@ -704,10 +704,14 @@ export default function GalleryDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["gallery", id] });
+      queryClient.invalidateQueries({ queryKey: ["galleries"] });
       i18nToast.success(t("sessionDetail.gallery.selectionLock.toast.unlocked"), { duration: 2500 });
     },
     onError: () => {
       queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["gallery", id] });
+      queryClient.invalidateQueries({ queryKey: ["galleries"] });
       i18nToast.error(t("sessionDetail.gallery.toast.errorDesc"), { duration: 2500 });
     },
   });

@@ -552,7 +552,7 @@
       },
       "statuses": {
         "draft": "Draft",
-        "published": "Published",
+        "published": "Shared",
         "approved": "Approved",
         "archived": "Archived"
       },

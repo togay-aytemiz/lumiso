@@ -1042,6 +1042,46 @@
           "locked": "Seçimler kilitlendi."
         }
       },
+      "exportSheet": {
+        "title": "Dosya İsimlerini Al",
+        "description": "İşletim sisteminize göre filtreleme kodu oluşturun.",
+        "tabs": {
+          "windows": "Windows",
+          "mac": "Mac",
+          "list": "Liste"
+        },
+        "favoritesTitle": "Favoriler",
+        "fileCount_one": "{{count}} dosya",
+        "fileCount_other": "{{count}} dosya",
+        "copyQuery": "Sorguyu Kopyala",
+        "downloadTxt": ".TXT İndir",
+        "emptyState": "Henüz dışa aktarılacak öğe yok.",
+        "downloadFileNames": {
+          "master": "master_secim_listesi"
+        },
+        "queryLabels": {
+          "windows": "Windows Arama Sorgusu",
+          "mac": "Mac Finder Sorgusu",
+          "list": "Lightroom/Capture One Filtresi"
+        },
+        "listTipInline": "Bu metni Lightroom Library > Text Filter alanına yapıştırın.",
+        "masterCard": {
+          "title": "Genel Toplu İşlem",
+          "description": "Sadece onaylı seçimleri içerir (Favoriler hariç).",
+          "emptyBreakdown": "Henüz seçim yapılmadı",
+          "totalFiles": "Toplam Dosya"
+        },
+        "categories": {
+          "title": "Kategori Bazlı Listeler",
+          "subtitle": "Tekil dışa aktarım",
+          "empty": "Listelenecek grup yok."
+        },
+        "tips": {
+          "windows": "İpucu: Windows Gezgini'nde klasörünüzü açın, Ctrl + F ile arama kutusuna gidin ve metni yapıştırın. Dosyalar otomatik filtrelenecektir.",
+          "mac": "İpucu: Finder'da klasörünüzü açın, Cmd + F yapın. Arama kapsamının \"Bu Mac\" değil \"Şu anki klasör\" olduğundan emin olun ve metni yapıştırın.",
+          "list": "İpucu: Lightroom Library modülünde Text > Contains filtresine yapıştırmak için optimize edilmiştir (boşlukla ayrılmış)."
+        }
+      },
       "lightbox": {
         "close": "Kapat",
         "previous": "Önceki",

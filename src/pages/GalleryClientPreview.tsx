@@ -11,6 +11,7 @@ import { MobilePhotoSelectionSheet } from "@/components/galleries/MobilePhotoSel
 import { ClientSelectionLockedBanner } from "@/components/galleries/ClientSelectionLockedBanner";
 import { ClientSelectionReopenedBanner } from "@/components/galleries/ClientSelectionReopenedBanner";
 import { SelectionLockBanner } from "@/components/galleries/SelectionLockBanner";
+import { SelectionExportSheet } from "@/components/galleries/SelectionExportSheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GALLERY_ASSETS_BUCKET, getStorageBasename, isSupabaseStorageObjectMissingError } from "@/lib/galleryAssets";
@@ -290,6 +291,7 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [exportSheetOpen, setExportSheetOpen] = useState(false);
 
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const visibleCountRef = useRef(visibleCount);
@@ -742,6 +744,11 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
       };
     });
   }, [favoritePhotoIds, favoritesEnabled, orderedSets, photoSelectionsById, photosBase]);
+
+  const exportDisabled = useMemo(
+    () => !resolvedPhotos.some((photo) => photo.isFavorite || photo.selections.length > 0),
+    [resolvedPhotos]
+  );
 
   const filteredPhotosUnsorted = useMemo(() => {
     switch (activeFilter) {
@@ -1277,8 +1284,8 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
   });
 
   const handleExportSelections = useCallback(() => {
-    i18nToast.info(t("sessionDetail.gallery.selectionLock.toast.exportComingSoon"), { duration: 2500 });
-  }, [i18nToast, t]);
+    setExportSheetOpen(true);
+  }, []);
 
   const handleToggleFavorite = useCallback(
     (photoId: string) => {
@@ -1864,6 +1871,7 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
                 status="locked"
                 note={selectionState?.note ?? null}
                 onExport={handleExportSelections}
+                exportDisabled={exportDisabled}
                 onUnlockForClient={() => unlockSelectionsMutation.mutate()}
                 unlockDisabled={unlockSelectionsMutation.isPending}
                 className="animate-in zoom-in duration-300"
@@ -2416,6 +2424,7 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
                         status="locked"
                         note={selectionState?.note ?? null}
                         onExport={handleExportSelections}
+                        exportDisabled={exportDisabled}
                         onUnlockForClient={() => unlockSelectionsMutation.mutate()}
                         unlockDisabled={unlockSelectionsMutation.isPending}
                       />
@@ -2643,6 +2652,13 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
           </nav>
         ) : null
       }
+
+      <SelectionExportSheet
+        open={exportSheetOpen}
+        onOpenChange={setExportSheetOpen}
+        photos={resolvedPhotos}
+        rules={selectionRules}
+      />
 
       <Lightbox
         isOpen={lightboxOpen}

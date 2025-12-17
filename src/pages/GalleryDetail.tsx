@@ -28,6 +28,7 @@ import {
 import { SelectionLockBanner } from "@/components/galleries/SelectionLockBanner";
 import { Lightbox } from "@/components/galleries/Lightbox";
 import { GalleryShareSheet } from "@/components/galleries/GalleryShareSheet";
+import { SelectionExportSheet } from "@/components/galleries/SelectionExportSheet";
 import {
   SelectionTemplateSection,
   type SelectionTemplateRuleForm,
@@ -346,6 +347,7 @@ export default function GalleryDetail() {
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [isSetSheetOpen, setIsSetSheetOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
+  const [exportSheetOpen, setExportSheetOpen] = useState(false);
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [activeSetId, setActiveSetId] = useState<string | null>(null);
   const [selectionSheetOpen, setSelectionSheetOpen] = useState(false);
@@ -683,8 +685,8 @@ export default function GalleryDetail() {
   });
 
   const handleExportSelections = useCallback(() => {
-    i18nToast.info(t("sessionDetail.gallery.selectionLock.toast.exportComingSoon"), { duration: 2500 });
-  }, [i18nToast, t]);
+    setExportSheetOpen(true);
+  }, []);
 
   const { data: shareSessionClientName } = useQuery({
     queryKey: ["gallery_share_client", data?.session_id],
@@ -1225,6 +1227,27 @@ export default function GalleryDetail() {
     });
     return ids;
   }, [clientSelections]);
+
+  const exportPhotos = useMemo(() => {
+    return uploadQueue
+      .filter((item) => item.status !== "canceled")
+      .map((item) => {
+        const selectedRuleIds = photoSelections[item.id] ?? [];
+        const isFavorite = clientFavoriteAssetIds.has(item.id) || selectedRuleIds.includes(FAVORITES_FILTER_ID);
+        const selections = selectedRuleIds.filter((ruleId) => ruleId !== FAVORITES_FILTER_ID);
+        return {
+          id: item.id,
+          filename: item.name,
+          selections,
+          isFavorite,
+        };
+      });
+  }, [clientFavoriteAssetIds, photoSelections, uploadQueue]);
+
+  const exportDisabled = useMemo(
+    () => !exportPhotos.some((photo) => photo.isFavorite || photo.selections.length > 0),
+    [exportPhotos]
+  );
 
   const localRuleCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -3505,6 +3528,13 @@ export default function GalleryDetail() {
         generatingPublicId={generatePublicIdMutation.isPending}
       />
 
+      <SelectionExportSheet
+        open={exportSheetOpen}
+        onOpenChange={setExportSheetOpen}
+        photos={exportPhotos}
+        rules={selectionRules}
+      />
+
       <div className="flex flex-col gap-6 px-4 py-6 lg:px-8">
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "photos" | "settings")}>
           <div className="grid gap-6 lg:grid-cols-[360px,1fr]">
@@ -3773,6 +3803,7 @@ export default function GalleryDetail() {
                             status={selectionLockBannerStatus}
                             note={selectionState?.note ?? null}
                             onExport={handleExportSelections}
+                            exportDisabled={exportDisabled}
                             onUnlockForClient={() => unlockSelectionsMutation.mutate()}
                             onUnlockForMe={() => setIsSelectionUnlockedForMe(true)}
                             onLockAgain={() => setIsSelectionUnlockedForMe(false)}

@@ -1026,6 +1026,46 @@
           "locked": "Selections are now locked."
         }
       },
+      "exportSheet": {
+        "title": "Get filenames",
+        "description": "Generate filtering code based on your OS.",
+        "tabs": {
+          "windows": "Windows",
+          "mac": "Mac",
+          "list": "List"
+        },
+        "favoritesTitle": "Favorites",
+        "fileCount_one": "{{count}} file",
+        "fileCount_other": "{{count}} files",
+        "copyQuery": "Copy query",
+        "downloadTxt": "Download .txt",
+        "emptyState": "No exported items available yet.",
+        "downloadFileNames": {
+          "master": "master_selection_list"
+        },
+        "queryLabels": {
+          "windows": "Windows Explorer query",
+          "mac": "Mac Finder query",
+          "list": "Lightroom/Capture One filter"
+        },
+        "listTipInline": "Paste this into Lightroom Library > Text Filter.",
+        "masterCard": {
+          "title": "Master batch",
+          "description": "Includes only approved selections (excludes favorites).",
+          "emptyBreakdown": "No selections yet",
+          "totalFiles": "Total files"
+        },
+        "categories": {
+          "title": "Category lists",
+          "subtitle": "Single exports",
+          "empty": "No groups to list."
+        },
+        "tips": {
+          "windows": "Tip: Open your folder in File Explorer, press Ctrl + F, then paste the text into search. Files will filter automatically.",
+          "mac": "Tip: In Finder, press Cmd + F, ensure the scope is \"Current folder\", then paste the text.",
+          "list": "Tip: Optimized for Lightroom Library > Text > Contains (space-separated)."
+        }
+      },
       "lightbox": {
         "close": "Close",
         "previous": "Previous",

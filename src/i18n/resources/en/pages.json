@@ -3933,5 +3933,47 @@
       "tableView": "Sort and filter the detailed table view",
       "archivedProjects": "Archive completed projects"
     }
+  },
+  "galleries": {
+    "title": "Client galleries",
+    "description": "Track selection progress, approvals, and quick access to linked work.",
+    "actions": {
+      "create": "New gallery"
+    },
+    "stats": {
+      "actionNeeded": "Action needed",
+      "approved": "Approved",
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "segments": {
+      "active": "Active",
+      "action": "Action needed",
+      "approved": "Approved",
+      "archived": "Archived"
+    },
+    "search": "Search galleries",
+    "empty": "No galleries found for this view.",
+    "table": {
+      "gallery": "Gallery",
+      "client": "Client",
+      "links": "Quick access",
+      "quickAccess": "Open",
+      "noSession": "No session",
+      "noProject": "No project",
+      "openGallery": "Open gallery",
+      "status": "Status",
+      "progress": "Selection progress",
+      "selected": "{{count}} selected",
+      "required": "{{count}} required",
+      "approval": "Last approval",
+      "noApproval": "No approval yet",
+      "actions": "Actions",
+      "export": "Export selections",
+      "view": "View details",
+      "summary": "{{count}} galleries",
+      "noEvent": "No event date",
+      "noClient": "No client"
+    }
   }
 }

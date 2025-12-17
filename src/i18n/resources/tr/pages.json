@@ -3949,5 +3949,47 @@
       "tableView": "Detaylı tabloyu sıralayıp filtreleyin",
       "archivedProjects": "Tamamlanan projeleri arşivleyin"
     }
+  },
+  "galleries": {
+    "title": "Müşteri galerileri",
+    "description": "Seçim ilerlemesini, onayları ve bağlı kayıtları tek yerden takip edin.",
+    "actions": {
+      "create": "Yeni galeri"
+    },
+    "stats": {
+      "actionNeeded": "Aksiyon bekleyen",
+      "approved": "Onaylanan",
+      "active": "Aktif",
+      "archived": "Arşiv"
+    },
+    "segments": {
+      "active": "Aktif",
+      "action": "Aksiyon bekleyen",
+      "approved": "Onaylanan",
+      "archived": "Arşiv"
+    },
+    "search": "Galerilerde ara",
+    "empty": "Bu görünümde galeri yok.",
+    "table": {
+      "gallery": "Galeri",
+      "client": "Kişi",
+      "links": "Hızlı erişim",
+      "quickAccess": "Git",
+      "noSession": "Seans yok",
+      "noProject": "Proje yok",
+      "openGallery": "Galeriyi aç",
+      "status": "Durum",
+      "progress": "Seçim ilerlemesi",
+      "selected": "{{count}} seçildi",
+      "required": "{{count}} zorunlu",
+      "approval": "Son onay",
+      "noApproval": "Henüz onay yok",
+      "actions": "İşlemler",
+      "export": "Seçimleri dışa aktar",
+      "view": "Detayı aç",
+      "summary": "{{count}} galeri",
+      "noEvent": "Etkinlik tarihi yok",
+      "noClient": "Kişi bilgisi yok"
+    }
   }
 }

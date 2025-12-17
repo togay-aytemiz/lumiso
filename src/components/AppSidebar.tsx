@@ -7,6 +7,7 @@ import {
   Bell,
   BarChart3,
   FolderOpen,
+  Images,
   CreditCard,
   CalendarDays,
   CalendarRange,
@@ -75,6 +76,7 @@ export function AppSidebar() {
     () => [
       { title: t("menu.calendar"), url: "/calendar", icon: CalendarDays },
       { title: t("menu.sessions"), url: "/sessions", icon: Calendar },
+      { title: t("menu.galleries"), url: "/galleries", icon: Images },
       { title: t("menu.reminders"), url: "/reminders", icon: Bell },
     ],
     [t]
@@ -109,7 +111,7 @@ export function AppSidebar() {
     return currentPath.startsWith(path);
   };
 
-  const isBookingsChildActive = ["/calendar", "/sessions", "/reminders"].some(
+  const isBookingsChildActive = ["/calendar", "/sessions", "/galleries", "/reminders"].some(
     (path) => currentPath.startsWith(path)
   );
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);

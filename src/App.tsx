@@ -14,6 +14,7 @@ import Auth from "./pages/Auth";
 import GettingStarted from "./pages/GettingStarted";
 import AllLeads from "./pages/AllLeads";
 import AllProjects from "./pages/AllProjects";
+import AllGalleries from "./pages/AllGalleries";
 import LeadDetail from "./pages/LeadDetail";
 import ProjectDetail from "./pages/ProjectDetail";
 import UpcomingSessions from "./pages/UpcomingSessions";
@@ -103,6 +104,7 @@ const AppRoutes = () => {
           <Route path="getting-started" element={<GettingStarted />} />
           <Route path="leads" element={<AllLeads />} />
           <Route path="projects" element={<AllProjects />} />
+          <Route path="galleries" element={<AllGalleries />} />
           <Route path="leads/:id" element={<LeadDetail />} />
           <Route path="projects/:id" element={<ProjectDetail />} />
           <Route path="sessions" element={<UpcomingSessions />} />

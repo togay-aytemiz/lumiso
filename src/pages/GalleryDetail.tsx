@@ -667,6 +667,20 @@ export default function GalleryDetail() {
     }
   }, [isSelectionsLocked]);
 
+  useEffect(() => {
+    if (!isReadOnly) return;
+    setIsSelectionUnlockedForMe(false);
+    setSelectionSheetOpen(false);
+    setIsSetSheetOpen(false);
+    setShareSheetOpen(false);
+    setPendingSelectionRemovalId(null);
+    setSelectedBatchIds(new Set());
+    setSetDeleteGuardOpen(false);
+    setPendingDeleteSet(null);
+    setBatchDeleteGuardOpen(false);
+    setPendingBatchDeleteIds(null);
+  }, [isReadOnly]);
+
   const unlockSelectionsMutation = useMutation({
     mutationFn: async () => {
       if (!id) return;
@@ -2305,6 +2319,7 @@ export default function GalleryDetail() {
 
   const handleAddMedia = useCallback(
     (setId?: string) => {
+      if (isReadOnly) return;
       if (setId === "default-placeholder") {
         toast({
           title: t("sessionDetail.gallery.toast.errorTitle"),
@@ -2328,11 +2343,12 @@ export default function GalleryDetail() {
         }),
       });
     },
-    [t, toast]
+    [isReadOnly, t, toast]
   );
 
   const enqueueUploads = useCallback(
     (files: FileList | File[], setId?: string | null) => {
+      if (isReadOnly) return;
       const list = Array.from(files ?? []);
       if (list.length === 0) return;
 
@@ -2403,7 +2419,7 @@ export default function GalleryDetail() {
         }),
       ]);
     },
-    [t, toast]
+    [isReadOnly, t, toast]
   );
 
   const clearUploadTimer = useCallback((id: string) => {
@@ -2676,6 +2692,7 @@ export default function GalleryDetail() {
 
   const handleToggleStar = useCallback(
     (assetId: string) => {
+      if (isReadOnly) return;
       const current = uploadQueueRef.current.find((item) => item.id === assetId);
       if (!current) return;
       const nextStarred = !current.starred;
@@ -2703,11 +2720,12 @@ export default function GalleryDetail() {
         }
       })();
     },
-    [id, queryClient, toast, t, updateGalleryAssetStarred]
+    [id, isReadOnly, queryClient, toast, t, updateGalleryAssetStarred]
   );
 
   const deleteGalleryAssets = useCallback(
     async (assetIds: string[]) => {
+      if (isReadOnly) return;
       if (!id || assetIds.length === 0) return;
 
       try {
@@ -2744,11 +2762,12 @@ export default function GalleryDetail() {
         throw error;
       }
     },
-    [id, queryClient]
+    [id, isReadOnly, queryClient]
   );
 
   const handleDeleteUpload = useCallback(
     (assetId: string) => {
+      if (isReadOnly) return;
       canceledUploadIdsRef.current.add(assetId);
       clearUploadTimer(assetId);
       setCoverPhotoId((prev) => (prev === assetId ? null : prev));
@@ -2781,11 +2800,12 @@ export default function GalleryDetail() {
         });
       });
     },
-    [clearUploadTimer, deleteGalleryAssets, t, toast]
+    [clearUploadTimer, deleteGalleryAssets, isReadOnly, t, toast]
   );
 
   const handleSetCover = useCallback(
     (photoId: string) => {
+      if (isReadOnly) return;
       setCoverPhotoId(photoId);
 
       if (!id) return;
@@ -2816,7 +2836,7 @@ export default function GalleryDetail() {
 
       saveGallery(payload);
     },
-    [buildAutoSavePayload, id, queryClient, saveGallery, updateMutation.isPending]
+    [buildAutoSavePayload, id, isReadOnly, queryClient, saveGallery, updateMutation.isPending]
   );
 
   const refreshPreviewUrl = useCallback(
@@ -2883,6 +2903,7 @@ export default function GalleryDetail() {
     !activeSelectionRuleId || activeSelectionRuleId === FAVORITES_FILTER_ID || activeSelectionRuleId === STARRED_FILTER_ID;
 
   const toggleBatchSelect = useCallback((id: string) => {
+    if (isReadOnly) return;
     setSelectedBatchIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -2892,7 +2913,7 @@ export default function GalleryDetail() {
       }
       return next;
     });
-  }, []);
+  }, [isReadOnly]);
 
   const clearBatchSelection = useCallback(() => {
     setSelectedBatchIds(new Set());
@@ -2947,6 +2968,7 @@ export default function GalleryDetail() {
 
   const togglePhotoRuleSelection = useCallback(
     (photoId: string, ruleId: string) => {
+      if (isReadOnly) return;
       if (isSelectionsLocked && !isSelectionUnlockedForMe) {
         i18nToast.error(t("sessionDetail.gallery.clientPreview.toast.selectionsLocked"), {
           duration: 3000,
@@ -3006,6 +3028,7 @@ export default function GalleryDetail() {
     },
     [
       i18nToast,
+      isReadOnly,
       isSelectionUnlockedForMe,
       isSelectionsLocked,
       photoSelections,
@@ -3452,6 +3475,11 @@ export default function GalleryDetail() {
 
   const handleFileInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (isReadOnly) {
+        event.target.value = "";
+        pendingSetIdRef.current = null;
+        return;
+      }
       const files = event.target.files;
       if (!files || files.length === 0) {
         pendingSetIdRef.current = null;
@@ -3462,27 +3490,30 @@ export default function GalleryDetail() {
       enqueueUploads(files, targetSetId);
       event.target.value = "";
     },
-    [enqueueUploads]
+    [enqueueUploads, isReadOnly]
   );
 
   const handleOpenCreateSet = useCallback(() => {
+    if (isReadOnly) return;
     resetSetForm();
     setIsSetSheetOpen(true);
-  }, [resetSetForm]);
+  }, [isReadOnly, resetSetForm]);
 
   const handleEditSet = useCallback(
     (set: GallerySetRow) => {
+      if (isReadOnly) return;
       if (typeof window === "undefined") return;
       setEditingSetId(set.id);
       setSetName(set.name);
       setSetDescription(set.description ?? "");
       setIsSetSheetOpen(true);
     },
-    []
+    [isReadOnly]
   );
 
   const handleDeleteSet = useCallback(
     (set: GallerySetRow) => {
+      if (isReadOnly) return;
       if (visibleSets.length <= 1 || set.id === "default-placeholder") {
         toast({
           title: t("sessionDetail.gallery.toast.errorTitle"),
@@ -3501,7 +3532,7 @@ export default function GalleryDetail() {
       }
       deleteSetMutation.mutate(set.id);
     },
-    [deleteSetMutation, visibleSets.length, uploadsBySetId, t, toast]
+    [deleteSetMutation, isReadOnly, t, toast, uploadsBySetId, visibleSets.length]
   );
 
   const closeSetDeleteGuard = useCallback(() => {
@@ -3520,6 +3551,7 @@ export default function GalleryDetail() {
 
   const handleSetReorder = useCallback(
     (result: DropResult) => {
+      if (isReadOnly) return;
       if (!result.destination) return;
       setOrderedSets((prev) => {
         if (prev.length === 0) return prev;
@@ -3530,7 +3562,7 @@ export default function GalleryDetail() {
         return items;
       });
     },
-    [reorderSetsMutation]
+    [isReadOnly, reorderSetsMutation]
   );
 
   if (isLoading || setsLoading || storedAssetsLoading) {
@@ -3732,17 +3764,18 @@ export default function GalleryDetail() {
                 </TabsList>
               </div>
 
-              {activeTab === "photos" ? (
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                  <Button
-                    size="sm"
-                    variant="surface"
-                    className="gap-2"
-                    onClick={handleOpenCreateSet}
-                  >
-                    <Plus className="h-4 w-4" />
-                    {t("sessionDetail.gallery.sets.add")}
-                  </Button>
+	              {activeTab === "photos" ? (
+	                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+	                  <Button
+	                    size="sm"
+	                    variant="surface"
+	                    className="gap-2"
+	                    onClick={handleOpenCreateSet}
+	                    disabled={isReadOnly}
+	                  >
+	                    <Plus className="h-4 w-4" />
+	                    {t("sessionDetail.gallery.sets.add")}
+	                  </Button>
 	                  <Button
 	                    variant="link"
 	                    size="sm"
@@ -3755,18 +3788,18 @@ export default function GalleryDetail() {
 	              ) : null}
 
              <TabsContent value="photos" className="mt-4 space-y-3">
-                {orderedSets.length > 0 ? (
-                  <DragDropContext onDragEnd={handleSetReorder}>
-                    <Droppable droppableId="gallery-sets">
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.droppableProps}
-                          className="space-y-2"
-                        >
-	                          {orderedSets.map((set, index) => (
-	                            <Draggable key={set.id} draggableId={set.id} index={index}>
-	                          {(dragProvided, snapshot) => {
+	                {orderedSets.length > 0 ? (
+	                  <DragDropContext onDragEnd={handleSetReorder}>
+	                    <Droppable droppableId="gallery-sets" isDropDisabled={isReadOnly}>
+	                      {(provided) => (
+	                        <div
+	                          ref={provided.innerRef}
+	                          {...provided.droppableProps}
+	                          className="space-y-2"
+	                        >
+		                          {orderedSets.map((set, index) => (
+		                            <Draggable key={set.id} draggableId={set.id} index={index} isDragDisabled={isReadOnly}>
+		                          {(dragProvided, snapshot) => {
                             const isLastSet = visibleSets.length <= 1 || set.id === "default-placeholder";
                             const isFilterMode = Boolean(activeSelectionRuleId);
                             const isActiveSetVisual = !isFilterMode && activeSet?.id === set.id;
@@ -3793,16 +3826,18 @@ export default function GalleryDetail() {
 	                                >
                                   <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3 min-w-0">
-                                      <button
-                                        type="button"
-                                        className="text-muted-foreground/70 transition-colors hover:text-foreground"
-                                        {...dragProvided.dragHandleProps}
-                                        aria-label={t("sessionDetail.gallery.sets.reorder", {
-                                          defaultValue: "Reorder set",
-                                        })}
-                                      >
-                                        <GripVertical className="h-4 w-4" />
-                                      </button>
+	                                      {!isReadOnly ? (
+	                                        <button
+	                                          type="button"
+	                                          className="text-muted-foreground/70 transition-colors hover:text-foreground"
+	                                          {...dragProvided.dragHandleProps}
+	                                          aria-label={t("sessionDetail.gallery.sets.reorder", {
+	                                            defaultValue: "Reorder set",
+	                                          })}
+	                                        >
+	                                          <GripVertical className="h-4 w-4" />
+	                                        </button>
+	                                      ) : null}
                                       <div className="flex min-w-0 items-center gap-2">
                                         <p
                                           className={cn(
@@ -3819,43 +3854,45 @@ export default function GalleryDetail() {
                                         ) : null}
                                       </div>
                                     </div>
-	                                    <div className="flex items-center gap-1">
-	                                      <Button
-	                                        variant="ghost"
-	                                        size="icon"
-	                                        className="h-8 w-8 opacity-70 hover:opacity-100"
-	                                        onClick={(event) => {
-	                                          event.stopPropagation();
-	                                          handleEditSet(set);
-	                                        }}
-	                                      >
-	                                        <Edit3 className="h-4 w-4" />
-	                                      </Button>
-	                                      <Button
-	                                        variant="ghost"
-	                                        size="icon"
-	                                        disabled={isLastSet || deleteSetMutation.isPending}
-	                                        className="h-8 w-8 opacity-70 hover:opacity-100 disabled:opacity-40"
-	                                        onClick={(event) => {
-	                                          event.stopPropagation();
-	                                          handleDeleteSet(set);
-	                                        }}
-	                                      >
-	                                        <Trash2 className="h-4 w-4" />
-	                                      </Button>
-	                                      <Button
-	                                        variant="ghost"
-	                                        size="icon"
-	                                        className="h-8 w-8 opacity-70 hover:opacity-100"
-	                                        onClick={(event) => {
-	                                          event.stopPropagation();
-	                                          setActiveSetId(set.id);
-	                                          handleAddMedia(set.id);
-	                                        }}
-	                                      >
-	                                        <ImageUp className="h-4 w-4" />
-	                                      </Button>
-	                                    </div>
+		                                    {!isReadOnly ? (
+		                                      <div className="flex items-center gap-1">
+		                                        <Button
+		                                          variant="ghost"
+		                                          size="icon"
+		                                          className="h-8 w-8 opacity-70 hover:opacity-100"
+		                                          onClick={(event) => {
+		                                            event.stopPropagation();
+		                                            handleEditSet(set);
+		                                          }}
+		                                        >
+		                                          <Edit3 className="h-4 w-4" />
+		                                        </Button>
+		                                        <Button
+		                                          variant="ghost"
+		                                          size="icon"
+		                                          disabled={isLastSet || deleteSetMutation.isPending}
+		                                          className="h-8 w-8 opacity-70 hover:opacity-100 disabled:opacity-40"
+		                                          onClick={(event) => {
+		                                            event.stopPropagation();
+		                                            handleDeleteSet(set);
+		                                          }}
+		                                        >
+		                                          <Trash2 className="h-4 w-4" />
+		                                        </Button>
+		                                        <Button
+		                                          variant="ghost"
+		                                          size="icon"
+		                                          className="h-8 w-8 opacity-70 hover:opacity-100"
+		                                          onClick={(event) => {
+		                                            event.stopPropagation();
+		                                            setActiveSetId(set.id);
+		                                            handleAddMedia(set.id);
+		                                          }}
+		                                        >
+		                                          <ImageUp className="h-4 w-4" />
+		                                        </Button>
+		                                      </div>
+		                                    ) : null}
 	                                  </div>
 	                                  {showSetProgress ? (
 	                                    <div className="pointer-events-none absolute inset-x-0 bottom-0">
@@ -3916,6 +3953,7 @@ export default function GalleryDetail() {
 	                  onCustomTypeChange: setCustomType,
 	                  autoSaveLabel,
 	                  disableTypeEditing: true,
+	                  disabled: isReadOnly,
 	                }}
 	                watermark={{
 	                  settings: watermarkSettings,
@@ -3926,10 +3964,11 @@ export default function GalleryDetail() {
 	                  logoUrl: organizationLogoUrl,
 	                  previewBackgroundUrl: watermarkPreviewBackgroundUrl,
 	                  onOpenOrganizationBranding: handleOpenOrganizationBrandingSettings,
+	                  disabled: isReadOnly,
 	                }}
 	                privacy={privacyInfo}
 	                saveBar={{
-	                  show: hasGallerySettingsUnsavedChanges,
+	                  show: !isReadOnly && hasGallerySettingsUnsavedChanges,
 	                  isSaving: gallerySettingsSaving,
 	                  showSuccess: gallerySettingsSaveSuccess,
 	                  onSave: handleSaveGallerySettings,
@@ -3944,28 +3983,28 @@ export default function GalleryDetail() {
                     <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
                       {selectionRules.length > 0 || isSelectionsLocked || selectionState?.locked_at ? (
                         <div className="mb-4">
-                          <SelectionLockBanner
-                            status={selectionLockBannerStatus}
-                            note={selectionState?.note ?? null}
-                            onExport={handleExportSelections}
-                            exportDisabled={exportDisabled}
-                            onUnlockForClient={() => unlockSelectionsMutation.mutate()}
-                            onUnlockForMe={() => setIsSelectionUnlockedForMe(true)}
-                            onLockAgain={() => setIsSelectionUnlockedForMe(false)}
-                            unlockDisabled={unlockSelectionsMutation.isPending}
-                          />
+	                          <SelectionLockBanner
+	                            status={selectionLockBannerStatus}
+	                            note={selectionState?.note ?? null}
+	                            onExport={handleExportSelections}
+	                            exportDisabled={exportDisabled}
+	                            onUnlockForClient={isReadOnly ? undefined : () => unlockSelectionsMutation.mutate()}
+	                            onUnlockForMe={isReadOnly ? undefined : () => setIsSelectionUnlockedForMe(true)}
+	                            onLockAgain={isReadOnly ? undefined : () => setIsSelectionUnlockedForMe(false)}
+	                            unlockDisabled={isReadOnly || unlockSelectionsMutation.isPending}
+	                          />
                         </div>
                       ) : null}
-                      <SelectionDashboard
-                        rules={selectionRules}
-                        favoritesCount={favoritesCount}
-                        starredCount={starredUploadCount}
-                        totalPhotos={totalPhotosCount}
-                        totalSelected={totalSelectedCount}
-                        activeRuleId={activeSelectionRuleId}
-                        onSelectRuleFilter={setActiveSelectionRuleId}
-                        onEditRules={() => setSelectionSheetOpen(true)}
-                      />
+	                      <SelectionDashboard
+	                        rules={selectionRules}
+	                        favoritesCount={favoritesCount}
+	                        starredCount={starredUploadCount}
+	                        totalPhotos={totalPhotosCount}
+	                        totalSelected={totalSelectedCount}
+	                        activeRuleId={activeSelectionRuleId}
+	                        onSelectRuleFilter={setActiveSelectionRuleId}
+	                        onEditRules={isReadOnly ? undefined : () => setSelectionSheetOpen(true)}
+	                      />
                     </div>
                   ) : null}
 
@@ -3973,31 +4012,35 @@ export default function GalleryDetail() {
                     <div className="space-y-4">
                       {activeSet ? (
                         <div
-                          className="space-y-4 rounded-xl"
-                          onDragEnter={(event) => {
-                            if (activeSelectionRuleId) return;
-                            event.preventDefault();
-                            dropzoneDragDepthRef.current += 1;
-                            setIsDropzoneActive(true);
-                          }}
-                          onDragLeave={(event) => {
-                            if (activeSelectionRuleId) return;
-                            event.preventDefault();
-                            dropzoneDragDepthRef.current = Math.max(0, dropzoneDragDepthRef.current - 1);
-                            if (dropzoneDragDepthRef.current === 0) {
-                              setIsDropzoneActive(false);
-                            }
-                          }}
-                          onDragOver={(event) => {
-                            if (activeSelectionRuleId) return;
-                            event.preventDefault();
-                          }}
-                          onDrop={(event) => {
-                            event.preventDefault();
-                            dropzoneDragDepthRef.current = 0;
-                            setIsDropzoneActive(false);
-                            if (activeSelectionRuleId) return;
-                            if (event.dataTransfer.files?.length) {
+	                          className="space-y-4 rounded-xl"
+	                          onDragEnter={(event) => {
+	                            if (isReadOnly) return;
+	                            if (activeSelectionRuleId) return;
+	                            event.preventDefault();
+	                            dropzoneDragDepthRef.current += 1;
+	                            setIsDropzoneActive(true);
+	                          }}
+	                          onDragLeave={(event) => {
+	                            if (isReadOnly) return;
+	                            if (activeSelectionRuleId) return;
+	                            event.preventDefault();
+	                            dropzoneDragDepthRef.current = Math.max(0, dropzoneDragDepthRef.current - 1);
+	                            if (dropzoneDragDepthRef.current === 0) {
+	                              setIsDropzoneActive(false);
+	                            }
+	                          }}
+	                          onDragOver={(event) => {
+	                            if (isReadOnly) return;
+	                            if (activeSelectionRuleId) return;
+	                            event.preventDefault();
+	                          }}
+	                          onDrop={(event) => {
+	                            event.preventDefault();
+	                            if (isReadOnly) return;
+	                            dropzoneDragDepthRef.current = 0;
+	                            setIsDropzoneActive(false);
+	                            if (activeSelectionRuleId) return;
+	                            if (event.dataTransfer.files?.length) {
                               if (activeSet.id === "default-placeholder") {
                                 toast({
                                   title: t("sessionDetail.gallery.toast.errorTitle"),
@@ -4091,9 +4134,9 @@ export default function GalleryDetail() {
                         />
                       </div>
 
-                      {!activeSelectionRuleId ? (
-                        <>
-                          <div className="h-6 w-px bg-border/60" aria-hidden="true" />
+	                      {!activeSelectionRuleId && !isReadOnly ? (
+	                        <>
+	                          <div className="h-6 w-px bg-border/60" aria-hidden="true" />
 
                           <Button
                             variant="ghost"
@@ -4261,13 +4304,13 @@ export default function GalleryDetail() {
                                   "Yüklemek için fotoğrafları sürükleyip bırakın veya aşağıdan ekleyebilirsiniz.",
                               })}
                             </p>
-                            <Button
-                              variant="surface"
-                              size="sm"
-                              className="btn-surface-accent mt-8 gap-2"
-                              disabled={activeSet.id === "default-placeholder"}
-                              onClick={() => handleAddMedia(activeSet.id)}
-                            >
+	                            <Button
+	                              variant="surface"
+	                              size="sm"
+	                              className="btn-surface-accent mt-8 gap-2"
+	                              disabled={isReadOnly || activeSet.id === "default-placeholder"}
+	                              onClick={() => handleAddMedia(activeSet.id)}
+	                            >
                               <ImageIcon className="h-4 w-4" />
                               {t("sessionDetail.gallery.labels.addMedia")}
                             </Button>
@@ -4403,11 +4446,11 @@ export default function GalleryDetail() {
                                   isSelectedInActiveRule && "bg-emerald-50/40"
                                 )}
                               >
-                                {isBatchSelectionMode && isDone ? (
-                                  <button
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
+	                                {isBatchSelectionMode && !isReadOnly && isDone ? (
+	                                  <button
+	                                    type="button"
+	                                    onClick={(event) => {
+	                                      event.stopPropagation();
                                       toggleBatchSelect(item.id);
                                     }}
                                     className={cn(
@@ -4502,122 +4545,137 @@ export default function GalleryDetail() {
                                   ) : null}
                                 </div>
 
-                                <div
-                                  className="flex shrink-0 items-center gap-2"
-                                  onClick={(event) => event.stopPropagation()}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleStar(item.id)}
-                                    className={cn(
-                                      "flex h-9 w-9 items-center justify-center rounded-lg border transition-colors",
-                                      item.starred
-                                        ? "border-amber-200 bg-amber-50 text-amber-500"
-                                        : "border-border/60 bg-white text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                                    )}
-                                    title={item.starred ? "Yıldızı kaldır" : "Yıldızla"}
-                                  >
-                                    <Star size={16} fill={item.starred ? "currentColor" : "none"} />
-                                  </button>
-
-                                  {activeSelectionRuleId &&
-                                  activeSelectionRuleId !== FAVORITES_FILTER_ID &&
-                                  activeSelectionRuleId !== STARRED_FILTER_ID ? (
-                                    isSelectedInActiveRule ? (
-                                      pendingSelectionRemovalId === item.id ? (
-                                        <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
-                                          <button
-                                            type="button"
-                                            onClick={() => setPendingSelectionRemovalId(null)}
-                                            className="h-9 rounded-lg border border-border/60 bg-white px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
-                                          >
-                                            İptal et
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              togglePhotoRuleSelection(item.id, activeSelectionRuleId);
-                                              setPendingSelectionRemovalId(null);
-                                            }}
-                                            className="h-9 rounded-lg bg-rose-600 px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-rose-700"
-                                          >
-                                            Kaldır
-                                          </button>
-                                        </div>
-                                      ) : (
-                                        <button
-                                          type="button"
-                                          onClick={() => setPendingSelectionRemovalId(item.id)}
-                                          className="h-9 rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100"
-                                        >
-                                          Seçimi kaldır
-                                        </button>
-                                      )
-                                    ) : (
-                                      <button
-                                        type="button"
-                                        onClick={() => togglePhotoRuleSelection(item.id, activeSelectionRuleId)}
-                                        className="h-9 rounded-lg border border-border/60 bg-white px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
-                                      >
-                                        Seç
-                                      </button>
-                                    )
-                                  ) : (
-                                    <div className="flex items-center gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => openLightboxAt(index)}
-                                        className="inline-flex h-9 items-center gap-2 rounded-lg border border-border/60 bg-white px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
-                                      >
-                                        <Maximize2 className="h-4 w-4" />
-                                        İncele
-                                      </button>
-                                    </div>
-                                  )}
-
-	                                  <DropdownMenu>
-	                                    <DropdownMenuTrigger asChild>
+	                                <div
+	                                  className="flex shrink-0 items-center gap-2"
+	                                  onClick={(event) => event.stopPropagation()}
+	                                >
+	                                  {isReadOnly ? (
+	                                    isDone ? (
 	                                      <button
 	                                        type="button"
-	                                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
-	                                        onClick={(event) => event.stopPropagation()}
-	                                        aria-label="Fotoğraf menüsü"
+	                                        onClick={() => openLightboxAt(index)}
+	                                        className="inline-flex h-9 items-center gap-2 rounded-lg border border-border/60 bg-white px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
 	                                      >
-	                                        <MoreHorizontal size={16} />
+	                                        <Maximize2 className="h-4 w-4" />
+	                                        İncele
 	                                      </button>
-	                                    </DropdownMenuTrigger>
-		                                    <DropdownMenuContent
-		                                      align="end"
-		                                      sideOffset={8}
-		                                      className="w-52 rounded-xl border-border/60 p-1.5 shadow-xl"
-		                                      onClick={(event) => event.stopPropagation()}
-		                                    >
-		                                      <DropdownMenuItem
-		                                        className="gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:bg-muted/60 focus:text-foreground"
-		                                        disabled={!isDone}
-		                                        onSelect={() => openLightboxAt(index)}
-		                                      >
-		                                        <Maximize2 className="h-4 w-4 text-muted-foreground" />
-		                                        Aç
-		                                      </DropdownMenuItem>
-		                                      <DropdownMenuItem
-		                                        className="gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:bg-muted/60 focus:text-foreground"
-		                                        disabled={!item.previewUrl || coverPhotoId === item.id}
-		                                        onSelect={() => handleSetCover(item.id)}
-		                                      >
-		                                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
-		                                        Kapak yap
-		                                      </DropdownMenuItem>
-		                                      <DropdownMenuSeparator />
-		                                      <DropdownMenuItem
-		                                        className="gap-2 rounded-lg px-3 py-2 text-sm font-medium text-destructive focus:bg-destructive/10 focus:text-destructive"
-		                                        onSelect={() => handleDeleteUpload(item.id)}
-		                                      >
-		                                        <Trash2 className="h-4 w-4" />
-		                                        Sil
-	                                      </DropdownMenuItem>
-	                                    </DropdownMenuContent>
-	                                  </DropdownMenu>
+	                                    ) : null
+	                                  ) : (
+	                                    <>
+	                                      <button
+	                                        type="button"
+	                                        onClick={() => handleToggleStar(item.id)}
+	                                        className={cn(
+	                                          "flex h-9 w-9 items-center justify-center rounded-lg border transition-colors",
+	                                          item.starred
+	                                            ? "border-amber-200 bg-amber-50 text-amber-500"
+	                                            : "border-border/60 bg-white text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+	                                        )}
+	                                        title={item.starred ? "Yıldızı kaldır" : "Yıldızla"}
+	                                      >
+	                                        <Star size={16} fill={item.starred ? "currentColor" : "none"} />
+	                                      </button>
+
+	                                      {activeSelectionRuleId &&
+	                                      activeSelectionRuleId !== FAVORITES_FILTER_ID &&
+	                                      activeSelectionRuleId !== STARRED_FILTER_ID ? (
+	                                        isSelectedInActiveRule ? (
+	                                          pendingSelectionRemovalId === item.id ? (
+	                                            <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
+	                                              <button
+	                                                type="button"
+	                                                onClick={() => setPendingSelectionRemovalId(null)}
+	                                                className="h-9 rounded-lg border border-border/60 bg-white px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+	                                              >
+	                                                İptal et
+	                                              </button>
+	                                              <button
+	                                                type="button"
+	                                                onClick={() => {
+	                                                  togglePhotoRuleSelection(item.id, activeSelectionRuleId);
+	                                                  setPendingSelectionRemovalId(null);
+	                                                }}
+	                                                className="h-9 rounded-lg bg-rose-600 px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-rose-700"
+	                                              >
+	                                                Kaldır
+	                                              </button>
+	                                            </div>
+	                                          ) : (
+	                                            <button
+	                                              type="button"
+	                                              onClick={() => setPendingSelectionRemovalId(item.id)}
+	                                              className="h-9 rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100"
+	                                            >
+	                                              Seçimi kaldır
+	                                            </button>
+	                                          )
+	                                        ) : (
+	                                          <button
+	                                            type="button"
+	                                            onClick={() => togglePhotoRuleSelection(item.id, activeSelectionRuleId)}
+	                                            className="h-9 rounded-lg border border-border/60 bg-white px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+	                                          >
+	                                            Seç
+	                                          </button>
+	                                        )
+	                                      ) : (
+	                                        <div className="flex items-center gap-2">
+	                                          <button
+	                                            type="button"
+	                                            onClick={() => openLightboxAt(index)}
+	                                            className="inline-flex h-9 items-center gap-2 rounded-lg border border-border/60 bg-white px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+	                                          >
+	                                            <Maximize2 className="h-4 w-4" />
+	                                            İncele
+	                                          </button>
+	                                        </div>
+	                                      )}
+
+	                                      <DropdownMenu>
+	                                        <DropdownMenuTrigger asChild>
+	                                          <button
+	                                            type="button"
+	                                            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+	                                            onClick={(event) => event.stopPropagation()}
+	                                            aria-label="Fotoğraf menüsü"
+	                                          >
+	                                            <MoreHorizontal size={16} />
+	                                          </button>
+	                                        </DropdownMenuTrigger>
+	                                        <DropdownMenuContent
+	                                          align="end"
+	                                          sideOffset={8}
+	                                          className="w-52 rounded-xl border-border/60 p-1.5 shadow-xl"
+	                                          onClick={(event) => event.stopPropagation()}
+	                                        >
+	                                          <DropdownMenuItem
+	                                            className="gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:bg-muted/60 focus:text-foreground"
+	                                            disabled={!isDone}
+	                                            onSelect={() => openLightboxAt(index)}
+	                                          >
+	                                            <Maximize2 className="h-4 w-4 text-muted-foreground" />
+	                                            Aç
+	                                          </DropdownMenuItem>
+	                                          <DropdownMenuItem
+	                                            className="gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:bg-muted/60 focus:text-foreground"
+	                                            disabled={!item.previewUrl || coverPhotoId === item.id}
+	                                            onSelect={() => handleSetCover(item.id)}
+	                                          >
+	                                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+	                                            Kapak yap
+	                                          </DropdownMenuItem>
+	                                          <DropdownMenuSeparator />
+	                                          <DropdownMenuItem
+	                                            className="gap-2 rounded-lg px-3 py-2 text-sm font-medium text-destructive focus:bg-destructive/10 focus:text-destructive"
+	                                            onSelect={() => handleDeleteUpload(item.id)}
+	                                          >
+	                                            <Trash2 className="h-4 w-4" />
+	                                            Sil
+	                                          </DropdownMenuItem>
+	                                        </DropdownMenuContent>
+	                                      </DropdownMenu>
+	                                    </>
+	                                  )}
 	                                </div>
 	                              </div>
                             );
@@ -4728,70 +4786,79 @@ export default function GalleryDetail() {
                                   </div>
                                 ) : null}
 
-                                <div className="absolute top-2 right-2 z-20 flex flex-col items-end gap-2">
-                                  <div onClick={(event) => event.stopPropagation()} className="relative">
-                                    {item.starred ? (
-                                      <div className="absolute right-0 top-0 rounded-full bg-amber-400 p-1.5 text-white shadow-sm transition-opacity duration-200 group-hover:opacity-0 pointer-events-none">
-                                        <Star size={12} fill="currentColor" />
-                                      </div>
-                                    ) : null}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleStar(item.id)}
-                                      className={cn(
-                                        "flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-md transition-all duration-200 ease-out opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 hover:!scale-110 shadow-lg",
-                                        item.starred
-                                          ? "bg-amber-400 text-white shadow-amber-500/30"
-                                          : "bg-black/40 text-white/70 hover:bg-white hover:text-amber-500"
-                                      )}
-                                    >
-                                      <Star size={16} fill={item.starred ? "currentColor" : "none"} />
-                                    </button>
-                                  </div>
-
-	                                  <DropdownMenu>
-	                                    <DropdownMenuTrigger asChild>
+	                                <div className="absolute top-2 right-2 z-20 flex flex-col items-end gap-2">
+	                                  <div onClick={(event) => event.stopPropagation()} className="relative">
+	                                    {item.starred ? (
+	                                      <div
+	                                        className={cn(
+	                                          "absolute right-0 top-0 rounded-full bg-amber-400 p-1.5 text-white shadow-sm transition-opacity duration-200 pointer-events-none",
+	                                          !isReadOnly && "group-hover:opacity-0"
+	                                        )}
+	                                      >
+	                                        <Star size={12} fill="currentColor" />
+	                                      </div>
+	                                    ) : null}
+	                                    {!isReadOnly ? (
 	                                      <button
 	                                        type="button"
-	                                        onClick={(event) => event.stopPropagation()}
-	                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white/70 hover:bg-white hover:text-slate-900 backdrop-blur-md transition-all duration-200 ease-out opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 hover:!scale-110 shadow-lg"
-	                                        aria-label="Fotoğraf menüsü"
+	                                        onClick={() => handleToggleStar(item.id)}
+	                                        className={cn(
+	                                          "flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-md transition-all duration-200 ease-out opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 hover:!scale-110 shadow-lg",
+	                                          item.starred
+	                                            ? "bg-amber-400 text-white shadow-amber-500/30"
+	                                            : "bg-black/40 text-white/70 hover:bg-white hover:text-amber-500"
+	                                        )}
 	                                      >
-	                                        <MoreVertical size={16} />
+	                                        <Star size={16} fill={item.starred ? "currentColor" : "none"} />
 	                                      </button>
-	                                    </DropdownMenuTrigger>
-		                                    <DropdownMenuContent
-		                                      align="end"
-		                                      sideOffset={8}
-		                                      className="w-52 rounded-xl border-border/60 p-1.5 shadow-xl"
-		                                      onClick={(event) => event.stopPropagation()}
-		                                    >
-		                                      <DropdownMenuItem
-		                                        className="gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:bg-muted/60 focus:text-foreground"
-		                                        disabled={!isDone}
-		                                        onSelect={() => openLightboxAt(index)}
+	                                    ) : null}
+	                                  </div>
+
+		                                  {!isReadOnly ? (
+		                                    <DropdownMenu>
+		                                      <DropdownMenuTrigger asChild>
+		                                        <button
+		                                          type="button"
+		                                          onClick={(event) => event.stopPropagation()}
+		                                          className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white/70 hover:bg-white hover:text-slate-900 backdrop-blur-md transition-all duration-200 ease-out opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 hover:!scale-110 shadow-lg"
+		                                          aria-label="Fotoğraf menüsü"
+		                                        >
+		                                          <MoreVertical size={16} />
+		                                        </button>
+		                                      </DropdownMenuTrigger>
+		                                      <DropdownMenuContent
+		                                        align="end"
+		                                        sideOffset={8}
+		                                        className="w-52 rounded-xl border-border/60 p-1.5 shadow-xl"
+		                                        onClick={(event) => event.stopPropagation()}
 		                                      >
-		                                        <Maximize2 className="h-4 w-4 text-muted-foreground" />
-		                                        Aç
-		                                      </DropdownMenuItem>
-		                                      <DropdownMenuItem
-		                                        className="gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:bg-muted/60 focus:text-foreground"
-		                                        disabled={!item.previewUrl || coverPhotoId === item.id}
-		                                        onSelect={() => handleSetCover(item.id)}
-		                                      >
-		                                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
-		                                        Kapak yap
-		                                      </DropdownMenuItem>
-		                                      <DropdownMenuSeparator />
-		                                      <DropdownMenuItem
-		                                        className="gap-2 rounded-lg px-3 py-2 text-sm font-medium text-destructive focus:bg-destructive/10 focus:text-destructive"
-		                                        onSelect={() => handleDeleteUpload(item.id)}
-		                                      >
-		                                        <Trash2 className="h-4 w-4" />
-		                                        Sil
-	                                      </DropdownMenuItem>
-	                                    </DropdownMenuContent>
-	                                  </DropdownMenu>
+		                                        <DropdownMenuItem
+		                                          className="gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:bg-muted/60 focus:text-foreground"
+		                                          disabled={!isDone}
+		                                          onSelect={() => openLightboxAt(index)}
+		                                        >
+		                                          <Maximize2 className="h-4 w-4 text-muted-foreground" />
+		                                          Aç
+		                                        </DropdownMenuItem>
+		                                        <DropdownMenuItem
+		                                          className="gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:bg-muted/60 focus:text-foreground"
+		                                          disabled={!item.previewUrl || coverPhotoId === item.id}
+		                                          onSelect={() => handleSetCover(item.id)}
+		                                        >
+		                                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+		                                          Kapak yap
+		                                        </DropdownMenuItem>
+		                                        <DropdownMenuSeparator />
+		                                        <DropdownMenuItem
+		                                          className="gap-2 rounded-lg px-3 py-2 text-sm font-medium text-destructive focus:bg-destructive/10 focus:text-destructive"
+		                                          onSelect={() => handleDeleteUpload(item.id)}
+		                                        >
+		                                          <Trash2 className="h-4 w-4" />
+		                                          Sil
+		                                        </DropdownMenuItem>
+		                                      </DropdownMenuContent>
+		                                    </DropdownMenu>
+		                                  ) : null}
 	                                </div>
 
                                 {isDone ? (
@@ -4803,85 +4870,96 @@ export default function GalleryDetail() {
                                         : "translate-y-full group-hover:translate-y-0"
                                     )}
                                   >
-                                    <span className="truncate px-1 text-xs font-medium text-white/80">
-                                      {item.name}
-                                    </span>
-                                    <div onClick={(event) => event.stopPropagation()}>
-                                      {activeSelectionRuleId &&
-                                      activeSelectionRuleId !== FAVORITES_FILTER_ID &&
-                                      activeSelectionRuleId !== STARRED_FILTER_ID ? (
-                                        isSelectedInActiveRule ? (
-                                          pendingSelectionRemovalId === item.id ? (
-                                            <div className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200">
-                                              <button
-                                                type="button"
-                                                onClick={() => setPendingSelectionRemovalId(null)}
-                                                className="flex h-10 flex-1 items-center justify-center rounded-lg bg-white/90 text-xs font-bold text-slate-900 shadow-lg backdrop-blur-md transition-colors hover:bg-white"
-                                              >
-                                                İPTAL ET
-                                              </button>
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  togglePhotoRuleSelection(item.id, activeSelectionRuleId);
-                                                  setPendingSelectionRemovalId(null);
-                                                }}
-                                                className="flex h-10 flex-1 items-center justify-center rounded-lg bg-rose-600 text-xs font-bold text-white shadow-lg transition-colors hover:bg-rose-700"
-                                              >
-                                                KALDIR
-                                              </button>
-                                            </div>
-                                          ) : (
-                                            <button
-                                              type="button"
-                                              onClick={() => setPendingSelectionRemovalId(item.id)}
-                                              className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-600 px-3 py-2.5 text-sm font-bold text-white shadow-lg transition-colors hover:bg-rose-700"
-                                            >
-                                              <X size={16} strokeWidth={3} />
-                                              SEÇİMİ KALDIR
-                                            </button>
-                                          )
-                                        ) : (
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              togglePhotoRuleSelection(item.id, activeSelectionRuleId)
-                                            }
-                                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-white px-3 py-2.5 text-sm font-bold text-slate-900 shadow-lg transition-colors hover:bg-slate-100"
-                                          >
-                                            <Check size={16} strokeWidth={3} />
-                                            SEÇ
-                                          </button>
-                                        )
-                                      ) : (
-                                        <div className="flex items-center gap-2">
-                                          <button
-                                            type="button"
-                                            onClick={() => toggleBatchSelect(item.id)}
-                                            className={cn(
-                                              "flex h-10 w-10 items-center justify-center rounded-lg shadow-lg backdrop-blur-md transition-colors",
-                                              isBatchSelected
-                                                ? "bg-[hsl(var(--accent-500))] text-white hover:bg-[hsl(var(--accent-600))]"
-                                                : "bg-white/90 text-muted-foreground hover:bg-white hover:text-foreground"
-                                            )}
-                                            title={isBatchSelected ? "Seçimi kaldır" : "Seç"}
-                                            aria-label={isBatchSelected ? "Seçimi kaldır" : "Seç"}
-                                          >
-                                            {isBatchSelected ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
-                                          </button>
+	                                    <span className="truncate px-1 text-xs font-medium text-white/80">
+	                                      {item.name}
+	                                    </span>
+	                                    <div onClick={(event) => event.stopPropagation()}>
+	                                      {isReadOnly ? (
+	                                        <button
+	                                          type="button"
+	                                          onClick={() => openLightboxAt(index)}
+	                                          className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-white/90 text-xs font-bold text-slate-900 shadow-lg backdrop-blur-md transition-colors hover:bg-white"
+	                                        >
+	                                          <Maximize2 className="h-4 w-4" />
+	                                          İNCELE
+	                                        </button>
+	                                      ) : (
+	                                        <>
+	                                          {activeSelectionRuleId &&
+	                                          activeSelectionRuleId !== FAVORITES_FILTER_ID &&
+	                                          activeSelectionRuleId !== STARRED_FILTER_ID ? (
+	                                            isSelectedInActiveRule ? (
+	                                              pendingSelectionRemovalId === item.id ? (
+	                                                <div className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200">
+	                                                  <button
+	                                                    type="button"
+	                                                    onClick={() => setPendingSelectionRemovalId(null)}
+	                                                    className="flex h-10 flex-1 items-center justify-center rounded-lg bg-white/90 text-xs font-bold text-slate-900 shadow-lg backdrop-blur-md transition-colors hover:bg-white"
+	                                                  >
+	                                                    İPTAL ET
+	                                                  </button>
+	                                                  <button
+	                                                    type="button"
+	                                                    onClick={() => {
+	                                                      togglePhotoRuleSelection(item.id, activeSelectionRuleId);
+	                                                      setPendingSelectionRemovalId(null);
+	                                                    }}
+	                                                    className="flex h-10 flex-1 items-center justify-center rounded-lg bg-rose-600 text-xs font-bold text-white shadow-lg transition-colors hover:bg-rose-700"
+	                                                  >
+	                                                    KALDIR
+	                                                  </button>
+	                                                </div>
+	                                              ) : (
+	                                                <button
+	                                                  type="button"
+	                                                  onClick={() => setPendingSelectionRemovalId(item.id)}
+	                                                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-600 px-3 py-2.5 text-sm font-bold text-white shadow-lg transition-colors hover:bg-rose-700"
+	                                                >
+	                                                  <X size={16} strokeWidth={3} />
+	                                                  SEÇİMİ KALDIR
+	                                                </button>
+	                                              )
+	                                            ) : (
+	                                              <button
+	                                                type="button"
+	                                                onClick={() => togglePhotoRuleSelection(item.id, activeSelectionRuleId)}
+	                                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-white px-3 py-2.5 text-sm font-bold text-slate-900 shadow-lg transition-colors hover:bg-slate-100"
+	                                              >
+	                                                <Check size={16} strokeWidth={3} />
+	                                                SEÇ
+	                                              </button>
+	                                            )
+	                                          ) : (
+	                                            <div className="flex items-center gap-2">
+	                                              <button
+	                                                type="button"
+	                                                onClick={() => toggleBatchSelect(item.id)}
+	                                                className={cn(
+	                                                  "flex h-10 w-10 items-center justify-center rounded-lg shadow-lg backdrop-blur-md transition-colors",
+	                                                  isBatchSelected
+	                                                    ? "bg-[hsl(var(--accent-500))] text-white hover:bg-[hsl(var(--accent-600))]"
+	                                                    : "bg-white/90 text-muted-foreground hover:bg-white hover:text-foreground"
+	                                                )}
+	                                                title={isBatchSelected ? "Seçimi kaldır" : "Seç"}
+	                                                aria-label={isBatchSelected ? "Seçimi kaldır" : "Seç"}
+	                                              >
+	                                                {isBatchSelected ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
+	                                              </button>
 
-                                          <button
-                                            type="button"
-                                            onClick={() => openLightboxAt(index)}
-                                            className="flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-white/90 text-xs font-bold text-slate-900 shadow-lg backdrop-blur-md transition-colors hover:bg-white"
-                                          >
-                                            <Maximize2 className="h-4 w-4" />
-                                            İNCELE
-                                          </button>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
+	                                              <button
+	                                                type="button"
+	                                                onClick={() => openLightboxAt(index)}
+	                                                className="flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-white/90 text-xs font-bold text-slate-900 shadow-lg backdrop-blur-md transition-colors hover:bg-white"
+	                                              >
+	                                                <Maximize2 className="h-4 w-4" />
+	                                                İNCELE
+	                                              </button>
+	                                            </div>
+	                                          )}
+	                                        </>
+	                                      )}
+	                                    </div>
+	                                  </div>
                                 ) : (
                                   <div className="absolute bottom-0 left-0 right-0 z-10 bg-black/60 px-3 py-2 text-[11px] text-white/80 backdrop-blur-sm">
                                     <div className="flex items-center gap-2">
@@ -4922,7 +5000,7 @@ export default function GalleryDetail() {
         </Tabs>
       </div>
 
-      {activeTab === "photos" && isBatchSelectionMode && selectedBatchIds.size > 0 && !lightboxOpen ? (
+	      {activeTab === "photos" && !isReadOnly && isBatchSelectionMode && selectedBatchIds.size > 0 && !lightboxOpen ? (
         <div className="fixed inset-x-0 bottom-6 z-40 flex justify-center px-4">
           <div className="animate-in fade-in slide-in-from-bottom-2 flex w-full max-w-3xl items-center gap-3 rounded-full border border-white/10 bg-slate-950/90 px-4 py-3 text-white shadow-2xl shadow-black/30 backdrop-blur">
             <div className="flex flex-1 items-center gap-3">
@@ -5062,11 +5140,16 @@ export default function GalleryDetail() {
         mode="admin"
         onImageError={refreshPreviewUrl}
         isSelectionsLocked={isSelectionsLocked && !isSelectionUnlockedForMe}
+        readOnly={isReadOnly}
       />
 
       <Sheet
         open={isSetSheetOpen}
         onOpenChange={(open) => {
+          if (open && isReadOnly) {
+            setIsSetSheetOpen(false);
+            return;
+          }
           setIsSetSheetOpen(open);
           if (!open) {
             resetSetForm();
@@ -5090,6 +5173,7 @@ export default function GalleryDetail() {
                 placeholder={t("sessionDetail.gallery.sets.namePlaceholder", {
                   defaultValue: "e.g., Ceremony, Reception",
                 })}
+                disabled={isReadOnly}
               />
             </div>
             <div className="space-y-2">
@@ -5099,6 +5183,7 @@ export default function GalleryDetail() {
                 onChange={(event) => setSetDescription(event.target.value)}
                 placeholder={t("sessionDetail.gallery.sets.descriptionPlaceholder", { defaultValue: "Optional" })}
                 rows={3}
+                disabled={isReadOnly}
               />
             </div>
           </div>
@@ -5112,6 +5197,7 @@ export default function GalleryDetail() {
             </Button>
             <Button
               onClick={() => {
+                if (isReadOnly) return;
                 if (editingSetId) {
                   updateSetMutation.mutate({ setId: editingSetId, name: setName, description: setDescription.trim() || null });
                 } else {
@@ -5119,6 +5205,7 @@ export default function GalleryDetail() {
                 }
               }}
               disabled={
+                isReadOnly ||
                 !setName.trim() ||
                 (editingSetId ? updateSetMutation.isPending : createSetMutation.isPending)
               }
@@ -5144,7 +5231,13 @@ export default function GalleryDetail() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
-      <Sheet open={selectionSheetOpen} onOpenChange={setSelectionSheetOpen}>
+      <Sheet
+        open={selectionSheetOpen}
+        onOpenChange={(open) => {
+          if (open && isReadOnly) return;
+          setSelectionSheetOpen(open);
+        }}
+      >
         <SheetContent className="flex h-full flex-col w-full sm:max-w-3xl">
           <SheetHeader>
             <SheetTitle>
@@ -5375,15 +5468,17 @@ export default function GalleryDetail() {
             <Button variant="outline" onClick={() => setSelectionSheetOpen(false)}>
               {t("sessionDetail.gallery.form.cancel")}
             </Button>
-            <Button
-              onClick={() => {
-                setSelectionSettings(selectionDraft);
-                const cleanedGroups = cleanSelectionTemplateDraft(selectionTemplateDraft);
-                setSelectionTemplateGroups(cleanedGroups);
-                setSelectionTemplateDraft(cloneSelectionTemplateGroups(cleanedGroups));
-                setSelectionSheetOpen(false);
-              }}
-            >
+	            <Button
+	              disabled={isReadOnly}
+	              onClick={() => {
+	                if (isReadOnly) return;
+	                setSelectionSettings(selectionDraft);
+	                const cleanedGroups = cleanSelectionTemplateDraft(selectionTemplateDraft);
+	                setSelectionTemplateGroups(cleanedGroups);
+	                setSelectionTemplateDraft(cloneSelectionTemplateGroups(cleanedGroups));
+	                setSelectionSheetOpen(false);
+	              }}
+	            >
               {t("sessionDetail.gallery.sets.saveChanges", { defaultValue: "Save changes" })}
             </Button>
           </SheetFooter>

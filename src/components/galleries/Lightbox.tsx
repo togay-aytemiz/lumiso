@@ -115,6 +115,7 @@ interface LightboxProps {
   onImageError?: (photoId: string) => void;
   watermark?: GalleryWatermarkConfig;
   isSelectionsLocked?: boolean;
+  readOnly?: boolean;
 }
 
 export function Lightbox({
@@ -133,6 +134,7 @@ export function Lightbox({
   onImageError,
   watermark,
   isSelectionsLocked = false,
+  readOnly = false,
 }: LightboxProps) {
   const { t } = useTranslation("pages");
   const currentPhoto = photos[currentIndex];
@@ -155,9 +157,10 @@ export function Lightbox({
   );
   const isSelectedForActiveRule = activeRuleId ? currentPhoto?.selections.includes(activeRuleId) : false;
   const activeRuleIsFull = activeRule?.maxCount != null ? activeRule.currentCount >= activeRule.maxCount : false;
-  const isActiveRuleDisabled = Boolean(activeRule && activeRuleIsFull && !isSelectedForActiveRule) || isSelectionsLocked;
+  const isActiveRuleDisabled =
+    Boolean(activeRule && activeRuleIsFull && !isSelectedForActiveRule) || isSelectionsLocked || readOnly;
   const hasSelections = (currentPhoto?.selections.length ?? 0) > 0;
-  const isFavoriteToggleDisabled = mode === "client" && isSelectionsLocked;
+  const isFavoriteToggleDisabled = readOnly || (mode === "client" && isSelectionsLocked);
 
   const handleMobileSwipeTouchStart = useMemo(
     () => (event: React.TouchEvent<HTMLImageElement>) => {
@@ -280,8 +283,10 @@ export function Lightbox({
       if (key === "arrowright") onNavigate(currentIndex + 1);
 
       if (!currentPhoto) return;
-      if (mode === "client" && favoritesEnabled && key === "f" && !isSelectionsLocked) onToggleStar(currentPhoto.id);
-      if (mode === "admin" && key === "s") onToggleStar(currentPhoto.id);
+      if (!readOnly) {
+        if (mode === "client" && favoritesEnabled && key === "f" && !isSelectionsLocked) onToggleStar(currentPhoto.id);
+        if (mode === "admin" && key === "s") onToggleStar(currentPhoto.id);
+      }
 
       if (mode === "client" && activeRuleId && event.code === "Space" && !isActiveRuleDisabled) {
         event.preventDefault();
@@ -304,6 +309,7 @@ export function Lightbox({
     isActiveRuleDisabled,
     favoritesEnabled,
     isSelectionsLocked,
+    readOnly,
   ]);
 
   if (!isOpen || !currentPhoto) return null;
@@ -331,7 +337,7 @@ export function Lightbox({
     }
   };
 
-  const shouldRenderMobileAddButton = rules.length > 0 && !isSelectionsLocked;
+  const shouldRenderMobileAddButton = rules.length > 0 && !isSelectionsLocked && !readOnly;
   const addButtonActive =
     shouldRenderMobileAddButton &&
     (isMobileSelectionPanelOpen || currentPhoto.selections.length > 0);
@@ -518,7 +524,7 @@ export function Lightbox({
           }))}
           selectedRuleIds={currentPhoto.selections}
           onToggleRule={(ruleId) => {
-            if (isSelectionsLocked) return;
+            if (isSelectionsLocked || readOnly) return;
             onToggleRule(currentPhoto.id, ruleId);
           }}
           onPhotoImageError={() => onImageError?.(currentPhoto.id)}
@@ -737,14 +743,15 @@ export function Lightbox({
                     </span>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => onToggleStar(currentPhoto.id)}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${currentPhoto.isStarred
-                      ? "bg-amber-500/10 border-amber-500/50 text-amber-400"
-                      : "bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-500"
-                      }`}
-                  >
+	                  <button
+	                    type="button"
+	                    onClick={() => onToggleStar(currentPhoto.id)}
+	                    disabled={readOnly}
+	                    className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${currentPhoto.isStarred
+	                      ? "bg-amber-500/10 border-amber-500/50 text-amber-400"
+	                      : "bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-500"
+	                      } ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
+	                  >
                     <span className="text-sm font-medium flex items-center gap-2">
                       <Star size={16} fill={currentPhoto.isStarred ? "currentColor" : "none"} />
                       {t("sessionDetail.gallery.lightbox.admin.starLabel")}
@@ -786,10 +793,10 @@ export function Lightbox({
 
                 <div className="space-y-2">
                   {rules.map((rule) => {
-                    const isSelected = currentPhoto.selections.includes(rule.id);
-                    const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
-                    const isDisabled = !isSelected && isFull;
-                    const isRuleToggleDisabled = isDisabled || isSelectionsLocked;
+	                    const isSelected = currentPhoto.selections.includes(rule.id);
+	                    const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
+	                    const isDisabled = !isSelected && isFull;
+	                    const isRuleToggleDisabled = isDisabled || isSelectionsLocked || readOnly;
                     const serviceName = rule.serviceName || t("sessionDetail.gallery.lightbox.lists.generalService");
                     const ruleStatus = getLightboxRuleStatus(rule, t);
 

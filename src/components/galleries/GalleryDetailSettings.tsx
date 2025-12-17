@@ -113,6 +113,7 @@ type GallerySettingsGeneralModel = {
   onCustomTypeChange: (value: string) => void;
   autoSaveLabel: string;
   disableTypeEditing?: boolean;
+  disabled?: boolean;
 };
 
 type GallerySettingsSaveBar = {
@@ -132,6 +133,7 @@ type GallerySettingsWatermarkModel = {
   logoUrl?: string | null;
   previewBackgroundUrl?: string;
   onOpenOrganizationBranding?: () => void;
+  disabled?: boolean;
 };
 
 type GallerySettingsPrivacyModel = {
@@ -196,6 +198,7 @@ export function GallerySettingsContent({
                 value={general.title}
                 onChange={(event) => general.onTitleChange(event.target.value)}
                 placeholder={t("sessionDetail.gallery.form.titlePlaceholder")}
+                disabled={general.disabled}
               />
             </div>
 
@@ -205,6 +208,7 @@ export function GallerySettingsContent({
                 mode="date"
                 value={general.eventDate}
                 onChange={general.onEventDateChange}
+                disabled={general.disabled}
                 buttonClassName="w-full justify-between"
                 popoverModal
                 fullWidth
@@ -216,7 +220,7 @@ export function GallerySettingsContent({
 
             <div className="space-y-2 min-w-0">
               <Label>{t("sessionDetail.gallery.form.statusLabel")}</Label>
-              <Select value={general.status} onValueChange={general.onStatusChange}>
+              <Select value={general.status} onValueChange={general.onStatusChange} disabled={general.disabled}>
                 <SelectTrigger className="w-full justify-between">
                   <SelectValue />
                 </SelectTrigger>
@@ -234,7 +238,7 @@ export function GallerySettingsContent({
               <Label>{t("sessionDetail.gallery.form.typeLabel")}</Label>
               <Select
                 value={general.type}
-                disabled={general.disableTypeEditing ?? true}
+                disabled={general.disabled || (general.disableTypeEditing ?? true)}
                 onValueChange={(value) => {
                   general.onTypeChange(value);
                   if (value !== "other") {
@@ -261,7 +265,7 @@ export function GallerySettingsContent({
                 value={general.customType}
                 onChange={(event) => general.onCustomTypeChange(event.target.value)}
                 placeholder={t("sessionDetail.gallery.form.customTypePlaceholder")}
-                disabled={general.disableTypeEditing ?? true}
+                disabled={general.disabled || (general.disableTypeEditing ?? true)}
               />
             </div>
 
@@ -283,6 +287,7 @@ export function GallerySettingsContent({
   }
 
   if (activeTab === "watermark") {
+    const isDisabled = watermark.disabled === true;
     const typeOptions = [
       {
         value: "text" as const,
@@ -387,6 +392,7 @@ export function GallerySettingsContent({
                     checked={watermark.settings.enabled}
                     onCheckedChange={(checked) => watermark.onSettingsChange({ enabled: checked })}
                     aria-label={t("sessionDetail.gallery.settings.watermark.toggle.title")}
+                    disabled={isDisabled}
                   />
                 ),
               },
@@ -411,12 +417,14 @@ export function GallerySettingsContent({
                         <button
                           key={option.value}
                           type="button"
+                          disabled={isDisabled}
                           aria-pressed={isSelected}
                           aria-label={option.label}
                           onClick={() => watermark.onSettingsChange({ type: option.value })}
                           className={cn(
                             "group flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                            "disabled:pointer-events-none disabled:opacity-60",
                             isSelected
                               ? "border-primary bg-primary/5 text-foreground shadow-sm"
                               : "border-border/60 bg-background text-muted-foreground hover:border-primary/50 hover:bg-muted/20 hover:text-foreground"
@@ -438,6 +446,7 @@ export function GallerySettingsContent({
                       value={watermark.textDraft}
                       onChange={(event) => watermark.onTextDraftChange(event.target.value)}
                       placeholder={t("sessionDetail.gallery.settings.watermark.text.placeholder")}
+                      disabled={isDisabled}
                     />
                   </div>
                 ) : (
@@ -464,7 +473,13 @@ export function GallerySettingsContent({
                           </div>
                         </div>
                         {watermark.onOpenOrganizationBranding ? (
-                          <Button type="button" variant="outline" size="sm" onClick={watermark.onOpenOrganizationBranding}>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={watermark.onOpenOrganizationBranding}
+                            disabled={isDisabled}
+                          >
                             {t("sessionDetail.gallery.settings.watermark.logo.manage")}
                           </Button>
                         ) : null}
@@ -481,6 +496,7 @@ export function GallerySettingsContent({
                             variant="link"
                             className="h-auto justify-start px-0 text-amber-900"
                             onClick={watermark.onOpenOrganizationBranding}
+                            disabled={isDisabled}
                           >
                             {t("sessionDetail.gallery.settings.watermark.logo.manage")}
                           </Button>
@@ -507,12 +523,14 @@ export function GallerySettingsContent({
                         <button
                           key={option.value}
                           type="button"
+                          disabled={isDisabled}
                           aria-pressed={isSelected}
                           aria-label={option.label}
                           onClick={() => watermark.onSettingsChange({ placement: option.value })}
                           className={cn(
                             "group flex w-full flex-col items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                            "disabled:pointer-events-none disabled:opacity-60",
                             isSelected
                               ? "border-primary bg-primary/5 text-foreground shadow-sm"
                               : "border-border/60 bg-background text-muted-foreground hover:border-primary/50 hover:bg-muted/20 hover:text-foreground"
@@ -536,6 +554,7 @@ export function GallerySettingsContent({
                     min={10}
                     max={100}
                     step={5}
+                    disabled={isDisabled}
                     onValueChange={(values) =>
                       watermark.onSettingsChange({ opacity: values[0] ?? watermark.settings.opacity })
                     }
@@ -556,6 +575,7 @@ export function GallerySettingsContent({
                     min={20}
                     max={200}
                     step={5}
+                    disabled={isDisabled}
                     onValueChange={(values) => watermark.onSettingsChange({ scale: values[0] ?? watermark.settings.scale })}
                   />
                   <div className="flex justify-between text-xs text-muted-foreground">

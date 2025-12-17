@@ -219,20 +219,21 @@
   "showLess": "Daha az",
   "storage": {
     "widget": {
-      "kicker": "Depolama bilgisi",
+      "kicker": "Depolama",
       "title": "Alan kullanımı",
-      "capacity": "Kapasite: {{total}}",
-      "percentFull": "%{{percent}} dolu",
+      "capacity": "Toplam: {{total}}",
+      "used": "{{used}} kullanıldı",
+      "percentFull": "%{{percent}}",
       "blocked": "Alan açana kadar yükleme yapılamaz.",
       "aria": {
         "progress": "Depolama kullanımı"
       },
       "status": {
-        "safe": "Güvenli",
-        "attention": "Dikkat",
-        "critical": "Kritik seviye",
-        "nearLimit": "Limit dolmak üzere",
-        "limitExceeded": "Limit aşıldı"
+        "safe": "Durum: İyi",
+        "attention": "Durum: Doluyor",
+        "critical": "Durum: Kritik",
+        "nearLimit": "Durum: Dolu",
+        "limitExceeded": "Durum: Limit aşıldı"
       }
     }
   },

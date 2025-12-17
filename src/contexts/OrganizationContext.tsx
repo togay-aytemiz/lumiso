@@ -455,6 +455,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
             'trial_extended_by_days',
             'premium_activated_at',
             'premium_expires_at',
+            'gallery_storage_limit_bytes',
           ] as const;
 
           const hasRelevantChange = relevantFields.some((field) => {

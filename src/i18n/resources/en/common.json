@@ -219,20 +219,21 @@
   "showLess": "Show less",
   "storage": {
     "widget": {
-      "kicker": "Storage info",
+      "kicker": "Storage",
       "title": "Storage usage",
-      "capacity": "Capacity: {{total}}",
-      "percentFull": "{{percent}}% full",
+      "capacity": "Total: {{total}}",
+      "used": "{{used}} used",
+      "percentFull": "{{percent}}%",
       "blocked": "Uploads are blocked until you free up space.",
       "aria": {
         "progress": "Storage usage"
       },
       "status": {
-        "safe": "Safe",
-        "attention": "Attention",
-        "critical": "Critical",
-        "nearLimit": "Almost full",
-        "limitExceeded": "Limit exceeded"
+        "safe": "Status: Good",
+        "attention": "Status: Filling up",
+        "critical": "Status: Critical",
+        "nearLimit": "Status: Full",
+        "limitExceeded": "Status: Limit exceeded"
       }
     }
   },

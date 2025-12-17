@@ -52,7 +52,7 @@ describe("SelectionExportSheet", () => {
 
     await waitFor(() => {
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        'name:("IMG_0001.jpg" OR "IMG_0003.jpg")'
+        "name:(IMG_0001.jpg OR IMG_0003.jpg)"
       );
     });
   });
@@ -91,7 +91,6 @@ describe("SelectionExportSheet", () => {
     fireEvent.click(screen.getByRole("button", { name: /Album Photos/i }));
 
     expect(screen.getByText("Windows Explorer query")).toBeInTheDocument();
-    expect(screen.getByText('name:("IMG_0001.jpg")')).toBeInTheDocument();
+    expect(screen.getByText("name:(IMG_0001.jpg)")).toBeInTheDocument();
   });
 });
-

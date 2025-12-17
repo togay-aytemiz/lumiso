@@ -92,17 +92,25 @@ const downloadPlainText = (filename: string, content: string) => {
 
 const escapeQuotedValue = (value: string) => value.replace(/"/g, '\\"');
 
+const formatOrToken = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const safePattern = /^[\w.-]+$/;
+  if (safePattern.test(trimmed)) return trimmed;
+  return `"${escapeQuotedValue(trimmed)}"`;
+};
+
 const buildExportQuery = (tab: SelectionExportTab, filenames: string[]) => {
   const normalized = filenames.map((name) => name.trim()).filter(Boolean);
   if (normalized.length === 0) return "";
 
   switch (tab) {
     case "windows": {
-      const parts = normalized.map((name) => `"${escapeQuotedValue(name)}"`);
+      const parts = normalized.map(formatOrToken).filter(Boolean) as string[];
       return `name:(${parts.join(" OR ")})`;
     }
     case "mac": {
-      const parts = normalized.map((name) => `"${escapeQuotedValue(name)}"`);
+      const parts = normalized.map(formatOrToken).filter(Boolean) as string[];
       return parts.join(" OR ");
     }
     case "list":
@@ -499,12 +507,12 @@ export function SelectionExportSheet({ open, onOpenChange, photos, rules }: Sele
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-[1.15fr_1fr] gap-3">
                   <button
                     type="button"
                     onClick={handleCopyAll}
                     disabled={groups.all.length === 0}
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-900 font-bold text-sm rounded-xl hover:bg-gray-100 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-900 font-bold text-[13px] sm:text-sm whitespace-nowrap rounded-xl hover:bg-gray-100 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                   >
                     {copiedAll ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
                     {copiedAll ? tCommon("copied") : t("sessionDetail.gallery.exportSheet.copyQuery")}
@@ -514,7 +522,7 @@ export function SelectionExportSheet({ open, onOpenChange, photos, rules }: Sele
                     type="button"
                     onClick={handleDownloadAll}
                     disabled={groups.all.length === 0}
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-800 text-white border border-gray-700 font-bold text-sm rounded-xl hover:bg-gray-700 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-800 text-white border border-gray-700 font-bold text-sm whitespace-nowrap rounded-xl hover:bg-gray-700 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Download size={16} aria-hidden="true" />
                     {t("sessionDetail.gallery.exportSheet.downloadTxt")}

@@ -2881,6 +2881,10 @@ export default function GalleryDetail() {
         return { ...prev, [photoId]: [...current, ruleId] };
       });
 
+      if (isSelectionsLocked) {
+        return;
+      }
+
       updateClientSelectionMutation.mutate(
         { photoId, selectionPartKey, nextIsSelected },
         {
@@ -2921,6 +2925,12 @@ export default function GalleryDetail() {
       updateClientSelectionMutation,
     ]
   );
+
+  const handleLockAgainForMe = useCallback(() => {
+    setIsSelectionUnlockedForMe(false);
+    photoSelectionsTouchedRef.current = false;
+    setPhotoSelections(persistedPhotoSelectionsById);
+  }, [persistedPhotoSelectionsById]);
 
   useEffect(() => {
     if (
@@ -3806,7 +3816,7 @@ export default function GalleryDetail() {
                             exportDisabled={exportDisabled}
                             onUnlockForClient={() => unlockSelectionsMutation.mutate()}
                             onUnlockForMe={() => setIsSelectionUnlockedForMe(true)}
-                            onLockAgain={() => setIsSelectionUnlockedForMe(false)}
+                            onLockAgain={handleLockAgainForMe}
                             unlockDisabled={unlockSelectionsMutation.isPending}
                           />
                         </div>

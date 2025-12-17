@@ -1506,8 +1506,13 @@
         "gallery": {
           "title": "Galeri depolama",
           "description": "Bu hesap için izin verilen maksimum galeri depolama alanını ayarlayın.",
-          "limitLabel": "İzin verilen depolama (GB)",
-          "limitHint": "Varsayılan: {{default}} GB",
+          "limitLabel": "İzin verilen depolama",
+          "unitLabel": "Birim",
+          "unit": {
+            "mb": "MB",
+            "gb": "GB"
+          },
+          "limitHint": "Varsayılan: {{default}}",
           "currentLimit": "Mevcut limit",
           "actions": {
             "reset": "Varsayılana sıfırla",

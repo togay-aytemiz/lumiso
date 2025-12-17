@@ -1490,8 +1490,13 @@
         "gallery": {
           "title": "Gallery storage",
           "description": "Configure the maximum gallery storage allowed for this account.",
-          "limitLabel": "Allowed storage (GB)",
-          "limitHint": "Default: {{default}} GB",
+          "limitLabel": "Allowed storage",
+          "unitLabel": "Unit",
+          "unit": {
+            "mb": "MB",
+            "gb": "GB"
+          },
+          "limitHint": "Default: {{default}}",
           "currentLimit": "Current limit",
           "actions": {
             "reset": "Reset to default",

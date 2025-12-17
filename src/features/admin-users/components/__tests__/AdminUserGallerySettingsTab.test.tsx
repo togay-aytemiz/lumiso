@@ -59,6 +59,26 @@ describe("AdminUserGallerySettingsTab", () => {
     expect(onSaved).toHaveBeenCalledTimes(1);
   });
 
+  it("converts MB input to bytes when saving", async () => {
+    const builder = (supabase as unknown as { __createQueryBuilder: () => any }).__createQueryBuilder();
+    (supabase.from as unknown as jest.Mock).mockReturnValue(builder);
+
+    render(<AdminUserGallerySettingsTab organizationId="org-1" limitBytes={3 * 1024 ** 3} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "MB" }));
+    fireEvent.change(screen.getByLabelText(/allowed storage/i), {
+      target: { value: "20" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(builder.update).toHaveBeenCalled());
+    expect(builder.update).toHaveBeenCalledWith({
+      gallery_storage_limit_bytes: 20 * 1024 ** 2,
+    });
+    expect(builder.eq).toHaveBeenCalledWith("id", "org-1");
+  });
+
   it("shows a validation toast when input is empty", async () => {
     const builder = (supabase as unknown as { __createQueryBuilder: () => any }).__createQueryBuilder();
     (supabase.from as unknown as jest.Mock).mockReturnValue(builder);
@@ -72,4 +92,3 @@ describe("AdminUserGallerySettingsTab", () => {
     expect(builder.update).not.toHaveBeenCalled();
   });
 });
-

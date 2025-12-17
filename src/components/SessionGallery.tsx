@@ -37,6 +37,7 @@ import {
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { cn } from "@/lib/utils";
 import { GALLERY_ASSETS_BUCKET } from "@/lib/galleryAssets";
+import { GalleryStatusChip } from "@/components/galleries/GalleryStatusChip";
 
 interface SessionGalleryProps {
   sessionId: string;
@@ -619,17 +620,6 @@ export default function SessionGallery({
     return (
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {galleries.map((gallery) => {
-          const statusLabel = upperLabel(
-            t(`sessionDetail.gallery.statuses.${gallery.status}`)
-          );
-
-          const statusClasses =
-            gallery.status === "published" || gallery.status === "approved"
-              ? "border-emerald-100 bg-white/90 text-emerald-700"
-              : gallery.status === "draft"
-                ? "border-white/10 bg-zinc-900/85 text-white"
-                : "border-border/40 bg-white/80 text-foreground";
-
           const typeLabel = upperLabel(getTypeLabel(gallery));
           const typeClasses =
             gallery.type === "proof"
@@ -667,14 +657,7 @@ export default function SessionGallery({
                 )}
 
                 <div className="absolute left-4 top-4">
-                  <span
-                    className={cn(
-                      "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold tracking-wide shadow-sm backdrop-blur-md",
-                      statusClasses
-                    )}
-                  >
-                    {statusLabel}
-                  </span>
+                  <GalleryStatusChip status={gallery.status} uppercase />
                 </div>
               </div>
 

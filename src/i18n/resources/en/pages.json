@@ -527,9 +527,14 @@
         "share": "Share",
         "manage": "Manage",
         "preview": "Preview",
-        "archive": "Archive",
-        "delete": "Delete",
+        "archive": "Archive gallery",
+        "restore": "Restore gallery",
+        "delete": "Delete gallery",
         "more": "More actions"
+      },
+      "archivedBanner": {
+        "title": "This gallery is archived",
+        "description": "Use More actions → Restore gallery to enable editing again."
       },
       "emptyState": {
         "title": "No images yet",

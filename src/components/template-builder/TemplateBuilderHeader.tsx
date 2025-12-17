@@ -14,6 +14,7 @@ interface TemplateBuilderHeaderProps {
   name: string;
   onNameChange: (name: string) => void;
   statusLabel?: string;
+  statusBadge?: React.ReactNode;
   isDraft: boolean;
   draftLabel: string;
   publishedLabel: string;
@@ -27,6 +28,7 @@ interface TemplateBuilderHeaderProps {
   primaryClassName?: string;
   primaryLeftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
+  disableNameEditing?: boolean;
   eyebrow?: React.ReactNode;
   subtitle?: React.ReactNode;
   children?: React.ReactNode;
@@ -39,6 +41,7 @@ export function TemplateBuilderHeader({
   name,
   onNameChange,
   statusLabel,
+  statusBadge,
   isDraft,
   draftLabel,
   publishedLabel,
@@ -52,6 +55,7 @@ export function TemplateBuilderHeader({
   primaryClassName,
   primaryLeftActions,
   rightActions,
+  disableNameEditing = false,
   eyebrow,
   subtitle,
   children,
@@ -66,15 +70,26 @@ export function TemplateBuilderHeader({
     }
   }, [name, isEditingName]);
 
+  useEffect(() => {
+    if (disableNameEditing && isEditingName) {
+      setIsEditingName(false);
+      setLocalName(name);
+    }
+  }, [disableNameEditing, isEditingName, name]);
+
   const badgeLabel = useMemo(() => (isDraft ? draftLabel : publishedLabel), [draftLabel, isDraft, publishedLabel]);
   const resolvedPrimaryClassName = useMemo(() => primaryClassName ?? "btn-surface-accent", [primaryClassName]);
 
   const commitNameChange = useCallback(() => {
     setIsEditingName(false);
+    if (disableNameEditing) {
+      setLocalName(name);
+      return;
+    }
     if (localName !== name) {
       onNameChange(localName);
     }
-  }, [localName, name, onNameChange]);
+  }, [disableNameEditing, localName, name, onNameChange]);
 
   const handleNameKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === "Enter") {
@@ -120,17 +135,23 @@ export function TemplateBuilderHeader({
               ) : (
                 <>
                   <span className="font-semibold text-lg">{name}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsEditingName(true)}
-                    className="h-6 w-6 p-0"
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <Badge variant={isDraft ? "secondary" : "default"}>
-                    {badgeLabel}
-                  </Badge>
+                  {!disableNameEditing ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingName(true)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  ) : null}
+                  {statusBadge ? (
+                    statusBadge
+                  ) : (
+                    <Badge variant={isDraft ? "secondary" : "default"}>
+                      {badgeLabel}
+                    </Badge>
+                  )}
                   {statusLabel ? <span className="text-xs text-muted-foreground">{statusLabel}</span> : null}
                 </>
               )}

@@ -29,6 +29,7 @@ import { SelectionLockBanner } from "@/components/galleries/SelectionLockBanner"
 import { Lightbox } from "@/components/galleries/Lightbox";
 import { GalleryShareSheet } from "@/components/galleries/GalleryShareSheet";
 import { SelectionExportSheet } from "@/components/galleries/SelectionExportSheet";
+import { GalleryStatusChip } from "@/components/galleries/GalleryStatusChip";
 import {
   SelectionTemplateSection,
   type SelectionTemplateRuleForm,
@@ -153,6 +154,7 @@ interface GalleryDetailRow {
   title: string;
   type: GalleryType;
   status: GalleryStatus;
+  previous_status: GalleryStatus | null;
   branding: Record<string, unknown> | null;
   session_id: string | null;
   updated_at: string;
@@ -203,6 +205,7 @@ interface UpdatePayload {
   type: GalleryType;
   status: GalleryStatus;
   branding: Record<string, unknown>;
+  previousStatus?: GalleryStatus | null;
   publishedAt?: string | null;
 }
 
@@ -336,6 +339,7 @@ export default function GalleryDetail() {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<GalleryType>("proof");
   const [status, setStatus] = useState<GalleryStatus>("draft");
+  const [previousStatus, setPreviousStatus] = useState<GalleryStatus | null>(null);
   const [customType, setCustomType] = useState("");
   const [eventDate, setEventDate] = useState<string>("");
   const [watermarkSettings, setWatermarkSettings] = useState<GalleryWatermarkSettings>(DEFAULT_GALLERY_WATERMARK_SETTINGS);
@@ -413,11 +417,16 @@ export default function GalleryDetail() {
     } as SelectionSettings,
     selectionTemplateGroups: [] as SelectionTemplateGroupForm[],
   });
+  const baselineRef = useRef(baseline);
+  useEffect(() => {
+    baselineRef.current = baseline;
+  }, [baseline]);
   const autoSaveTimerRef = useRef<number | null>(null);
   const pendingSavePayloadRef = useRef<UpdatePayload | null>(null);
   const galleryAssetsSyncTimerRef = useRef<number | null>(null);
   const attemptedDefaultSetRef = useRef(false);
   const isMountedRef = useRef(false);
+  const isReadOnly = status === "archived";
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -618,7 +627,7 @@ export default function GalleryDetail() {
       if (!id) return null;
       const { data, error } = await supabase
         .from("galleries")
-        .select("id,public_id,title,type,status,branding,session_id,updated_at,created_at,published_at")
+        .select("id,public_id,title,type,status,previous_status,branding,session_id,updated_at,created_at,published_at")
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -743,6 +752,7 @@ export default function GalleryDetail() {
     setTitle(data.title ?? "");
     setType(data.type);
     setStatus(data.status);
+    setPreviousStatus(data.previous_status ?? null);
     setEventDate(storedDate);
     setCustomType(storedCustomType);
     setCoverPhotoId((prev) => prev ?? storedCoverAssetId);
@@ -761,7 +771,7 @@ export default function GalleryDetail() {
     setSelectionTemplateGroups(parsedTemplateGroups);
     setSelectionTemplateDraft(cloneSelectionTemplateGroups(parsedTemplateGroups));
     setLastSavedAt(data.updated_at || data.created_at || null);
-    setBaseline({
+    const nextBaseline = {
       title: data.title ?? "",
       type: data.type,
       status: data.status,
@@ -775,7 +785,9 @@ export default function GalleryDetail() {
         allowFavorites: storedSelection.allowFavorites !== false,
       },
       selectionTemplateGroups: parsedTemplateGroups,
-    });
+    };
+    setBaseline(nextBaseline);
+    baselineRef.current = nextBaseline;
   }, [data, parseSelectionTemplateGroups]);
 
   useLayoutEffect(() => {
@@ -1574,21 +1586,32 @@ export default function GalleryDetail() {
   );
 
   const canAutoSave = useMemo(() => {
+    if (isReadOnly) return false;
     if (!title.trim()) return false;
     if (type === "other" && !customType.trim()) return false;
     return hasUnsavedChanges;
-  }, [title, type, customType, hasUnsavedChanges]);
+  }, [customType, hasUnsavedChanges, isReadOnly, title, type]);
 
   const updateMutation = useMutation<unknown, unknown, UpdatePayload>({
     mutationFn: async (payload) => {
       if (!id) return;
-	      const updateBody: Partial<GalleryDetailRow> & { branding: Record<string, unknown> } = {
-	        title: payload.title,
-	        type: payload.type,
-	        status: payload.status,
-	        branding: payload.branding,
-	        updated_at: new Date().toISOString(),
-	      };
+      const nextPreviousStatus =
+        payload.previousStatus !== undefined
+          ? payload.previousStatus
+          : payload.status === "archived" && baselineRef.current.status !== "archived"
+            ? baselineRef.current.status
+            : payload.status !== "archived" && baselineRef.current.status === "archived"
+              ? null
+              : undefined;
+
+      const updateBody: Partial<GalleryDetailRow> & { branding: Record<string, unknown> } = {
+        title: payload.title,
+        type: payload.type,
+        status: payload.status,
+        branding: payload.branding,
+        updated_at: new Date().toISOString(),
+        ...(nextPreviousStatus !== undefined ? { previous_status: nextPreviousStatus } : {}),
+      };
       if (payload.publishedAt) {
         updateBody.published_at = payload.publishedAt;
       }
@@ -1596,23 +1619,38 @@ export default function GalleryDetail() {
       if (error) throw error;
     },
     onSuccess: (_, payload) => {
+      const nextPreviousStatus =
+        payload.previousStatus !== undefined
+          ? payload.previousStatus
+          : payload.status === "archived" && baselineRef.current.status !== "archived"
+            ? baselineRef.current.status
+            : payload.status !== "archived" && baselineRef.current.status === "archived"
+              ? null
+              : undefined;
+
+      if (nextPreviousStatus !== undefined && isMountedRef.current) {
+        setPreviousStatus(nextPreviousStatus);
+      }
+
       const parsedTemplateGroups = parseSelectionTemplateGroups(payload.branding);
+      const nextBaseline = {
+        title: payload.title,
+        type: payload.type,
+        status: payload.status,
+        eventDate: typeof payload.branding.eventDate === "string" ? (payload.branding.eventDate as string) : "",
+        customType: typeof payload.branding.customType === "string" ? (payload.branding.customType as string) : "",
+        coverAssetId: typeof payload.branding.coverAssetId === "string" ? (payload.branding.coverAssetId as string) : null,
+        selectionSettings: (payload.branding.selectionSettings || {
+          enabled: false,
+          limit: null,
+          deadline: null,
+          allowFavorites: true,
+        }) as SelectionSettings,
+        selectionTemplateGroups: parsedTemplateGroups,
+      };
+      baselineRef.current = nextBaseline;
       if (isMountedRef.current) {
-        setBaseline({
-          title: payload.title,
-          type: payload.type,
-          status: payload.status,
-          eventDate: typeof payload.branding.eventDate === "string" ? (payload.branding.eventDate as string) : "",
-          customType: typeof payload.branding.customType === "string" ? (payload.branding.customType as string) : "",
-          coverAssetId: typeof payload.branding.coverAssetId === "string" ? (payload.branding.coverAssetId as string) : null,
-          selectionSettings: (payload.branding.selectionSettings || {
-            enabled: false,
-            limit: null,
-            deadline: null,
-            allowFavorites: true,
-          }) as SelectionSettings,
-          selectionTemplateGroups: parsedTemplateGroups,
-        });
+        setBaseline(nextBaseline);
         setSelectionTemplateGroups(parsedTemplateGroups);
         setSelectionTemplateDraft(cloneSelectionTemplateGroups(parsedTemplateGroups));
         setLastSavedAt(new Date().toISOString());
@@ -1712,11 +1750,28 @@ export default function GalleryDetail() {
 
   const handleArchiveGallery = useCallback(() => {
     if (isSaving) return;
+    if (status === "archived") return;
     const payload = buildAutoSavePayload(coverPhotoId, "archived");
     if (!payload) return;
+    setPreviousStatus(status);
     setStatus("archived");
-    saveGallery(payload);
-  }, [buildAutoSavePayload, coverPhotoId, isSaving, saveGallery]);
+    saveGallery({ ...payload, previousStatus: status });
+  }, [buildAutoSavePayload, coverPhotoId, isSaving, saveGallery, status]);
+
+  const handleRestoreGallery = useCallback(() => {
+    if (isSaving) return;
+    if (status !== "archived") return;
+
+    const candidate = previousStatus ?? data?.previous_status ?? null;
+    const resolvedStatus: GalleryStatus =
+      candidate && candidate !== "archived" ? candidate : data?.published_at ? "published" : "draft";
+
+    const payload = buildAutoSavePayload(coverPhotoId, resolvedStatus);
+    if (!payload) return;
+    setPreviousStatus(null);
+    setStatus(resolvedStatus);
+    saveGallery({ ...payload, previousStatus: null });
+  }, [buildAutoSavePayload, coverPhotoId, data?.previous_status, data?.published_at, isSaving, previousStatus, saveGallery, status]);
 
   const formattedLastSaved = useMemo(() => {
     if (!lastSavedAt) return "";
@@ -3510,6 +3565,7 @@ export default function GalleryDetail() {
       <TemplateBuilderHeader
         name={displayTitle}
         onNameChange={(value) => setTitle(value)}
+        statusBadge={<GalleryStatusChip status={status} size="md" />}
         isDraft={status === "draft"}
         draftLabel={draftLabel}
         publishedLabel={nonDraftStatusLabel}
@@ -3520,6 +3576,7 @@ export default function GalleryDetail() {
         onPrimaryAction={handlePreview}
         primaryDisabled={deleteGalleryMutation.isPending}
         primaryClassName="hover:!bg-muted/80 hover:!text-foreground"
+        disableNameEditing={isReadOnly}
         eyebrow={typeLabel}
         subtitle={
           <>
@@ -3534,7 +3591,7 @@ export default function GalleryDetail() {
               variant="surface"
               size="sm"
               className="btn-surface-accent gap-2"
-              disabled={deleteGalleryMutation.isPending}
+              disabled={isReadOnly || deleteGalleryMutation.isPending}
             >
               <Share className="h-4 w-4" />
               {t("sessionDetail.gallery.actions.share")}
@@ -3551,29 +3608,56 @@ export default function GalleryDetail() {
                   {t("sessionDetail.gallery.actions.more", { defaultValue: "More actions" })}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end">
+              {status === "archived" ? (
+                <DropdownMenuItem
+                  className="gap-2"
+                  onSelect={handleRestoreGallery}
+                  disabled={isSaving || deleteGalleryMutation.isPending}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  {t("sessionDetail.gallery.actions.restore", { defaultValue: "Restore gallery" })}
+                </DropdownMenuItem>
+              ) : (
                 <DropdownMenuItem
                   className="gap-2"
                   onSelect={handleArchiveGallery}
-                  disabled={status === "archived" || isSaving || deleteGalleryMutation.isPending}
+                  disabled={isSaving || deleteGalleryMutation.isPending}
                 >
                   <Archive className="h-4 w-4" />
-                  {t("sessionDetail.gallery.actions.archive", { defaultValue: "Archive" })}
+                  {t("sessionDetail.gallery.actions.archive", { defaultValue: "Archive gallery" })}
                 </DropdownMenuItem>
+              )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  className="gap-2 text-destructive focus:text-destructive"
+                  className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
                   onSelect={openGalleryDeleteGuard}
                   disabled={deleteGalleryMutation.isPending}
                 >
                   <Trash2 className="h-4 w-4" />
-                  {t("sessionDetail.gallery.actions.delete", { defaultValue: "Delete" })}
+                  {t("sessionDetail.gallery.actions.delete", { defaultValue: "Delete gallery" })}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         }
-      />
+      >
+        {status === "archived" ? (
+          <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm leading-relaxed text-sky-800 dark:border-sky-400/30 dark:bg-sky-500/10 dark:text-sky-100">
+            <Archive className="mt-0.5 h-4 w-4 text-sky-500 dark:text-sky-300" aria-hidden="true" />
+            <div className="space-y-1">
+              <p className="font-semibold text-sky-900 dark:text-sky-50">
+                {t("sessionDetail.gallery.archivedBanner.title", { defaultValue: "This gallery is archived" })}
+              </p>
+              <p>
+                {t("sessionDetail.gallery.archivedBanner.description", {
+                  defaultValue: "Use More actions → Restore to enable editing again.",
+                })}
+              </p>
+            </div>
+          </div>
+        ) : null}
+      </TemplateBuilderHeader>
 
       <GalleryShareSheet
         open={shareSheetOpen}

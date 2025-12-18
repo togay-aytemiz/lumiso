@@ -858,6 +858,23 @@ export default function SessionGallery({
                 })}
               </div>
             </div>
+            {formType === "final" ? (
+              <div className="space-y-3">
+                <Alert className="border-indigo-200/80 bg-indigo-50 text-indigo-900">
+                  <div className="flex gap-3">
+                    <ImageIcon className="h-5 w-5 flex-shrink-0 text-indigo-600" aria-hidden="true" />
+                    <div className="space-y-1">
+                      <AlertTitle className="text-sm font-semibold text-indigo-900">
+                        {t("sessionDetail.gallery.originalsNotice.title")}
+                      </AlertTitle>
+                      <AlertDescription className="text-sm text-indigo-900/90">
+                        {t("sessionDetail.gallery.originalsNotice.description")}
+                      </AlertDescription>
+                    </div>
+                  </div>
+                </Alert>
+              </div>
+            ) : null}
             {formType === "proof" && selectionGroups.length > 0 && (
               <div className="space-y-3">
                 <Alert className="border-amber-200/80 bg-amber-50 text-amber-900">

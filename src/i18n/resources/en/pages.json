@@ -768,6 +768,10 @@
         "title": "Uploads are optimized for selection",
         "description": "To keep selection galleries fast and lightweight, we convert and compress uploads. Originals aren’t stored—but the optimized version still looks great for viewing, selecting, and sharing on social media."
       },
+      "originalsNotice": {
+        "title": "Uploads stay original for final delivery",
+        "description": "Final galleries don’t resize or convert uploads. Clients view the original files, so loading may be slower for larger images."
+      },
       "selectionTemplate": {
         "loading": "Loading selection rules...",
         "serviceSource": "Loaded from service: {{service}}",

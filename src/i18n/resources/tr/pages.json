@@ -783,6 +783,10 @@
         "title": "Yüklemeler seçim için optimize edilir",
         "description": "Seçim galerileri hızlı ve verimli olsun diye yüklemeleri dönüştürüp sıkıştırıyoruz. Orijinaller saklanmaz; ancak optimize edilmiş sürüm görüntüleme, seçim ve sosyal medyada paylaşım için fazlasıyla iyi görünür."
       },
+      "originalsNotice": {
+        "title": "Final teslimde yüklemeler orijinal kalır",
+        "description": "Final galerilerde yüklemeleri yeniden boyutlandırmıyor veya dönüştürmüyoruz. Müşteriler orijinal dosyaları görür; büyük fotoğraflarda açılış daha yavaş olabilir."
+      },
       "selectionTemplate": {
         "loading": "Seçim kuralları yükleniyor...",
         "serviceSource": "Kaynak hizmet: {{service}}",

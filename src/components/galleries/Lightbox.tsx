@@ -27,6 +27,7 @@ import {
 export type LightboxPhoto = {
   id: string;
   url: string;
+  originalPath?: string | null;
   filename: string;
   isFavorite: boolean;
   isStarred: boolean;
@@ -113,6 +114,8 @@ interface LightboxProps {
   activeRuleId?: string | null;
   favoritesEnabled?: boolean;
   onImageError?: (photoId: string) => void;
+  enableOriginalSwap?: boolean;
+  resolveOriginalUrl?: (photo: LightboxPhoto) => Promise<string | null>;
   watermark?: GalleryWatermarkConfig;
   isSelectionsLocked?: boolean;
   readOnly?: boolean;
@@ -132,6 +135,8 @@ export function Lightbox({
   activeRuleId,
   favoritesEnabled = true,
   onImageError,
+  enableOriginalSwap = false,
+  resolveOriginalUrl,
   watermark,
   isSelectionsLocked = false,
   readOnly = false,
@@ -141,6 +146,9 @@ export function Lightbox({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileSelectionPanelOpen, setIsMobileSelectionPanelOpen] = useState(false);
   const hasSelectionRules = rules.length > 0;
+  const [originalUrlVersion, setOriginalUrlVersion] = useState(0);
+  const originalUrlByIdRef = useRef<Map<string, string>>(new Map());
+  const originalUrlInFlightRef = useRef<Set<string>>(new Set());
 
   // Carousel State
   const [mobileApi, setMobileApi] = useState<CarouselApi>();
@@ -164,7 +172,7 @@ export function Lightbox({
   const isFavoriteToggleDisabled = readOnly || (mode === "client" && isSelectionsLocked);
 
   const handleMobileSwipeTouchStart = useMemo(
-    () => (event: React.TouchEvent<HTMLImageElement>) => {
+    () => (event: React.TouchEvent<HTMLElement>) => {
       const touch = event.targetTouches?.[0];
       if (!touch) return;
       swipeStartXRef.current = touch.clientX;
@@ -178,7 +186,7 @@ export function Lightbox({
   );
 
   const handleMobileSwipeTouchMove = useMemo(
-    () => (event: React.TouchEvent<HTMLImageElement>) => {
+    () => (event: React.TouchEvent<HTMLElement>) => {
       const touch = event.targetTouches?.[0];
       if (!touch) return;
       swipeLastXRef.current = touch.clientX;
@@ -188,7 +196,7 @@ export function Lightbox({
   );
 
   const handleMobileSwipeTouchEnd = useMemo(
-    () => (event: React.TouchEvent<HTMLImageElement>) => {
+    () => (event: React.TouchEvent<HTMLElement>) => {
       const startX = swipeStartXRef.current;
       const startY = swipeStartYRef.current;
       if (startX == null || startY == null) return;
@@ -222,6 +230,52 @@ export function Lightbox({
     },
     [mobileApi, onNavigate, photos.length]
   );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!enableOriginalSwap) return;
+    if (typeof resolveOriginalUrl !== "function") return;
+
+    const photo = photos[currentIndex];
+    if (!photo?.originalPath) return;
+    if (originalUrlByIdRef.current.has(photo.id)) return;
+    if (originalUrlInFlightRef.current.has(photo.id)) return;
+
+    let cancelled = false;
+    originalUrlInFlightRef.current.add(photo.id);
+
+    void resolveOriginalUrl(photo)
+      .then((signedUrl) => {
+        if (cancelled) return;
+        if (!signedUrl) return;
+        const image = new Image();
+        image.onload = () => {
+          if (cancelled) return;
+          originalUrlByIdRef.current.set(photo.id, signedUrl);
+          setOriginalUrlVersion((prev) => prev + 1);
+        };
+        image.onerror = () => {
+          // keep preview
+        };
+        image.src = signedUrl;
+      })
+      .finally(() => {
+        originalUrlInFlightRef.current.delete(photo.id);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentIndex, enableOriginalSwap, isOpen, photos, resolveOriginalUrl]);
+
+  const getResolvedSrc = useMemo(() => {
+    return (photo: LightboxPhoto) => {
+      if (!enableOriginalSwap) return { previewSrc: photo.url, originalSrc: null as string | null };
+      const originalSrc = originalUrlByIdRef.current.get(photo.id) ?? null;
+      return { previewSrc: photo.url, originalSrc };
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enableOriginalSwap, originalUrlVersion]);
 
   useEffect(() => {
     if (isOpen) {
@@ -396,16 +450,32 @@ export function Lightbox({
                       className="relative w-full h-full pl-0 flex items-center justify-center min-w-full"
                     >
                       {Math.abs(index - currentIndex) <= 2 ? (
-                        <div className="relative w-full h-full flex items-center justify-center">
-                          <img
-                            src={photo.url}
-                            alt={photo.filename}
-                            className="max-w-full max-h-full object-contain"
-                            onError={() => onImageError?.(photo.id)}
-                            onTouchStart={handleMobileSwipeTouchStart}
-                            onTouchMove={handleMobileSwipeTouchMove}
-                            onTouchEnd={handleMobileSwipeTouchEnd}
-                          />
+                        <div
+                          className="relative w-full h-full flex items-center justify-center"
+                          onTouchStart={handleMobileSwipeTouchStart}
+                          onTouchMove={handleMobileSwipeTouchMove}
+                          onTouchEnd={handleMobileSwipeTouchEnd}
+                        >
+                          {(() => {
+                            const { previewSrc, originalSrc } = getResolvedSrc(photo);
+                            return (
+                              <>
+                                <img
+                                  src={previewSrc}
+                                  alt={photo.filename}
+                                  className={`absolute inset-0 m-auto max-w-full max-h-full object-contain transition-opacity duration-300 ${originalSrc ? "opacity-0" : "opacity-100"}`}
+                                  onError={() => onImageError?.(photo.id)}
+                                />
+                                {originalSrc ? (
+                                  <img
+                                    src={originalSrc}
+                                    alt={photo.filename}
+                                    className="absolute inset-0 m-auto max-w-full max-h-full object-contain opacity-0 animate-in fade-in duration-500"
+                                  />
+                                ) : null}
+                              </>
+                            );
+                          })()}
                           {mode === "client" && watermark ? (
                             <GalleryWatermarkOverlay
                               watermark={watermark}
@@ -649,12 +719,26 @@ export function Lightbox({
                 {photos.map((photo, index) => (
                   <CarouselItem key={photo.id} className="relative w-full h-full pl-0 flex items-center justify-center min-w-full">
                     {Math.abs(index - currentIndex) <= 2 ? (
-                      <img
-                        src={photo.url}
-                        alt={photo.filename}
-                        className="max-w-full max-h-full object-contain shadow-2xl"
-                        onError={() => onImageError?.(photo.id)}
-                      />
+                      (() => {
+                        const { previewSrc, originalSrc } = getResolvedSrc(photo);
+                        return (
+                          <div className="relative w-full h-full flex items-center justify-center">
+                            <img
+                              src={previewSrc}
+                              alt={photo.filename}
+                              className={`absolute inset-0 m-auto max-w-full max-h-full object-contain shadow-2xl transition-opacity duration-300 ${originalSrc ? "opacity-0" : "opacity-100"}`}
+                              onError={() => onImageError?.(photo.id)}
+                            />
+                            {originalSrc ? (
+                              <img
+                                src={originalSrc}
+                                alt={photo.filename}
+                                className="absolute inset-0 m-auto max-w-full max-h-full object-contain shadow-2xl opacity-0 animate-in fade-in duration-500"
+                              />
+                            ) : null}
+                          </div>
+                        );
+                      })()
                     ) : null}
                     {mode === "client" && watermark && Math.abs(index - currentIndex) <= 2 ? (
                       <GalleryWatermarkOverlay watermark={watermark} variant="lightbox" className="z-10" />

@@ -48,6 +48,7 @@ import AdminLocalization from "./pages/admin/Localization";
 import AdminUsers from "./pages/admin/Users";
 import AdminSystem from "./pages/admin/System";
 import { FEATURE_FLAGS, isFeatureEnabled } from "./lib/featureFlags";
+import { useOrganizationSettings } from "./hooks/useOrganizationSettings";
 
 const renderSettingsRoutes = (enableOverlay: boolean) => (
   <Route path="settings" element={<SettingsLayout enableOverlay={enableOverlay} />}>
@@ -66,6 +67,7 @@ const renderSettingsRoutes = (enableOverlay: boolean) => (
 const AppRoutes = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { settings: organizationSettings } = useOrganizationSettings();
   const state = location.state as { backgroundLocation?: Location } | undefined;
   const settingsOverlayEnabled = isFeatureEnabled(
     FEATURE_FLAGS.settingsModalOverlayV1,
@@ -97,7 +99,21 @@ const AppRoutes = () => {
         <Route path="/auth/sign-up" element={<Auth />} />
         <Route path="/g/:publicId" element={<GalleryPublic />} />
         <Route path="/" element={<ProtectedRoute disableLayout />}>
-          <Route path="galleries/:id/preview" element={<GalleryClientPreview />} />
+          <Route
+            path="galleries/:id/preview"
+            element={
+              <GalleryClientPreview
+                branding={
+                  organizationSettings?.logo_url || organizationSettings?.photography_business_name
+                    ? {
+                        logoUrl: organizationSettings.logo_url ?? null,
+                        businessName: organizationSettings.photography_business_name ?? null,
+                      }
+                    : null
+                }
+              />
+            }
+          />
         </Route>
         <Route path="/" element={<ProtectedRoute />}>
           <Route index element={<Index />} />

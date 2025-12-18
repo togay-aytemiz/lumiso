@@ -73,6 +73,7 @@ type GallerySetRow = {
 type GalleryAssetRow = {
   id: string;
   storage_path_web: string | null;
+  storage_path_original: string | null;
   width: number | null;
   height: number | null;
   status: "processing" | "ready" | "failed";
@@ -83,6 +84,7 @@ type GalleryAssetRow = {
 type ClientPreviewPhotoBase = {
   id: string;
   url: string;
+  originalPath: string | null;
   filename: string;
   setId: string | null;
   isStarred: boolean;
@@ -293,6 +295,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   const [brokenPhotoIds, setBrokenPhotoIds] = useState<Set<string>>(() => new Set());
   const lastSignedUrlRefreshAtRef = useRef(0);
   const lastPhotoUrlByIdRef = useRef<Map<string, string>>(new Map());
+  const originalSignedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
 
   const [favoritePhotoIds, setFavoritePhotoIds] = useState<Set<string>>(() => new Set());
   const favoritesTouchedRef = useRef(false);
@@ -406,7 +409,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
       if (!resolvedGalleryId) return [];
       const { data, error } = await supabase
         .from("gallery_assets")
-        .select("id,storage_path_web,status,metadata,created_at,width,height")
+        .select("id,storage_path_web,storage_path_original,status,metadata,created_at,width,height")
         .eq("gallery_id", resolvedGalleryId)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -456,6 +459,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
         return {
           id: row.id,
           url,
+          originalPath: row.storage_path_original,
           filename,
           setId,
           isStarred,
@@ -1431,6 +1435,26 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     },
     [queryClient, resolvedGalleryId]
   );
+
+  const resolveLightboxOriginalUrl = useCallback(async (photo: { id: string; originalPath?: string | null }) => {
+    const storagePath = typeof photo.originalPath === "string" ? photo.originalPath : "";
+    if (!storagePath) return null;
+
+    const now = Date.now();
+    const cached = originalSignedUrlCacheRef.current.get(photo.id);
+    if (cached && cached.expiresAt > now) return cached.url;
+
+    const { data: urlData, error } = await supabase.storage
+      .from(GALLERY_ASSETS_BUCKET)
+      .createSignedUrl(storagePath, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
+    if (error || !urlData?.signedUrl) return null;
+
+    originalSignedUrlCacheRef.current.set(photo.id, {
+      url: urlData.signedUrl,
+      expiresAt: now + GALLERY_ASSET_SIGNED_URL_TTL_SECONDS * 1000 - 15_000,
+    });
+    return urlData.signedUrl;
+  }, []);
 
   const handleExit = useCallback(() => {
     if (routeGalleryId) {
@@ -2839,6 +2863,8 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
         activeRuleId={activeLightboxRuleId}
         favoritesEnabled={favoritesEnabled}
         onImageError={handleAssetImageError}
+        enableOriginalSwap={isFinalGallery}
+        resolveOriginalUrl={isFinalGallery ? resolveLightboxOriginalUrl : undefined}
         watermark={watermark}
         isSelectionsLocked={isSelectionsLocked}
       />

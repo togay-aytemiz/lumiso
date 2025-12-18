@@ -73,7 +73,6 @@ import {
   buildGalleryProofPath,
   convertImageToProof,
   GALLERY_ASSETS_BUCKET,
-  getImageDimensions,
   getStorageBasename,
   isSupabaseStorageObjectMissingError,
 } from "@/lib/galleryAssets";
@@ -149,6 +148,7 @@ type UploadItem = {
   starred?: boolean;
   error?: string | null;
   storagePathWeb?: string | null;
+  storagePathOriginal?: string | null;
   uploadBatchId?: string;
   enqueuedAt?: number;
 };
@@ -198,6 +198,7 @@ interface GalleryStorageUsageRow {
 interface GalleryAssetRow {
   id: string;
   storage_path_web: string | null;
+  storage_path_original: string | null;
   width: number | null;
   height: number | null;
   status: "processing" | "ready" | "failed";
@@ -262,6 +263,11 @@ const formatDurationShortTR = (milliseconds: number) => {
   return `${minutes} dk ${seconds} sn`;
 };
 
+const formatDurationMinutesOnlyTR = (milliseconds: number) => {
+  const totalMinutes = Math.max(1, Math.ceil(Math.max(0, milliseconds) / 60_000));
+  return `${totalMinutes} dk`;
+};
+
 const formatDateForDisplay = (value: string | null) => {
   if (!value) return "";
   const parsed = new Date(`${value}T00:00:00`);
@@ -316,6 +322,9 @@ const normalizeImageExtension = (extension: string) => {
   return normalized;
 };
 
+const FINAL_WEB_LONG_EDGE_PX = 2048;
+const estimateFinalWebBytes = (file: File) => Math.min(2_000_000, Math.max(120_000, Math.round(file.size * 0.08)));
+
 const resolveImageExtension = (file: File) => {
   const match = file.name.match(/\.([a-z0-9]{1,12})$/i);
   if (match?.[1]) return normalizeImageExtension(match[1]);
@@ -364,6 +373,7 @@ export default function GalleryDetail() {
 
   const signedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
   const signedUrlRefreshInFlightRef = useRef<Set<string>>(new Set());
+  const originalSignedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
   const photoSelectionsTouchedRef = useRef(false);
 
   const [activeTab, setActiveTab] = useState<"photos" | "settings">("photos");
@@ -459,6 +469,7 @@ export default function GalleryDetail() {
   const attemptedDefaultSetRef = useRef(false);
   const isMountedRef = useRef(false);
   const isReadOnly = status === "archived";
+  const isFinalGallery = type === "final";
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -920,7 +931,7 @@ export default function GalleryDetail() {
       if (!id) return [];
       const { data, error } = await supabase
         .from("gallery_assets")
-        .select("id,storage_path_web,width,height,status,metadata,created_at")
+        .select("id,storage_path_web,storage_path_original,width,height,status,metadata,created_at")
         .eq("gallery_id", id)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -975,12 +986,10 @@ export default function GalleryDetail() {
         const originalName = typeof metadata.originalName === "string" ? metadata.originalName : null;
         const setId = typeof metadata.setId === "string" ? metadata.setId : null;
         const name = originalName || (row.storage_path_web ? getStorageBasename(row.storage_path_web) : "photo");
-        const size =
-          typeof metadata.proofSize === "number"
-            ? metadata.proofSize
-            : typeof metadata.originalSize === "number"
-              ? metadata.originalSize
-              : 0;
+        const proofSize = typeof metadata.proofSize === "number" ? metadata.proofSize : 0;
+        const originalSize = typeof metadata.originalSize === "number" ? metadata.originalSize : 0;
+        const hasOriginal = typeof row.storage_path_original === "string" && row.storage_path_original.length > 0;
+        const size = hasOriginal ? proofSize + originalSize : proofSize || originalSize || 0;
         const starred = metadata.starred === true;
         const status: UploadStatus =
           row.status === "ready" ? "done" : row.status === "failed" ? "error" : "processing";
@@ -998,6 +1007,7 @@ export default function GalleryDetail() {
           starred,
           error: status === "error" ? "Upload failed" : null,
           storagePathWeb: row.storage_path_web,
+          storagePathOriginal: row.storage_path_original,
         };
       });
     },
@@ -2455,9 +2465,10 @@ export default function GalleryDetail() {
       const allowedFiles: File[] = [];
       let storageSkippedCount = 0;
       supportedFiles.forEach((file) => {
-        if (file.size <= remainingBytes) {
+        const estimatedBytes = isFinalGallery ? file.size + estimateFinalWebBytes(file) : file.size;
+        if (estimatedBytes <= remainingBytes) {
           allowedFiles.push(file);
-          remainingBytes -= file.size;
+          remainingBytes -= estimatedBytes;
         } else {
           storageSkippedCount += 1;
         }
@@ -2518,11 +2529,12 @@ export default function GalleryDetail() {
         ...prev,
         ...allowedFiles.map((file) => {
           const id = crypto.randomUUID?.() ?? Math.random().toString(16).slice(2);
+          const estimatedBytes = isFinalGallery ? file.size + estimateFinalWebBytes(file) : file.size;
           return {
             id,
             file,
             name: file.name,
-            size: file.size,
+            size: estimatedBytes,
             setId: resolvedSetId,
             status: "queued" as UploadStatus,
             progress: 0,
@@ -2535,7 +2547,7 @@ export default function GalleryDetail() {
         }),
       ]);
     },
-    [galleryStorageLimitBytes, isReadOnly, orgBytes, t, toast]
+    [galleryStorageLimitBytes, isFinalGallery, isReadOnly, orgBytes, t, toast]
   );
 
   const clearUploadTimer = useCallback((id: string) => {
@@ -2596,6 +2608,7 @@ export default function GalleryDetail() {
 
       const assetId = current.id;
       const sourceFile = current.file;
+      const uploadedPaths: string[] = [];
 
       clearUploadTimer(assetId);
       setUploadQueue((prev) =>
@@ -2605,21 +2618,44 @@ export default function GalleryDetail() {
       );
 
       try {
-        const isFinalGallery = type === "final";
+        const isFinalUpload = type === "final";
 
         let uploadBlob: Blob;
         let uploadContentType: string;
         let uploadExtension: string;
         let uploadWidth: number | null;
         let uploadHeight: number | null;
+        let totalUploadBytes: number;
+        let storagePathWeb: string;
+        let storagePathOriginal: string | null = null;
+        let originalUploadContentType: string | null = null;
 
-        if (isFinalGallery) {
-          uploadExtension = resolveImageExtension(sourceFile);
-          uploadContentType = resolveImageContentType(sourceFile, uploadExtension);
-          const dimensions = await getImageDimensions(sourceFile);
-          uploadWidth = dimensions?.width ?? null;
-          uploadHeight = dimensions?.height ?? null;
-          uploadBlob = sourceFile;
+        if (isFinalUpload) {
+          const originalExtension = resolveImageExtension(sourceFile);
+          const originalContentType = resolveImageContentType(sourceFile, originalExtension);
+          originalUploadContentType = originalContentType;
+          const webPreview = await convertImageToProof(sourceFile, { longEdgePx: FINAL_WEB_LONG_EDGE_PX });
+
+          uploadBlob = webPreview.blob;
+          uploadContentType = webPreview.contentType;
+          uploadExtension = webPreview.extension;
+          uploadWidth = webPreview.width;
+          uploadHeight = webPreview.height;
+
+          storagePathWeb = buildGalleryProofPath({
+            organizationId: activeOrganizationId,
+            galleryId: id,
+            assetId,
+            extension: uploadExtension,
+          });
+          storagePathOriginal = buildGalleryOriginalPath({
+            organizationId: activeOrganizationId,
+            galleryId: id,
+            assetId,
+            extension: originalExtension,
+          });
+
+          totalUploadBytes = uploadBlob.size + sourceFile.size;
         } else {
           const proof = await convertImageToProof(sourceFile);
           uploadBlob = proof.blob;
@@ -2627,6 +2663,14 @@ export default function GalleryDetail() {
           uploadExtension = proof.extension;
           uploadWidth = proof.width;
           uploadHeight = proof.height;
+          totalUploadBytes = uploadBlob.size;
+
+          storagePathWeb = buildGalleryProofPath({
+            organizationId: activeOrganizationId,
+            galleryId: id,
+            assetId,
+            extension: uploadExtension,
+          });
         }
 
         if (canceledUploadIdsRef.current.has(assetId)) return;
@@ -2639,7 +2683,7 @@ export default function GalleryDetail() {
           return sum + item.size;
         }, 0);
         const remainingBytes = galleryStorageLimitBytes - usedBytes - reservedBytes;
-        if (uploadBlob.size > remainingBytes) {
+        if (totalUploadBytes > remainingBytes) {
           clearUploadTimer(assetId);
           toast({
             title: t("sessionDetail.gallery.toast.storageLimitTitle"),
@@ -2664,22 +2708,6 @@ export default function GalleryDetail() {
           return;
         }
 
-        const storagePathWeb = isFinalGallery
-          ? buildGalleryOriginalPath({
-              organizationId: activeOrganizationId,
-              galleryId: id,
-              assetId,
-              extension: uploadExtension,
-            })
-          : buildGalleryProofPath({
-              organizationId: activeOrganizationId,
-              galleryId: id,
-              assetId,
-              extension: uploadExtension,
-            });
-
-        const storagePathOriginal = isFinalGallery ? storagePathWeb : null;
-
         setUploadQueue((prev) =>
           prev.map((entry) =>
             entry.id === assetId
@@ -2689,6 +2717,8 @@ export default function GalleryDetail() {
                   progress: Math.max(entry.progress, 15),
                   error: null,
                   storagePathWeb,
+                  storagePathOriginal,
+                  size: totalUploadBytes,
                 }
               : entry
           )
@@ -2714,31 +2744,34 @@ export default function GalleryDetail() {
             upsert: true,
           });
         if (uploadError) throw uploadError;
+        uploadedPaths.push(storagePathWeb);
+
+        if (storagePathOriginal) {
+          const { error: uploadOriginalError } = await supabase.storage
+            .from(GALLERY_ASSETS_BUCKET)
+            .upload(storagePathOriginal, sourceFile, {
+              contentType: originalUploadContentType ?? "application/octet-stream",
+              cacheControl: "3600",
+              upsert: true,
+            });
+          if (uploadOriginalError) throw uploadOriginalError;
+          uploadedPaths.push(storagePathOriginal);
+        }
 
         if (canceledUploadIdsRef.current.has(assetId)) {
-          await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove([storagePathWeb]);
+          await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove(uploadedPaths);
           return;
         }
 
-        const metadata = isFinalGallery
-          ? {
-              originalName: sourceFile.name,
-              originalSize: sourceFile.size,
-              originalType: sourceFile.type,
-              setId: current.setId,
-              starred: Boolean(current.starred),
-              width: uploadWidth ?? undefined,
-              height: uploadHeight ?? undefined,
-            }
-          : {
-              originalName: sourceFile.name,
-              originalSize: sourceFile.size,
-              originalType: sourceFile.type,
-              proofSize: uploadBlob.size,
-              proofType: uploadContentType,
-              setId: current.setId,
-              starred: Boolean(current.starred),
-            };
+        const metadata = {
+          originalName: sourceFile.name,
+          originalSize: sourceFile.size,
+          originalType: sourceFile.type,
+          proofSize: uploadBlob.size,
+          proofType: uploadContentType,
+          setId: current.setId,
+          starred: Boolean(current.starred),
+        };
 
         const { error: upsertError } = await supabase
           .from("gallery_assets")
@@ -2756,7 +2789,7 @@ export default function GalleryDetail() {
             { onConflict: "id" }
           );
         if (upsertError) {
-          await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove([storagePathWeb]);
+          await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove(uploadedPaths);
           throw upsertError;
         }
 
@@ -2768,15 +2801,22 @@ export default function GalleryDetail() {
               ...entry,
               status: "done",
               progress: 100,
-              size: uploadBlob.size,
+              size: totalUploadBytes,
               file: undefined,
               storagePathWeb,
+              storagePathOriginal,
             };
           })
         );
         scheduleGalleryAssetsSync();
       } catch (error: unknown) {
         clearUploadTimer(assetId);
+        if (uploadedPaths.length > 0) {
+          const { error: cleanupError } = await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove(uploadedPaths);
+          if (cleanupError) {
+            console.warn("Failed to clean up storage objects after upload error", cleanupError);
+          }
+        }
         const message =
           error instanceof Error
             ? error.message
@@ -3303,13 +3343,18 @@ export default function GalleryDetail() {
     const result: Record<string, { percent: number; inProgress: number; total: number }> = {};
     Object.entries(aggregates).forEach(([setId, aggregate]) => {
       result[setId] = {
-        percent: aggregate.total > 0 ? aggregate.sumProgress / aggregate.total : 0,
+        percent:
+          aggregate.total > 0
+            ? isFinalGallery
+              ? ((aggregate.total - aggregate.inProgress) / aggregate.total) * 100
+              : aggregate.sumProgress / aggregate.total
+            : 0,
         inProgress: aggregate.inProgress,
         total: aggregate.total,
       };
     });
     return result;
-  }, [uploadQueue, legacyFallbackSetId]);
+  }, [isFinalGallery, uploadQueue, legacyFallbackSetId]);
 
   const uploadBatchStatsBySetId = useMemo(() => {
     const result: Record<string, UploadBatchStats> = {};
@@ -3341,7 +3386,7 @@ export default function GalleryDetail() {
       });
 
       const completed = uploaded + errors + canceled;
-      const percent = total > 0 ? progressSum / total : 0;
+      const percent = total > 0 ? (isFinalGallery ? (completed / total) * 100 : progressSum / total) : 0;
 
       const remaining = Math.max(0, total - completed);
       const elapsedMs = Math.max(0, now - batch.startedAt);
@@ -3364,7 +3409,7 @@ export default function GalleryDetail() {
     });
 
     return result;
-  }, [uploadBatchBySetId, uploadQueue]);
+  }, [isFinalGallery, uploadBatchBySetId, uploadQueue]);
 
   useEffect(() => {
     setUploadBatchSummaryBySetId((prev) => {
@@ -3507,7 +3552,9 @@ export default function GalleryDetail() {
   );
   const activeUploadEstimateLabel =
     activeSetUploadBatch?.estimatedRemainingMs != null
-      ? formatDurationShortTR(activeSetUploadBatch.estimatedRemainingMs)
+      ? (isFinalGallery
+          ? formatDurationMinutesOnlyTR(activeSetUploadBatch.estimatedRemainingMs)
+          : formatDurationShortTR(activeSetUploadBatch.estimatedRemainingMs))
       : null;
 
   const selectableDoneUploadIds = useMemo(
@@ -3618,6 +3665,26 @@ export default function GalleryDetail() {
     setLightboxOpen(true);
   }, []);
 
+  const resolveLightboxOriginalUrl = useCallback(async (photo: { id: string; originalPath?: string | null }) => {
+    const storagePath = typeof photo.originalPath === "string" ? photo.originalPath : "";
+    if (!storagePath) return null;
+
+    const now = Date.now();
+    const cached = originalSignedUrlCacheRef.current.get(photo.id);
+    if (cached && cached.expiresAt > now) return cached.url;
+
+    const { data: urlData, error } = await supabase.storage
+      .from(GALLERY_ASSETS_BUCKET)
+      .createSignedUrl(storagePath, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
+    if (error || !urlData?.signedUrl) return null;
+
+    originalSignedUrlCacheRef.current.set(photo.id, {
+      url: urlData.signedUrl,
+      expiresAt: now + GALLERY_ASSET_SIGNED_URL_TTL_SECONDS * 1000 - 15_000,
+    });
+    return urlData.signedUrl;
+  }, []);
+
   const lightboxPhotos = useMemo(
     () =>
       filteredUploads.map((item) => {
@@ -3626,6 +3693,7 @@ export default function GalleryDetail() {
         return {
           id: item.id,
           url: item.previewUrl ?? "",
+          originalPath: item.storagePathOriginal ?? null,
           filename: item.name,
           isFavorite: isClientFavorite,
           isStarred: Boolean(item.starred),
@@ -4522,6 +4590,22 @@ export default function GalleryDetail() {
                                   </div>
                                 </Alert>
                               </div>
+                            ) : type === "final" ? (
+                              <div className="mt-6 w-full max-w-md">
+                                <Alert className="border-indigo-200/80 bg-indigo-50 text-indigo-900">
+                                  <div className="flex gap-3">
+                                    <ImageIcon className="h-5 w-5 flex-shrink-0 text-indigo-600" aria-hidden="true" />
+                                    <div className="space-y-1 text-left">
+                                      <AlertTitle className="text-sm font-semibold text-indigo-900">
+                                        {t("sessionDetail.gallery.originalsNotice.title")}
+                                      </AlertTitle>
+                                      <AlertDescription className="text-sm text-indigo-900/90">
+                                        {t("sessionDetail.gallery.originalsNotice.description")}
+                                      </AlertDescription>
+                                    </div>
+                                  </div>
+                                </Alert>
+                              </div>
                             ) : null}
 	                            <Button
 	                              variant="surface"
@@ -4653,6 +4737,7 @@ export default function GalleryDetail() {
                                       : item.status === "canceled"
                                         ? t("sessionDetail.gallery.labels.canceled", { defaultValue: "İptal edildi" })
                                         : t("sessionDetail.gallery.labels.queued", { defaultValue: "Sırada" });
+                            const showIndeterminateProgress = isFinalGallery && item.status === "uploading" && !isError;
 
                             return (
                               <div
@@ -4718,14 +4803,23 @@ export default function GalleryDetail() {
                                     </div>
                                   )}
                                   {!isDone ? (
-                                    <div className="absolute inset-x-1 bottom-1 h-1 overflow-hidden rounded-full bg-emerald-100">
-                                      <div
-                                        className={cn(
-                                          "h-full rounded-full transition-all",
-                                          isError ? "bg-destructive" : "bg-emerald-400"
-                                        )}
-                                        style={{ width: `${item.progress}%` }}
-                                      />
+                                    <div
+                                      className={cn(
+                                        "absolute inset-x-1 bottom-1 h-1 overflow-hidden rounded-full",
+                                        showIndeterminateProgress ? "bg-indigo-100" : "bg-emerald-100"
+                                      )}
+                                    >
+                                      {showIndeterminateProgress ? (
+                                        <div className="gallery-indeterminate-bar h-full w-1/3 rounded-full bg-indigo-500/80" />
+                                      ) : (
+                                        <div
+                                          className={cn(
+                                            "h-full rounded-full transition-all",
+                                            isError ? "bg-destructive" : "bg-emerald-400"
+                                          )}
+                                          style={{ width: `${item.progress}%` }}
+                                        />
+                                      )}
                                     </div>
                                   ) : null}
                                 </div>
@@ -4760,7 +4854,10 @@ export default function GalleryDetail() {
                                     )}
                                   </div>
                                   {!isDone ? (
-                                    <div className="text-[11px] text-muted-foreground">{progressLabel} · {Math.round(item.progress)}%</div>
+                                    <div className="text-[11px] text-muted-foreground">
+                                      {progressLabel}
+                                      {!showIndeterminateProgress ? ` · ${Math.round(item.progress)}%` : null}
+                                    </div>
                                   ) : null}
                                 </div>
 
@@ -4932,6 +5029,7 @@ export default function GalleryDetail() {
                                       : item.status === "canceled"
                                         ? t("sessionDetail.gallery.labels.canceled", { defaultValue: "İptal edildi" })
                                         : t("sessionDetail.gallery.labels.queued", { defaultValue: "Sırada" });
+                            const showIndeterminateProgress = isFinalGallery && item.status === "uploading" && !isError;
 
                             return (
                               <div
@@ -5183,16 +5281,21 @@ export default function GalleryDetail() {
                                   <div className="absolute bottom-0 left-0 right-0 z-10 bg-black/60 px-3 py-2 text-[11px] text-white/80 backdrop-blur-sm">
                                     <div className="flex items-center gap-2">
                                       <span className="shrink-0">
-                                        {progressLabel} · {Math.round(item.progress)}%
+                                        {progressLabel}
+                                        {!showIndeterminateProgress ? ` · ${Math.round(item.progress)}%` : null}
                                       </span>
                                       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/20">
-                                        <div
-                                          className={cn(
-                                            "h-full rounded-full transition-all",
-                                            isError ? "bg-destructive" : "bg-emerald-400"
-                                          )}
-                                          style={{ width: `${item.progress}%` }}
-                                        />
+                                        {showIndeterminateProgress ? (
+                                          <div className="gallery-indeterminate-bar h-full w-1/3 rounded-full bg-indigo-300/90" />
+                                        ) : (
+                                          <div
+                                            className={cn(
+                                              "h-full rounded-full transition-all",
+                                              isError ? "bg-destructive" : "bg-emerald-400"
+                                            )}
+                                            style={{ width: `${item.progress}%` }}
+                                          />
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -5358,6 +5461,8 @@ export default function GalleryDetail() {
         onToggleStar={handleToggleStar}
         mode="admin"
         onImageError={refreshPreviewUrl}
+        enableOriginalSwap={isFinalGallery}
+        resolveOriginalUrl={isFinalGallery ? resolveLightboxOriginalUrl : undefined}
         isSelectionsLocked={isSelectionsLocked && !isSelectionUnlockedForMe}
         readOnly={isReadOnly}
       />

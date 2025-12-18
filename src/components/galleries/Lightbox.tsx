@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { GalleryWatermarkConfig } from "@/lib/galleryWatermark";
 import { GalleryWatermarkOverlay } from "./GalleryWatermarkOverlay";
 import { MobilePhotoSelectionSheet } from "./MobilePhotoSelectionSheet";
+import { useI18nToast } from "@/lib/toastHelpers";
 import {
   Carousel,
   CarouselContent,
@@ -14,9 +15,11 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Download,
   Heart,
   ListChecks,
   ListPlus,
+  Loader2,
   PanelRightClose,
   PlusCircle,
   Share2,
@@ -45,6 +48,47 @@ export type LightboxRule = {
 };
 
 type LightboxMode = "admin" | "client";
+
+const stripFileExtension = (value: string) => value.replace(/\.[^/.]+$/, "");
+
+const getBasename = (value: string) => {
+  const withoutQuery = value.split("?")[0]?.split("#")[0] ?? value;
+  const parts = withoutQuery.split("/");
+  return parts[parts.length - 1] || withoutQuery || value;
+};
+
+const getFileExtension = (filename: string) => {
+  const match = filename.match(/\.([a-z0-9]+)$/i);
+  return match?.[1]?.toLowerCase() ?? "";
+};
+
+const buildDownloadFilename = ({ originalName, extension }: { originalName: string; extension: string }) => {
+  const base = stripFileExtension((originalName || "").trim()) || "photo";
+  const ext = (extension || "").trim().replace(/^\./, "");
+  return ext ? `${base}.${ext}` : base;
+};
+
+const buildSignedDownloadUrl = ({ signedUrl, fileName }: { signedUrl: string; fileName: string }) => {
+  try {
+    const url = new URL(signedUrl);
+    url.searchParams.set("download", fileName);
+    return url.toString();
+  } catch {
+    const separator = signedUrl.includes("?") ? "&" : "?";
+    return `${signedUrl}${separator}download=${encodeURIComponent(fileName)}`;
+  }
+};
+
+const triggerBrowserDownload = (url: string) => {
+  if (typeof document === "undefined") return;
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.rel = "noopener";
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+};
 
 // Helper to determine rule status in Lightbox
 const getLightboxRuleStatus = (
@@ -142,6 +186,7 @@ export function Lightbox({
   readOnly = false,
 }: LightboxProps) {
   const { t } = useTranslation("pages");
+  const i18nToast = useI18nToast();
   const currentPhoto = photos[currentIndex];
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileSelectionPanelOpen, setIsMobileSelectionPanelOpen] = useState(false);
@@ -170,6 +215,52 @@ export function Lightbox({
     Boolean(activeRule && activeRuleIsFull && !isSelectedForActiveRule) || isSelectionsLocked || readOnly;
   const hasSelections = (currentPhoto?.selections.length ?? 0) > 0;
   const isFavoriteToggleDisabled = readOnly || (mode === "client" && isSelectionsLocked);
+  const [downloadPhotoId, setDownloadPhotoId] = useState<string | null>(null);
+  const shouldDownloadOriginal = enableOriginalSwap && typeof resolveOriginalUrl === "function";
+  const downloadButtonLabel =
+    mode === "client" && shouldDownloadOriginal
+      ? t("sessionDetail.gallery.lightbox.actions.downloadOriginal")
+      : t("sessionDetail.gallery.lightbox.actions.download");
+  const isDownloadInProgress = mode === "client" && downloadPhotoId === currentPhoto?.id;
+
+  const handleDownload = useCallback(async () => {
+    if (mode !== "client") return;
+    const photo = photos[currentIndex];
+    if (!photo) return;
+    if (!photo.url && !photo.originalPath) return;
+
+    const downloadId = photo.id;
+    setDownloadPhotoId(downloadId);
+
+    try {
+      if (shouldDownloadOriginal) {
+        const signedOriginalUrl =
+          originalUrlByIdRef.current.get(downloadId) ?? (await resolveOriginalUrl?.(photo)) ?? "";
+        if (!signedOriginalUrl) {
+          i18nToast.error(t("sessionDetail.gallery.lightbox.toast.downloadFailed"), { duration: 2500 });
+          return;
+        }
+
+        const extension = getFileExtension(getBasename(photo.originalPath ?? "")) || getFileExtension(getBasename(signedOriginalUrl));
+        const fileName = buildDownloadFilename({ originalName: photo.filename, extension });
+        triggerBrowserDownload(buildSignedDownloadUrl({ signedUrl: signedOriginalUrl, fileName }));
+        return;
+      }
+
+      if (!photo.url) {
+        i18nToast.error(t("sessionDetail.gallery.lightbox.toast.downloadFailed"), { duration: 2500 });
+        return;
+      }
+
+      const extension = getFileExtension(getBasename(photo.url)) || getFileExtension(photo.filename);
+      const fileName = buildDownloadFilename({ originalName: photo.filename, extension });
+      triggerBrowserDownload(buildSignedDownloadUrl({ signedUrl: photo.url, fileName }));
+    } catch {
+      i18nToast.error(t("sessionDetail.gallery.lightbox.toast.downloadFailed"), { duration: 2500 });
+    } finally {
+      setDownloadPhotoId((current) => (current === downloadId ? null : current));
+    }
+  }, [currentIndex, i18nToast, mode, photos, resolveOriginalUrl, shouldDownloadOriginal, t]);
 
   const handleMobileSwipeTouchStart = useMemo(
     () => (event: React.TouchEvent<HTMLElement>) => {
@@ -618,24 +709,12 @@ export function Lightbox({
               <span className="min-w-0 flex-1 text-sm opacity-60 font-mono truncate">{currentPhoto.filename}</span>
             </div>
 
-            <div className="flex items-center gap-4 shrink-0">
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label={t("sessionDetail.gallery.lightbox.close")}
-                className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-colors text-white/90"
-              >
-                <span className="text-sm font-medium hidden sm:inline uppercase tracking-wide">
-                  {t("sessionDetail.gallery.lightbox.close")}
-                </span>
-                <X size={24} />
-              </button>
-
-              {!isSidebarOpen ? (
-                <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4">
-                  {mode === "client" && activeRule ? (
-                    <button
-                      type="button"
+	            <div className="flex items-center gap-4 shrink-0">
+	              {!isSidebarOpen ? (
+	                <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4">
+	                  {mode === "client" && activeRule ? (
+	                    <button
+	                      type="button"
                       onClick={() => !isActiveRuleDisabled && onToggleRule(currentPhoto.id, activeRule.id)}
                       disabled={isActiveRuleDisabled}
                       className={`flex items-center gap-2 px-5 py-2 rounded-full font-bold text-sm transition-all shadow-lg hidden sm:flex disabled:opacity-50 disabled:cursor-not-allowed ${isSelectedForActiveRule
@@ -679,11 +758,41 @@ export function Lightbox({
                         {currentPhoto.selections.length}
                       </span>
                     ) : null}
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          </div>
+	                  </button>
+	                </div>
+	              ) : null}
+
+	              {mode === "client" ? (
+	                <button
+	                  type="button"
+	                  onClick={handleDownload}
+	                  disabled={isDownloadInProgress}
+	                  aria-label={downloadButtonLabel}
+	                  title={downloadButtonLabel}
+	                  className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-colors text-white/90 disabled:opacity-60 disabled:cursor-wait"
+	                >
+	                  <span className="text-sm font-medium hidden sm:inline uppercase tracking-wide">
+	                    {isDownloadInProgress
+	                      ? t("sessionDetail.gallery.lightbox.actions.downloadPreparing")
+	                      : downloadButtonLabel}
+	                  </span>
+	                  {isDownloadInProgress ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+	                </button>
+	              ) : null}
+
+	              <button
+	                type="button"
+	                onClick={onClose}
+	                aria-label={t("sessionDetail.gallery.lightbox.close")}
+	                className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-colors text-white/90"
+	              >
+	                <span className="text-sm font-medium hidden sm:inline uppercase tracking-wide">
+	                  {t("sessionDetail.gallery.lightbox.close")}
+	                </span>
+	                <X size={24} />
+	              </button>
+	            </div>
+	          </div>
 
           <button
             type="button"

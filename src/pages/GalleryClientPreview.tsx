@@ -25,6 +25,7 @@ import {
   CheckCircle2,
   ChevronDown,
   CircleDashed,
+  Download,
   Grid3x3,
   Heart,
   Image as ImageIcon,
@@ -1456,6 +1457,12 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     return urlData.signedUrl;
   }, []);
 
+  const handleBulkDownloadClick = useCallback(() => {
+    i18nToast.info(t("sessionDetail.gallery.clientPreview.toast.bulkDownloadSoon"), {
+      duration: 2500,
+    });
+  }, [i18nToast, t]);
+
   const handleExit = useCallback(() => {
     if (routeGalleryId) {
       navigate(`/galleries/${routeGalleryId}`);
@@ -2394,6 +2401,15 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
             </button>
 
             {/* Grid Size Controls */}
+            <button
+              type="button"
+              onClick={handleBulkDownloadClick}
+              className="hidden lg:flex items-center justify-center bg-gray-100 text-gray-700 rounded-lg p-2 hover:bg-gray-200 transition-colors"
+              aria-label={t("sessionDetail.gallery.clientPreview.actions.downloadAll")}
+              title={t("sessionDetail.gallery.clientPreview.actions.downloadAll")}
+            >
+              <Download size={16} aria-hidden="true" />
+            </button>
             <div className="hidden lg:flex items-center bg-gray-100 rounded-lg p-1 mr-2">
               <button
                 type="button"

@@ -908,6 +908,7 @@
           "inspect": "Inspect",
           "closeMenu": "Close menu",
           "closeViewer": "Close photo",
+          "downloadAll": "Download all",
           "addToFavorites": "Add to favorites",
           "removeFromFavorites": "Remove from favorites",
           "gridLarge": "Large grid",
@@ -980,6 +981,7 @@
         "toast": {
           "favoritesAdded": "Added to favorites",
           "favoritesRemoved": "Removed from favorites",
+          "bulkDownloadSoon": "Bulk download is coming soon.",
           "selectionsLocked": "Selections are finalized and cannot be changed."
         },
         "empty": {
@@ -1111,6 +1113,11 @@
         "next": "Next",
         "noPreview": "No preview available",
         "limitFull": "Limit full",
+        "actions": {
+          "download": "Download",
+          "downloadOriginal": "Download original",
+          "downloadPreparing": "Preparing..."
+        },
         "quickAdd": {
           "add": "Add to {{rule}}",
           "added": "Added to {{rule}}"
@@ -1125,6 +1132,9 @@
           "favorite": "Favorite",
           "add": "Add",
           "share": "Share"
+        },
+        "toast": {
+          "downloadFailed": "Couldn't download photo. Please try again."
         },
         "sidebar": {
           "client": {

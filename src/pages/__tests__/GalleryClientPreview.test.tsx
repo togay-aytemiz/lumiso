@@ -557,8 +557,15 @@ describe("GalleryClientPreview", () => {
     render(<GalleryClientPreview />);
 
     expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^(all|tümü)$/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /favorites|favoriler/i })).not.toBeInTheDocument();
+    const allToggles = screen
+      .queryAllByRole("button", { name: /^(all|tümü)$/i })
+      .filter((button) => button.getAttribute("data-touch-target") === "compact");
+    expect(allToggles).toHaveLength(0);
+
+    const favoritesToggles = screen
+      .queryAllByRole("button", { name: /favorites|favoriler/i })
+      .filter((button) => button.getAttribute("data-touch-target") === "compact");
+    expect(favoritesToggles).toHaveLength(0);
   });
 
   it("defaults to all and shows toggles for final galleries when favorites exist", async () => {
@@ -615,10 +622,24 @@ describe("GalleryClientPreview", () => {
 
     expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
 
-    const allButton = await screen.findByRole("button", { name: /^(all|tümü)$/i });
+    const allButton = await waitFor(() => {
+      const candidates = screen.getAllByRole("button", { name: /^(all|tümü)$/i });
+      const toggle = candidates.find((button) => button.getAttribute("data-touch-target") === "compact");
+      if (!toggle) {
+        throw new Error("Missing all toggle");
+      }
+      return toggle;
+    });
     expect(allButton).toHaveAttribute("aria-current", "page");
 
-    const favoritesButton = screen.getByRole("button", { name: /favorites|favoriler/i });
+    const favoritesButton = await waitFor(() => {
+      const candidates = screen.getAllByRole("button", { name: /favorites|favoriler/i });
+      const toggle = candidates.find((button) => button.getAttribute("data-touch-target") === "compact");
+      if (!toggle) {
+        throw new Error("Missing favorites toggle");
+      }
+      return toggle;
+    });
     expect(favoritesButton).not.toHaveAttribute("aria-current", "page");
   });
 

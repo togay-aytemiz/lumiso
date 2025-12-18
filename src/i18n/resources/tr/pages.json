@@ -923,6 +923,7 @@
           "inspect": "İncele",
           "closeMenu": "Menüyü kapat",
           "closeViewer": "Fotoğrafı kapat",
+          "downloadAll": "Hepsini indir",
           "addToFavorites": "Favorilere Ekle",
           "removeFromFavorites": "Favorilerden Çıkar",
           "completeSelection": "Seçimi Tamamla",
@@ -996,6 +997,7 @@
         "toast": {
           "favoritesAdded": "Favorilere eklendi",
           "favoritesRemoved": "Favorilerden çıkarıldı",
+          "bulkDownloadSoon": "Toplu indirme yakında.",
           "selectionsLocked": "Seçimler kesinleştirildi, artık değiştirilemez."
         },
         "empty": {
@@ -1127,6 +1129,11 @@
         "next": "Sonraki",
         "noPreview": "Önizleme yok",
         "limitFull": "Limit dolu",
+        "actions": {
+          "download": "İndir",
+          "downloadOriginal": "Orijinali indir",
+          "downloadPreparing": "Hazırlanıyor..."
+        },
         "quickAdd": {
           "add": "{{rule}}'e Ekle",
           "added": "{{rule}}'e Eklendi"
@@ -1141,6 +1148,9 @@
           "favorite": "Favori",
           "add": "Ekle",
           "share": "Paylaş"
+        },
+        "toast": {
+          "downloadFailed": "Fotoğraf indirilemedi. Lütfen tekrar deneyin."
         },
         "sidebar": {
           "client": {

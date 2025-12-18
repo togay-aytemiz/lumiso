@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@/utils/testUtils";
+import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { Lightbox } from "../Lightbox";
 
 describe("Lightbox", () => {
@@ -325,7 +325,128 @@ describe("Lightbox", () => {
       />
     );
 
-    expect(screen.getByText(/photo|fotoğraf/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /photo|fotoğraf/i })).toBeInTheDocument();
     expect(screen.queryByText(/add to lists|listelere ekle/i)).not.toBeInTheDocument();
+  });
+
+  it("shows download button in client mode and downloads preview url", () => {
+    const appendChildSpy = jest.spyOn(document.body, "appendChild");
+    const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+
+    render(
+      <Lightbox
+        isOpen
+        onClose={jest.fn()}
+        photos={[
+          {
+            id: "photo-1",
+            url: "https://example.com/1.jpg",
+            filename: "1.jpg",
+            isFavorite: false,
+            isStarred: false,
+            selections: [],
+          },
+        ]}
+        currentIndex={0}
+        onNavigate={jest.fn()}
+        rules={[]}
+        onToggleRule={jest.fn()}
+        onToggleStar={jest.fn()}
+        mode="client"
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /download|indir/i }));
+
+    const anchorNode = appendChildSpy.mock.calls
+      .map(([node]) => node)
+      .find((node) => node instanceof HTMLAnchorElement) as HTMLAnchorElement | undefined;
+
+    expect(anchorNode?.href).toContain("https://example.com/1.jpg");
+    expect(anchorNode?.href).toContain("download=");
+    expect(clickSpy).toHaveBeenCalled();
+
+    appendChildSpy.mockRestore();
+    clickSpy.mockRestore();
+  });
+
+  it("downloads original url when enableOriginalSwap is set", async () => {
+    const appendChildSpy = jest.spyOn(document.body, "appendChild");
+    const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const resolveOriginalUrl = jest
+      .fn()
+      .mockResolvedValue("https://example.com/original.jpg?token=abc");
+
+    render(
+      <Lightbox
+        isOpen
+        onClose={jest.fn()}
+        photos={[
+          {
+            id: "photo-1",
+            url: "https://example.com/preview.webp?token=xyz",
+            originalPath: "bucket/original/photo-1.jpg",
+            filename: "photo-1.webp",
+            isFavorite: false,
+            isStarred: false,
+            selections: [],
+          },
+        ]}
+        currentIndex={0}
+        onNavigate={jest.fn()}
+        rules={[]}
+        onToggleRule={jest.fn()}
+        onToggleStar={jest.fn()}
+        mode="client"
+        enableOriginalSwap
+        resolveOriginalUrl={resolveOriginalUrl}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /download original|orijinali indir/i }));
+
+    await waitFor(() => {
+      expect(resolveOriginalUrl).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "photo-1" })
+      );
+    });
+
+    const anchorNode = appendChildSpy.mock.calls
+      .map(([node]) => node)
+      .find((node) => node instanceof HTMLAnchorElement) as HTMLAnchorElement | undefined;
+
+    expect(anchorNode?.href).toContain("https://example.com/original.jpg");
+    expect(anchorNode?.href).toContain("download=");
+    expect(clickSpy).toHaveBeenCalled();
+
+    appendChildSpy.mockRestore();
+    clickSpy.mockRestore();
+  });
+
+  it("does not show download button in admin mode", () => {
+    render(
+      <Lightbox
+        isOpen
+        onClose={jest.fn()}
+        photos={[
+          {
+            id: "photo-1",
+            url: "https://example.com/1.jpg",
+            filename: "1.jpg",
+            isFavorite: false,
+            isStarred: false,
+            selections: [],
+          },
+        ]}
+        currentIndex={0}
+        onNavigate={jest.fn()}
+        rules={[]}
+        onToggleRule={jest.fn()}
+        onToggleStar={jest.fn()}
+        mode="admin"
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /download|indir/i })).not.toBeInTheDocument();
   });
 });

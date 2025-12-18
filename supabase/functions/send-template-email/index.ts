@@ -1851,4 +1851,6 @@ async function sendSimpleTextEmail(
   );
 }
 
-serve(handler);
+if (import.meta.main) {
+  serve(handler);
+}

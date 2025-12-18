@@ -622,4 +622,6 @@ export const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-serve(handler);
+if (import.meta.main) {
+  serve(handler);
+}

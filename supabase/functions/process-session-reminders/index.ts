@@ -256,4 +256,6 @@ export async function processScheduledReminders(supabase: SupabaseClient) {
   return { processed, triggered, failed };
 }
 
-serve(handler);
+if (import.meta.main) {
+  serve(handler);
+}

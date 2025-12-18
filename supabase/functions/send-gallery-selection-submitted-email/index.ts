@@ -471,7 +471,7 @@ export const handler = async (
 
     const fromName = normalizeText(orgSettingsData?.photography_business_name) || "Lumiso";
     const generalEmail = normalizeText(orgSettingsData?.email);
-    const fromAddress = `Lumiso <daily-summary@lumiso.app>`;
+    const fromAddress = `Lumiso <hello@updates.lumiso.app>`;
 
     const resendClient = deps.resendClient ?? resend;
     const results: Array<{ userId: string; email: string; sent: boolean; error?: string }> = [];

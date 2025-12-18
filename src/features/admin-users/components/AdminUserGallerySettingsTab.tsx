@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Archive, Loader2, MoreVertical, RotateCcw, Trash2, ArrowUpRight } from "lucide-react";
+import { Archive, Eye, Loader2, RotateCcw, Trash2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { ORG_GALLERY_STORAGE_LIMIT_BYTES } from "@/lib/storageLimits";
@@ -18,13 +18,6 @@ import { StorageWidget } from "@/components/ui/storage-widget";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { GalleryStatusChip, type GalleryStatus } from "@/components/galleries/GalleryStatusChip";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -34,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContentDark, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type StorageUnit = "gb" | "mb";
 
@@ -367,101 +361,118 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
   }, [archiveMutation, pendingArchiveGallery?.id]);
 
   const galleryColumns = useMemo<Column<AdminGalleryListItem>[]>(
-    () => [
-      {
-        key: "title",
-        header: t("admin.users.detail.gallery.galleries.columns.title"),
-        sortable: true,
-        render: (row) => row.title || "—",
-      },
-      {
-        key: "status",
-        header: t("admin.users.detail.gallery.galleries.columns.status"),
-        sortable: true,
-        render: (row) => <GalleryStatusChip status={row.status} />,
-      },
-      {
-        key: "leadName",
-        header: t("admin.users.detail.gallery.galleries.columns.lead"),
-        sortable: true,
-        render: (row) => row.leadName || "—",
-      },
-      {
-        key: "galleryBytes",
-        header: t("admin.users.detail.gallery.galleries.columns.size"),
-        sortable: true,
-        render: (row) => formatBytes(row.galleryBytes, locale),
-      },
-      {
-        key: "actions",
-        header: t("admin.users.detail.gallery.galleries.columns.actions"),
-        render: (row) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label={t("admin.users.detail.gallery.galleries.columns.actions")}
-                disabled={isSaving || isMutating}
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                className="gap-2"
-                onSelect={(event) => {
-                  event.preventDefault();
-                  void handlePreview(row.id);
-                }}
-                disabled={isSaving || isMutating}
-              >
-                <ArrowUpRight className="h-4 w-4" />
-                {t("sessionDetail.gallery.actions.preview")}
-              </DropdownMenuItem>
-              {row.status === "archived" ? (
-                <DropdownMenuItem
-                  className="gap-2"
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    void handleToggleArchive(row);
-                  }}
-                  disabled={isSaving || isMutating}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  {t("sessionDetail.gallery.actions.restore")}
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  className="gap-2"
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    openArchiveGuard(row);
-                  }}
-                  disabled={isSaving || isMutating}
-                >
-                  <Archive className="h-4 w-4" />
-                  {t("sessionDetail.gallery.actions.archive")}
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
-                onSelect={(event) => {
-                  event.preventDefault();
-                  openDeleteGuard(row);
-                }}
-                disabled={isSaving || isMutating}
-              >
-                <Trash2 className="h-4 w-4" />
-                {t("sessionDetail.gallery.actions.delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
-      },
-    ],
+    () => {
+      const previewLabel = t("sessionDetail.gallery.actions.preview");
+      const archiveLabel = t("sessionDetail.gallery.actions.archive");
+      const restoreLabel = t("sessionDetail.gallery.actions.restore");
+      const deleteLabel = t("sessionDetail.gallery.actions.delete");
+
+      return [
+        {
+          key: "title",
+          header: t("admin.users.detail.gallery.galleries.columns.title"),
+          sortable: true,
+          render: (row) => row.title || "—",
+        },
+        {
+          key: "status",
+          header: t("admin.users.detail.gallery.galleries.columns.status"),
+          sortable: true,
+          render: (row) => <GalleryStatusChip status={row.status} />,
+        },
+        {
+          key: "leadName",
+          header: t("admin.users.detail.gallery.galleries.columns.lead"),
+          sortable: true,
+          render: (row) => row.leadName || "—",
+        },
+        {
+          key: "galleryBytes",
+          header: t("admin.users.detail.gallery.galleries.columns.size"),
+          sortable: true,
+          render: (row) => formatBytes(row.galleryBytes, locale),
+        },
+        {
+          key: "actions",
+          header: t("admin.users.detail.gallery.galleries.columns.actions"),
+          render: (row) => {
+            const disabled = isSaving || isMutating;
+            const isArchived = row.status === "archived";
+
+            return (
+              <div className="flex items-center justify-end gap-1">
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={previewLabel}
+                      disabled={disabled}
+                      onClick={() => void handlePreview(row.id)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContentDark side="top">{previewLabel}</TooltipContentDark>
+                </Tooltip>
+
+                {isArchived ? (
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={restoreLabel}
+                        disabled={disabled}
+                        onClick={() => void handleToggleArchive(row)}
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContentDark side="top">{restoreLabel}</TooltipContentDark>
+                  </Tooltip>
+                ) : (
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={archiveLabel}
+                        disabled={disabled}
+                        onClick={() => openArchiveGuard(row)}
+                      >
+                        <Archive className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContentDark side="top">{archiveLabel}</TooltipContentDark>
+                  </Tooltip>
+                )}
+
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={deleteLabel}
+                      disabled={disabled}
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => openDeleteGuard(row)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContentDark side="top">{deleteLabel}</TooltipContentDark>
+                </Tooltip>
+              </div>
+            );
+          },
+        },
+      ];
+    },
     [handlePreview, handleToggleArchive, isMutating, isSaving, locale, openArchiveGuard, openDeleteGuard, t]
   );
 
@@ -546,17 +557,19 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
               {t("admin.users.detail.gallery.galleries.error")}
             </p>
           ) : (
-            <DataTable
-              data={galleries}
-              columns={galleryColumns}
-              itemsPerPage={8}
-              className="max-w-full overflow-x-auto"
-              emptyState={
-                <span className="text-sm text-muted-foreground">
-                  {t("admin.users.detail.gallery.galleries.empty")}
-                </span>
-              }
-            />
+            <TooltipProvider delayDuration={0}>
+              <DataTable
+                data={galleries}
+                columns={galleryColumns}
+                itemsPerPage={8}
+                className="max-w-full overflow-x-auto"
+                emptyState={
+                  <span className="text-sm text-muted-foreground">
+                    {t("admin.users.detail.gallery.galleries.empty")}
+                  </span>
+                }
+              />
+            </TooltipProvider>
           )}
         </CardContent>
       </Card>

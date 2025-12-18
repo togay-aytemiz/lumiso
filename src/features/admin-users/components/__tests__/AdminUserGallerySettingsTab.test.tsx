@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
+import { fireEvent, render, screen, waitFor, within } from "@/utils/testUtils";
 import i18n from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18nToast } from "@/lib/toastHelpers";
@@ -123,14 +123,12 @@ describe("AdminUserGallerySettingsTab", () => {
 
     expect(await screen.findByText("Client One")).toBeInTheDocument();
 
-    const actionsButton = screen.getByRole("button", { name: "Actions" });
-    actionsButton.focus();
-    fireEvent.keyDown(actionsButton, { key: "Enter", code: "Enter" });
-    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete gallery" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete gallery" }));
 
     expect(await screen.findByRole("heading", { name: "Delete gallery" })).toBeInTheDocument();
 
-    const confirmButton = screen.getByRole("button", { name: "Delete gallery" });
+    const dialog = await screen.findByRole("alertdialog");
+    const confirmButton = within(dialog).getByRole("button", { name: "Delete gallery" });
     expect(confirmButton).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText("Type the gallery name to delete"), {

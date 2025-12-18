@@ -194,6 +194,10 @@ export function Lightbox({
   const [originalUrlVersion, setOriginalUrlVersion] = useState(0);
   const originalUrlByIdRef = useRef<Map<string, string>>(new Map());
   const originalUrlInFlightRef = useRef<Set<string>>(new Set());
+  const shareFileByIdRef = useRef<Map<string, File>>(new Map());
+  const shareFileIdOrderRef = useRef<string[]>([]);
+  const shareFileAbortControllerByIdRef = useRef<Map<string, AbortController>>(new Map());
+  const shareHintToastShownRef = useRef(false);
 
   // Carousel State
   const [mobileApi, setMobileApi] = useState<CarouselApi>();
@@ -217,11 +221,17 @@ export function Lightbox({
   const isFavoriteToggleDisabled = readOnly || (mode === "client" && isSelectionsLocked);
   const [downloadPhotoId, setDownloadPhotoId] = useState<string | null>(null);
   const shouldDownloadOriginal = enableOriginalSwap && typeof resolveOriginalUrl === "function";
-  const downloadButtonLabel =
-    mode === "client" && shouldDownloadOriginal
-      ? t("sessionDetail.gallery.lightbox.actions.downloadOriginal")
-      : t("sessionDetail.gallery.lightbox.actions.download");
+  const downloadButtonLabel = t("sessionDetail.gallery.lightbox.actions.download");
   const isDownloadInProgress = mode === "client" && downloadPhotoId === currentPhoto?.id;
+
+  useEffect(() => {
+    if (isOpen) return;
+    shareFileAbortControllerByIdRef.current.forEach((controller) => controller.abort());
+    shareFileAbortControllerByIdRef.current.clear();
+    shareFileByIdRef.current.clear();
+    shareFileIdOrderRef.current = [];
+    shareHintToastShownRef.current = false;
+  }, [isOpen]);
 
   const handleDownload = useCallback(async () => {
     if (mode !== "client") return;
@@ -261,6 +271,74 @@ export function Lightbox({
       setDownloadPhotoId((current) => (current === downloadId ? null : current));
     }
   }, [currentIndex, i18nToast, mode, photos, resolveOriginalUrl, shouldDownloadOriginal, t]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (mode !== "client") return;
+    if (typeof navigator === "undefined" || typeof navigator.share !== "function") return;
+    if (typeof window === "undefined") return;
+    const isMobileViewport =
+      typeof window.matchMedia === "function" ? window.matchMedia("(max-width: 767px)").matches : window.innerWidth < 768;
+    if (!isMobileViewport) return;
+    if (typeof fetch !== "function" || typeof File !== "function") return;
+
+    const photo = photos[currentIndex];
+    if (!photo) return;
+    if (shareFileByIdRef.current.has(photo.id)) return;
+    if (shareFileAbortControllerByIdRef.current.has(photo.id)) return;
+
+    const controller = new AbortController();
+    shareFileAbortControllerByIdRef.current.set(photo.id, controller);
+
+    let cancelled = false;
+
+    const prefetchShareFile = async () => {
+      const shouldShareOriginal = shouldDownloadOriginal && Boolean(photo.originalPath);
+      const shareSourceUrl = shouldShareOriginal
+        ? originalUrlByIdRef.current.get(photo.id) ?? (await resolveOriginalUrl?.(photo)) ?? ""
+        : photo.url;
+
+      if (!shareSourceUrl) return;
+
+      const response = await fetch(shareSourceUrl, { signal: controller.signal });
+      if (!response.ok) return;
+      const blob = await response.blob();
+      if (cancelled) return;
+
+      const extension = shouldShareOriginal
+        ? getFileExtension(getBasename(photo.originalPath ?? "")) || getFileExtension(getBasename(shareSourceUrl))
+        : getFileExtension(getBasename(photo.url)) || getFileExtension(photo.filename);
+      const fileName = buildDownloadFilename({ originalName: photo.filename, extension });
+      const file = new File([blob], fileName, {
+        type: blob.type || "application/octet-stream",
+      });
+
+      shareFileByIdRef.current.set(photo.id, file);
+
+      const maxCachedFiles = shouldShareOriginal ? 1 : 3;
+      const nextOrder = shareFileIdOrderRef.current.filter((id) => id !== photo.id);
+      nextOrder.push(photo.id);
+      while (nextOrder.length > maxCachedFiles) {
+        const evictedId = nextOrder.shift();
+        if (evictedId) shareFileByIdRef.current.delete(evictedId);
+      }
+      shareFileIdOrderRef.current = nextOrder;
+    };
+
+    void prefetchShareFile()
+      .catch(() => {
+        // fall back to URL share / long-press
+      })
+      .finally(() => {
+        shareFileAbortControllerByIdRef.current.delete(photo.id);
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      shareFileAbortControllerByIdRef.current.delete(photo.id);
+    };
+  }, [currentIndex, isOpen, mode, photos, resolveOriginalUrl, shouldDownloadOriginal]);
 
   const handleMobileSwipeTouchStart = useMemo(
     () => (event: React.TouchEvent<HTMLElement>) => {
@@ -463,61 +541,61 @@ export function Lightbox({
   const desktopContainerClassName = `fixed inset-0 z-[200] ${mode === "client" ? "hidden md:flex" : "flex"
     } bg-black/95 backdrop-blur-sm text-white`;
 
-  const handleShare = async () => {
-    const pageUrl = typeof window !== "undefined" ? window.location.href : "";
+  const handleShare = () => {
     const photo = photos[currentIndex];
     if (!photo) return;
+    const pageUrl = typeof window !== "undefined" ? window.location.href : "";
+    const shouldShareOriginal = shouldDownloadOriginal && Boolean(photo.originalPath);
+    const fallbackUrl =
+      (shouldShareOriginal ? originalUrlByIdRef.current.get(photo.id) : null) ?? photo.url ?? pageUrl ?? "";
+
+    const showLongPressHintOnce = () => {
+      if (shareHintToastShownRef.current) return;
+      shareHintToastShownRef.current = true;
+      i18nToast.info(t("sessionDetail.gallery.lightbox.toast.shareHint"), { duration: 3500 });
+    };
 
     const canNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
     if (canNativeShare) {
+      const file = shareFileByIdRef.current.get(photo.id);
       const canShareFiles = typeof navigator.canShare === "function";
-      const shouldShareOriginal = shouldDownloadOriginal;
-      const shareSourceUrl = shouldShareOriginal
-        ? originalUrlByIdRef.current.get(photo.id) ?? (await resolveOriginalUrl?.(photo)) ?? ""
-        : photo.url;
 
-      if (shareSourceUrl && typeof fetch === "function" && typeof File === "function") {
-        try {
-          const response = await fetch(shareSourceUrl);
-          if (response.ok) {
-            const blob = await response.blob();
-            const extension = shouldShareOriginal
-              ? getFileExtension(getBasename(photo.originalPath ?? "")) || getFileExtension(getBasename(shareSourceUrl))
-              : getFileExtension(getBasename(photo.url)) || getFileExtension(photo.filename);
-            const fileName = buildDownloadFilename({ originalName: photo.filename, extension });
-            const file = new File([blob], fileName, {
-              type: blob.type || "application/octet-stream",
-            });
-
-            if (!canShareFiles || navigator.canShare({ files: [file] })) {
-              await navigator.share({
-                files: [file],
-                title: stripFileExtension(photo.filename) || fileName,
-              });
-              return;
-            }
-          }
-        } catch {
-          // fall back to URL sharing
-        }
+      if (file && (!canShareFiles || navigator.canShare({ files: [file] }))) {
+        void navigator
+          .share({
+            files: [file],
+            title: stripFileExtension(photo.filename) || file.name,
+          })
+          .catch(() => {
+            // ignore share cancellations
+          });
+        return;
       }
 
-      if (pageUrl) {
-        try {
-          await navigator.share({ url: pageUrl });
-          return;
-        } catch {
+      if (fallbackUrl) {
+        void navigator.share({ url: fallbackUrl }).catch(() => {
           // ignore share cancellations
-        }
+        });
+        if (!file) showLongPressHintOnce();
+        return;
       }
+    }
+
+    if (fallbackUrl && typeof window !== "undefined") {
+      try {
+        window.open(fallbackUrl, "_blank", "noopener,noreferrer");
+      } catch {
+        // ignore pop-up blockers
+      }
+      showLongPressHintOnce();
+      return;
     }
 
     if (!pageUrl) return;
-    try {
-      await navigator.clipboard.writeText(pageUrl);
-    } catch {
+    if (typeof navigator === "undefined") return;
+    void navigator.clipboard?.writeText(pageUrl)?.catch(() => {
       // ignore clipboard failures
-    }
+    });
   };
 
   const shouldRenderMobileAddButton = hasSelectionRules && !isSelectionsLocked && !readOnly;

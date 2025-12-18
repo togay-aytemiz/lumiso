@@ -1134,7 +1134,8 @@
           "share": "Share"
         },
         "toast": {
-          "downloadFailed": "Couldn't download photo. Please try again."
+          "downloadFailed": "Couldn't download photo. Please try again.",
+          "shareHint": "Tip: Press and hold the photo to save or share it."
         },
         "sidebar": {
           "client": {

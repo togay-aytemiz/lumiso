@@ -403,7 +403,7 @@ describe("Lightbox", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /download original|orijinali indir/i }));
+    fireEvent.click(screen.getByRole("button", { name: /download|indir/i }));
 
     await waitFor(() => {
       expect(resolveOriginalUrl).toHaveBeenCalledWith(

@@ -1150,7 +1150,8 @@
           "share": "Paylaş"
         },
         "toast": {
-          "downloadFailed": "Fotoğraf indirilemedi. Lütfen tekrar deneyin."
+          "downloadFailed": "Fotoğraf indirilemedi. Lütfen tekrar deneyin.",
+          "shareHint": "İpucu: Kaydetmek veya paylaşmak için fotoğrafa basılı tutun."
         },
         "sidebar": {
           "client": {

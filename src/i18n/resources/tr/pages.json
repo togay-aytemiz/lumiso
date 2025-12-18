@@ -1149,9 +1149,11 @@
           "add": "Ekle",
           "share": "Paylaş"
         },
+        "mobileHint": {
+          "longPressToShare": "Paylaşmak ya da kaydetmek için fotoğrafa basılı tutun."
+        },
         "toast": {
-          "downloadFailed": "Fotoğraf indirilemedi. Lütfen tekrar deneyin.",
-          "shareHint": "İpucu: Kaydetmek veya paylaşmak için fotoğrafa basılı tutun."
+          "downloadFailed": "Fotoğraf indirilemedi. Lütfen tekrar deneyin."
         },
         "sidebar": {
           "client": {

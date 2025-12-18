@@ -1133,9 +1133,11 @@
           "add": "Add",
           "share": "Share"
         },
+        "mobileHint": {
+          "longPressToShare": "Press and hold the photo to share or save."
+        },
         "toast": {
-          "downloadFailed": "Couldn't download photo. Please try again.",
-          "shareHint": "Tip: Press and hold the photo to save or share it."
+          "downloadFailed": "Couldn't download photo. Please try again."
         },
         "sidebar": {
           "client": {

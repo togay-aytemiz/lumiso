@@ -1671,20 +1671,20 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
               onClick={() => openViewer(photo.id)}
               className="overflow-hidden rounded-sm bg-gray-100 relative cursor-pointer"
             >
-              {photo.url && !brokenPhotoIds.has(photo.id) ? (
-                <img
-                  src={photo.url}
-                  alt={photo.filename}
-                  width={photo.width && photo.width > 0 ? photo.width : 3}
-                  height={photo.height && photo.height > 0 ? photo.height : 4}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
-                  onError={() => handleAssetImageError(photo.id)}
-                />
-              ) : (
-                <div className="w-full aspect-[3/4] bg-gray-200 flex items-center justify-center text-gray-500">
-                  <ImageIcon size={32} />
+                {photo.url && !brokenPhotoIds.has(photo.id) ? (
+                  <img
+                    src={photo.url}
+                    alt={photo.filename}
+                    width={photo.width && photo.width > 0 ? photo.width : 3}
+                    height={photo.height && photo.height > 0 ? photo.height : 4}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-auto object-cover transition-transform duration-500 md:group-hover:scale-105"
+                    onError={() => handleAssetImageError(photo.id)}
+                  />
+                ) : (
+                  <div className="w-full aspect-[3/4] bg-gray-200 flex items-center justify-center text-gray-500">
+                    <ImageIcon size={32} />
                 </div>
               )}
 
@@ -1732,12 +1732,12 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                             setActiveMenuId(isMenuOpen ? null : photo.id);
                           }}
                           className={`hidden md:flex h-9 px-3 rounded-full items-center justify-center gap-2 shadow-sm backdrop-blur-md transition-all duration-200 border
-	                        ${isSelectionsLocked
+                          ${isSelectionsLocked
                               ? "bg-gray-700/50 text-white/50 border-transparent cursor-not-allowed"
                               : hasSelections
                                 ? "bg-brand-600 text-white border-brand-500 hover:bg-brand-700 hover:scale-105"
                                 : "bg-white/90 text-gray-700 border-white/50 hover:bg-white hover:text-gray-900 hover:scale-105"}
-	                      `}
+                        `}
                         >
                           {isSelectionsLocked ? (
                             <>
@@ -1798,12 +1798,12 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                                 }}
                                 disabled={isDisabled}
                                 className={`relative w-full flex items-start justify-between gap-3 px-4 py-3 rounded-xl text-sm transition-all border text-left group
-	                                  ${isSelected
+                                    ${isSelected
                                     ? "bg-sky-50 border-sky-200 text-sky-900"
                                     : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50"
                                   }
-	                                  ${isDisabled ? "opacity-50 cursor-not-allowed bg-gray-50" : ""}
-	                                `}
+                                    ${isDisabled ? "opacity-50 cursor-not-allowed bg-gray-50" : ""}
+                                  `}
                               >
                                 <span
                                   className={`absolute top-2 right-3 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${rule.required
@@ -1842,11 +1842,11 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                                 <div className="shrink-0 pt-6">
                                   <div
                                     className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
-	                                      ${isSelected
+                                        ${isSelected
                                         ? "bg-sky-500 text-white shadow-sm shadow-sky-200"
                                         : "bg-gray-100 text-gray-300 group-hover:bg-white group-hover:border group-hover:border-gray-200"
                                       }
-	                                    `}
+                                      `}
                                   >
                                     {isSelected ? <Check size={14} strokeWidth={3} /> : <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />}
                                   </div>
@@ -1886,22 +1886,22 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                   </div>
                 ) : null}
 
-                {favoritesEnabled ? (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleFavorite(photo.id);
-                    }}
-                    className={`w-11 h-11 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-md transition-all duration-200 pointer-events-auto active:scale-95
-                      ${photo.isFavorite
-                        ? "bg-red-500 text-white scale-100"
-                        : "bg-black/40 text-white hover:bg-white hover:text-red-500 backdrop-blur-sm"
-                      }`}
-                    title={
-                      photo.isFavorite
-                        ? t("sessionDetail.gallery.clientPreview.actions.removeFromFavorites")
-                        : t("sessionDetail.gallery.clientPreview.actions.addToFavorites")
+                  {favoritesEnabled ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavorite(photo.id);
+                      }}
+                      className={`w-11 h-11 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-md transition-all duration-200 pointer-events-auto active:scale-95
+                        ${photo.isFavorite
+                          ? "bg-red-500 text-white scale-100"
+                          : "bg-black/40 text-white md:hover:bg-white md:hover:text-red-500 backdrop-blur-sm"
+                        }`}
+                      title={
+                        photo.isFavorite
+                          ? t("sessionDetail.gallery.clientPreview.actions.removeFromFavorites")
+                          : t("sessionDetail.gallery.clientPreview.actions.addToFavorites")
                     }
                     aria-label={
                       photo.isFavorite
@@ -1917,19 +1917,19 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
               </div>
             </div>
 
-            {!isMenuOpen ? (
-              <div
-                onClick={() => openViewer(photo.id)}
-                className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-4 pointer-events-none z-10"
-              >
-                <div className="flex flex-col items-center gap-2 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                  <Maximize2 size={32} strokeWidth={1.5} className="drop-shadow-lg" />
-                  <span className="text-[10px] uppercase tracking-widest font-medium drop-shadow-md">
-                    {t("sessionDetail.gallery.clientPreview.actions.inspect")}
-                  </span>
+              {!isMenuOpen ? (
+                <div
+                  onClick={() => openViewer(photo.id)}
+                  className="absolute inset-0 bg-black/20 opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-4 pointer-events-none z-10"
+                >
+                  <div className="flex flex-col items-center gap-2 text-white transform translate-y-4 md:group-hover:translate-y-0 transition-transform duration-300">
+                    <Maximize2 size={32} strokeWidth={1.5} className="drop-shadow-lg" />
+                    <span className="text-[10px] uppercase tracking-widest font-medium drop-shadow-md">
+                      {t("sessionDetail.gallery.clientPreview.actions.inspect")}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ) : null}
+              ) : null}
           </div>
         );
       })}
@@ -2800,14 +2800,14 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                 </button>
               ) : null}
 
-	              <button
-	                type="button"
-	                disabled={!favoritesEnabled}
-	                onClick={() => handleMobileTabChange("favorites")}
-	                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "favorites" ? "text-red-500 bg-red-50" : "text-gray-400"
-	                  } ${favoritesEnabled ? "" : "opacity-50 cursor-not-allowed"}`}
-	                aria-current={mobileTab === "favorites" ? "page" : undefined}
-	              >
+                <button
+                  type="button"
+                  disabled={!favoritesEnabled}
+                  onClick={() => handleMobileTabChange("favorites")}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "favorites" ? "text-red-500 bg-red-50" : "text-gray-400"
+                    } ${favoritesEnabled ? "" : "opacity-50 cursor-not-allowed"}`}
+                  aria-current={mobileTab === "favorites" ? "page" : undefined}
+                >
                 <div className="relative">
                   <Heart
                     size={22}
@@ -2824,40 +2824,40 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                 </div>
                 <span className="text-[10px] font-bold mt-0.5">
                   {t("sessionDetail.gallery.clientPreview.filters.favorites")}
-	                </span>
-	              </button>
+                  </span>
+                </button>
 
-	              {isSelectionGallery && starredCount > 0 ? (
-	                <button
-	                  type="button"
-	                  onClick={() => handleMobileTabChange("starred")}
-	                  className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "starred" ? "text-amber-500 bg-amber-50" : "text-gray-400"
-	                    }`}
-	                  aria-current={mobileTab === "starred" ? "page" : undefined}
-	                >
-	                  <div className="relative">
-	                    <Star
-	                      size={22}
-	                      fill={mobileTab === "starred" ? "currentColor" : "none"}
-	                      strokeWidth={mobileTab === "starred" ? 2.5 : 2}
-	                      aria-hidden="true"
-	                    />
-	                    <div
-	                      className={`absolute -top-1.5 -right-2 min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[9px] font-bold border-2 border-white shadow-sm transition-colors ${mobileTab === "starred" ? "bg-amber-500 text-white" : "bg-gray-200 text-gray-600"
-	                        }`}
-	                    >
-	                      {starredCount}
-	                    </div>
-	                  </div>
-	                  <span className="text-[10px] font-bold mt-0.5">
-	                    {t("sessionDetail.gallery.clientPreview.bottomNav.starred")}
-	                  </span>
-	                </button>
-	              ) : null}
-	            </div>
-	          </nav>
-	        ) : null
-	      }
+                {isSelectionGallery && starredCount > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => handleMobileTabChange("starred")}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "starred" ? "text-amber-500 bg-amber-50" : "text-gray-400"
+                      }`}
+                    aria-current={mobileTab === "starred" ? "page" : undefined}
+                  >
+                    <div className="relative">
+                      <Star
+                        size={22}
+                        fill={mobileTab === "starred" ? "currentColor" : "none"}
+                        strokeWidth={mobileTab === "starred" ? 2.5 : 2}
+                        aria-hidden="true"
+                      />
+                      <div
+                        className={`absolute -top-1.5 -right-2 min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[9px] font-bold border-2 border-white shadow-sm transition-colors ${mobileTab === "starred" ? "bg-amber-500 text-white" : "bg-gray-200 text-gray-600"
+                          }`}
+                      >
+                        {starredCount}
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold mt-0.5">
+                      {t("sessionDetail.gallery.clientPreview.bottomNav.starred")}
+                    </span>
+                  </button>
+                ) : null}
+              </div>
+            </nav>
+          ) : null
+        }
 
       <SelectionExportSheet
         open={exportSheetOpen}

@@ -22,7 +22,6 @@ import {
   Loader2,
   PanelRightClose,
   PlusCircle,
-  Share2,
   Star,
   X,
 } from "lucide-react";
@@ -194,10 +193,6 @@ export function Lightbox({
   const [originalUrlVersion, setOriginalUrlVersion] = useState(0);
   const originalUrlByIdRef = useRef<Map<string, string>>(new Map());
   const originalUrlInFlightRef = useRef<Set<string>>(new Set());
-  const shareFileByIdRef = useRef<Map<string, File>>(new Map());
-  const shareFileIdOrderRef = useRef<string[]>([]);
-  const shareFileAbortControllerByIdRef = useRef<Map<string, AbortController>>(new Map());
-  const shareHintToastShownRef = useRef(false);
 
   // Carousel State
   const [mobileApi, setMobileApi] = useState<CarouselApi>();
@@ -223,15 +218,6 @@ export function Lightbox({
   const shouldDownloadOriginal = enableOriginalSwap && typeof resolveOriginalUrl === "function";
   const downloadButtonLabel = t("sessionDetail.gallery.lightbox.actions.download");
   const isDownloadInProgress = mode === "client" && downloadPhotoId === currentPhoto?.id;
-
-  useEffect(() => {
-    if (isOpen) return;
-    shareFileAbortControllerByIdRef.current.forEach((controller) => controller.abort());
-    shareFileAbortControllerByIdRef.current.clear();
-    shareFileByIdRef.current.clear();
-    shareFileIdOrderRef.current = [];
-    shareHintToastShownRef.current = false;
-  }, [isOpen]);
 
   const handleDownload = useCallback(async () => {
     if (mode !== "client") return;
@@ -271,74 +257,6 @@ export function Lightbox({
       setDownloadPhotoId((current) => (current === downloadId ? null : current));
     }
   }, [currentIndex, i18nToast, mode, photos, resolveOriginalUrl, shouldDownloadOriginal, t]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    if (mode !== "client") return;
-    if (typeof navigator === "undefined" || typeof navigator.share !== "function") return;
-    if (typeof window === "undefined") return;
-    const isMobileViewport =
-      typeof window.matchMedia === "function" ? window.matchMedia("(max-width: 767px)").matches : window.innerWidth < 768;
-    if (!isMobileViewport) return;
-    if (typeof fetch !== "function" || typeof File !== "function") return;
-
-    const photo = photos[currentIndex];
-    if (!photo) return;
-    if (shareFileByIdRef.current.has(photo.id)) return;
-    if (shareFileAbortControllerByIdRef.current.has(photo.id)) return;
-
-    const controller = new AbortController();
-    shareFileAbortControllerByIdRef.current.set(photo.id, controller);
-
-    let cancelled = false;
-
-    const prefetchShareFile = async () => {
-      const shouldShareOriginal = shouldDownloadOriginal && Boolean(photo.originalPath);
-      const shareSourceUrl = shouldShareOriginal
-        ? originalUrlByIdRef.current.get(photo.id) ?? (await resolveOriginalUrl?.(photo)) ?? ""
-        : photo.url;
-
-      if (!shareSourceUrl) return;
-
-      const response = await fetch(shareSourceUrl, { signal: controller.signal });
-      if (!response.ok) return;
-      const blob = await response.blob();
-      if (cancelled) return;
-
-      const extension = shouldShareOriginal
-        ? getFileExtension(getBasename(photo.originalPath ?? "")) || getFileExtension(getBasename(shareSourceUrl))
-        : getFileExtension(getBasename(photo.url)) || getFileExtension(photo.filename);
-      const fileName = buildDownloadFilename({ originalName: photo.filename, extension });
-      const file = new File([blob], fileName, {
-        type: blob.type || "application/octet-stream",
-      });
-
-      shareFileByIdRef.current.set(photo.id, file);
-
-      const maxCachedFiles = shouldShareOriginal ? 1 : 3;
-      const nextOrder = shareFileIdOrderRef.current.filter((id) => id !== photo.id);
-      nextOrder.push(photo.id);
-      while (nextOrder.length > maxCachedFiles) {
-        const evictedId = nextOrder.shift();
-        if (evictedId) shareFileByIdRef.current.delete(evictedId);
-      }
-      shareFileIdOrderRef.current = nextOrder;
-    };
-
-    void prefetchShareFile()
-      .catch(() => {
-        // fall back to URL share / long-press
-      })
-      .finally(() => {
-        shareFileAbortControllerByIdRef.current.delete(photo.id);
-      });
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-      shareFileAbortControllerByIdRef.current.delete(photo.id);
-    };
-  }, [currentIndex, isOpen, mode, photos, resolveOriginalUrl, shouldDownloadOriginal]);
 
   const handleMobileSwipeTouchStart = useMemo(
     () => (event: React.TouchEvent<HTMLElement>) => {
@@ -541,63 +459,6 @@ export function Lightbox({
   const desktopContainerClassName = `fixed inset-0 z-[200] ${mode === "client" ? "hidden md:flex" : "flex"
     } bg-black/95 backdrop-blur-sm text-white`;
 
-  const handleShare = () => {
-    const photo = photos[currentIndex];
-    if (!photo) return;
-    const pageUrl = typeof window !== "undefined" ? window.location.href : "";
-    const shouldShareOriginal = shouldDownloadOriginal && Boolean(photo.originalPath);
-    const fallbackUrl =
-      (shouldShareOriginal ? originalUrlByIdRef.current.get(photo.id) : null) ?? photo.url ?? pageUrl ?? "";
-
-    const showLongPressHintOnce = () => {
-      if (shareHintToastShownRef.current) return;
-      shareHintToastShownRef.current = true;
-      i18nToast.info(t("sessionDetail.gallery.lightbox.toast.shareHint"), { duration: 3500 });
-    };
-
-    const canNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
-    if (canNativeShare) {
-      const file = shareFileByIdRef.current.get(photo.id);
-      const canShareFiles = typeof navigator.canShare === "function";
-
-      if (file && (!canShareFiles || navigator.canShare({ files: [file] }))) {
-        void navigator
-          .share({
-            files: [file],
-            title: stripFileExtension(photo.filename) || file.name,
-          })
-          .catch(() => {
-            // ignore share cancellations
-          });
-        return;
-      }
-
-      if (fallbackUrl) {
-        void navigator.share({ url: fallbackUrl }).catch(() => {
-          // ignore share cancellations
-        });
-        if (!file) showLongPressHintOnce();
-        return;
-      }
-    }
-
-    if (fallbackUrl && typeof window !== "undefined") {
-      try {
-        window.open(fallbackUrl, "_blank", "noopener,noreferrer");
-      } catch {
-        // ignore pop-up blockers
-      }
-      showLongPressHintOnce();
-      return;
-    }
-
-    if (!pageUrl) return;
-    if (typeof navigator === "undefined") return;
-    void navigator.clipboard?.writeText(pageUrl)?.catch(() => {
-      // ignore clipboard failures
-    });
-  };
-
   const shouldRenderMobileAddButton = hasSelectionRules && !isSelectionsLocked && !readOnly;
   const addButtonActive =
     shouldRenderMobileAddButton &&
@@ -627,7 +488,26 @@ export function Lightbox({
                   {currentPhoto.filename}
                 </div>
               </div>
-              <div className="w-11" />
+              {mode === "client" && !hasSelectionRules && favoritesEnabled ? (
+                <button
+                  type="button"
+                  onClick={() => onToggleStar(currentPhoto.id)}
+                  disabled={isFavoriteToggleDisabled}
+                  aria-label={
+                    currentPhoto.isFavorite
+                      ? t("sessionDetail.gallery.lightbox.client.favoriteAdded")
+                      : t("sessionDetail.gallery.lightbox.client.favoriteAdd")
+                  }
+                  className={`w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed ${currentPhoto.isFavorite
+                    ? "bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.45)]"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                >
+                  <Heart size={24} fill={currentPhoto.isFavorite ? "currentColor" : "none"} />
+                </button>
+              ) : (
+                <div className="w-11" />
+              )}
             </div>
 
             {currentPhoto.isStarred ? (
@@ -723,60 +603,59 @@ export function Lightbox({
               ) : null}
             </div>
 
-            <div className="absolute bottom-0 left-0 right-0 p-6 pb-10 bg-gradient-to-t from-black/90 via-black/70 to-transparent flex items-end justify-center gap-10">
-              {favoritesEnabled ? (
-                <button
-                  type="button"
-                  onClick={() => onToggleStar(currentPhoto.id)}
-                  disabled={isFavoriteToggleDisabled}
-                  className="flex flex-col items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <div
-                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 ${currentPhoto.isFavorite
-                      ? "bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.45)]"
-                      : "bg-white/10 text-white hover:bg-white/20"
-                      }`}
-                  >
-                    <Heart size={26} fill={currentPhoto.isFavorite ? "currentColor" : "none"} />
-                  </div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
-                    {t("sessionDetail.gallery.lightbox.mobileActions.favorite")}
-                  </span>
-                </button>
-              ) : null}
-
-              {shouldRenderMobileAddButton ? (
-                <button
-                  type="button"
-                  onClick={() => setIsMobileSelectionPanelOpen((prev) => !prev)}
-                  disabled={isSelectionsLocked}
-                  className="flex flex-col items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <div
-                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 relative ${addButtonActive ? "bg-brand-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.35)]" : "bg-white/10 text-white hover:bg-white/20"
-                      }`}
-                  >
-                    <ListPlus size={26} />
-                    {currentPhoto.selections.length > 0 ? (
-                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-white text-brand-700 rounded-full text-[11px] font-bold flex items-center justify-center shadow">
-                        {currentPhoto.selections.length}
+            <div className="absolute bottom-0 left-0 right-0 p-6 pb-10 bg-gradient-to-t from-black/90 via-black/70 to-transparent flex flex-col items-center">
+              {hasSelectionRules ? (
+                <div className="flex items-end justify-center gap-10">
+                  {favoritesEnabled ? (
+                    <button
+                      type="button"
+                      onClick={() => onToggleStar(currentPhoto.id)}
+                      disabled={isFavoriteToggleDisabled}
+                      className="flex flex-col items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <div
+                        className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 ${currentPhoto.isFavorite
+                          ? "bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.45)]"
+                          : "bg-white/10 text-white hover:bg-white/20"
+                          }`}
+                      >
+                        <Heart size={26} fill={currentPhoto.isFavorite ? "currentColor" : "none"} />
                       </div>
-                    ) : null}
-                  </div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
-                    {t("sessionDetail.gallery.lightbox.mobileActions.add")}
-                  </span>
-                </button>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
+                        {t("sessionDetail.gallery.lightbox.mobileActions.favorite")}
+                      </span>
+                    </button>
+                  ) : null}
+
+                  {shouldRenderMobileAddButton ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsMobileSelectionPanelOpen((prev) => !prev)}
+                      disabled={isSelectionsLocked}
+                      className="flex flex-col items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <div
+                        className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 relative ${addButtonActive ? "bg-brand-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.35)]" : "bg-white/10 text-white hover:bg-white/20"
+                          }`}
+                      >
+                        <ListPlus size={26} />
+                        {currentPhoto.selections.length > 0 ? (
+                          <div className="absolute -top-1 -right-1 w-6 h-6 bg-white text-brand-700 rounded-full text-[11px] font-bold flex items-center justify-center shadow">
+                            {currentPhoto.selections.length}
+                          </div>
+                        ) : null}
+                      </div>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
+                        {t("sessionDetail.gallery.lightbox.mobileActions.add")}
+                      </span>
+                    </button>
+                  ) : null}
+                </div>
               ) : null}
 
-              <button type="button" onClick={handleShare} className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-full bg-white/10 text-white hover:bg-white/20 flex items-center justify-center transition-all active:scale-95">
-                  <Share2 size={26} />
-                </div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
-                  {t("sessionDetail.gallery.lightbox.mobileActions.share")}
-                </span>
-              </button>
+              <p className={`text-[12px] font-medium text-white/70 text-center max-w-[80vw] ${hasSelectionRules ? "mt-5" : "mt-2"}`}>
+                {t("sessionDetail.gallery.lightbox.mobileHint.longPressToShare")}
+              </p>
             </div>
           </div>
         </div>
@@ -824,128 +703,128 @@ export function Lightbox({
               <span className="min-w-0 flex-1 text-sm opacity-60 font-mono truncate">{currentPhoto.filename}</span>
             </div>
 
-	            <div className="flex items-start gap-3 shrink-0">
-	              {mode === "client" ? (
-	                <div className="flex flex-col items-end gap-2">
-	                  <button
-	                    type="button"
-	                    onClick={onClose}
-	                    aria-label={t("sessionDetail.gallery.lightbox.close")}
-	                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-colors text-white/90"
-	                  >
-	                    <X size={20} />
-	                    <span className="text-sm font-medium">{t("sessionDetail.gallery.lightbox.close")}</span>
-	                  </button>
+              <div className="flex items-start gap-3 shrink-0">
+                {mode === "client" ? (
+                  <div className="flex flex-col items-end gap-2">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      aria-label={t("sessionDetail.gallery.lightbox.close")}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-colors text-white/90"
+                    >
+                      <X size={20} />
+                      <span className="text-sm font-medium">{t("sessionDetail.gallery.lightbox.close")}</span>
+                    </button>
 
-	                  <button
-	                    type="button"
-	                    onClick={handleDownload}
-	                    disabled={isDownloadInProgress}
-	                    aria-label={downloadButtonLabel}
-	                    title={downloadButtonLabel}
-	                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-colors text-white/90 disabled:opacity-60 disabled:cursor-wait"
-	                  >
-	                    {isDownloadInProgress ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
-	                    <span className="text-sm font-medium">
-	                      {isDownloadInProgress
-	                        ? t("sessionDetail.gallery.lightbox.actions.downloadPreparing")
-	                        : downloadButtonLabel}
-	                    </span>
-	                  </button>
+                    <button
+                      type="button"
+                      onClick={handleDownload}
+                      disabled={isDownloadInProgress}
+                      aria-label={downloadButtonLabel}
+                      title={downloadButtonLabel}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-colors text-white/90 disabled:opacity-60 disabled:cursor-wait"
+                    >
+                      {isDownloadInProgress ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+                      <span className="text-sm font-medium">
+                        {isDownloadInProgress
+                          ? t("sessionDetail.gallery.lightbox.actions.downloadPreparing")
+                          : downloadButtonLabel}
+                      </span>
+                    </button>
 
-	                  {favoritesEnabled ? (
-	                    <button
-	                      type="button"
-	                      onClick={() => onToggleStar(currentPhoto.id)}
-	                      disabled={isFavoriteToggleDisabled}
-	                      aria-label={
-	                        currentPhoto.isFavorite
-	                          ? t("sessionDetail.gallery.lightbox.client.favoriteAdded")
-	                          : t("sessionDetail.gallery.lightbox.client.favoriteAdd")
-	                      }
-	                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed ${currentPhoto.isFavorite
-	                        ? "bg-red-500 text-white hover:bg-red-600"
-	                        : "bg-white/10 hover:bg-white/20 text-white/90"
-	                        }`}
-	                    >
-	                      <Heart size={20} fill={currentPhoto.isFavorite ? "currentColor" : "none"} />
-	                      <span className="text-sm font-medium">
-	                        {currentPhoto.isFavorite
-	                          ? t("sessionDetail.gallery.lightbox.client.favoriteAdded")
-	                          : t("sessionDetail.gallery.lightbox.client.favoriteAdd")}
-	                      </span>
-	                    </button>
-	                  ) : null}
-	                </div>
-	              ) : (
-	                <>
-	                  {!isSidebarOpen ? (
-	                    <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4">
-	                      {mode === "client" && activeRule ? (
-	                        <button
-	                          type="button"
-	                          onClick={() => !isActiveRuleDisabled && onToggleRule(currentPhoto.id, activeRule.id)}
-	                          disabled={isActiveRuleDisabled}
-	                          className={`flex items-center gap-2 px-5 py-2 rounded-full font-bold text-sm transition-all shadow-lg hidden sm:flex disabled:opacity-50 disabled:cursor-not-allowed ${isSelectedForActiveRule
-	                            ? "bg-brand-500 text-white hover:bg-red-500 hover:shadow-red-500/30"
-	                            : "bg-white text-gray-900 hover:bg-brand-50 hover:text-brand-600"
-	                            }`}
-	                          title={isActiveRuleDisabled ? t("sessionDetail.gallery.lightbox.limitFull") : undefined}
-	                        >
-	                          {isSelectedForActiveRule ? (
-	                            <>
-	                              <CheckCircle2 size={18} />
-	                              <span>{t("sessionDetail.gallery.lightbox.quickAdd.added", { rule: activeRule.title })}</span>
-	                            </>
-	                          ) : (
-	                            <>
-	                              <PlusCircle size={18} />
-	                              <span>{t("sessionDetail.gallery.lightbox.quickAdd.add", { rule: activeRule.title })}</span>
-	                            </>
-	                          )}
-	                        </button>
-	                      ) : null}
+                    {favoritesEnabled ? (
+                      <button
+                        type="button"
+                        onClick={() => onToggleStar(currentPhoto.id)}
+                        disabled={isFavoriteToggleDisabled}
+                        aria-label={
+                          currentPhoto.isFavorite
+                            ? t("sessionDetail.gallery.lightbox.client.favoriteAdded")
+                            : t("sessionDetail.gallery.lightbox.client.favoriteAdd")
+                        }
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed ${currentPhoto.isFavorite
+                          ? "bg-red-500 text-white hover:bg-red-600"
+                          : "bg-white/10 hover:bg-white/20 text-white/90"
+                          }`}
+                      >
+                        <Heart size={20} fill={currentPhoto.isFavorite ? "currentColor" : "none"} />
+                        <span className="text-sm font-medium">
+                          {currentPhoto.isFavorite
+                            ? t("sessionDetail.gallery.lightbox.client.favoriteAdded")
+                            : t("sessionDetail.gallery.lightbox.client.favoriteAdd")}
+                        </span>
+                      </button>
+                    ) : null}
+                  </div>
+                ) : (
+                  <>
+                    {!isSidebarOpen ? (
+                      <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4">
+                        {mode === "client" && activeRule ? (
+                          <button
+                            type="button"
+                            onClick={() => !isActiveRuleDisabled && onToggleRule(currentPhoto.id, activeRule.id)}
+                            disabled={isActiveRuleDisabled}
+                            className={`flex items-center gap-2 px-5 py-2 rounded-full font-bold text-sm transition-all shadow-lg hidden sm:flex disabled:opacity-50 disabled:cursor-not-allowed ${isSelectedForActiveRule
+                              ? "bg-brand-500 text-white hover:bg-red-500 hover:shadow-red-500/30"
+                              : "bg-white text-gray-900 hover:bg-brand-50 hover:text-brand-600"
+                              }`}
+                            title={isActiveRuleDisabled ? t("sessionDetail.gallery.lightbox.limitFull") : undefined}
+                          >
+                            {isSelectedForActiveRule ? (
+                              <>
+                                <CheckCircle2 size={18} />
+                                <span>{t("sessionDetail.gallery.lightbox.quickAdd.added", { rule: activeRule.title })}</span>
+                              </>
+                            ) : (
+                              <>
+                                <PlusCircle size={18} />
+                                <span>{t("sessionDetail.gallery.lightbox.quickAdd.add", { rule: activeRule.title })}</span>
+                              </>
+                            )}
+                          </button>
+                        ) : null}
 
-	                      <button
-	                        type="button"
-	                        onClick={() => setIsSidebarOpen(true)}
-	                        className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-all bg-white/10 text-white hover:bg-white hover:text-brand-600 backdrop-blur-md border border-white/10"
-	                        title={
-	                          hasSelectionRules
-	                            ? t("sessionDetail.gallery.lightbox.showSelectionsTitle")
-	                            : t("sessionDetail.gallery.lightbox.showDetailsTitle")
-	                        }
-	                      >
-	                        {hasSelectionRules ? <ListChecks size={18} /> : <Heart size={18} />}
-	                        <span className="hidden sm:inline">
-	                          {hasSelectionRules
-	                            ? t("sessionDetail.gallery.lightbox.showSelections")
-	                            : t("sessionDetail.gallery.lightbox.showDetails")}
-	                        </span>
-	                        {hasSelectionRules && hasSelections ? (
-	                          <span className="ml-1 bg-white text-brand-600 text-[10px] px-1.5 rounded-full min-w-[1.5rem] text-center">
-	                            {currentPhoto.selections.length}
-	                          </span>
-	                        ) : null}
-	                      </button>
-	                    </div>
-	                  ) : null}
+                        <button
+                          type="button"
+                          onClick={() => setIsSidebarOpen(true)}
+                          className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-all bg-white/10 text-white hover:bg-white hover:text-brand-600 backdrop-blur-md border border-white/10"
+                          title={
+                            hasSelectionRules
+                              ? t("sessionDetail.gallery.lightbox.showSelectionsTitle")
+                              : t("sessionDetail.gallery.lightbox.showDetailsTitle")
+                          }
+                        >
+                          {hasSelectionRules ? <ListChecks size={18} /> : <Heart size={18} />}
+                          <span className="hidden sm:inline">
+                            {hasSelectionRules
+                              ? t("sessionDetail.gallery.lightbox.showSelections")
+                              : t("sessionDetail.gallery.lightbox.showDetails")}
+                          </span>
+                          {hasSelectionRules && hasSelections ? (
+                            <span className="ml-1 bg-white text-brand-600 text-[10px] px-1.5 rounded-full min-w-[1.5rem] text-center">
+                              {currentPhoto.selections.length}
+                            </span>
+                          ) : null}
+                        </button>
+                      </div>
+                    ) : null}
 
-	                  <button
-	                    type="button"
-	                    onClick={onClose}
-	                    aria-label={t("sessionDetail.gallery.lightbox.close")}
-	                    className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-colors text-white/90"
-	                  >
-	                    <span className="text-sm font-medium hidden sm:inline uppercase tracking-wide">
-	                      {t("sessionDetail.gallery.lightbox.close")}
-	                    </span>
-	                    <X size={24} />
-	                  </button>
-	                </>
-	              )}
-	            </div>
-	          </div>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      aria-label={t("sessionDetail.gallery.lightbox.close")}
+                      className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-colors text-white/90"
+                    >
+                      <span className="text-sm font-medium hidden sm:inline uppercase tracking-wide">
+                        {t("sessionDetail.gallery.lightbox.close")}
+                      </span>
+                      <X size={24} />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
 
           <button
             type="button"
@@ -1104,15 +983,15 @@ export function Lightbox({
                     </span>
                   </div>
 
-	                  <button
-	                    type="button"
-	                    onClick={() => onToggleStar(currentPhoto.id)}
-	                    disabled={readOnly}
-	                    className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${currentPhoto.isStarred
-	                      ? "bg-amber-500/10 border-amber-500/50 text-amber-400"
-	                      : "bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-500"
-	                      } ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
-	                  >
+                    <button
+                      type="button"
+                      onClick={() => onToggleStar(currentPhoto.id)}
+                      disabled={readOnly}
+                      className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${currentPhoto.isStarred
+                        ? "bg-amber-500/10 border-amber-500/50 text-amber-400"
+                        : "bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-500"
+                        } ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
+                    >
                     <span className="text-sm font-medium flex items-center gap-2">
                       <Star size={16} fill={currentPhoto.isStarred ? "currentColor" : "none"} />
                       {t("sessionDetail.gallery.lightbox.admin.starLabel")}
@@ -1155,10 +1034,10 @@ export function Lightbox({
 
                   <div className="space-y-2">
                     {rules.map((rule) => {
-	                    const isSelected = currentPhoto.selections.includes(rule.id);
-	                    const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
-	                    const isDisabled = !isSelected && isFull;
-	                    const isRuleToggleDisabled = isDisabled || isSelectionsLocked || readOnly;
+                      const isSelected = currentPhoto.selections.includes(rule.id);
+                      const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
+                      const isDisabled = !isSelected && isFull;
+                      const isRuleToggleDisabled = isDisabled || isSelectionsLocked || readOnly;
                     const serviceName = rule.serviceName || t("sessionDetail.gallery.lightbox.lists.generalService");
                     const ruleStatus = getLightboxRuleStatus(rule, t);
 

@@ -1248,6 +1248,27 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
       queryClient.invalidateQueries({ queryKey: ["gallery", resolvedGalleryId] });
       queryClient.invalidateQueries({ queryKey: ["galleries"] });
       i18nToast.success(t("sessionDetail.gallery.selectionLock.toast.locked"), { duration: 2500 });
+
+      if (!isInternalUserView && resolvedGalleryId) {
+        void supabase.functions
+          .invoke("send-gallery-selection-submitted-email", {
+            body: { galleryId: resolvedGalleryId },
+          })
+          .then(({ error }) => {
+            if (error) {
+              console.warn(
+                "GalleryClientPreview: Failed to send selection submitted email",
+                error,
+              );
+            }
+          })
+          .catch((error: unknown) => {
+            console.warn(
+              "GalleryClientPreview: Failed to send selection submitted email",
+              error,
+            );
+          });
+      }
     },
     onError: () => {
       queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });

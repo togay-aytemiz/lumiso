@@ -200,6 +200,30 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
         projectMilestoneCancelled: '⚠️ Project Cancelled: {{name}}',
       },
     },
+    gallerySelectionSubmitted: {
+      subject: {
+        withLead: '✅ Selections completed: {{galleryTitle}} — {{leadName}}',
+        withoutLead: '✅ Selections completed: {{galleryTitle}}',
+      },
+      hero: {
+        title: 'Selections submitted',
+        subtitleWithLead:
+          '{{leadName}} submitted selections for {{galleryTitle}}.',
+        subtitleWithoutLead:
+          'Selections have been submitted for {{galleryTitle}}.',
+      },
+      summary: {
+        selectedCountLabel: 'Selected photos',
+        noteLabel: 'Client note',
+      },
+      actions: {
+        viewGallery: 'View gallery',
+        viewAllGalleries: 'View all galleries',
+      },
+      alt: {
+        cover: 'Gallery cover photo',
+      },
+    },
     samples: {
       dailySummary: {
         projectType: 'Wedding',
@@ -461,6 +485,30 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
         leadAssignment: '👤 Yeni Atama: {{name}}',
         projectMilestoneCompleted: '🎉 Proje Tamamlandı: {{name}}',
         projectMilestoneCancelled: '⚠️ Proje İptal Edildi: {{name}}',
+      },
+    },
+    gallerySelectionSubmitted: {
+      subject: {
+        withLead: '✅ {{galleryTitle}} seçimi tamamlandı — {{leadName}}',
+        withoutLead: '✅ {{galleryTitle}} seçimi tamamlandı',
+      },
+      hero: {
+        title: 'Seçimler gönderildi',
+        subtitleWithLead:
+          '{{leadName}}, {{galleryTitle}} galerisi için seçimlerini tamamladı.',
+        subtitleWithoutLead:
+          '{{galleryTitle}} galerisi için seçimler tamamlandı.',
+      },
+      summary: {
+        selectedCountLabel: 'Seçilen fotoğraflar',
+        noteLabel: 'Müşteri notu',
+      },
+      actions: {
+        viewGallery: 'Galeriyi görüntüle',
+        viewAllGalleries: 'Tüm galerileri görüntüle',
+      },
+      alt: {
+        cover: 'Galeri kapak fotoğrafı',
       },
     },
     samples: {

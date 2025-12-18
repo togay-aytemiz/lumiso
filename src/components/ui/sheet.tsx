@@ -58,7 +58,10 @@ const SheetContent = React.forwardRef<
   const handlePointerDownOutside = React.useCallback(
     (event: Parameters<NonNullable<typeof onPointerDownOutside>>[0]) => {
       const target = event.target;
-      if (target instanceof Element && target.closest("[data-toast-root]")) {
+      if (
+        target instanceof Element &&
+        target.closest('[data-toast-root], [role="dialog"], [role="alertdialog"]')
+      ) {
         event.preventDefault();
         return;
       }
@@ -70,7 +73,10 @@ const SheetContent = React.forwardRef<
   const handleInteractOutside = React.useCallback(
     (event: Parameters<NonNullable<typeof onInteractOutside>>[0]) => {
       const target = event.target;
-      if (target instanceof Element && target.closest("[data-toast-root]")) {
+      if (
+        target instanceof Element &&
+        target.closest('[data-toast-root], [role="dialog"], [role="alertdialog"]')
+      ) {
         event.preventDefault();
         return;
       }

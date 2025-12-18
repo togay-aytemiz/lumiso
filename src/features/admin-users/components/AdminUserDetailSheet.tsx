@@ -1499,7 +1499,7 @@ function AdminUserDetailSheetContent({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
       <SheetContent className="w-[95vw] sm:w-full sm:max-w-[85vw] md:max-w-[80vw] lg:max-w-[78vw] xl:max-w-[75vw] 2xl:max-w-[70vw] overflow-y-auto p-0">
         <div className="sticky top-0 z-40 border-b border-border/60 bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <SheetHeader className="settings-header-motion space-y-3 text-left">

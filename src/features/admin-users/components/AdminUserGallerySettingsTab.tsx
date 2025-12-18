@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Archive, Eye, Loader2, RotateCcw, Trash2 } from "lucide-react";
+import { Archive, ArrowUpRight, Loader2, RotateCcw, Trash2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { ORG_GALLERY_STORAGE_LIMIT_BYTES } from "@/lib/storageLimits";
@@ -69,6 +69,20 @@ type AdminGalleryStorageRow = {
   created_at: string | null;
   updated_at: string | null;
   gallery_bytes: number | null;
+};
+
+type LooseSupabaseRpcError = { message?: string } | Error;
+
+type LooseSupabaseRpcResult<T> = {
+  data: T | null;
+  error: LooseSupabaseRpcError | null;
+};
+
+type LooseSupabaseClient = {
+  rpc: <T>(
+    functionName: string,
+    args?: Record<string, unknown>
+  ) => Promise<LooseSupabaseRpcResult<T>>;
 };
 
 type AdminGalleryListItem = {
@@ -194,7 +208,10 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
     enabled: Boolean(organizationId),
     staleTime: 60_000,
     queryFn: async (): Promise<AdminGalleryListItem[]> => {
-      const { data, error } = await (supabase as any).rpc("admin_list_galleries_with_storage", { org_uuid: organizationId });
+      const { data, error } = await (supabase as unknown as LooseSupabaseClient).rpc<AdminGalleryStorageRow[]>(
+        "admin_list_galleries_with_storage",
+        { org_uuid: organizationId }
+      );
       if (error) throw error;
       const rows = Array.isArray(data) ? (data as AdminGalleryStorageRow[]) : [];
       return rows
@@ -259,10 +276,13 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
 
   const archiveMutation = useMutation({
     mutationFn: async ({ galleryId, archived }: { galleryId: string; archived: boolean }) => {
-      const { error } = await (supabase as any).rpc("admin_set_gallery_archived", {
+      const { error } = await (supabase as unknown as LooseSupabaseClient).rpc(
+        "admin_set_gallery_archived",
+        {
         gallery_uuid: galleryId,
         archived,
-      });
+        }
+      );
       if (error) throw error;
     },
     onSuccess: async (_data, variables) => {
@@ -282,9 +302,10 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
 
   const previewMutation = useMutation({
     mutationFn: async ({ galleryId }: { galleryId: string }) => {
-      const { error } = await (supabase as any).rpc("admin_grant_gallery_access", {
-        gallery_uuid: galleryId,
-      });
+      const { error } = await (supabase as unknown as LooseSupabaseClient).rpc(
+        "admin_grant_gallery_access",
+        { gallery_uuid: galleryId }
+      );
       if (error) throw error;
     },
     onError: (error) => {
@@ -319,20 +340,28 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
 
   const handlePreview = useCallback(
     async (galleryId: string) => {
+      const previewPath = `/galleries/${galleryId}/preview`;
+      const previewWindow =
+        typeof window !== "undefined"
+          ? window.open("about:blank", "_blank", "noopener,noreferrer")
+          : null;
+
       try {
         await previewMutation.mutateAsync({ galleryId });
       } catch {
+        previewWindow?.close?.();
         return;
       }
-      const previewPath = `/galleries/${galleryId}/preview`;
-      const win = typeof window !== "undefined"
-        ? window.open(previewPath, "_blank", "noopener,noreferrer")
-        : null;
-      if (!win) {
+      if (!previewWindow) {
         navigate(previewPath);
         return;
       }
-      win.focus?.();
+      try {
+        previewWindow.location.href = previewPath;
+        previewWindow.focus?.();
+      } catch {
+        navigate(previewPath);
+      }
     },
     [navigate, previewMutation]
   );
@@ -403,19 +432,19 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
               <div className="flex items-center justify-end gap-1">
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label={previewLabel}
-                      disabled={disabled}
-                      onClick={() => void handlePreview(row.id)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContentDark side="top">{previewLabel}</TooltipContentDark>
-                </Tooltip>
+	                    <Button
+	                      type="button"
+	                      variant="ghost"
+	                      size="icon"
+	                      aria-label={previewLabel}
+	                      disabled={disabled}
+	                      onClick={() => void handlePreview(row.id)}
+	                    >
+	                      <ArrowUpRight className="h-4 w-4" />
+	                    </Button>
+	                  </TooltipTrigger>
+	                  <TooltipContentDark side="top">{previewLabel}</TooltipContentDark>
+	                </Tooltip>
 
                 {isArchived ? (
                   <Tooltip delayDuration={0}>

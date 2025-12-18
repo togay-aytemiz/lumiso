@@ -16,6 +16,10 @@ describe("AdminUserGallerySettingsTab", () => {
     warning: jest.fn(),
     info: jest.fn(),
   };
+  type QueryBuilderMock = {
+    update: jest.Mock;
+    eq: jest.Mock;
+  };
 
   beforeAll(async () => {
     await i18n.changeLanguage("en");
@@ -31,7 +35,8 @@ describe("AdminUserGallerySettingsTab", () => {
   });
 
   it("converts GB input to bytes when saving", async () => {
-    const builder = (supabase as unknown as { __createQueryBuilder: () => any }).__createQueryBuilder();
+    const builder = (supabase as unknown as { __createQueryBuilder: () => unknown })
+      .__createQueryBuilder() as QueryBuilderMock;
     (supabase.from as unknown as jest.Mock).mockReturnValue(builder);
 
     const onSaved = jest.fn();
@@ -60,7 +65,8 @@ describe("AdminUserGallerySettingsTab", () => {
   });
 
   it("converts MB input to bytes when saving", async () => {
-    const builder = (supabase as unknown as { __createQueryBuilder: () => any }).__createQueryBuilder();
+    const builder = (supabase as unknown as { __createQueryBuilder: () => unknown })
+      .__createQueryBuilder() as QueryBuilderMock;
     (supabase.from as unknown as jest.Mock).mockReturnValue(builder);
 
     render(<AdminUserGallerySettingsTab organizationId="org-1" limitBytes={3 * 1024 ** 3} />);
@@ -80,7 +86,8 @@ describe("AdminUserGallerySettingsTab", () => {
   });
 
   it("shows a validation toast when input is empty", async () => {
-    const builder = (supabase as unknown as { __createQueryBuilder: () => any }).__createQueryBuilder();
+    const builder = (supabase as unknown as { __createQueryBuilder: () => unknown })
+      .__createQueryBuilder() as QueryBuilderMock;
     (supabase.from as unknown as jest.Mock).mockReturnValue(builder);
 
     render(<AdminUserGallerySettingsTab organizationId="org-1" limitBytes={3 * 1024 ** 3} />);
@@ -150,5 +157,56 @@ describe("AdminUserGallerySettingsTab", () => {
       })
     );
     await waitFor(() => expect(toastApi.success).toHaveBeenCalledWith("Gallery deleted."));
+  });
+
+  it("opens preview in a new tab after granting access (admin actions)", async () => {
+    (supabase.rpc as unknown as jest.Mock).mockImplementation((fnName: string) => {
+      if (fnName === "admin_list_galleries_with_storage") {
+        return Promise.resolve({
+          data: [
+            {
+              id: "gallery-1",
+              title: "My Gallery",
+              status: "draft",
+              type: "proof",
+              lead_name: "Client One",
+              created_at: null,
+              updated_at: null,
+              gallery_bytes: 1024,
+            },
+          ],
+          error: null,
+        });
+      }
+      if (fnName === "admin_grant_gallery_access") {
+        return Promise.resolve({ data: null, error: null });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const previewWindow = {
+      location: { href: "" },
+      focus: jest.fn(),
+      close: jest.fn(),
+    } as unknown as Window;
+
+    const openSpy = jest.spyOn(window, "open").mockReturnValue(previewWindow);
+
+    render(<AdminUserGallerySettingsTab organizationId="org-1" limitBytes={3 * 1024 ** 3} />);
+
+    expect(await screen.findByText("Client One")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+
+    await waitFor(() =>
+      expect(supabase.rpc).toHaveBeenCalledWith("admin_grant_gallery_access", {
+        gallery_uuid: "gallery-1",
+      })
+    );
+    expect(openSpy).toHaveBeenCalledWith("about:blank", "_blank", "noopener,noreferrer");
+    await waitFor(() => expect(previewWindow.location.href).toBe("/galleries/gallery-1/preview"));
+    expect(previewWindow.focus).toHaveBeenCalled();
+
+    openSpy.mockRestore();
   });
 });

@@ -238,25 +238,18 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
   );
 
   const [deleteGuardOpen, setDeleteGuardOpen] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [pendingDeleteGallery, setPendingDeleteGallery] = useState<AdminGalleryListItem | null>(null);
 
   const [archiveGuardOpen, setArchiveGuardOpen] = useState(false);
   const [pendingArchiveGallery, setPendingArchiveGallery] = useState<AdminGalleryListItem | null>(null);
 
-  const expectedGalleryNameForDelete = useMemo(() => pendingDeleteGallery?.title.trim() ?? "", [pendingDeleteGallery?.title]);
-  const canConfirmGalleryDelete =
-    expectedGalleryNameForDelete.length > 0 && deleteConfirmText.trim() === expectedGalleryNameForDelete;
-
   const closeDeleteGuard = useCallback(() => {
     setDeleteGuardOpen(false);
-    setDeleteConfirmText("");
     setPendingDeleteGallery(null);
   }, []);
 
   const openDeleteGuard = useCallback((gallery: AdminGalleryListItem) => {
     setPendingDeleteGallery(gallery);
-    setDeleteConfirmText("");
     setDeleteGuardOpen(true);
   }, []);
 
@@ -389,8 +382,8 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
   const handleConfirmDelete = useCallback(() => {
     const galleryId = pendingDeleteGallery?.id ?? "";
     if (!galleryId) return;
-    deleteMutation.mutate({ galleryId, confirmTitle: deleteConfirmText.trim() });
-  }, [deleteConfirmText, deleteMutation, pendingDeleteGallery?.id]);
+    deleteMutation.mutate({ galleryId, confirmTitle: pendingDeleteGallery?.title.trim() ?? "" });
+  }, [deleteMutation, pendingDeleteGallery]);
 
   const handleConfirmArchive = useCallback(() => {
     const galleryId = pendingArchiveGallery?.id ?? "";
@@ -621,30 +614,13 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="space-y-2">
-            <Label htmlFor="admin-gallery-delete-confirm">
-              {t("sessionDetail.gallery.delete.confirmLabel")}
-            </Label>
-            <Input
-              id="admin-gallery-delete-confirm"
-              value={deleteConfirmText}
-              onChange={(event) => setDeleteConfirmText(event.target.value)}
-              placeholder={expectedGalleryNameForDelete}
-              autoFocus
-              disabled={deleteMutation.isPending}
-            />
-            <p className="text-xs text-muted-foreground">
-              {t("sessionDetail.gallery.delete.confirmHint", { name: expectedGalleryNameForDelete })}
-            </p>
-          </div>
-
           <AlertDialogFooter className="gap-2">
             <AlertDialogCancel onClick={closeDeleteGuard} disabled={deleteMutation.isPending}>
               {t("buttons.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
-              disabled={!canConfirmGalleryDelete || deleteMutation.isPending}
+              disabled={!pendingDeleteGallery?.id || deleteMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteMutation.isPending ? (

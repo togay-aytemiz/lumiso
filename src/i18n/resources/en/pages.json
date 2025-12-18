@@ -553,6 +553,8 @@
         "button": "Create gallery",
         "comingSoon": "Coming soon"
       },
+      "emptySetTitle": "No photos yet",
+      "emptySetDesc": "Drag & drop photos to upload, or add them below.",
       "types": {
         "proof": "Selections",
         "retouch": "Retouch",
@@ -575,7 +577,7 @@
         "media": "Photos",
         "uploadTitle": "Upload photos",
         "uploadDesc": "Drag & drop photos here to add to this gallery.",
-        "uploadHint": "Proof uploads will be optimized to WebP. Originals remain untouched.",
+        "uploadHint": "Proof uploads are converted to compressed WebP for faster loading. Originals are not stored.",
         "addMedia": "Add photo",
         "coverSelected": "Cover photo",
         "coverMissing": "Select a cover photo",
@@ -760,6 +762,10 @@
           "customTypeRequired": "Custom type is required",
           "typeRequired": "Please choose a type"
         }
+      },
+      "optimizationNotice": {
+        "title": "Uploads are optimized for selection",
+        "description": "To keep selection galleries fast and lightweight, we convert and compress uploads. Originals aren’t stored—but the optimized version still looks great for viewing, selecting, and sharing on social media."
       },
       "selectionTemplate": {
         "loading": "Loading selection rules...",

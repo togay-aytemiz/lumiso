@@ -2625,14 +2625,14 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
                 </span>
               </button>
 
-              <button
-                type="button"
-                disabled={!favoritesEnabled}
-                onClick={() => handleMobileTabChange("favorites")}
-                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "favorites" ? "text-red-500 bg-red-50" : "text-gray-400"
-                  } ${favoritesEnabled ? "" : "opacity-50 cursor-not-allowed"}`}
-                aria-current={mobileTab === "favorites" ? "page" : undefined}
-              >
+	              <button
+	                type="button"
+	                disabled={!favoritesEnabled}
+	                onClick={() => handleMobileTabChange("favorites")}
+	                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "favorites" ? "text-red-500 bg-red-50" : "text-gray-400"
+	                  } ${favoritesEnabled ? "" : "opacity-50 cursor-not-allowed"}`}
+	                aria-current={mobileTab === "favorites" ? "page" : undefined}
+	              >
                 <div className="relative">
                   <Heart
                     size={22}
@@ -2649,38 +2649,40 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
                 </div>
                 <span className="text-[10px] font-bold mt-0.5">
                   {t("sessionDetail.gallery.clientPreview.filters.favorites")}
-                </span>
-              </button>
+	                </span>
+	              </button>
 
-              <button
-                type="button"
-                onClick={() => handleMobileTabChange("starred")}
-                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "starred" ? "text-amber-500 bg-amber-50" : "text-gray-400"
-                  }`}
-                aria-current={mobileTab === "starred" ? "page" : undefined}
-              >
-                <div className="relative">
-                  <Star
-                    size={22}
-                    fill={mobileTab === "starred" ? "currentColor" : "none"}
-                    strokeWidth={mobileTab === "starred" ? 2.5 : 2}
-                    aria-hidden="true"
-                  />
-                  {starredCount > 0 ? (
-                    <div className={`absolute -top-1.5 -right-2 min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[9px] font-bold border-2 border-white shadow-sm transition-colors ${mobileTab === "starred" ? "bg-amber-500 text-white" : "bg-gray-200 text-gray-600"
-                      }`}>
-                      {starredCount}
-                    </div>
-                  ) : null}
-                </div>
-                <span className="text-[10px] font-bold mt-0.5">
-                  {t("sessionDetail.gallery.clientPreview.bottomNav.starred")}
-                </span>
-              </button>
-            </div>
-          </nav>
-        ) : null
-      }
+	              {starredCount > 0 ? (
+	                <button
+	                  type="button"
+	                  onClick={() => handleMobileTabChange("starred")}
+	                  className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "starred" ? "text-amber-500 bg-amber-50" : "text-gray-400"
+	                    }`}
+	                  aria-current={mobileTab === "starred" ? "page" : undefined}
+	                >
+	                  <div className="relative">
+	                    <Star
+	                      size={22}
+	                      fill={mobileTab === "starred" ? "currentColor" : "none"}
+	                      strokeWidth={mobileTab === "starred" ? 2.5 : 2}
+	                      aria-hidden="true"
+	                    />
+	                    <div
+	                      className={`absolute -top-1.5 -right-2 min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[9px] font-bold border-2 border-white shadow-sm transition-colors ${mobileTab === "starred" ? "bg-amber-500 text-white" : "bg-gray-200 text-gray-600"
+	                        }`}
+	                    >
+	                      {starredCount}
+	                    </div>
+	                  </div>
+	                  <span className="text-[10px] font-bold mt-0.5">
+	                    {t("sessionDetail.gallery.clientPreview.bottomNav.starred")}
+	                  </span>
+	                </button>
+	              ) : null}
+	            </div>
+	          </nav>
+	        ) : null
+	      }
 
       <SelectionExportSheet
         open={exportSheetOpen}

@@ -99,7 +99,7 @@ describe("AdminUserGallerySettingsTab", () => {
     expect(builder.update).not.toHaveBeenCalled();
   });
 
-  it("requires typing gallery name before delete (admin actions)", async () => {
+  it("confirms and deletes gallery without typing (admin actions)", async () => {
     (supabase.rpc as unknown as jest.Mock).mockImplementation((fnName: string) => {
       if (fnName === "admin_list_galleries_with_storage") {
         return Promise.resolve({
@@ -136,18 +136,8 @@ describe("AdminUserGallerySettingsTab", () => {
 
     const dialog = await screen.findByRole("alertdialog");
     const confirmButton = within(dialog).getByRole("button", { name: "Delete gallery" });
-    expect(confirmButton).toBeDisabled();
-
-    fireEvent.change(screen.getByLabelText("Type the gallery name to delete"), {
-      target: { value: "Wrong" },
-    });
-    expect(confirmButton).toBeDisabled();
-
-    fireEvent.change(screen.getByLabelText("Type the gallery name to delete"), {
-      target: { value: "My Gallery" },
-    });
-
-    await waitFor(() => expect(confirmButton).toBeEnabled());
+    expect(confirmButton).toBeEnabled();
+    expect(screen.queryByLabelText("Type the gallery name to delete")).not.toBeInTheDocument();
 
     fireEvent.click(confirmButton);
 

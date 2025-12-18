@@ -5,41 +5,6 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-type DismissableLayerEvent<T extends Event> = CustomEvent<{
-  originalEvent: T;
-}>;
-
-type PointerDownOutsideEvent = DismissableLayerEvent<PointerEvent>;
-type FocusOutsideEvent = DismissableLayerEvent<FocusEvent>;
-
-const getDismissableEventTarget = (
-  event: PointerDownOutsideEvent | FocusOutsideEvent,
-): Element | null => {
-  const originalEvent = event.detail?.originalEvent as Event | undefined;
-  if (!originalEvent) return null;
-
-  const getElement = (value: EventTarget | null | undefined): Element | null =>
-    value instanceof Element ? value : null;
-
-  const target = "target" in originalEvent ? getElement(originalEvent.target) : null;
-  if (target) return target;
-
-  const relatedTarget =
-    "relatedTarget" in originalEvent
-      ? getElement((originalEvent as FocusEvent).relatedTarget)
-      : null;
-  if (relatedTarget) return relatedTarget;
-
-  if (typeof originalEvent.composedPath === "function") {
-    const pathTarget = originalEvent
-      .composedPath()
-      .find((node): node is Element => node instanceof Element);
-    if (pathTarget) return pathTarget;
-  }
-
-  return null;
-};
-
 const Sheet = SheetPrimitive.Root
 
 const SheetTrigger = SheetPrimitive.Trigger
@@ -90,37 +55,34 @@ const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
 >(({ side = "right", className, children, onPointerDownOutside, onInteractOutside, ...props }, ref) => {
-  const shouldIgnoreOutsideEvent = React.useCallback((target: Element | null) => {
-    if (!target) return false;
-    return Boolean(target.closest('[data-toast-root], [role="dialog"], [role="alertdialog"]'));
-  }, []);
-
   const handlePointerDownOutside = React.useCallback(
     (event: Parameters<NonNullable<typeof onPointerDownOutside>>[0]) => {
-      const target = getDismissableEventTarget(event as PointerDownOutsideEvent);
-      if (shouldIgnoreOutsideEvent(target)) {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('[data-toast-root], [role="dialog"], [role="alertdialog"]')
+      ) {
         event.preventDefault();
         return;
       }
       onPointerDownOutside?.(event);
     },
-    [onPointerDownOutside, shouldIgnoreOutsideEvent]
+    [onPointerDownOutside]
   );
 
   const handleInteractOutside = React.useCallback(
     (event: Parameters<NonNullable<typeof onInteractOutside>>[0]) => {
-      const typedEvent = event as PointerDownOutsideEvent | FocusOutsideEvent;
-      const target = getDismissableEventTarget(typedEvent);
-      if (shouldIgnoreOutsideEvent(target)) {
-        if (typedEvent.detail?.originalEvent instanceof FocusEvent) {
-          return;
-        }
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('[data-toast-root], [role="dialog"], [role="alertdialog"]')
+      ) {
         event.preventDefault();
         return;
       }
       onInteractOutside?.(event);
     },
-    [onInteractOutside, shouldIgnoreOutsideEvent]
+    [onInteractOutside]
   );
 
   return (

@@ -130,17 +130,11 @@ export const handler = async (
 
     const galleryId = typeof requestData.gallery_id === "string" ? requestData.gallery_id.trim() : "";
     const confirmTitle = typeof requestData.confirm_title === "string" ? requestData.confirm_title : "";
+    const normalizedConfirmTitle = normalizeText(confirmTitle);
 
     if (!galleryId) {
       return new Response(
         JSON.stringify({ error: "gallery_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    if (!confirmTitle.trim()) {
-      return new Response(
-        JSON.stringify({ error: "confirm_title is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -201,7 +195,7 @@ export const handler = async (
     }
 
     const expectedTitle = normalizeText(galleryRow.title ?? "");
-    if (normalizeText(confirmTitle) !== expectedTitle) {
+    if (normalizedConfirmTitle.length > 0 && normalizedConfirmTitle !== expectedTitle) {
       return new Response(
         JSON.stringify({ error: "confirm_title does not match gallery title" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },

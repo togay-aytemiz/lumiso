@@ -568,6 +568,8 @@
         "button": "Galeri oluştur",
         "comingSoon": "Çok yakında"
       },
+      "emptySetTitle": "Henüz fotoğraf yok",
+      "emptySetDesc": "Yüklemek için fotoğrafları sürükleyip bırakın veya aşağıdan ekleyebilirsiniz.",
       "types": {
         "proof": "Seçim",
         "retouch": "Rötuş",
@@ -590,7 +592,7 @@
         "media": "Fotoğraflar",
         "uploadTitle": "Fotoğraf yükle",
         "uploadDesc": "Bu galeriye eklemek için fotoğrafları sürükleyip bırak.",
-        "uploadHint": "Proof yüklemeleri WebP olarak optimize edilir. Orijinaller korunur.",
+        "uploadHint": "Proof yüklemeleri daha hızlı açılması için sıkıştırılmış WebP'e dönüştürülür. Orijinaller saklanmaz.",
         "addMedia": "Fotoğraf ekle",
         "coverSelected": "Kapak fotoğrafı",
         "coverMissing": "Kapak fotoğrafı seç",
@@ -775,6 +777,10 @@
           "customTypeRequired": "Özel tür gerekli",
           "typeRequired": "Tür seçmeniz gerekiyor"
         }
+      },
+      "optimizationNotice": {
+        "title": "Yüklemeler seçim için optimize edilir",
+        "description": "Seçim galerileri hızlı ve verimli olsun diye yüklemeleri dönüştürüp sıkıştırıyoruz. Orijinaller saklanmaz; ancak optimize edilmiş sürüm görüntüleme, seçim ve sosyal medyada paylaşım için fazlasıyla iyi görünür."
       },
       "selectionTemplate": {
         "loading": "Seçim kuralları yükleniyor...",

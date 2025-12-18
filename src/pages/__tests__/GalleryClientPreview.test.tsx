@@ -777,6 +777,124 @@ describe("GalleryClientPreview", () => {
     }
   });
 
+  it("hides the mobile recommended tab when there are no starred photos", async () => {
+    const originalInnerWidth = window.innerWidth;
+    window.innerWidth = 375;
+
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            type: "proof",
+            branding: {
+              selectionSettings: { enabled: true, allowFavorites: true },
+              selectionTemplate: [{ part: "Cover", min: 1, max: 1, required: true }],
+            },
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              status: "ready",
+              metadata: { originalName: "a.jpg", setId: "set-1", starred: false },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    try {
+      render(<GalleryClientPreview />);
+
+      expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+
+      const bottomNav = await screen.findByRole("navigation", { name: /gallery navigation|galeri sekmeleri/i });
+      expect(within(bottomNav).queryByRole("button", { name: /recommended|önerilen/i })).not.toBeInTheDocument();
+      expect(within(bottomNav).getAllByRole("button")).toHaveLength(3);
+    } finally {
+      window.innerWidth = originalInnerWidth;
+    }
+  });
+
+  it("shows the mobile recommended tab when there are starred photos", async () => {
+    const originalInnerWidth = window.innerWidth;
+    window.innerWidth = 375;
+
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            type: "proof",
+            branding: {
+              selectionSettings: { enabled: true, allowFavorites: true },
+              selectionTemplate: [{ part: "Cover", min: 1, max: 1, required: true }],
+            },
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              status: "ready",
+              metadata: { originalName: "a.jpg", setId: "set-1", starred: true },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    try {
+      render(<GalleryClientPreview />);
+
+      expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+
+      const bottomNav = await screen.findByRole("navigation", { name: /gallery navigation|galeri sekmeleri/i });
+      expect(await within(bottomNav).findByRole("button", { name: /recommended|önerilen/i })).toBeInTheDocument();
+      expect(within(bottomNav).getAllByRole("button")).toHaveLength(4);
+    } finally {
+      window.innerWidth = originalInnerWidth;
+    }
+  });
+
   it("prefills the note with the latest saved note after the photographer reopens selections", async () => {
     supabaseMock.from.mockImplementation((table: string) => {
       const builder = supabaseMock.__createQueryBuilder();

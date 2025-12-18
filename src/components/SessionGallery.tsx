@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Sheet,
   SheetContent,
@@ -858,11 +859,25 @@ export default function SessionGallery({
               </div>
             </div>
             {formType === "proof" && selectionGroups.length > 0 && (
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-foreground">
-                  {tForms("service.selection_template.title")}
-                </Label>
-                {(() => {
+              <div className="space-y-3">
+                <Alert className="border-amber-200/80 bg-amber-50 text-amber-900">
+                  <div className="flex gap-3">
+                    <Sparkles className="h-5 w-5 flex-shrink-0 text-amber-600" aria-hidden="true" />
+                    <div className="space-y-1">
+                      <AlertTitle className="text-sm font-semibold text-amber-900">
+                        {t("sessionDetail.gallery.optimizationNotice.title")}
+                      </AlertTitle>
+                      <AlertDescription className="text-sm text-amber-900/90">
+                        {t("sessionDetail.gallery.optimizationNotice.description")}
+                      </AlertDescription>
+                    </div>
+                  </div>
+                </Alert>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">
+                    {tForms("service.selection_template.title")}
+                  </Label>
+                  {(() => {
                   const serviceGroups = selectionGroups.filter((group) => group.serviceId);
                   const manualGroups = selectionGroups.filter(
                     (group) => group.kind === "manual" || !group.serviceId
@@ -1081,7 +1096,8 @@ export default function SessionGallery({
                       {renderManualGroup(false)}
                     </div>
                   );
-                })()}
+                  })()}
+                </div>
               </div>
             )}
           </div>

@@ -56,6 +56,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import {
@@ -104,6 +105,7 @@ import {
   PlusCircle,
   RotateCcw,
   Share,
+  Sparkles,
   Star,
   Trash2,
   Upload,
@@ -4411,16 +4413,31 @@ export default function GalleryDetail() {
 	                              <Upload size={48} />
 	                            </div>
                             <h3 className="mb-2 text-lg font-bold text-gray-800">
-                              {t("sessionDetail.gallery.emptySetTitle", {
-                                defaultValue: "Henüz fotoğraf yok",
-                              })}
+                              {t("sessionDetail.gallery.emptySetTitle")}
                             </h3>
                             <p className="mx-auto max-w-sm text-sm leading-relaxed text-gray-500">
-                              {t("sessionDetail.gallery.emptySetDesc", {
-                                defaultValue:
-                                  "Yüklemek için fotoğrafları sürükleyip bırakın veya aşağıdan ekleyebilirsiniz.",
-                              })}
+                              {t("sessionDetail.gallery.emptySetDesc")}
                             </p>
+                            {type === "proof" ? (
+                              <div className="mt-6 w-full max-w-md">
+                                <Alert className="border-amber-200/80 bg-amber-50 text-amber-900">
+                                  <div className="flex gap-3">
+                                    <Sparkles
+                                      className="h-5 w-5 flex-shrink-0 text-amber-600"
+                                      aria-hidden="true"
+                                    />
+                                    <div className="space-y-1 text-left">
+                                      <AlertTitle className="text-sm font-semibold text-amber-900">
+                                        {t("sessionDetail.gallery.optimizationNotice.title")}
+                                      </AlertTitle>
+                                      <AlertDescription className="text-sm text-amber-900/90">
+                                        {t("sessionDetail.gallery.optimizationNotice.description")}
+                                      </AlertDescription>
+                                    </div>
+                                  </div>
+                                </Alert>
+                              </div>
+                            ) : null}
 	                            <Button
 	                              variant="surface"
 	                              size="sm"

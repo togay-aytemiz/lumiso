@@ -34,6 +34,27 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAdvancedTableSearch } from "./useAdvancedTableSearch";
 import { AdvancedDataTablePaginationFooter } from "./AdvancedDataTablePagination";
 
+const ROW_CLICK_IGNORE_SELECTOR = [
+  "a",
+  "button",
+  "input",
+  "textarea",
+  "select",
+  "[role='button']",
+  "[role='link']",
+  "[role='checkbox']",
+  "[role='switch']",
+  "[role='menuitem']",
+  "[role='menuitemcheckbox']",
+  "[role='menuitemradio']",
+  "[data-row-click='ignore']",
+].join(",");
+
+function shouldIgnoreRowClick(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest(ROW_CLICK_IGNORE_SELECTOR));
+}
+
 export type SortDirection = "asc" | "desc";
 
 export interface AdvancedTableColumn<T> {
@@ -704,12 +725,16 @@ export function AdvancedDataTable<T>({
                                 className={cn(
                                   zebraClass,
                                   "border-b border-border/60 transition-colors",
-                                  onRowClick
+                                onRowClick
                                     ? "cursor-pointer hover:bg-muted/30 dark:hover:bg-muted/50"
                                     : "hover:bg-muted/20 dark:hover:bg-muted/40",
                                   userRowClass
                                 )}
-                                onClick={() => onRowClick?.(row)}
+                                onClick={(event) => {
+                                  if (!onRowClick || event.defaultPrevented) return;
+                                  if (shouldIgnoreRowClick(event.target)) return;
+                                  onRowClick(row);
+                                }}
                               >
                                 {columns.map((column) => (
                                   <TableCell

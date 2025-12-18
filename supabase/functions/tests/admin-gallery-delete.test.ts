@@ -124,7 +124,7 @@ Deno.test("admin-gallery-delete returns 401 when authorization header is missing
   const request = new Request("https://example.com", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ gallery_id: "gallery-1", confirm_title: "Gallery" }),
+    body: JSON.stringify({ gallery_id: "gallery-1" }),
   });
 
   const response = await adminGalleryDeleteHandler(request, {
@@ -146,7 +146,7 @@ Deno.test("admin-gallery-delete returns 403 when user is not admin", async () =>
   const request = new Request("https://example.com", {
     method: "POST",
     headers: { "Content-Type": "application/json", authorization: "Bearer token" },
-    body: JSON.stringify({ gallery_id: "gallery-1", confirm_title: "Gallery" }),
+    body: JSON.stringify({ gallery_id: "gallery-1" }),
   });
 
   const response = await adminGalleryDeleteHandler(request, {
@@ -164,7 +164,7 @@ Deno.test("admin-gallery-delete returns 403 when user is not admin", async () =>
   assertEquals(body, { error: "Admin role required" });
 });
 
-Deno.test("admin-gallery-delete returns 400 when confirm title does not match", async () => {
+Deno.test("admin-gallery-delete returns 400 when confirm title is provided but does not match", async () => {
   const request = new Request("https://example.com", {
     method: "POST",
     headers: { "Content-Type": "application/json", authorization: "Bearer token" },
@@ -201,7 +201,7 @@ Deno.test("admin-gallery-delete removes storage paths and deletes gallery", asyn
   const request = new Request("https://example.com", {
     method: "POST",
     headers: { "Content-Type": "application/json", authorization: "Bearer token" },
-    body: JSON.stringify({ gallery_id: "gallery-1", confirm_title: "Gallery" }),
+    body: JSON.stringify({ gallery_id: "gallery-1" }),
   });
 
   const response = await adminGalleryDeleteHandler(request, {
@@ -216,4 +216,3 @@ Deno.test("admin-gallery-delete removes storage paths and deletes gallery", asyn
   assertEquals(mockSupabase.__deleteCalls.length, 1);
   assertEquals(mockSupabase.__deleteCalls[0], { table: "galleries", id: "gallery-1" });
 });
-

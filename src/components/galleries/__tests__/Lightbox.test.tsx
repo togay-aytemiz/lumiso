@@ -325,8 +325,8 @@ describe("Lightbox", () => {
       />
     );
 
-    expect(screen.getByRole("heading", { name: /photo|fotoğraf/i })).toBeInTheDocument();
     expect(screen.queryByText(/add to lists|listelere ekle/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /download|indir/i })).toBeInTheDocument();
   });
 
   it("shows download button in client mode and downloads preview url", () => {

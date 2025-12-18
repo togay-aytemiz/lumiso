@@ -166,6 +166,7 @@ type OrganizationRow = {
 };
 
 type OrganizationSettingsRow = {
+  email: string | null;
   photography_business_name: string | null;
   primary_brand_color: string | null;
   logo_url: string | null;
@@ -399,7 +400,7 @@ export const handler = async (
     const { data: orgSettingsData, error: orgSettingsError } = await supabaseAdmin
       .from("organization_settings")
       .select(
-        "photography_business_name,primary_brand_color,logo_url,preferred_locale,notification_global_enabled",
+        "email,photography_business_name,primary_brand_color,logo_url,preferred_locale,notification_global_enabled",
       )
       .eq("organization_id", organizationId)
       .maybeSingle<OrganizationSettingsRow>();
@@ -428,14 +429,6 @@ export const handler = async (
     if (recipients.size === 0) {
       return new Response(
         JSON.stringify({ skipped: true, reason: "No recipients resolved" }),
-        { status: 200, headers: jsonHeaders },
-      );
-    }
-
-    const lockedBy = selectionState.locked_by;
-    if (lockedBy && recipients.has(lockedBy)) {
-      return new Response(
-        JSON.stringify({ skipped: true, reason: "Selections locked by internal user" }),
         { status: 200, headers: jsonHeaders },
       );
     }
@@ -477,10 +470,12 @@ export const handler = async (
     const allGalleriesUrl = `${baseUrl}/galleries`;
 
     const fromName = normalizeText(orgSettingsData?.photography_business_name) || "Lumiso";
-    const fromAddress = `${fromName} <hello@updates.lumiso.app>`;
+    const generalEmail = normalizeText(orgSettingsData?.email);
+    const fromAddress = `Lumiso <daily-summary@lumiso.app>`;
 
     const resendClient = deps.resendClient ?? resend;
     const results: Array<{ userId: string; email: string; sent: boolean; error?: string }> = [];
+    const seenRecipientEmails = new Set<string>();
 
     for (const userId of recipients) {
       const { data: userSettingsData } = await supabaseAdmin
@@ -504,6 +499,9 @@ export const handler = async (
 
       const email = normalizeText(userData.user?.email ?? "");
       if (!email) continue;
+      const emailKey = email.toLowerCase();
+      if (seenRecipientEmails.has(emailKey)) continue;
+      seenRecipientEmails.add(emailKey);
 
       const { data: languagePrefData } = await supabaseAdmin
         .from("user_language_preferences")
@@ -554,8 +552,72 @@ export const handler = async (
       results.push({ userId, email, sent: true });
     }
 
+    if (generalEmail) {
+      const generalEmailKey = generalEmail.toLowerCase();
+      if (!seenRecipientEmails.has(generalEmailKey)) {
+        seenRecipientEmails.add(generalEmailKey);
+
+        const localization = createEmailLocalization(
+          orgSettingsData?.preferred_locale ?? undefined,
+        );
+
+        const templateData = {
+          businessName: fromName,
+          brandColor: orgSettingsData?.primary_brand_color || "#1EB29F",
+          logoUrl: orgSettingsData?.logo_url || undefined,
+          baseUrl,
+          assetBaseUrl: baseUrl,
+          platformName: "Lumiso",
+          language: localization.language,
+          localization,
+        };
+
+        const { subject, html } = renderGallerySelectionSubmittedEmail(
+          {
+            galleryTitle: resolvedGalleryTitle,
+            leadName,
+            coverImageUrl,
+            selectionCount,
+            note: selectionState.note ?? null,
+            galleryUrl,
+            allGalleriesUrl,
+          },
+          templateData,
+        );
+
+        const sendResult = await resendClient.emails.send({
+          from: fromAddress,
+          to: [generalEmail],
+          subject,
+          html,
+        });
+
+        if (sendResult.error) {
+          results.push({
+            userId: "organization_settings.email",
+            email: generalEmail,
+            sent: false,
+            error: sendResult.error.message,
+          });
+        } else {
+          results.push({
+            userId: "organization_settings.email",
+            email: generalEmail,
+            sent: true,
+          });
+        }
+      }
+    }
+
     const sent = results.filter((entry) => entry.sent).length;
     const failed = results.filter((entry) => !entry.sent).length;
+
+    if (sent === 0 && failed > 0) {
+      return new Response(
+        JSON.stringify({ error: "Failed to send selection submitted email", sent, failed, results }),
+        { status: 500, headers: jsonHeaders },
+      );
+    }
 
     return new Response(
       JSON.stringify({ sent, failed, results }),
@@ -579,4 +641,3 @@ if (import.meta.main) {
 }
 
 export { corsHeaders };
-

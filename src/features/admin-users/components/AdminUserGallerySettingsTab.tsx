@@ -343,8 +343,16 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
       const previewPath = `/galleries/${galleryId}/preview`;
       const previewWindow =
         typeof window !== "undefined"
-          ? window.open("about:blank", "_blank", "noopener,noreferrer")
+          ? window.open("about:blank", "_blank")
           : null;
+
+      if (previewWindow) {
+        try {
+          previewWindow.opener = null;
+        } catch {
+          // ignore
+        }
+      }
 
       try {
         await previewMutation.mutateAsync({ galleryId });
@@ -360,6 +368,7 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
         previewWindow.location.href = previewPath;
         previewWindow.focus?.();
       } catch {
+        previewWindow.close?.();
         navigate(previewPath);
       }
     },

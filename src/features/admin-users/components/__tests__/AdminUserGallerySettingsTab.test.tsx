@@ -203,7 +203,7 @@ describe("AdminUserGallerySettingsTab", () => {
         gallery_uuid: "gallery-1",
       })
     );
-    expect(openSpy).toHaveBeenCalledWith("about:blank", "_blank", "noopener,noreferrer");
+    expect(openSpy).toHaveBeenCalledWith("about:blank", "_blank");
     await waitFor(() => expect(previewWindow.location.href).toBe("/galleries/gallery-1/preview"));
     expect(previewWindow.focus).toHaveBeenCalled();
 

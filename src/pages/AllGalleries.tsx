@@ -11,6 +11,7 @@ import {
   type AdvancedTableColumn,
 } from "@/components/data-table";
 import GlobalSearch from "@/components/GlobalSearch";
+import { EmptyState } from "@/components/EmptyState";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -726,6 +727,44 @@ export default function AllGalleries() {
     return t("galleries.table.summary", { count: filtered.length });
   }, [filtered.length, t]);
 
+  const emptyState = useMemo(() => {
+    const isSearching = searchTerm.trim().length > 0;
+
+    if (isSearching) {
+      return (
+        <EmptyState
+          icon={Images}
+          iconVariant="pill"
+          iconColor="indigo"
+          title={t("galleries.emptyState.search.title")}
+          description={t("galleries.emptyState.search.description")}
+        />
+      );
+    }
+
+    if (galleries.length === 0) {
+      return (
+        <EmptyState
+          icon={Images}
+          iconVariant="pill"
+          iconColor="indigo"
+          title={t("galleries.emptyState.none.title")}
+          description={t("galleries.emptyState.none.description")}
+        />
+      );
+    }
+
+    return (
+      <EmptyState
+        icon={Images}
+        iconVariant="pill"
+        iconColor="indigo"
+        title={t(`galleries.emptyState.segments.${segment}.title`)}
+        description={t(`galleries.emptyState.segments.${segment}.description`)}
+      />
+    );
+  }, [galleries.length, searchTerm, segment, t]);
+
   const exportTarget = useMemo(() => filtered.find((gallery) => gallery.id === exportGalleryId) ?? null, [exportGalleryId, filtered]);
 
   return (
@@ -792,9 +831,7 @@ export default function AllGalleries() {
           onSortChange={setSortState}
           onRowClick={(row) => navigate(`/galleries/${row.id}`)}
           className="rounded-2xl border border-border/60 bg-white shadow-sm"
-          emptyState={
-            <div className="py-12 text-center text-muted-foreground">{t("galleries.empty")}</div>
-          }
+          emptyState={emptyState}
         />
 
         <SelectionExportSheet

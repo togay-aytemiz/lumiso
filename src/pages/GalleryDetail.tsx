@@ -646,11 +646,14 @@ export default function GalleryDetail() {
   const isSelectionsLocked = selectionState?.is_locked ?? false;
   const [isSelectionUnlockedForMe, setIsSelectionUnlockedForMe] = useState(false);
   const selectionLockBannerStatus = useMemo(() => {
+    if (status === "draft" && !isSelectionsLocked) {
+      return "draft" as const;
+    }
     if (isSelectionsLocked) {
       return isSelectionUnlockedForMe ? ("unlockedForMe" as const) : ("locked" as const);
     }
     return selectionState?.locked_at ? ("reopened" as const) : ("waiting" as const);
-  }, [isSelectionUnlockedForMe, isSelectionsLocked, selectionState?.locked_at]);
+  }, [isSelectionUnlockedForMe, isSelectionsLocked, selectionState?.locked_at, status]);
 
   useEffect(() => {
     if (!isSelectionsLocked) {

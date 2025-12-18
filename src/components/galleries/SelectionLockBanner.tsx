@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
-type SelectionLockBannerStatus = "waiting" | "locked" | "reopened" | "unlockedForMe";
+type SelectionLockBannerStatus = "draft" | "waiting" | "locked" | "reopened" | "unlockedForMe";
 
 type SelectionLockBannerProps = {
   status: SelectionLockBannerStatus;
@@ -57,6 +57,7 @@ export function SelectionLockBanner({
 
   const icon = useMemo(() => {
     switch (status) {
+      case "draft":
       case "waiting":
         return <CircleDashed className="h-6 w-6" strokeWidth={2.5} />;
       case "reopened":

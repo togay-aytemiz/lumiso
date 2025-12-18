@@ -39,5 +39,12 @@ describe("SelectionLockBanner", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Unlock for client" }));
     expect(onUnlockForClient).toHaveBeenCalledTimes(1);
   });
-});
 
+  it("renders draft status without actions", () => {
+    render(<SelectionLockBanner status="draft" />);
+
+    expect(screen.getByText("Draft gallery")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Unlock" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Export selections" })).not.toBeInTheDocument();
+  });
+});

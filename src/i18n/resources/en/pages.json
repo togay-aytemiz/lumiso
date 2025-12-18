@@ -1003,6 +1003,10 @@
           "description": "This gallery is approved and locked."
         },
         "status": {
+          "draft": {
+            "title": "Draft gallery",
+            "description": "This gallery hasn't been shared yet. Share it to let the client start selecting photos."
+          },
           "waiting": {
             "title": "Waiting for client selections",
             "description": "The client can still select photos and send their final picks."
@@ -3991,6 +3995,34 @@
       "archived": "Archived"
     },
     "search": "Search galleries",
+    "emptyState": {
+      "none": {
+        "title": "No galleries yet",
+        "description": "When you share a gallery with a client, it will show up here."
+      },
+      "search": {
+        "title": "No galleries match your search",
+        "description": "Try a different keyword or clear the search."
+      },
+      "segments": {
+        "active": {
+          "title": "No active galleries",
+          "description": "Active galleries appear here once they're shared with clients."
+        },
+        "action": {
+          "title": "Nothing needs your attention",
+          "description": "Galleries waiting for client selections will appear here."
+        },
+        "approved": {
+          "title": "No approved galleries",
+          "description": "Locked or approved galleries will appear here."
+        },
+        "archived": {
+          "title": "No archived galleries",
+          "description": "Archived galleries will appear here."
+        }
+      }
+    },
     "empty": "No galleries found for this view.",
     "table": {
       "gallery": "Gallery",

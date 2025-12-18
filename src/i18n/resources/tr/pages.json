@@ -1019,6 +1019,10 @@
           "description": "Bu galeri onaylandı ve kilitlendi."
         },
         "status": {
+          "draft": {
+            "title": "Taslak galeri",
+            "description": "Bu galeri henüz paylaşılmadı. Paylaştığınızda müşteri fotoğraf seçmeye başlayabilir."
+          },
           "waiting": {
             "title": "Müşterinin seçimleri bekleniyor",
             "description": "Müşteri hâlâ fotoğraf seçebilir ve seçimlerini gönderebilir."
@@ -4007,6 +4011,34 @@
       "archived": "Arşiv"
     },
     "search": "Galerilerde ara",
+    "emptyState": {
+      "none": {
+        "title": "Henüz galeri yok",
+        "description": "Bir galeriyi müşteriyle paylaştığınızda burada görünecek."
+      },
+      "search": {
+        "title": "Aramana uygun galeri bulunamadı",
+        "description": "Farklı bir kelime deneyin veya aramayı temizleyin."
+      },
+      "segments": {
+        "active": {
+          "title": "Aktif galeri yok",
+          "description": "Müşteriyle paylaşılan aktif galeriler burada listelenir."
+        },
+        "action": {
+          "title": "Bekleyen bir şey yok",
+          "description": "Müşteri seçimi bekleyen galeriler burada görünür."
+        },
+        "approved": {
+          "title": "Onaylanan galeri yok",
+          "description": "Kilitlediğiniz veya onayladığınız galeriler burada görünür."
+        },
+        "archived": {
+          "title": "Arşivlenmiş galeri yok",
+          "description": "Arşive aldığınız galeriler burada görünür."
+        }
+      }
+    },
     "empty": "Bu görünümde galeri yok.",
     "table": {
       "gallery": "Galeri",

@@ -3814,6 +3814,7 @@ export default function GalleryDetail() {
         open={shareSheetOpen}
         onOpenChange={setShareSheetOpen}
         onShare={(channel) => publishFromShareMutation.mutate(channel)}
+        galleryType={type}
         title={displayTitle}
         clientName={shareClientName}
         eventLabel={eventLabel}

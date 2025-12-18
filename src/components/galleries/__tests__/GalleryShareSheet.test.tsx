@@ -104,4 +104,37 @@ describe("GalleryShareSheet", () => {
 
     openSpy.mockRestore();
   });
+
+  it("uses the final template when galleryType is final", async () => {
+    const openSpy = jest
+      .spyOn(window, "open")
+      .mockImplementation(() => ({ focus: jest.fn() }) as unknown as Window);
+
+    render(
+      <GalleryShareSheet
+        open
+        onOpenChange={jest.fn()}
+        title="My gallery"
+        clientName="Ayse"
+        publicId="PUB123"
+        pin="4T0PXF"
+        galleryType="final"
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "WhatsApp" }));
+
+    await waitFor(() => {
+      expect(openSpy).toHaveBeenCalled();
+    });
+
+    const openedUrl = String(openSpy.mock.calls[0]?.[0] ?? "");
+    const parsed = new URL(openedUrl);
+    const textParam = parsed.searchParams.get("text") ?? "";
+    const normalizedText = textParam.replace(/\r\n/g, "\n").toLowerCase();
+
+    expect(normalizedText).toContain("final");
+
+    openSpy.mockRestore();
+  });
 });

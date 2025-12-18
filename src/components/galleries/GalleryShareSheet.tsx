@@ -23,6 +23,7 @@ type GalleryShareSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onShare?: (channel: "whatsapp" | "email") => void;
+  galleryType?: string | null;
   title: string;
   clientName: string;
   eventLabel?: string;
@@ -37,6 +38,7 @@ export function GalleryShareSheet({
   open,
   onOpenChange,
   onShare,
+  galleryType,
   title,
   clientName,
   eventLabel,
@@ -70,6 +72,8 @@ export function GalleryShareSheet({
 
   const normalizedPin = pin.trim();
   const resolvedClientName = useMemo(() => clientName.trim() || t("sessionDetail.unknownClient"), [clientName, t]);
+  const normalizedGalleryType = (galleryType ?? "").trim().toLowerCase();
+  const isFinalGallery = normalizedGalleryType === "final";
 
   const messageUrlValue = useMemo(() => {
     if (publicUrl) return publicUrl;
@@ -84,12 +88,16 @@ export function GalleryShareSheet({
   }, [normalizedPin, pinLoading, t]);
 
   const defaultMessage = useMemo(() => {
-    return t("sessionDetail.gallery.shareSheet.messageTemplate", {
+    const templateKey = isFinalGallery
+      ? "sessionDetail.gallery.shareSheet.messageTemplateFinal"
+      : "sessionDetail.gallery.shareSheet.messageTemplate";
+
+    return t(templateKey, {
       clientName: resolvedClientName,
       url: messageUrlValue,
       pin: messagePinValue,
     });
-  }, [messagePinValue, messageUrlValue, resolvedClientName, t]);
+  }, [isFinalGallery, messagePinValue, messageUrlValue, resolvedClientName, t]);
 
   useEffect(() => {
     if (!open) return;

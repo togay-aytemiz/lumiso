@@ -1143,13 +1143,15 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   const handleMobileTabChange = useCallback(
     (nextTab: MobileTab) => {
       if (!isMobile) return;
-      setMobileTab(nextTab);
-      if (nextTab === "gallery") setActiveFilter("all");
-      if (nextTab === "favorites") setActiveFilter("favorites");
-      if (nextTab === "starred") setActiveFilter("starred");
+      const resolvedTab =
+        !isSelectionGallery && (nextTab === "tasks" || nextTab === "starred") ? "gallery" : nextTab;
+      setMobileTab(resolvedTab);
+      if (resolvedTab === "gallery") setActiveFilter("all");
+      if (resolvedTab === "favorites") setActiveFilter("favorites");
+      if (resolvedTab === "starred") setActiveFilter("starred");
       scrollToContentStart();
     },
-    [isMobile, scrollToContentStart]
+    [isMobile, isSelectionGallery, scrollToContentStart]
   );
 
   const handleMobileTaskSelect = useCallback(
@@ -2689,10 +2691,10 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
           onDelete={() => { }}
           onStar={() => { }}
           mode="client"
-          totalRuleSelectedCount={totalSelectedCount}
-          unselectedCount={unselectedCount}
+          totalRuleSelectedCount={isSelectionGallery ? totalSelectedCount : 0}
+          unselectedCount={isSelectionGallery ? unselectedCount : 0}
           favoritesCount={favoritePhotoIds.size}
-          starredCount={starredCount}
+          starredCount={isSelectionGallery ? starredCount : 0}
           activeFilter={activeFilter}
           onFilter={(filter) => {
             setActiveFilter(filter);
@@ -2722,41 +2724,43 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                 </span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => handleMobileTabChange("tasks")}
-                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "tasks" ? "text-brand-600 bg-brand-50" : "text-gray-400"
-                  }`}
-                aria-current={mobileTab === "tasks" ? "page" : undefined}
-              >
-                <div className="relative flex items-center justify-center w-6 h-6">
-                  {areAllMandatoryComplete ? (
-                    <>
-                      {/* Outward Pulse (Slowed Down) */}
-                      <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20 [animation-duration:3s]" />
+              {isSelectionGallery ? (
+                <button
+                  type="button"
+                  onClick={() => handleMobileTabChange("tasks")}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "tasks" ? "text-brand-600 bg-brand-50" : "text-gray-400"
+                    }`}
+                  aria-current={mobileTab === "tasks" ? "page" : undefined}
+                >
+                  <div className="relative flex items-center justify-center w-6 h-6">
+                    {areAllMandatoryComplete ? (
+                      <>
+                        {/* Outward Pulse (Slowed Down) */}
+                        <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20 [animation-duration:3s]" />
 
-                      {/* Fixed Icon: Green BG, White Tick */}
-                      <div className="relative z-10 bg-emerald-500 text-white rounded-full p-[3px] shadow-sm">
-                        <Check size={14} strokeWidth={4} />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <ListChecks size={22} strokeWidth={mobileTab === "tasks" ? 2.5 : 2} aria-hidden="true" />
-                      {hasIncompleteMandatory ? (
-                        <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center p-[2px] border-2 border-white shadow-sm font-bold text-[10px]">
-                          !
+                        {/* Fixed Icon: Green BG, White Tick */}
+                        <div className="relative z-10 bg-emerald-500 text-white rounded-full p-[3px] shadow-sm">
+                          <Check size={14} strokeWidth={4} />
                         </div>
-                      ) : totalSelectedCount > 0 ? (
-                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white" />
-                      ) : null}
-                    </>
-                  )}
-                </div>
-                <span className={`text-[10px] font-bold mt-0.5 ${areAllMandatoryComplete ? "text-emerald-600" : ""}`}>
-                  {t("sessionDetail.gallery.clientPreview.bottomNav.selections")}
-                </span>
-              </button>
+                      </>
+                    ) : (
+                      <>
+                        <ListChecks size={22} strokeWidth={mobileTab === "tasks" ? 2.5 : 2} aria-hidden="true" />
+                        {hasIncompleteMandatory ? (
+                          <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center p-[2px] border-2 border-white shadow-sm font-bold text-[10px]">
+                            !
+                          </div>
+                        ) : totalSelectedCount > 0 ? (
+                          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white" />
+                        ) : null}
+                      </>
+                    )}
+                  </div>
+                  <span className={`text-[10px] font-bold mt-0.5 ${areAllMandatoryComplete ? "text-emerald-600" : ""}`}>
+                    {t("sessionDetail.gallery.clientPreview.bottomNav.selections")}
+                  </span>
+                </button>
+              ) : null}
 
 	              <button
 	                type="button"
@@ -2785,7 +2789,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
 	                </span>
 	              </button>
 
-	              {starredCount > 0 ? (
+	              {isSelectionGallery && starredCount > 0 ? (
 	                <button
 	                  type="button"
 	                  onClick={() => handleMobileTabChange("starred")}

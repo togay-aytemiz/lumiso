@@ -631,6 +631,7 @@
         "footerPublicLabel": "Herkese Açık",
         "openLink": "Test Et",
         "messageTemplate": "Merhaba {{clientName}}, fotoğraflarınız seçim için hazır!\n\nGaleriniz: {{url}}\n\nGiriş Şifresi: {{pin}}",
+        "messageTemplateFinal": "Merhaba {{clientName}}, final fotoğraflarınız hazır!\n\nGaleriniz: {{url}}\n\nGiriş Şifresi: {{pin}}",
         "errors": {
           "missingGalleryId": "Galeri kimliği bulunamadı.",
           "generateFailed": "Paylaşım linki oluşturulamadı."
@@ -1128,6 +1129,8 @@
         },
         "showSelections": "Seçimler",
         "showSelectionsTitle": "Listeleri göster",
+        "showDetails": "Detaylar",
+        "showDetailsTitle": "Detayları göster",
         "collapse": "Daralt",
         "collapseTitle": "Paneli daralt",
         "mobileActions": {
@@ -1138,7 +1141,9 @@
         "sidebar": {
           "client": {
             "title": "Seçimler",
-            "description": "Fotoğrafı listelerinize ekleyin"
+            "description": "Fotoğrafı listelerinize ekleyin",
+            "finalTitle": "Fotoğraf",
+            "finalDescription": "Fotoğrafı favorile veya paylaş"
           },
           "admin": {
             "title": "Seçim Detayları",

@@ -300,4 +300,32 @@ describe("Lightbox", () => {
     fireEvent.click(screen.getByTestId("lightbox-mobile-next"));
     expect(onNavigate).toHaveBeenCalledWith(1);
   });
+
+  it("hides selection lists in client mode when there are no rules", () => {
+    render(
+      <Lightbox
+        isOpen
+        onClose={jest.fn()}
+        photos={[
+          {
+            id: "photo-1",
+            url: "https://example.com/1.jpg",
+            filename: "1.jpg",
+            isFavorite: false,
+            isStarred: false,
+            selections: [],
+          },
+        ]}
+        currentIndex={0}
+        onNavigate={jest.fn()}
+        rules={[]}
+        onToggleRule={jest.fn()}
+        onToggleStar={jest.fn()}
+        mode="client"
+      />
+    );
+
+    expect(screen.getByText(/photo|fotoğraf/i)).toBeInTheDocument();
+    expect(screen.queryByText(/add to lists|listelere ekle/i)).not.toBeInTheDocument();
+  });
 });

@@ -616,6 +616,7 @@
         "footerPublicLabel": "Public",
         "openLink": "Test",
         "messageTemplate": "Hi {{clientName}}, your photos are ready for selection!\n\nYour gallery: {{url}}\n\nAccess password: {{pin}}",
+        "messageTemplateFinal": "Hi {{clientName}}, your final photos are ready!\n\nYour gallery: {{url}}\n\nAccess password: {{pin}}",
         "errors": {
           "missingGalleryId": "Gallery id is missing.",
           "generateFailed": "Could not generate a public link."
@@ -1112,6 +1113,8 @@
         },
         "showSelections": "Selections",
         "showSelectionsTitle": "Show selections",
+        "showDetails": "Details",
+        "showDetailsTitle": "Show details",
         "collapse": "Collapse",
         "collapseTitle": "Collapse panel",
         "mobileActions": {
@@ -1122,7 +1125,9 @@
         "sidebar": {
           "client": {
             "title": "Selections",
-            "description": "Add this photo to your lists"
+            "description": "Add this photo to your lists",
+            "finalTitle": "Photo",
+            "finalDescription": "Favorite or share this photo"
           },
           "admin": {
             "title": "Selection details",

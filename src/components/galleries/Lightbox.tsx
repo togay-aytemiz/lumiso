@@ -48,7 +48,7 @@ type LightboxMode = "admin" | "client";
 // Helper to determine rule status in Lightbox
 const getLightboxRuleStatus = (
   rule: LightboxRule,
-  t: (key: string, options?: any) => string
+  t: (key: string, options?: Record<string, unknown>) => string
 ) => {
   const isRequired = rule.required;
   const currentCount = rule.currentCount;
@@ -140,6 +140,7 @@ export function Lightbox({
   const currentPhoto = photos[currentIndex];
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileSelectionPanelOpen, setIsMobileSelectionPanelOpen] = useState(false);
+  const hasSelectionRules = rules.length > 0;
 
   // Carousel State
   const [mobileApi, setMobileApi] = useState<CarouselApi>();
@@ -337,7 +338,7 @@ export function Lightbox({
     }
   };
 
-  const shouldRenderMobileAddButton = rules.length > 0 && !isSelectionsLocked && !readOnly;
+  const shouldRenderMobileAddButton = hasSelectionRules && !isSelectionsLocked && !readOnly;
   const addButtonActive =
     shouldRenderMobileAddButton &&
     (isMobileSelectionPanelOpen || currentPhoto.selections.length > 0);
@@ -506,30 +507,32 @@ export function Lightbox({
       ) : null}
 
       {mode === "client" ? (
-        <MobilePhotoSelectionSheet
-          open={isMobileSelectionPanelOpen}
-          onOpenChange={setIsMobileSelectionPanelOpen}
-          photo={{
-            id: currentPhoto.id,
-            url: currentPhoto.url,
-            filename: currentPhoto.filename,
-          }}
-          rules={rules.map((rule) => ({
-            id: rule.id,
-            title: rule.title,
-            serviceName: rule.serviceName,
-            currentCount: rule.currentCount,
-            maxCount: rule.maxCount,
-            required: rule.required,
-          }))}
-          selectedRuleIds={currentPhoto.selections}
-          onToggleRule={(ruleId) => {
-            if (isSelectionsLocked || readOnly) return;
-            onToggleRule(currentPhoto.id, ruleId);
-          }}
-          onPhotoImageError={() => onImageError?.(currentPhoto.id)}
-          zIndexClassName="z-[210]"
-        />
+        hasSelectionRules ? (
+          <MobilePhotoSelectionSheet
+            open={isMobileSelectionPanelOpen}
+            onOpenChange={setIsMobileSelectionPanelOpen}
+            photo={{
+              id: currentPhoto.id,
+              url: currentPhoto.url,
+              filename: currentPhoto.filename,
+            }}
+            rules={rules.map((rule) => ({
+              id: rule.id,
+              title: rule.title,
+              serviceName: rule.serviceName,
+              currentCount: rule.currentCount,
+              maxCount: rule.maxCount,
+              required: rule.required,
+            }))}
+            selectedRuleIds={currentPhoto.selections}
+            onToggleRule={(ruleId) => {
+              if (isSelectionsLocked || readOnly) return;
+              onToggleRule(currentPhoto.id, ruleId);
+            }}
+            onPhotoImageError={() => onImageError?.(currentPhoto.id)}
+            zIndexClassName="z-[210]"
+          />
+        ) : null
       ) : null}
 
       <div className={desktopContainerClassName} role="dialog" aria-modal="true">
@@ -589,11 +592,19 @@ export function Lightbox({
                     type="button"
                     onClick={() => setIsSidebarOpen(true)}
                     className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-all bg-white/10 text-white hover:bg-white hover:text-brand-600 backdrop-blur-md border border-white/10"
-                    title={t("sessionDetail.gallery.lightbox.showSelectionsTitle")}
+                    title={
+                      hasSelectionRules
+                        ? t("sessionDetail.gallery.lightbox.showSelectionsTitle")
+                        : t("sessionDetail.gallery.lightbox.showDetailsTitle")
+                    }
                   >
-                    <ListChecks size={18} />
-                    <span className="hidden sm:inline">{t("sessionDetail.gallery.lightbox.showSelections")}</span>
-                    {hasSelections ? (
+                    {hasSelectionRules ? <ListChecks size={18} /> : <Heart size={18} />}
+                    <span className="hidden sm:inline">
+                      {hasSelectionRules
+                        ? t("sessionDetail.gallery.lightbox.showSelections")
+                        : t("sessionDetail.gallery.lightbox.showDetails")}
+                    </span>
+                    {hasSelectionRules && hasSelections ? (
                       <span className="ml-1 bg-white text-brand-600 text-[10px] px-1.5 rounded-full min-w-[1.5rem] text-center">
                         {currentPhoto.selections.length}
                       </span>
@@ -665,12 +676,16 @@ export function Lightbox({
               <div className="min-w-0">
                 <h3 className="font-semibold text-lg mb-1 truncate">
                   {mode === "client"
-                    ? t("sessionDetail.gallery.lightbox.sidebar.client.title")
+                    ? hasSelectionRules
+                      ? t("sessionDetail.gallery.lightbox.sidebar.client.title")
+                      : t("sessionDetail.gallery.lightbox.sidebar.client.finalTitle")
                     : t("sessionDetail.gallery.lightbox.sidebar.admin.title")}
                 </h3>
                 <p className="text-xs text-gray-400">
                   {mode === "client"
-                    ? t("sessionDetail.gallery.lightbox.sidebar.client.description")
+                    ? hasSelectionRules
+                      ? t("sessionDetail.gallery.lightbox.sidebar.client.description")
+                      : t("sessionDetail.gallery.lightbox.sidebar.client.finalDescription")
                     : t("sessionDetail.gallery.lightbox.sidebar.admin.description")}
                 </p>
               </div>
@@ -784,15 +799,16 @@ export function Lightbox({
                 </div>
               ) : null}
 
-              <div>
-                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-1 mb-3">
-                  {mode === "client"
-                    ? t("sessionDetail.gallery.lightbox.lists.clientTitle")
-                    : t("sessionDetail.gallery.lightbox.lists.adminTitle")}
-                </div>
+              {hasSelectionRules ? (
+                <div>
+                  <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-1 mb-3">
+                    {mode === "client"
+                      ? t("sessionDetail.gallery.lightbox.lists.clientTitle")
+                      : t("sessionDetail.gallery.lightbox.lists.adminTitle")}
+                  </div>
 
-                <div className="space-y-2">
-                  {rules.map((rule) => {
+                  <div className="space-y-2">
+                    {rules.map((rule) => {
 	                    const isSelected = currentPhoto.selections.includes(rule.id);
 	                    const isFull = rule.maxCount ? rule.currentCount >= rule.maxCount : false;
 	                    const isDisabled = !isSelected && isFull;
@@ -855,9 +871,10 @@ export function Lightbox({
                         </div>
                       </button>
                     );
-                  })}
+                    })}
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
           </div>
         ) : null}

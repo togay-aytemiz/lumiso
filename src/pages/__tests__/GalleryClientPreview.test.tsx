@@ -514,6 +514,165 @@ describe("GalleryClientPreview", () => {
     expect(screen.getByText(/all your memories are ready|tüm anılarınız hazır/i)).toBeInTheDocument();
   });
 
+  it("does not show all/favorites toggles for final galleries when there are no favorites", async () => {
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            type: "final",
+            branding: { selectionSettings: { allowFavorites: true } },
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              status: "ready",
+              metadata: { originalName: "a.jpg", setId: "set-1", starred: false },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^(all|tümü)$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /favorites|favoriler/i })).not.toBeInTheDocument();
+  });
+
+  it("defaults to all and shows toggles for final galleries when favorites exist", async () => {
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            type: "final",
+            branding: { selectionSettings: { allowFavorites: true } },
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              status: "ready",
+              metadata: { originalName: "a.jpg", setId: "set-1", starred: false },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "selection-1",
+              asset_id: "asset-1",
+              selection_part: "favorites",
+              client_id: "client-1",
+            },
+          ],
+          error: null,
+        });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+
+    const allButton = await screen.findByRole("button", { name: /^(all|tümü)$/i });
+    expect(allButton).toHaveAttribute("aria-current", "page");
+
+    const favoritesButton = screen.getByRole("button", { name: /favorites|favoriler/i });
+    expect(favoritesButton).not.toHaveAttribute("aria-current", "page");
+  });
+
+  it("hides mobile bottom nav for final galleries when there are no favorites", async () => {
+    const originalWidth = window.innerWidth;
+    window.innerWidth = 375;
+
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            type: "final",
+            branding: { selectionSettings: { allowFavorites: true } },
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              status: "ready",
+              metadata: { originalName: "a.jpg", setId: "set-1", starred: false },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/gallery navigation|galeri sekmeleri/i)).not.toBeInTheDocument();
+
+    window.innerWidth = originalWidth;
+  });
+
   it("prefers coverAssetId for the hero cover image", async () => {
     supabaseMock.storage.from.mockImplementation(() => ({
       createSignedUrl: jest.fn().mockImplementation((path: string) => {

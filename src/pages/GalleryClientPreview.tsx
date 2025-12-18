@@ -494,6 +494,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   const selectionSettings = useMemo(() => (brandingData.selectionSettings || {}) as Record<string, unknown>, [brandingData]);
   const watermark = useMemo(() => parseGalleryWatermarkFromBranding(brandingData), [brandingData]);
   const favoritesEnabled = selectionSettings.allowFavorites !== false;
+  const hasFavorites = favoritesEnabled && favoritePhotoIds.size > 0;
   const eventDate = typeof brandingData.eventDate === "string" ? brandingData.eventDate : "";
 
   const viewInitializedRef = useRef<string | null>(null);
@@ -503,19 +504,9 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     if (viewInitializedRef.current === galleryId) return;
     viewInitializedRef.current = galleryId;
 
-    if (isMobile) {
-      setMobileTab("gallery");
-      setActiveFilter("all");
-      return;
-    }
-
-    if (isFinalGallery && favoritesEnabled) {
-      setActiveFilter("favorites");
-      return;
-    }
-
+    setMobileTab("gallery");
     setActiveFilter("all");
-  }, [favoritesEnabled, gallery?.id, isFinalGallery, isMobile]);
+  }, [gallery?.id]);
 
   useEffect(() => {
     if (isSelectionGallery) return;
@@ -529,8 +520,15 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   useEffect(() => {
     if (isSelectionGallery) return;
     if (activeFilter === "all" || activeFilter === "favorites") return;
-    setActiveFilter(isMobile ? "all" : favoritesEnabled ? "favorites" : "all");
-  }, [activeFilter, favoritesEnabled, isMobile, isSelectionGallery]);
+    setActiveFilter("all");
+  }, [activeFilter, isSelectionGallery]);
+
+  useEffect(() => {
+    if (isSelectionGallery) return;
+    if (activeFilter !== "favorites") return;
+    if (hasFavorites) return;
+    setActiveFilter("all");
+  }, [activeFilter, hasFavorites, isSelectionGallery]);
 
   const { data: persistedClientSelections } = useQuery({
     queryKey: ["gallery_client_preview_client_selections", resolvedGalleryId, viewerId],
@@ -2432,7 +2430,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
         ) : null}
 
         {/* ROW 3: Tasks + Filters */}
-        {!isMobile ? (
+        {!isMobile && (isSelectionGallery || hasFavorites) ? (
           <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-2">
             <div className="flex items-start gap-3 min-w-max">
               {isSelectionGallery
@@ -2504,9 +2502,9 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                           setActiveFilter("all");
                           scrollToContentStart();
                         }}
-                        className={`group relative inline-flex items-center gap-2 shrink-0 rounded-full border bg-white px-4 py-2 text-sm font-semibold transition-all hover:shadow-sm ${activeFilter === "all"
+                        className={`group relative inline-flex items-center gap-2 shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-all hover:shadow-sm ${activeFilter === "all"
                           ? "border-gray-900 bg-gray-900 text-white"
-                          : "border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
                           }`}
                         aria-current={activeFilter === "all" ? "page" : undefined}
                       >
@@ -2521,9 +2519,9 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                           setActiveFilter("favorites");
                           scrollToContentStart();
                         }}
-                        className={`group relative inline-flex items-center gap-2 shrink-0 rounded-full border bg-white px-4 py-2 text-sm font-semibold transition-all hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${activeFilter === "favorites"
+                        className={`group relative inline-flex items-center gap-2 shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-all hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${activeFilter === "favorites"
                           ? "border-red-500 bg-red-500 text-white shadow-sm"
-                          : "border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
                           }`}
                         aria-current={activeFilter === "favorites" ? "page" : undefined}
                       >
@@ -2704,7 +2702,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
       )}
 
       {
-        isMobile ? (
+        isMobile && (isSelectionGallery || hasFavorites) ? (
           <nav
             aria-label={t("sessionDetail.gallery.clientPreview.bottomNav.ariaLabel")}
             className={`mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-100 px-2 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] transition-transform duration-300 ease-out ${showBottomNav ? "translate-y-0" : "translate-y-full"

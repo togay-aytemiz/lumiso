@@ -69,9 +69,11 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { cn, formatBytes, getUserLocale } from "@/lib/utils";
 import {
+  buildGalleryOriginalPath,
   buildGalleryProofPath,
   convertImageToProof,
   GALLERY_ASSETS_BUCKET,
+  getImageDimensions,
   getStorageBasename,
   isSupabaseStorageObjectMissingError,
 } from "@/lib/galleryAssets";
@@ -290,6 +292,43 @@ const cloneSelectionTemplateGroups = (groups: SelectionTemplateGroupForm[]) =>
   }));
 
 const isImageFile = (file: File) => file.type.startsWith("image/");
+
+const IMAGE_EXTENSION_BY_MIME: Record<string, string> = {
+  "image/jpg": "jpg",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "image/avif": "avif",
+  "image/heic": "heic",
+  "image/heif": "heif",
+  "image/tiff": "tiff",
+};
+
+const IMAGE_MIME_BY_EXTENSION: Record<string, string> = Object.fromEntries(
+  Object.entries(IMAGE_EXTENSION_BY_MIME).map(([mime, extension]) => [extension, mime])
+);
+
+const normalizeImageExtension = (extension: string) => {
+  const normalized = extension.trim().toLowerCase();
+  if (normalized === "jpeg") return "jpg";
+  if (normalized === "tif") return "tiff";
+  return normalized;
+};
+
+const resolveImageExtension = (file: File) => {
+  const match = file.name.match(/\.([a-z0-9]{1,12})$/i);
+  if (match?.[1]) return normalizeImageExtension(match[1]);
+  const mimeExtension = IMAGE_EXTENSION_BY_MIME[file.type.toLowerCase()];
+  if (mimeExtension) return mimeExtension;
+  return "jpg";
+};
+
+const resolveImageContentType = (file: File, extension: string) => {
+  const type = file.type.trim();
+  if (type) return type;
+  return IMAGE_MIME_BY_EXTENSION[extension] ?? "application/octet-stream";
+};
 
 const fingerprintSelectionTemplateGroups = (groups: SelectionTemplateGroupForm[]) =>
   JSON.stringify(
@@ -2566,7 +2605,30 @@ export default function GalleryDetail() {
       );
 
       try {
-        const proof = await convertImageToProof(sourceFile);
+        const isFinalGallery = type === "final";
+
+        let uploadBlob: Blob;
+        let uploadContentType: string;
+        let uploadExtension: string;
+        let uploadWidth: number | null;
+        let uploadHeight: number | null;
+
+        if (isFinalGallery) {
+          uploadExtension = resolveImageExtension(sourceFile);
+          uploadContentType = resolveImageContentType(sourceFile, uploadExtension);
+          const dimensions = await getImageDimensions(sourceFile);
+          uploadWidth = dimensions?.width ?? null;
+          uploadHeight = dimensions?.height ?? null;
+          uploadBlob = sourceFile;
+        } else {
+          const proof = await convertImageToProof(sourceFile);
+          uploadBlob = proof.blob;
+          uploadContentType = proof.contentType;
+          uploadExtension = proof.extension;
+          uploadWidth = proof.width;
+          uploadHeight = proof.height;
+        }
+
         if (canceledUploadIdsRef.current.has(assetId)) return;
 
         const usedBytes = typeof orgBytes === "number" && Number.isFinite(orgBytes) ? orgBytes : 0;
@@ -2577,7 +2639,7 @@ export default function GalleryDetail() {
           return sum + item.size;
         }, 0);
         const remainingBytes = galleryStorageLimitBytes - usedBytes - reservedBytes;
-        if (proof.blob.size > remainingBytes) {
+        if (uploadBlob.size > remainingBytes) {
           clearUploadTimer(assetId);
           toast({
             title: t("sessionDetail.gallery.toast.storageLimitTitle"),
@@ -2602,12 +2664,21 @@ export default function GalleryDetail() {
           return;
         }
 
-        const storagePathWeb = buildGalleryProofPath({
-          organizationId: activeOrganizationId,
-          galleryId: id,
-          assetId,
-          extension: proof.extension,
-        });
+        const storagePathWeb = isFinalGallery
+          ? buildGalleryOriginalPath({
+              organizationId: activeOrganizationId,
+              galleryId: id,
+              assetId,
+              extension: uploadExtension,
+            })
+          : buildGalleryProofPath({
+              organizationId: activeOrganizationId,
+              galleryId: id,
+              assetId,
+              extension: uploadExtension,
+            });
+
+        const storagePathOriginal = isFinalGallery ? storagePathWeb : null;
 
         setUploadQueue((prev) =>
           prev.map((entry) =>
@@ -2637,8 +2708,8 @@ export default function GalleryDetail() {
 
         const { error: uploadError } = await supabase.storage
           .from(GALLERY_ASSETS_BUCKET)
-          .upload(storagePathWeb, proof.blob, {
-            contentType: proof.contentType,
+          .upload(storagePathWeb, uploadBlob, {
+            contentType: uploadContentType,
             cacheControl: "3600",
             upsert: true,
           });
@@ -2649,15 +2720,25 @@ export default function GalleryDetail() {
           return;
         }
 
-        const metadata = {
-          originalName: sourceFile.name,
-          originalSize: sourceFile.size,
-          originalType: sourceFile.type,
-          proofSize: proof.blob.size,
-          proofType: proof.contentType,
-          setId: current.setId,
-          starred: Boolean(current.starred),
-        };
+        const metadata = isFinalGallery
+          ? {
+              originalName: sourceFile.name,
+              originalSize: sourceFile.size,
+              originalType: sourceFile.type,
+              setId: current.setId,
+              starred: Boolean(current.starred),
+              width: uploadWidth ?? undefined,
+              height: uploadHeight ?? undefined,
+            }
+          : {
+              originalName: sourceFile.name,
+              originalSize: sourceFile.size,
+              originalType: sourceFile.type,
+              proofSize: uploadBlob.size,
+              proofType: uploadContentType,
+              setId: current.setId,
+              starred: Boolean(current.starred),
+            };
 
         const { error: upsertError } = await supabase
           .from("gallery_assets")
@@ -2666,8 +2747,9 @@ export default function GalleryDetail() {
               id: assetId,
               gallery_id: id,
               storage_path_web: storagePathWeb,
-              width: proof.width,
-              height: proof.height,
+              storage_path_original: storagePathOriginal,
+              width: uploadWidth,
+              height: uploadHeight,
               status: "ready",
               metadata,
             },
@@ -2686,7 +2768,7 @@ export default function GalleryDetail() {
               ...entry,
               status: "done",
               progress: 100,
-              size: proof.blob.size,
+              size: uploadBlob.size,
               file: undefined,
               storagePathWeb,
             };
@@ -2715,6 +2797,7 @@ export default function GalleryDetail() {
       scheduleGalleryAssetsSync,
       t,
       toast,
+      type,
     ]
   );
 
@@ -2870,7 +2953,8 @@ export default function GalleryDetail() {
         queryClient.invalidateQueries({ queryKey: ["gallery_storage_usage", id] });
 
         if (storagePaths.length > 0) {
-          const { error: storageError } = await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove(storagePaths);
+          const uniquePaths = Array.from(new Set(storagePaths));
+          const { error: storageError } = await supabase.storage.from(GALLERY_ASSETS_BUCKET).remove(uniquePaths);
           if (storageError) {
             console.warn("Failed to remove storage objects for deleted assets", storageError);
           }

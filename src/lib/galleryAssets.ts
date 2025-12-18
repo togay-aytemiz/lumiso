@@ -93,6 +93,18 @@ export const buildGalleryProofPath = ({
   extension: string;
 }) => `${organizationId}/galleries/${galleryId}/proof/${assetId}.${extension}`;
 
+export const buildGalleryOriginalPath = ({
+  organizationId,
+  galleryId,
+  assetId,
+  extension,
+}: {
+  organizationId: string;
+  galleryId: string;
+  assetId: string;
+  extension: string;
+}) => `${organizationId}/galleries/${galleryId}/original/${assetId}.${extension}`;
+
 export const getStorageBasename = (path: string) => {
   const parts = path.split("/");
   return parts[parts.length - 1] || path;
@@ -144,5 +156,19 @@ export const convertImageToProof = async (
     }
   } finally {
     decoded.cleanup();
+  }
+};
+
+export const getImageDimensions = async (file: File): Promise<{ width: number; height: number } | null> => {
+  if (!file.type.startsWith("image/")) return null;
+  try {
+    const decoded = await decodeImage(file);
+    try {
+      return { width: decoded.width, height: decoded.height };
+    } finally {
+      decoded.cleanup();
+    }
+  } catch {
+    return null;
   }
 };

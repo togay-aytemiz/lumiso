@@ -91,4 +91,66 @@ describe("AdminUserGallerySettingsTab", () => {
     await waitFor(() => expect(toastApi.error).toHaveBeenCalled());
     expect(builder.update).not.toHaveBeenCalled();
   });
+
+  it("requires typing gallery name before delete (admin actions)", async () => {
+    (supabase.rpc as unknown as jest.Mock).mockImplementation((fnName: string) => {
+      if (fnName === "admin_list_galleries_with_storage") {
+        return Promise.resolve({
+          data: [
+            {
+              id: "gallery-1",
+              title: "My Gallery",
+              status: "draft",
+              type: "proof",
+              lead_name: "Client One",
+              created_at: null,
+              updated_at: null,
+              gallery_bytes: 1024,
+            },
+          ],
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    (supabase.functions.invoke as unknown as jest.Mock).mockResolvedValue({
+      data: { success: true },
+      error: null,
+    });
+
+    render(<AdminUserGallerySettingsTab organizationId="org-1" limitBytes={3 * 1024 ** 3} />);
+
+    expect(await screen.findByText("Client One")).toBeInTheDocument();
+
+    const actionsButton = screen.getByRole("button", { name: "Actions" });
+    actionsButton.focus();
+    fireEvent.keyDown(actionsButton, { key: "Enter", code: "Enter" });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete gallery" }));
+
+    expect(await screen.findByRole("heading", { name: "Delete gallery" })).toBeInTheDocument();
+
+    const confirmButton = screen.getByRole("button", { name: "Delete gallery" });
+    expect(confirmButton).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Type the gallery name to delete"), {
+      target: { value: "Wrong" },
+    });
+    expect(confirmButton).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Type the gallery name to delete"), {
+      target: { value: "My Gallery" },
+    });
+
+    await waitFor(() => expect(confirmButton).toBeEnabled());
+
+    fireEvent.click(confirmButton);
+
+    await waitFor(() =>
+      expect(supabase.functions.invoke).toHaveBeenCalledWith("admin-gallery-delete", {
+        body: { gallery_id: "gallery-1", confirm_title: "My Gallery" },
+      })
+    );
+    await waitFor(() => expect(toastApi.success).toHaveBeenCalledWith("Gallery deleted."));
+  });
 });

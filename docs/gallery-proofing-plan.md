@@ -8,8 +8,9 @@
 - Session detail: gallery create sheet + per-session gallery list shipped; gallery detail supports uploads into sets (Supabase Storage proofs).
 - Services: deliverable selection template UI shipped (EN/TR).
 - Client view: `/galleries/:id/preview` (internal) + `/g/:publicId` (public) shipped with PIN gate, responsive desktop/mobile UI, selections/favorites, and watermark overlay.
-- Supabase: tables + private `gallery-assets` bucket with org-scoped RLS shipped; public access uses `galleries.public_id` + `gallery_access` PIN + `gallery_access_grants` viewer sessions.
-- Edge: Supabase functions (`gallery-access`, `gallery-branding`) + Netlify Edge Functions for share-link OG previews (`/g/*`, `/og/g/*`).
+- Supabase: tables + private `gallery-assets` bucket with org-scoped RLS shipped; public access uses `galleries.public_id` + `gallery_access` PIN + `gallery_access_grants` viewer sessions; admin tooling uses RPCs (`admin_list_galleries_with_storage`, `admin_grant_gallery_access`, `admin_set_gallery_archived`).
+- Edge: Supabase functions (`gallery-access`, `gallery-branding`, `admin-gallery-delete`) + Netlify Edge Functions for share-link OG previews (`/g/*`, `/og/g/*`).
+- Admin: Admin → Users → Gallery tab now shows per-gallery lead name + quick actions (preview, archive/restore with confirmation, delete with typed-name confirmation).
 
 ## Competitive Notes (Picflow, Pixpa, CloudSpot, ShootProof, Pixieset, SmugMug, Zenfolio, Lightfolio, N-Vu, Online Picture Proof)
 - Client galleries with proof/final states, password/PIN, optional expiration, and share links per gallery.
@@ -141,6 +142,7 @@ Templates attach to services/packages; when a session includes that deliverable,
 - ✅ Galleries list per session (fetches from Supabase); empty state CTA remains, header CTA hidden when empty to avoid duplicates.
 - ✅ Gallery detail page `/galleries/:id`: back arrow to session, editable title/type/status/event date, save action; sets sidebar with list and “Add set” sheet; upload flow wired to Supabase Storage. All backed by new Supabase tables.
 - ✅ Gallery detail proofing/admin polish: per-set upload routing + counts, right-panel upload progress banner + completion chip, set delete (with DB+storage cleanup, no fallback), gallery delete (typed-name, full cascade), filter-mode hides set actions, improved empty states, soft-emerald dropzone highlight, batch selection in grid/list, safer “seçimi kaldır” confirm UI, and image-only uploads (mixed drops skip non-images with a warning).
+- ✅ Admin console: Admin → Users → Gallery tab includes lead name + preview/archive/delete actions for each gallery.
 
 ### In-app gallery UX (current)
 - Gallery create sheet (max-w-3xl) mirrors the selection schema UI used in services: service groups show service name input, “Kural ekle” for service-scoped rules, and “Seçime aç/kapat” to disable a service; a manual “İlave kurallar” block sits underneath with a pill + add button. Saving seeds `branding.selectionTemplateGroups` and a flattened `selectionTemplate`.

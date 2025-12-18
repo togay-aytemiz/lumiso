@@ -74,6 +74,9 @@
       "next": "Sonraki özellik"
     }
   },
+  "buttons": {
+    "cancel": "İptal"
+  },
   "profileIntake": {
     "badge": "Başlamadan önce",
     "title": "Stüdyonu tanıtalım",
@@ -546,6 +549,14 @@
         "restore": "Galeriyi Arşivden Çıkar",
         "delete": "Galeriyi Sil",
         "more": "Diğer işlemler"
+      },
+      "delete": {
+        "title": "Galeriyi sil",
+        "description": "Bu işlem geri alınamaz. Galeri ve tüm medya kalıcı olarak silinecek.",
+        "confirmLabel": "Silmek için galeri adını yazın",
+        "confirmHint": "Galeri adı: {{name}}",
+        "confirmButton": "Galeriyi sil",
+        "deleting": "Siliniyor..."
       },
       "archivedBanner": {
         "title": "Bu galeri arşivlendi",
@@ -1536,7 +1547,23 @@
             "columns": {
               "title": "Galeri",
               "status": "Durum",
-              "size": "Kullanım"
+              "lead": "Kişi",
+              "size": "Kullanım",
+              "actions": "İşlemler"
+            },
+            "toasts": {
+              "archiveSuccess": "Galeri arşivlendi.",
+              "restoreSuccess": "Galeri arşivden çıkarıldı.",
+              "actionError": "Galeri güncellenemedi.",
+              "previewError": "Önizleme açılamadı.",
+              "deleteSuccess": "Galeri silindi.",
+              "deleteError": "Galeri silinemedi."
+            },
+            "archiveConfirm": {
+              "title": "Galeriyi arşivle?",
+              "description": "Bu galeri arşive taşınacak ve düzenleme kapatılacak. Daha sonra arşivden çıkarabilirsiniz.",
+              "confirm": "Galeriyi arşivle",
+              "confirmLoading": "Arşivleniyor..."
             }
           }
         },

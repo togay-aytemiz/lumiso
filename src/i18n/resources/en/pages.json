@@ -74,6 +74,9 @@
       "next": "Next feature"
     }
   },
+  "buttons": {
+    "cancel": "Cancel"
+  },
   "profileIntake": {
     "badge": "Before you start",
     "title": "Tell us about your studio",
@@ -531,6 +534,14 @@
         "restore": "Restore gallery",
         "delete": "Delete gallery",
         "more": "More actions"
+      },
+      "delete": {
+        "title": "Delete gallery",
+        "description": "This action cannot be undone. The gallery and all media will be permanently deleted.",
+        "confirmLabel": "Type the gallery name to delete",
+        "confirmHint": "Gallery name: {{name}}",
+        "confirmButton": "Delete gallery",
+        "deleting": "Deleting..."
       },
       "archivedBanner": {
         "title": "This gallery is archived",
@@ -1520,7 +1531,23 @@
             "columns": {
               "title": "Gallery",
               "status": "Status",
-              "size": "Usage"
+              "lead": "Lead",
+              "size": "Usage",
+              "actions": "Actions"
+            },
+            "toasts": {
+              "archiveSuccess": "Gallery archived.",
+              "restoreSuccess": "Gallery restored.",
+              "actionError": "Could not update the gallery.",
+              "previewError": "Could not open preview.",
+              "deleteSuccess": "Gallery deleted.",
+              "deleteError": "Could not delete the gallery."
+            },
+            "archiveConfirm": {
+              "title": "Archive gallery?",
+              "description": "This will move the gallery to archived and disable editing. You can restore it later.",
+              "confirm": "Archive gallery",
+              "confirmLoading": "Archiving..."
             }
           }
         },

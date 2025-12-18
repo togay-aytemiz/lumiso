@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { Archive, Loader2, MoreVertical, RotateCcw, Trash2, ArrowUpRight } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { ORG_GALLERY_STORAGE_LIMIT_BYTES } from "@/lib/storageLimits";
@@ -15,6 +17,23 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { StorageWidget } from "@/components/ui/storage-widget";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { GalleryStatusChip, type GalleryStatus } from "@/components/galleries/GalleryStatusChip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type StorageUnit = "gb" | "mb";
 
@@ -52,6 +71,7 @@ type AdminGalleryStorageRow = {
   title: string;
   status: string;
   type: string;
+  lead_name: string | null;
   created_at: string | null;
   updated_at: string | null;
   gallery_bytes: number | null;
@@ -61,6 +81,7 @@ type AdminGalleryListItem = {
   id: string;
   title: string;
   status: GalleryStatus;
+  leadName: string | null;
   galleryBytes: number;
   updatedAt: string | null;
 };
@@ -83,6 +104,7 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
   const locale = i18n.resolvedLanguage ?? i18n.language ?? undefined;
   const queryClient = useQueryClient();
   const i18nToast = useI18nToast();
+  const navigate = useNavigate();
 
   const resolvedLimitBytes = useMemo(() => {
     if (typeof limitBytes === "number" && Number.isFinite(limitBytes) && limitBytes > 0) {
@@ -168,8 +190,13 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
     [locale]
   );
 
+  const galleriesQueryKey = useMemo(
+    () => ["admin-users", organizationId, "galleries", "storage"] as const,
+    [organizationId]
+  );
+
   const galleriesQuery = useQuery({
-    queryKey: ["admin-users", organizationId, "galleries", "storage"],
+    queryKey: galleriesQueryKey,
     enabled: Boolean(organizationId),
     staleTime: 60_000,
     queryFn: async (): Promise<AdminGalleryListItem[]> => {
@@ -184,6 +211,7 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
             id: row.id,
             title: row.title,
             status,
+            leadName: typeof row.lead_name === "string" ? row.lead_name : null,
             galleryBytes,
             updatedAt: row.updated_at,
           };
@@ -197,6 +225,146 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
     () => galleries.reduce((sum, row) => sum + (Number.isFinite(row.galleryBytes) ? row.galleryBytes : 0), 0),
     [galleries]
   );
+
+  const [deleteGuardOpen, setDeleteGuardOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [pendingDeleteGallery, setPendingDeleteGallery] = useState<AdminGalleryListItem | null>(null);
+
+  const [archiveGuardOpen, setArchiveGuardOpen] = useState(false);
+  const [pendingArchiveGallery, setPendingArchiveGallery] = useState<AdminGalleryListItem | null>(null);
+
+  const expectedGalleryNameForDelete = useMemo(() => pendingDeleteGallery?.title.trim() ?? "", [pendingDeleteGallery?.title]);
+  const canConfirmGalleryDelete =
+    expectedGalleryNameForDelete.length > 0 && deleteConfirmText.trim() === expectedGalleryNameForDelete;
+
+  const closeDeleteGuard = useCallback(() => {
+    setDeleteGuardOpen(false);
+    setDeleteConfirmText("");
+    setPendingDeleteGallery(null);
+  }, []);
+
+  const openDeleteGuard = useCallback((gallery: AdminGalleryListItem) => {
+    setPendingDeleteGallery(gallery);
+    setDeleteConfirmText("");
+    setDeleteGuardOpen(true);
+  }, []);
+
+  const closeArchiveGuard = useCallback(() => {
+    setArchiveGuardOpen(false);
+    setPendingArchiveGallery(null);
+  }, []);
+
+  const openArchiveGuard = useCallback((gallery: AdminGalleryListItem) => {
+    setPendingArchiveGallery(gallery);
+    setArchiveGuardOpen(true);
+  }, []);
+
+  const refreshGalleries = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: galleriesQueryKey });
+  }, [galleriesQueryKey, queryClient]);
+
+  const archiveMutation = useMutation({
+    mutationFn: async ({ galleryId, archived }: { galleryId: string; archived: boolean }) => {
+      const { error } = await (supabase as any).rpc("admin_set_gallery_archived", {
+        gallery_uuid: galleryId,
+        archived,
+      });
+      if (error) throw error;
+    },
+    onSuccess: async (_data, variables) => {
+      closeArchiveGuard();
+      await refreshGalleries();
+      i18nToast.success(
+        variables.archived
+          ? t("admin.users.detail.gallery.galleries.toasts.archiveSuccess")
+          : t("admin.users.detail.gallery.galleries.toasts.restoreSuccess")
+      );
+    },
+    onError: (error) => {
+      console.error("Admin gallery archive action failed", error);
+      i18nToast.error(t("admin.users.detail.gallery.galleries.toasts.actionError"));
+    },
+  });
+
+  const previewMutation = useMutation({
+    mutationFn: async ({ galleryId }: { galleryId: string }) => {
+      const { error } = await (supabase as any).rpc("admin_grant_gallery_access", {
+        gallery_uuid: galleryId,
+      });
+      if (error) throw error;
+    },
+    onError: (error) => {
+      console.error("Admin gallery preview grant failed", error);
+      i18nToast.error(t("admin.users.detail.gallery.galleries.toasts.previewError"));
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async ({ galleryId, confirmTitle }: { galleryId: string; confirmTitle: string }) => {
+      const { data, error } = await supabase.functions.invoke("admin-gallery-delete", {
+        body: { gallery_id: galleryId, confirm_title: confirmTitle },
+      });
+      if (error) throw error;
+      const payload = data as { error?: { message?: string } } | null;
+      if (payload?.error?.message) {
+        throw new Error(payload.error.message);
+      }
+    },
+    onSuccess: async () => {
+      closeDeleteGuard();
+      await refreshGalleries();
+      i18nToast.success(t("admin.users.detail.gallery.galleries.toasts.deleteSuccess"));
+    },
+    onError: (error) => {
+      console.error("Admin gallery delete failed", error);
+      i18nToast.error(t("admin.users.detail.gallery.galleries.toasts.deleteError"));
+    },
+  });
+
+  const isMutating = archiveMutation.isPending || previewMutation.isPending || deleteMutation.isPending;
+
+  const handlePreview = useCallback(
+    async (galleryId: string) => {
+      try {
+        await previewMutation.mutateAsync({ galleryId });
+      } catch {
+        return;
+      }
+      const previewPath = `/galleries/${galleryId}/preview`;
+      const win = typeof window !== "undefined"
+        ? window.open(previewPath, "_blank", "noopener,noreferrer")
+        : null;
+      if (!win) {
+        navigate(previewPath);
+        return;
+      }
+      win.focus?.();
+    },
+    [navigate, previewMutation]
+  );
+
+  const handleToggleArchive = useCallback(
+    async (gallery: AdminGalleryListItem) => {
+      try {
+        await archiveMutation.mutateAsync({ galleryId: gallery.id, archived: gallery.status !== "archived" });
+      } catch {
+        return;
+      }
+    },
+    [archiveMutation]
+  );
+
+  const handleConfirmDelete = useCallback(() => {
+    const galleryId = pendingDeleteGallery?.id ?? "";
+    if (!galleryId) return;
+    deleteMutation.mutate({ galleryId, confirmTitle: deleteConfirmText.trim() });
+  }, [deleteConfirmText, deleteMutation, pendingDeleteGallery?.id]);
+
+  const handleConfirmArchive = useCallback(() => {
+    const galleryId = pendingArchiveGallery?.id ?? "";
+    if (!galleryId) return;
+    archiveMutation.mutate({ galleryId, archived: true });
+  }, [archiveMutation, pendingArchiveGallery?.id]);
 
   const galleryColumns = useMemo<Column<AdminGalleryListItem>[]>(
     () => [
@@ -213,13 +381,88 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
         render: (row) => <GalleryStatusChip status={row.status} />,
       },
       {
+        key: "leadName",
+        header: t("admin.users.detail.gallery.galleries.columns.lead"),
+        sortable: true,
+        render: (row) => row.leadName || "—",
+      },
+      {
         key: "galleryBytes",
         header: t("admin.users.detail.gallery.galleries.columns.size"),
         sortable: true,
         render: (row) => formatBytes(row.galleryBytes, locale),
       },
+      {
+        key: "actions",
+        header: t("admin.users.detail.gallery.galleries.columns.actions"),
+        render: (row) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t("admin.users.detail.gallery.galleries.columns.actions")}
+                disabled={isSaving || isMutating}
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="gap-2"
+                onSelect={(event) => {
+                  event.preventDefault();
+                  void handlePreview(row.id);
+                }}
+                disabled={isSaving || isMutating}
+              >
+                <ArrowUpRight className="h-4 w-4" />
+                {t("sessionDetail.gallery.actions.preview")}
+              </DropdownMenuItem>
+              {row.status === "archived" ? (
+                <DropdownMenuItem
+                  className="gap-2"
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    void handleToggleArchive(row);
+                  }}
+                  disabled={isSaving || isMutating}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  {t("sessionDetail.gallery.actions.restore")}
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  className="gap-2"
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    openArchiveGuard(row);
+                  }}
+                  disabled={isSaving || isMutating}
+                >
+                  <Archive className="h-4 w-4" />
+                  {t("sessionDetail.gallery.actions.archive")}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+                onSelect={(event) => {
+                  event.preventDefault();
+                  openDeleteGuard(row);
+                }}
+                disabled={isSaving || isMutating}
+              >
+                <Trash2 className="h-4 w-4" />
+                {t("sessionDetail.gallery.actions.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+      },
     ],
-    [locale, t]
+    [handlePreview, handleToggleArchive, isMutating, isSaving, locale, openArchiveGuard, openDeleteGuard, t]
   );
 
   return (
@@ -317,6 +560,84 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={deleteGuardOpen} onOpenChange={(open) => !open && closeDeleteGuard()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("sessionDetail.gallery.delete.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("sessionDetail.gallery.delete.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="admin-gallery-delete-confirm">
+              {t("sessionDetail.gallery.delete.confirmLabel")}
+            </Label>
+            <Input
+              id="admin-gallery-delete-confirm"
+              value={deleteConfirmText}
+              onChange={(event) => setDeleteConfirmText(event.target.value)}
+              placeholder={expectedGalleryNameForDelete}
+              autoFocus
+              disabled={deleteMutation.isPending}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("sessionDetail.gallery.delete.confirmHint", { name: expectedGalleryNameForDelete })}
+            </p>
+          </div>
+
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel onClick={closeDeleteGuard} disabled={deleteMutation.isPending}>
+              {t("buttons.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={!canConfirmGalleryDelete || deleteMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("sessionDetail.gallery.delete.deleting")}
+                </>
+              ) : (
+                t("sessionDetail.gallery.delete.confirmButton")
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={archiveGuardOpen} onOpenChange={(open) => !open && closeArchiveGuard()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.users.detail.gallery.galleries.archiveConfirm.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.users.detail.gallery.galleries.archiveConfirm.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel onClick={closeArchiveGuard} disabled={archiveMutation.isPending}>
+              {t("buttons.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmArchive}
+              disabled={!pendingArchiveGallery?.id || archiveMutation.isPending}
+            >
+              {archiveMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("admin.users.detail.gallery.galleries.archiveConfirm.confirmLoading")}
+                </>
+              ) : (
+                t("admin.users.detail.gallery.galleries.archiveConfirm.confirm")
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

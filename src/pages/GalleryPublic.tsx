@@ -207,7 +207,7 @@ export default function GalleryPublic() {
   }, [accessStorageKey, canSubmit, normalizedPublicId, pinInput, t]);
 
   if (resolvedGalleryId) {
-    return <GalleryClientPreview galleryId={resolvedGalleryId} />;
+    return <GalleryClientPreview galleryId={resolvedGalleryId} branding={branding} />;
   }
 
   const brandingBlock = branding ? (

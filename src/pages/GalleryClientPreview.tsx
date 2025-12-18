@@ -118,6 +118,16 @@ type SelectionTemplateGroupForm = {
   rules: SelectionTemplateRuleForm[];
 };
 
+type GalleryClientFooterBranding = {
+  logoUrl: string | null;
+  businessName: string | null;
+};
+
+type GalleryClientPreviewProps = {
+  galleryId?: string;
+  branding?: GalleryClientFooterBranding | null;
+};
+
 type ClientSelectionRow = {
   id: string;
   asset_id: string | null;
@@ -252,7 +262,7 @@ const parseCountValue = (value: unknown): number | null => {
   return null;
 };
 
-export default function GalleryClientPreview({ galleryId }: { galleryId?: string } = {}) {
+export default function GalleryClientPreview({ galleryId, branding }: GalleryClientPreviewProps = {}) {
   const { id: routeGalleryId } = useParams<{ id?: string }>();
   const resolvedGalleryId = galleryId ?? routeGalleryId ?? "";
   const { t, i18n } = useTranslation("pages");
@@ -338,6 +348,10 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
     },
   });
 
+  const normalizedGalleryType = (gallery?.type ?? "").trim().toLowerCase();
+  const isSelectionGallery = normalizedGalleryType === "proof";
+  const isFinalGallery = normalizedGalleryType === "final";
+
   const selectionStateQueryKey = useMemo(
     () => ["gallery_selection_state", resolvedGalleryId],
     [resolvedGalleryId]
@@ -345,7 +359,7 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
 
   const { data: selectionState } = useQuery({
     queryKey: selectionStateQueryKey,
-    enabled: Boolean(resolvedGalleryId),
+    enabled: Boolean(resolvedGalleryId && isSelectionGallery),
     queryFn: async (): Promise<GallerySelectionStateRow | null> => {
       if (!resolvedGalleryId) return null;
       const { data, error } = await supabase
@@ -482,6 +496,42 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
   const favoritesEnabled = selectionSettings.allowFavorites !== false;
   const eventDate = typeof brandingData.eventDate === "string" ? brandingData.eventDate : "";
 
+  const viewInitializedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const galleryId = gallery?.id ?? "";
+    if (!galleryId) return;
+    if (viewInitializedRef.current === galleryId) return;
+    viewInitializedRef.current = galleryId;
+
+    if (isMobile) {
+      setMobileTab("gallery");
+      setActiveFilter("all");
+      return;
+    }
+
+    if (isFinalGallery && favoritesEnabled) {
+      setActiveFilter("favorites");
+      return;
+    }
+
+    setActiveFilter("all");
+  }, [favoritesEnabled, gallery?.id, isFinalGallery, isMobile]);
+
+  useEffect(() => {
+    if (isSelectionGallery) return;
+    if (!isMobile) return;
+    if (mobileTab === "tasks" || mobileTab === "starred") {
+      setMobileTab("gallery");
+      setActiveFilter("all");
+    }
+  }, [isMobile, isSelectionGallery, mobileTab]);
+
+  useEffect(() => {
+    if (isSelectionGallery) return;
+    if (activeFilter === "all" || activeFilter === "favorites") return;
+    setActiveFilter(isMobile ? "all" : favoritesEnabled ? "favorites" : "all");
+  }, [activeFilter, favoritesEnabled, isMobile, isSelectionGallery]);
+
   const { data: persistedClientSelections } = useQuery({
     queryKey: ["gallery_client_preview_client_selections", resolvedGalleryId, viewerId],
     enabled: Boolean(resolvedGalleryId && viewerId),
@@ -580,6 +630,7 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
   );
 
   const selectionRulesBase = useMemo<ClientPreviewRuleBase[]>(() => {
+    if (!isSelectionGallery) return [];
     const groups = parseSelectionTemplateGroups(brandingData);
     const rules: ClientPreviewRuleBase[] = [];
 
@@ -609,7 +660,7 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
     });
 
     return rules;
-  }, [brandingData, parseSelectionTemplateGroups, t]);
+  }, [brandingData, isSelectionGallery, parseSelectionTemplateGroups, t]);
 
   const legacySingleRuleSelectionPartKeyOverride = useMemo(() => {
     if (selectionTemplateHasRuleIds) return null;
@@ -2111,7 +2162,7 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
 
   const isLoading = galleryLoading || setsLoading || photosLoading;
   const heroTitle = gallery?.title || t("sessionDetail.gallery.clientPreview.hero.untitled");
-  const heroMode: HeroMode = gallery?.type === "final" ? "delivery" : "selection";
+  const heroMode: HeroMode = isSelectionGallery ? "selection" : "delivery";
   const showHero = !isMobile || (mobileTab === "gallery" && activeFilter === "all");
 
   const navTitle = useMemo(() => {
@@ -2382,57 +2433,115 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
         {!isMobile ? (
           <div className="w-full border-t border-gray-100 bg-white overflow-x-auto no-scrollbar px-4 py-4 md:px-12 md:py-2">
             <div className="flex items-start gap-3 min-w-max">
-              {selectionRules.map((rule) => {
-                const isActive = activeFilter === rule.id;
-                const status = getRuleStatus(rule, t);
-                const serviceName = rule.serviceName?.trim() ?? "";
-                const showRange = rule.minCount > 0 && rule.maxCount != null && rule.maxCount !== rule.minCount;
-                const desktopDenominator = rule.maxCount != null
-                  ? showRange
-                    ? `${rule.minCount}-${rule.maxCount}`
-                    : `${rule.maxCount}`
-                  : rule.minCount > 0
-                    ? `${rule.minCount}+`
-                    : "0";
+              {isSelectionGallery
+                ? selectionRules.map((rule) => {
+                    const isActive = activeFilter === rule.id;
+                    const status = getRuleStatus(rule, t);
+                    const serviceName = rule.serviceName?.trim() ?? "";
+                    const showRange =
+                      rule.minCount > 0 && rule.maxCount != null && rule.maxCount !== rule.minCount;
+                    const desktopDenominator =
+                      rule.maxCount != null
+                        ? showRange
+                          ? `${rule.minCount}-${rule.maxCount}`
+                          : `${rule.maxCount}`
+                        : rule.minCount > 0
+                          ? `${rule.minCount}+`
+                          : "0";
 
-                return (
-                  <button
-                    key={rule.id}
-                    type="button"
-                    data-touch-target="compact"
-                    onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
-                    className={`group relative flex items-center gap-3 min-w-[240px] shrink-0 rounded-full border bg-white px-4 py-2 transition-all text-left hover:shadow-sm ${isActive
-                      ? "border-emerald-600 bg-emerald-50 ring-1 ring-emerald-200"
-                      : status.borderColor
-                      }`}
-                  >
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-full border ${status.isComplete ? "bg-emerald-500 border-emerald-500 text-white" : "bg-gray-50 border-gray-200 text-gray-300"}`}>
-                      {status.isComplete ? <Check size={16} strokeWidth={3} /> : <div className="h-2 w-2 rounded-full bg-gray-300" />}
-                    </div>
+                    return (
+                      <button
+                        key={rule.id}
+                        type="button"
+                        data-touch-target="compact"
+                        onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
+                        className={`group relative flex items-center gap-3 min-w-[240px] shrink-0 rounded-full border bg-white px-4 py-2 transition-all text-left hover:shadow-sm ${isActive
+                          ? "border-emerald-600 bg-emerald-50 ring-1 ring-emerald-200"
+                          : status.borderColor
+                          }`}
+                      >
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-full border ${status.isComplete ? "bg-emerald-500 border-emerald-500 text-white" : "bg-gray-50 border-gray-200 text-gray-300"}`}
+                        >
+                          {status.isComplete ? (
+                            <Check size={16} strokeWidth={3} />
+                          ) : (
+                            <div className="h-2 w-2 rounded-full bg-gray-300" />
+                          )}
+                        </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1 text-sm font-semibold text-gray-900 leading-snug truncate">
-                        <span className="truncate">{rule.title}</span>
-                        {rule.required ? <span className="text-red-500">*</span> : null}
-                      </div>
-                      {serviceName ? (
-                        <p className="text-xs text-gray-500 truncate">{serviceName}</p>
-                      ) : null}
-                    </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1 text-sm font-semibold text-gray-900 leading-snug truncate">
+                            <span className="truncate">{rule.title}</span>
+                            {rule.required ? <span className="text-red-500">*</span> : null}
+                          </div>
+                          {serviceName ? (
+                            <p className="text-xs text-gray-500 truncate">{serviceName}</p>
+                          ) : null}
+                        </div>
 
-                    <div className="text-right">
-                      <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-base font-bold text-gray-900 tabular-nums leading-none">
-                          {rule.currentCount}
-                        </span>
-                        <span className="text-xs font-semibold text-gray-500 tabular-nums">
-                          / {desktopDenominator}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+                        <div className="text-right">
+                          <div className="flex items-baseline justify-end gap-1">
+                            <span className="text-base font-bold text-gray-900 tabular-nums leading-none">
+                              {rule.currentCount}
+                            </span>
+                            <span className="text-xs font-semibold text-gray-500 tabular-nums">
+                              / {desktopDenominator}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })
+                : (
+                    <>
+                      <button
+                        type="button"
+                        data-touch-target="compact"
+                        onClick={() => {
+                          setActiveFilter("all");
+                          scrollToContentStart();
+                        }}
+                        className={`group relative inline-flex items-center gap-2 shrink-0 rounded-full border bg-white px-4 py-2 text-sm font-semibold transition-all hover:shadow-sm ${activeFilter === "all"
+                          ? "border-gray-900 bg-gray-900 text-white"
+                          : "border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                          }`}
+                        aria-current={activeFilter === "all" ? "page" : undefined}
+                      >
+                        {t("sessionDetail.gallery.clientPreview.filters.all")}
+                      </button>
+
+                      <button
+                        type="button"
+                        data-touch-target="compact"
+                        disabled={!favoritesEnabled}
+                        onClick={() => {
+                          setActiveFilter("favorites");
+                          scrollToContentStart();
+                        }}
+                        className={`group relative inline-flex items-center gap-2 shrink-0 rounded-full border bg-white px-4 py-2 text-sm font-semibold transition-all hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${activeFilter === "favorites"
+                          ? "border-red-500 bg-red-500 text-white shadow-sm"
+                          : "border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                          }`}
+                        aria-current={activeFilter === "favorites" ? "page" : undefined}
+                      >
+                        <Heart
+                          size={16}
+                          fill={activeFilter === "favorites" ? "currentColor" : "none"}
+                          className={activeFilter === "favorites" ? "" : "text-red-500"}
+                          aria-hidden="true"
+                        />
+                        <span>{t("sessionDetail.gallery.clientPreview.filters.favorites")}</span>
+                        {favoritePhotoIds.size > 0 ? (
+                          <span
+                            className={`ml-1 inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[11px] font-bold tabular-nums ${activeFilter === "favorites" ? "bg-white/20 text-white" : "bg-red-50 text-red-600"}`}
+                          >
+                            {favoritePhotoIds.size}
+                          </span>
+                        ) : null}
+                      </button>
+                    </>
+                  )}
             </div>
           </div>
         ) : null}
@@ -2539,13 +2648,37 @@ export default function GalleryClientPreview({ galleryId }: { galleryId?: string
       )}
 
       {/* --- FOOTER --- */}
-      <footer className="bg-white py-12 border-t border-gray-100 text-center">
-        <div className="flex items-center justify-center gap-2 text-xl font-bold font-serif mb-4 text-gray-900">
-          {t("sessionDetail.gallery.clientPreview.footer.brand")}
+      <footer className="bg-white border-t border-gray-100 text-center pt-12 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+        <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-4 px-4">
+          {branding?.logoUrl || branding?.businessName ? (
+            <div className="flex flex-col items-center gap-2 text-center">
+              {branding.logoUrl ? (
+                <img
+                  src={branding.logoUrl}
+                  alt={
+                    branding.businessName ? "" : t("sessionDetail.gallery.publicAccess.brandingLogoAlt")
+                  }
+                  className="max-h-12 w-auto max-w-[220px] object-contain"
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : null}
+              {branding.businessName ? (
+                <p className="break-words font-playfair text-sm font-semibold leading-tight text-gray-900 md:text-base">
+                  {branding.businessName}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2 text-xl font-bold font-serif text-gray-900">
+              {t("sessionDetail.gallery.clientPreview.footer.brand")}
+            </div>
+          )}
+
+          <p className="text-gray-400 text-xs uppercase tracking-widest">
+            {t("sessionDetail.gallery.clientPreview.footer.copyright")}
+          </p>
         </div>
-        <p className="text-gray-400 text-xs uppercase tracking-widest">
-          {t("sessionDetail.gallery.clientPreview.footer.copyright")}
-        </p>
       </footer>
 
       {!isMobile && (

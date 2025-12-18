@@ -67,6 +67,41 @@ describe("GalleryClientPreview", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders footer branding and keeps it above overlays", async () => {
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: { id: "gallery-123", title: "My Gallery", type: "proof", branding: {} },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    render(
+      <GalleryClientPreview
+        branding={{ logoUrl: "https://example.com/logo.png", businessName: "Studio ABC" }}
+      />
+    );
+
+    expect(await screen.findByRole("heading", { name: "My Gallery" })).toBeInTheDocument();
+
+    const footer = screen.getByRole("contentinfo");
+    expect(footer).toHaveClass("pb-[calc(env(safe-area-inset-bottom,0px)+96px)]");
+    expect(screen.getByText("Studio ABC")).toBeInTheDocument();
+    expect(screen.getByAltText("")).toHaveAttribute("src", "https://example.com/logo.png");
+  });
+
   it("renders watermark overlay when enabled", async () => {
     supabaseMock.from.mockImplementation((table: string) => {
       const builder = supabaseMock.__createQueryBuilder();

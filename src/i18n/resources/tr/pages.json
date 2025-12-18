@@ -2769,7 +2769,9 @@
         "title": "Anında Bildirimler",
         "description": "Olaylar gerçekleştiğinde gönderilen uyarılar",
         "projectMilestone": "Proje Kilometre Taşı",
-        "projectMilestoneHelp": "Bir proje Tamamlandı veya İptal Edildi durumuna geçtiğinde bildir"
+        "projectMilestoneHelp": "Bir proje Tamamlandı veya İptal Edildi durumuna geçtiğinde bildir",
+        "gallerySelection": "Galeri Seçimleri Gönderildi",
+        "gallerySelectionHelp": "Müşteri galeri seçimlerini gönderdiğinde bildir"
       },
       "sendTest": "Test gönder",
       "sendEmptyTest": "Boş test gönder",

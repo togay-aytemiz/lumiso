@@ -173,6 +173,7 @@ describe("Notifications settings page", () => {
             notification_scheduled_time: "10:30",
             notification_daily_summary_enabled: false,
             notification_project_milestone_enabled: true,
+            notification_gallery_selection_enabled: true,
           },
         });
         chain.update.mockImplementation(() => ({
@@ -201,6 +202,7 @@ describe("Notifications settings page", () => {
     });
 
     expect(screen.getByTestId("switch-global-notifications")).toHaveTextContent("on");
+    expect(screen.getByTestId("switch-gallery-selection")).toHaveTextContent("on");
   });
 
   it("does not render test buttons for non-admin users", async () => {
@@ -231,6 +233,7 @@ describe("Notifications settings page", () => {
         notification_global_enabled: false,
         notification_daily_summary_enabled: false,
         notification_project_milestone_enabled: false,
+        notification_gallery_selection_enabled: false,
       });
     });
   });

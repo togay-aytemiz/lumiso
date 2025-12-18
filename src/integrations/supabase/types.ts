@@ -2444,6 +2444,7 @@ export type Database = {
           id: string
           logo_url: string | null
           notification_daily_summary_enabled: boolean | null
+          notification_gallery_selection_enabled: boolean | null
           notification_global_enabled: boolean | null
           notification_project_milestone_enabled: boolean | null
           notification_scheduled_time: string | null
@@ -2462,6 +2463,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
+          notification_gallery_selection_enabled?: boolean | null
           notification_global_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
           notification_scheduled_time?: string | null
@@ -2480,6 +2482,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
+          notification_gallery_selection_enabled?: boolean | null
           notification_global_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
           notification_scheduled_time?: string | null

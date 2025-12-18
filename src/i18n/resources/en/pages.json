@@ -2753,7 +2753,9 @@
         "title": "Immediate Notifications",
         "description": "Real-time alerts sent when events occur",
         "projectMilestone": "Project Milestone Reached",
-        "projectMilestoneHelp": "Notify when a project transitions to Completed or Cancelled lifecycle"
+        "projectMilestoneHelp": "Notify when a project transitions to Completed or Cancelled lifecycle",
+        "gallerySelection": "Gallery Selections Submitted",
+        "gallerySelectionHelp": "Notify when a client submits their gallery selections"
       },
       "sendTest": "Send test",
       "sendEmptyTest": "Send empty test",

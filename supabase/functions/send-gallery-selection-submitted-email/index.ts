@@ -176,6 +176,7 @@ type OrganizationSettingsRow = {
 
 type UserSettingsRow = {
   notification_global_enabled: boolean | null;
+  notification_gallery_selection_enabled: boolean | null;
 };
 
 type UserLanguagePreferenceRow = {
@@ -476,15 +477,14 @@ export const handler = async (
     const resendClient = deps.resendClient ?? resend;
     const results: Array<{ userId: string; email: string; sent: boolean; error?: string }> = [];
     const seenRecipientEmails = new Set<string>();
+    const suppressedRecipientEmails = new Set<string>();
 
     for (const userId of recipients) {
       const { data: userSettingsData } = await supabaseAdmin
         .from("user_settings")
-        .select("notification_global_enabled")
+        .select("notification_global_enabled,notification_gallery_selection_enabled")
         .eq("user_id", userId)
         .maybeSingle<UserSettingsRow>();
-
-      if (userSettingsData?.notification_global_enabled === false) continue;
 
       const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(
         userId,
@@ -502,6 +502,16 @@ export const handler = async (
       const emailKey = email.toLowerCase();
       if (seenRecipientEmails.has(emailKey)) continue;
       seenRecipientEmails.add(emailKey);
+
+      if (userSettingsData?.notification_global_enabled === false) {
+        suppressedRecipientEmails.add(emailKey);
+        continue;
+      }
+
+      if (userSettingsData?.notification_gallery_selection_enabled === false) {
+        suppressedRecipientEmails.add(emailKey);
+        continue;
+      }
 
       const { data: languagePrefData } = await supabaseAdmin
         .from("user_language_preferences")
@@ -554,7 +564,7 @@ export const handler = async (
 
     if (generalEmail) {
       const generalEmailKey = generalEmail.toLowerCase();
-      if (!seenRecipientEmails.has(generalEmailKey)) {
+      if (!seenRecipientEmails.has(generalEmailKey) && !suppressedRecipientEmails.has(generalEmailKey)) {
         seenRecipientEmails.add(generalEmailKey);
 
         const localization = createEmailLocalization(

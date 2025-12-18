@@ -8,6 +8,7 @@ export interface NotificationSettings {
   scheduledTime: string;
   dailySummaryEnabled: boolean;
   projectMilestoneEnabled: boolean;
+  gallerySelectionEnabled: boolean;
 }
 
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
@@ -15,6 +16,7 @@ const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   scheduledTime: "09:00",
   dailySummaryEnabled: true,
   projectMilestoneEnabled: false,
+  gallerySelectionEnabled: true,
 };
 
 const notificationSettingsQueryKey = (userId?: string | null) =>
@@ -25,6 +27,7 @@ const DB_FIELD_MAP: Record<keyof NotificationSettings, string> = {
   scheduledTime: "notification_scheduled_time",
   dailySummaryEnabled: "notification_daily_summary_enabled",
   projectMilestoneEnabled: "notification_project_milestone_enabled",
+  gallerySelectionEnabled: "notification_gallery_selection_enabled",
 };
 
 const mapFromDb = (row: Record<string, unknown>): NotificationSettings => ({
@@ -44,6 +47,10 @@ const mapFromDb = (row: Record<string, unknown>): NotificationSettings => ({
     typeof row.notification_project_milestone_enabled === "boolean"
       ? row.notification_project_milestone_enabled
       : DEFAULT_NOTIFICATION_SETTINGS.projectMilestoneEnabled,
+  gallerySelectionEnabled:
+    typeof row.notification_gallery_selection_enabled === "boolean"
+      ? row.notification_gallery_selection_enabled
+      : DEFAULT_NOTIFICATION_SETTINGS.gallerySelectionEnabled,
 });
 
 export function useNotificationSettings() {
@@ -61,7 +68,7 @@ export function useNotificationSettings() {
       const { data, error } = await supabase
         .from("user_settings")
         .select(
-          "notification_global_enabled, notification_scheduled_time, notification_daily_summary_enabled, notification_project_milestone_enabled"
+          "notification_global_enabled, notification_scheduled_time, notification_daily_summary_enabled, notification_project_milestone_enabled, notification_gallery_selection_enabled"
         )
         .eq("user_id", userId)
         .maybeSingle();

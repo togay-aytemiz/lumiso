@@ -322,8 +322,9 @@ const normalizeImageExtension = (extension: string) => {
   return normalized;
 };
 
-const FINAL_WEB_LONG_EDGE_PX = 2048;
-const estimateFinalWebBytes = (file: File) => Math.min(2_000_000, Math.max(120_000, Math.round(file.size * 0.08)));
+const FINAL_WEB_LONG_EDGE_PX = 1400;
+const FINAL_WEBP_QUALITY = 0.72;
+const estimateFinalWebBytes = (file: File) => Math.min(1_200_000, Math.max(90_000, Math.round(file.size * 0.06)));
 
 const resolveImageExtension = (file: File) => {
   const match = file.name.match(/\.([a-z0-9]{1,12})$/i);
@@ -2634,7 +2635,10 @@ export default function GalleryDetail() {
           const originalExtension = resolveImageExtension(sourceFile);
           const originalContentType = resolveImageContentType(sourceFile, originalExtension);
           originalUploadContentType = originalContentType;
-          const webPreview = await convertImageToProof(sourceFile, { longEdgePx: FINAL_WEB_LONG_EDGE_PX });
+          const webPreview = await convertImageToProof(sourceFile, {
+            longEdgePx: FINAL_WEB_LONG_EDGE_PX,
+            webpQuality: FINAL_WEBP_QUALITY,
+          });
 
           uploadBlob = webPreview.blob;
           uploadContentType = webPreview.contentType;

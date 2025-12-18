@@ -470,7 +470,7 @@ export function Lightbox({
                                   <img
                                     src={originalSrc}
                                     alt={photo.filename}
-                                    className="absolute inset-0 m-auto max-w-full max-h-full object-contain opacity-0 animate-in fade-in duration-500"
+                                    className="absolute inset-0 m-auto max-w-full max-h-full object-contain animate-in fade-in duration-500"
                                   />
                                 ) : null}
                               </>
@@ -733,7 +733,7 @@ export function Lightbox({
                               <img
                                 src={originalSrc}
                                 alt={photo.filename}
-                                className="absolute inset-0 m-auto max-w-full max-h-full object-contain shadow-2xl opacity-0 animate-in fade-in duration-500"
+                                className="absolute inset-0 m-auto max-w-full max-h-full object-contain shadow-2xl animate-in fade-in duration-500"
                               />
                             ) : null}
                           </div>

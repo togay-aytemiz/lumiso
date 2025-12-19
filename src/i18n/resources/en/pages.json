@@ -923,6 +923,7 @@
           "confirmAction": "Prepare download",
           "preparingTitle": "Preparing your download",
           "preparingDescription": "This can take a few minutes. We'll start the download automatically when it's ready. You can close this window.",
+          "preparingProgress": "Preparing {{completed}} / {{total}} photos...",
           "readyTitle": "Download is starting",
           "readyDescription": "If the download doesn't start automatically, click below to try again. You can close this window.",
           "downloadNow": "Start download",

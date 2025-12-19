@@ -89,6 +89,7 @@ type GalleryAssetRow = {
 type ClientPreviewPhotoBase = {
   id: string;
   url: string;
+  storagePathWeb: string | null;
   originalPath: string | null;
   filename: string;
   setId: string | null;
@@ -155,6 +156,7 @@ const GALLERY_ASSET_SIGNED_URL_TTL_SECONDS = 60 * 60;
 const SET_SECTION_ID_PREFIX = "client-preview-set-section-";
 const SET_SENTINEL_ID_PREFIX = "client-preview-set-sentinel-";
 const SECTION_SKELETON_COUNT = 10;
+const BULK_DOWNLOAD_CONCURRENCY = 3;
 
 const sanitizeZipEntryName = (value: string) => {
   const withoutControlChars = Array.from(value)
@@ -328,6 +330,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   const lastSignedUrlRefreshAtRef = useRef(0);
   const lastPhotoUrlByIdRef = useRef<Map<string, string>>(new Map());
   const originalSignedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
+  const webSignedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
 
   const [favoritePhotoIds, setFavoritePhotoIds] = useState<Set<string>>(() => new Set());
   const favoritesTouchedRef = useRef(false);
@@ -353,6 +356,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     "idle" | "confirm" | "preparing" | "ready" | "failed"
   >("idle");
   const [bulkDownloadDownloadUrl, setBulkDownloadDownloadUrl] = useState<string | null>(null);
+  const [bulkDownloadProgress, setBulkDownloadProgress] = useState<{ completed: number; total: number } | null>(null);
   const bulkDownloadTriggeredRef = useRef(false);
   const bulkDownloadAbortRef = useRef<AbortController | null>(null);
   const bulkDownloadObjectUrlRef = useRef<string | null>(null);
@@ -509,6 +513,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
         return {
           id: row.id,
           url,
+          storagePathWeb: row.storage_path_web,
           originalPath: row.storage_path_original,
           filename,
           setId,
@@ -1476,10 +1481,11 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
       if (!isMountedRef.current) return;
       setBulkDownloadStatus("ready");
       setBulkDownloadUrl(downloadUrl);
+      setBulkDownloadProgress(null);
       triggerBulkDownload(downloadUrl);
       trackEvent("gallery_bulk_download_ready", bulkDownloadTelemetryContext);
     },
-    [bulkDownloadTelemetryContext, setBulkDownloadUrl, triggerBulkDownload]
+    [bulkDownloadTelemetryContext, setBulkDownloadProgress, setBulkDownloadUrl, triggerBulkDownload]
   );
 
   const handleBulkDownloadFailure = useCallback(
@@ -1487,9 +1493,10 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
       if (!isMountedRef.current) return;
       setBulkDownloadStatus("failed");
       setBulkDownloadUrl(null);
+      setBulkDownloadProgress(null);
       trackEvent("gallery_bulk_download_failed", { ...bulkDownloadTelemetryContext, status });
     },
-    [bulkDownloadTelemetryContext, setBulkDownloadUrl]
+    [bulkDownloadTelemetryContext, setBulkDownloadProgress, setBulkDownloadUrl]
   );
 
   useEffect(() => {
@@ -1593,6 +1600,29 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     return urlData.signedUrl;
   }, []);
 
+  const resolveWebUrl = useCallback(
+    async (photo: { id: string; storagePathWeb?: string | null }, options?: { force?: boolean }) => {
+      const storagePath = typeof photo.storagePathWeb === "string" ? photo.storagePathWeb : "";
+      if (!storagePath) return null;
+
+      const now = Date.now();
+      const cached = webSignedUrlCacheRef.current.get(photo.id);
+      if (!options?.force && cached && cached.expiresAt > now) return cached.url;
+
+      const { data: urlData, error } = await supabase.storage
+        .from(GALLERY_ASSETS_BUCKET)
+        .createSignedUrl(storagePath, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
+      if (error || !urlData?.signedUrl) return null;
+
+      webSignedUrlCacheRef.current.set(photo.id, {
+        url: urlData.signedUrl,
+        expiresAt: now + GALLERY_ASSET_SIGNED_URL_TTL_SECONDS * 1000 - 15_000,
+      });
+      return urlData.signedUrl;
+    },
+    []
+  );
+
   const buildBulkDownloadZip = useCallback(async () => {
     if (resolvedPhotos.length === 0) {
       throw new Error("No photos available");
@@ -1604,6 +1634,9 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
 
     const variant = isFinalGallery ? "original" : "web";
     const photos = resolvedPhotos;
+    if (isMountedRef.current) {
+      setBulkDownloadProgress({ completed: 0, total: photos.length });
+    }
 
     return await new Promise<Blob>((resolve, reject) => {
       let settled = false;
@@ -1625,7 +1658,17 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
       const usedNames = new Set<string>();
 
       const run = async () => {
-        for (const photo of photos) {
+        let completed = 0;
+        let nextIndex = 0;
+        const total = photos.length;
+
+        const updateProgress = () => {
+          completed += 1;
+          if (!isMountedRef.current) return;
+          setBulkDownloadProgress({ completed, total });
+        };
+
+        const processPhoto = async (photo: ClientPreviewPhoto) => {
           if (controller.signal.aborted) {
             throw new Error("Bulk download cancelled");
           }
@@ -1641,25 +1684,39 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
             }
             downloadUrl = originalUrl;
           } else {
-            if (!photo.url) {
-              throw new Error("Missing web asset");
+            if (photo.url) {
+              downloadUrl = photo.url;
+            } else {
+              const refreshedUrl = await resolveWebUrl(photo);
+              if (!refreshedUrl) {
+                throw new Error("Missing web asset");
+              }
+              downloadUrl = refreshedUrl;
             }
-            downloadUrl = photo.url;
           }
 
           const extension =
-            variant === "original"
-              ? getFileExtension(getBasename(photo.originalPath ?? "")) || getFileExtension(photo.filename)
-              : getFileExtension(getBasename(downloadUrl)) || getFileExtension(photo.filename);
+            getFileExtension(getBasename(variant === "original" ? photo.originalPath ?? "" : photo.storagePathWeb ?? "")) ||
+            getFileExtension(getBasename(downloadUrl)) ||
+            getFileExtension(photo.filename);
 
-          const fallbackSource = variant === "original" ? photo.originalPath ?? "" : downloadUrl;
+          const fallbackSource =
+            (variant === "original" ? photo.originalPath : photo.storagePathWeb) ?? downloadUrl;
           const baseName =
             stripFileExtension((photo.filename || "").trim()) ||
             stripFileExtension(getBasename(fallbackSource)) ||
             "photo";
           const entryName = ensureUniqueFileName(baseName, extension, usedNames);
 
-          const response = await fetch(downloadUrl, { signal: controller.signal });
+          let response = await fetch(downloadUrl, { signal: controller.signal });
+          if (!response.ok && variant === "web") {
+            const refreshedUrl = await resolveWebUrl(photo, { force: true });
+            if (refreshedUrl && refreshedUrl !== downloadUrl) {
+              downloadUrl = refreshedUrl;
+              response = await fetch(downloadUrl, { signal: controller.signal });
+            }
+          }
+
           if (!response.ok) {
             throw new Error(`Failed to fetch asset ${photo.id}`);
           }
@@ -1668,8 +1725,20 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
           const entry = new ZipPassThrough(entryName);
           zip.add(entry);
           entry.push(buffer, true);
-        }
+          updateProgress();
+        };
 
+        const workerCount = Math.min(BULK_DOWNLOAD_CONCURRENCY, photos.length);
+        const workers = Array.from({ length: workerCount }, async () => {
+          while (true) {
+            const current = nextIndex;
+            nextIndex += 1;
+            if (current >= photos.length) return;
+            await processPhoto(photos[current]);
+          }
+        });
+
+        await Promise.all(workers);
         zip.end();
       };
 
@@ -1679,7 +1748,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
         reject(error as Error);
       });
     });
-  }, [isFinalGallery, resolveOriginalUrl, resolvedPhotos]);
+  }, [isFinalGallery, resolveOriginalUrl, resolveWebUrl, resolvedPhotos, setBulkDownloadProgress]);
 
   const bulkDownloadCreateMutation = useMutation({
     mutationFn: async () => await buildBulkDownloadZip(),
@@ -1710,11 +1779,12 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   const resetBulkDownloadState = useCallback(() => {
     setBulkDownloadStatus("idle");
     setBulkDownloadUrl(null);
+    setBulkDownloadProgress(null);
     bulkDownloadTriggeredRef.current = false;
     bulkDownloadAbortRef.current?.abort();
     bulkDownloadAbortRef.current = null;
     bulkDownloadCreateMutation.reset();
-  }, [bulkDownloadCreateMutation, setBulkDownloadUrl]);
+  }, [bulkDownloadCreateMutation, setBulkDownloadProgress, setBulkDownloadUrl]);
 
   const handleBulkDownloadDialogChange = useCallback(
     (open: boolean) => {
@@ -3217,9 +3287,19 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                 <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center shrink-0">
                   <Loader2 size={16} className="text-slate-500 animate-spin" />
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  {t("sessionDetail.gallery.clientPreview.bulkDownload.preparingDescription")}
-                </p>
+                <div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {t("sessionDetail.gallery.clientPreview.bulkDownload.preparingDescription")}
+                  </p>
+                  {bulkDownloadProgress?.total ? (
+                    <p className="mt-2 text-xs text-slate-500">
+                      {t("sessionDetail.gallery.clientPreview.bulkDownload.preparingProgress", {
+                        completed: bulkDownloadProgress.completed,
+                        total: bulkDownloadProgress.total,
+                      })}
+                    </p>
+                  ) : null}
+                </div>
               </div>
             ) : null}
 

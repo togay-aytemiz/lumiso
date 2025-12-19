@@ -1296,4 +1296,116 @@ describe("GalleryClientPreview", () => {
       writable: true,
     });
   });
+
+  it("refreshes proof download urls when signed urls are missing", async () => {
+    const originalStorageFrom = supabaseMock.storage.from.getMockImplementation();
+    const createSignedUrlMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: "expired" },
+      })
+      .mockResolvedValueOnce({
+        data: { signedUrl: "https://example.com/refreshed-url" },
+        error: null,
+      });
+    supabaseMock.storage.from.mockReturnValue({
+      createSignedUrl: createSignedUrlMock,
+    });
+
+    const originalFetch = global.fetch;
+    const originalAnchorClick = HTMLAnchorElement.prototype.click;
+    Object.defineProperty(HTMLAnchorElement.prototype, "click", {
+      value: jest.fn(),
+      writable: true,
+    });
+
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(4)),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const originalCreateObjectURL = URL.createObjectURL;
+    Object.defineProperty(URL, "createObjectURL", {
+      value: jest.fn(() => "blob:zip"),
+      writable: true,
+    });
+
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: { id: "gallery-123", title: "My Gallery", type: "proof", branding: {} },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/gallery/asset.webp",
+              storage_path_original: null,
+              status: "ready",
+              metadata: { originalName: "asset.webp" },
+              created_at: "2024-01-01T00:00:00Z",
+              width: 1200,
+              height: 800,
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "gallery_selection_states") {
+        return builder.__setResponse({ data: null, error: null });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    const downloadButton = await screen.findByRole("button", { name: /download all|hepsini indir/i });
+    await waitFor(() => {
+      expect(downloadButton).not.toBeDisabled();
+    });
+    fireEvent.click(downloadButton);
+
+    const dialog = await screen.findByRole("dialog");
+    const confirmButton = within(dialog).getByRole("button", { name: /prepare download|indirmeyi hazirla/i });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(createSignedUrlMock).toHaveBeenCalledWith(
+        "org/gallery/asset.webp",
+        expect.any(Number)
+      );
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://example.com/refreshed-url",
+        expect.any(Object)
+      );
+    });
+
+    if (originalStorageFrom) {
+      supabaseMock.storage.from.mockImplementation(originalStorageFrom);
+    }
+    global.fetch = originalFetch;
+    Object.defineProperty(HTMLAnchorElement.prototype, "click", {
+      value: originalAnchorClick,
+      writable: true,
+    });
+    Object.defineProperty(URL, "createObjectURL", {
+      value: originalCreateObjectURL,
+      writable: true,
+    });
+  });
 });

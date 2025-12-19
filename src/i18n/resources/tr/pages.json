@@ -938,6 +938,7 @@
           "confirmAction": "İndirmeyi hazırla",
           "preparingTitle": "İndirme hazırlanıyor",
           "preparingDescription": "Bu işlem birkaç dakika sürebilir. Hazır olunca indirme otomatik başlayacak. İstersen bu pencereyi kapatabilirsin.",
+          "preparingProgress": "{{completed}} / {{total}} fotoğraf hazırlanıyor...",
           "readyTitle": "İndirme başlıyor",
           "readyDescription": "İndirme otomatik başlamazsa aşağıdan tekrar deneyebilirsin. Bu pencereyi kapatabilirsin.",
           "downloadNow": "İndirmeyi başlat",

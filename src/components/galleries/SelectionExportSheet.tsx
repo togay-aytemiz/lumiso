@@ -21,6 +21,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { sanitizeFileBasename } from "@/lib/fileNames";
 
 export type SelectionExportTab = "windows" | "mac" | "list";
 
@@ -62,20 +63,6 @@ const getPreferredTab = (): SelectionExportTab => {
     return "mac";
   }
   return "windows";
-};
-
-const sanitizeFileBasename = (value: string) => {
-  const withoutControlChars = Array.from(value)
-    .filter((char) => char.charCodeAt(0) >= 32)
-    .join("");
-  const normalized = withoutControlChars
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "_")
-    .replace(/[<>:"/\\|?*]+/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_+|_+$/g, "");
-  return normalized || "selection";
 };
 
 const downloadPlainText = (filename: string, content: string) => {

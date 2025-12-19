@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -166,6 +166,11 @@ interface GalleryDetailRow {
   created_at: string;
   published_at: string | null;
 }
+
+type SessionLeadInfo = {
+  id: string;
+  name: string;
+};
 
 interface GallerySetRow {
   id: string;
@@ -767,21 +772,31 @@ export default function GalleryDetail() {
     setExportSheetOpen(true);
   }, []);
 
-  const { data: shareSessionClientName } = useQuery({
+  const { data: shareSessionLead } = useQuery({
     queryKey: ["gallery_share_client", data?.session_id],
     enabled: Boolean(data?.session_id),
     staleTime: 60_000,
-    queryFn: async (): Promise<string | null> => {
+    queryFn: async (): Promise<SessionLeadInfo | null> => {
       const sessionId = data?.session_id;
       if (!sessionId) return null;
       const { data: sessionRow, error } = await supabase
         .from("sessions")
-        .select("id,leads(name)")
+        .select("id,lead_id,leads(id,name)")
         .eq("id", sessionId)
         .maybeSingle();
       if (error) throw error;
-      const clientName = (sessionRow as { leads?: { name?: string | null } | null } | null)?.leads?.name ?? null;
-      return typeof clientName === "string" ? clientName : null;
+      const typedSession = sessionRow as
+        | { lead_id?: string | null; leads?: { id?: string | null; name?: string | null } | null }
+        | null;
+      const leadId =
+        typeof typedSession?.leads?.id === "string"
+          ? typedSession.leads.id
+          : typeof typedSession?.lead_id === "string"
+            ? typedSession.lead_id
+            : null;
+      const leadName = typeof typedSession?.leads?.name === "string" ? typedSession.leads.name : null;
+      if (!leadId || !leadName) return null;
+      return { id: leadId, name: leadName };
     },
   });
 
@@ -1221,10 +1236,29 @@ export default function GalleryDetail() {
     title.trim() || t("sessionDetail.gallery.form.titlePlaceholder", { defaultValue: "Untitled gallery" });
   const shareClientName = useMemo(
     () =>
-      shareSessionClientName?.trim() ||
+      shareSessionLead?.name?.trim() ||
       t("sessionDetail.unknownClient", { defaultValue: "Unknown Client" }),
-    [shareSessionClientName, t]
+    [shareSessionLead?.name, t]
   );
+  const eyebrowContent = useMemo(() => {
+    const leadName = shareSessionLead?.name?.trim();
+    if (!shareSessionLead?.id || !leadName) {
+      return typeLabel;
+    }
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <span>{typeLabel}</span>
+        <ChevronRight className="h-3 w-3 text-muted-foreground/70" aria-hidden="true" />
+        <Link
+          to={`/leads/${shareSessionLead.id}`}
+          className="inline-flex items-center gap-1 text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          <User className="h-3 w-3" aria-hidden="true" />
+          {leadName}
+        </Link>
+      </div>
+    );
+  }, [shareSessionLead?.id, shareSessionLead?.name, typeLabel]);
   const brandingData = (data?.branding || {}) as Record<string, unknown>;
   const selectionTemplateHasRuleIds = useMemo(() => {
     const groupsRaw = Array.isArray(brandingData.selectionTemplateGroups)
@@ -3884,7 +3918,7 @@ export default function GalleryDetail() {
         primaryDisabled={deleteGalleryMutation.isPending}
         primaryClassName="hover:!bg-muted/80 hover:!text-foreground"
         disableNameEditing={isReadOnly}
-        eyebrow={typeLabel}
+        eyebrow={eyebrowContent}
         subtitle={
           <>
             <CalendarRange className="h-4 w-4 text-muted-foreground" />

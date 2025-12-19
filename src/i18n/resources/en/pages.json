@@ -917,6 +917,21 @@
           "completeSelection": "Complete Selection",
           "resendSelection": "Resend Selections"
         },
+        "bulkDownload": {
+          "confirmTitle": "Download all photos",
+          "confirmDescription": "We'll prepare a single .zip file with {{count}} photos. This can take a few minutes. Continue?",
+          "confirmAction": "Prepare download",
+          "preparingTitle": "Preparing your download",
+          "preparingDescription": "This can take a few minutes. Please keep this window open.",
+          "preparingAction": "Preparing...",
+          "readyTitle": "Download ready",
+          "readyDescription": "Your download should start automatically. If it doesn't, click below.",
+          "downloadNow": "Download now",
+          "failedTitle": "Download failed",
+          "failedDescription": "We couldn't prepare your download. Please try again.",
+          "filePrefixFinal": "Final",
+          "filePrefixSelection": "Secim"
+        },
         "filters": {
           "label": "View:",
           "all": "All",
@@ -982,6 +997,7 @@
           "favoritesAdded": "Added to favorites",
           "favoritesRemoved": "Removed from favorites",
           "bulkDownloadSoon": "Bulk download is coming soon.",
+          "bulkDownloadFailed": "Couldn't start bulk download. Please try again.",
           "selectionsLocked": "Selections are finalized and cannot be changed."
         },
         "empty": {

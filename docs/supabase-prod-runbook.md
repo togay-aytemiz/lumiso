@@ -36,6 +36,7 @@ Use this guide whenever we need to apply database migrations to the Lumiso produ
 ## Post-Deployment Checks
 - Spot-check key tables in Supabase Studio if data changes are expected (e.g., new columns populated by backfill scripts).
 - Record the migration file names and timestamp in the deployment notes or ticket.
+- If new cron jobs were introduced (for example, gallery download processing), verify them in `cron.job` after the push.
 
 ## Troubleshooting
 - **Skipped migrations due to naming**  

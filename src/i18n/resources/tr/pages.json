@@ -932,6 +932,21 @@
           "gridMedium": "Orta grid",
           "gridSmall": "Küçük grid"
         },
+        "bulkDownload": {
+          "confirmTitle": "Tüm fotoğrafları indir",
+          "confirmDescription": "{{count}} fotoğraf tek bir .zip dosyası olarak hazırlanacak. Biraz sürebilir. Devam edilsin mi?",
+          "confirmAction": "İndirmeyi hazırla",
+          "preparingTitle": "İndirme hazırlanıyor",
+          "preparingDescription": "Bu işlem birkaç dakika sürebilir. Lütfen bu pencereyi kapatma.",
+          "preparingAction": "Hazırlanıyor...",
+          "readyTitle": "İndirme hazır",
+          "readyDescription": "İndirme otomatik başlamalı. Başlamadıysa aşağıdan tekrar başlat.",
+          "downloadNow": "İndirmeyi başlat",
+          "failedTitle": "İndirme hazırlanamadı",
+          "failedDescription": "İndirme hazırlanamadı. Lütfen tekrar dene.",
+          "filePrefixFinal": "Final",
+          "filePrefixSelection": "Secim"
+        },
         "filters": {
           "label": "Görünüm:",
           "all": "Tümü",
@@ -998,6 +1013,7 @@
           "favoritesAdded": "Favorilere eklendi",
           "favoritesRemoved": "Favorilerden çıkarıldı",
           "bulkDownloadSoon": "Toplu indirme yakında.",
+          "bulkDownloadFailed": "Toplu indirme başlatılamadı. Lütfen tekrar deneyin.",
           "selectionsLocked": "Seçimler kesinleştirildi, artık değiştirilemez."
         },
         "empty": {

@@ -23,6 +23,9 @@ const supabaseMock = supabase as unknown as {
   storage: {
     from: jest.Mock;
   };
+  functions: {
+    invoke: jest.Mock;
+  };
   __createQueryBuilder: (initial?: { data?: unknown; error?: unknown }) => {
     __setResponse: (result: { data?: unknown; error?: unknown }) => unknown;
   };
@@ -1187,6 +1190,71 @@ describe("GalleryClientPreview", () => {
 
     await waitFor(() => {
       expect(textarea).toHaveValue("Keep this one");
+    });
+  });
+
+  it("opens bulk download modal and requests a job", async () => {
+    supabaseMock.functions.invoke.mockResolvedValueOnce({
+      data: { jobId: "job-1", status: "pending" },
+      error: null,
+    });
+
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: { id: "gallery-123", title: "My Gallery", type: "proof", branding: {} },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/gallery/asset.jpg",
+              storage_path_original: null,
+              status: "ready",
+              metadata: { originalName: "asset.jpg" },
+              created_at: "2024-01-01T00:00:00Z",
+              width: 1200,
+              height: 800,
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "gallery_selection_states") {
+        return builder.__setResponse({ data: null, error: null });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    const downloadButton = await screen.findByRole("button", { name: /download all|hepsini indir/i });
+    await waitFor(() => {
+      expect(downloadButton).not.toBeDisabled();
+    });
+    fireEvent.click(downloadButton);
+
+    const dialog = await screen.findByRole("dialog");
+    const confirmButton = within(dialog).getByRole("button", { name: /prepare download|indirmeyi hazirla/i });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(supabaseMock.functions.invoke).toHaveBeenCalledWith(
+        "gallery-download",
+        expect.objectContaining({
+          body: expect.objectContaining({ action: "request", galleryId: "gallery-123" }),
+        })
+      );
     });
   });
 });

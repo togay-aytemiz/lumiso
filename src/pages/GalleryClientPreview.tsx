@@ -17,6 +17,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { GALLERY_ASSETS_BUCKET, getStorageBasename, isSupabaseStorageObjectMissingError } from "@/lib/galleryAssets";
 import { parseGalleryWatermarkFromBranding } from "@/lib/galleryWatermark";
 import { useI18nToast } from "@/lib/toastHelpers";
+import { trackEvent } from "@/lib/telemetry";
+import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
+import { sanitizeFileBasename } from "@/lib/fileNames";
 import { FloatingActionBar } from "@/components/galleries/FloatingActionBar";
 import {
   ArrowDown,
@@ -317,6 +320,13 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
 
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [photographerNote, setPhotographerNote] = useState("");
+  const [isBulkDownloadModalOpen, setIsBulkDownloadModalOpen] = useState(false);
+  const [bulkDownloadStatus, setBulkDownloadStatus] = useState<
+    "idle" | "confirm" | "preparing" | "ready" | "failed"
+  >("idle");
+  const [bulkDownloadJobId, setBulkDownloadJobId] = useState<string | null>(null);
+  const [bulkDownloadDownloadUrl, setBulkDownloadDownloadUrl] = useState<string | null>(null);
+  const bulkDownloadTriggeredRef = useRef(false);
 
   const [viewerId, setViewerId] = useState<string | null>(null);
 
@@ -355,6 +365,15 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   const normalizedGalleryType = (gallery?.type ?? "").trim().toLowerCase();
   const isSelectionGallery = normalizedGalleryType === "proof";
   const isFinalGallery = normalizedGalleryType === "final";
+  const bulkDownloadEnabled = isFeatureEnabled(FEATURE_FLAGS.galleryBulkDownload, true);
+  const bulkDownloadFileName = useMemo(() => {
+    const prefix = isFinalGallery
+      ? t("sessionDetail.gallery.clientPreview.bulkDownload.filePrefixFinal")
+      : t("sessionDetail.gallery.clientPreview.bulkDownload.filePrefixSelection");
+    const titleFallback = t("sessionDetail.gallery.clientPreview.hero.untitled");
+    const baseName = sanitizeFileBasename(gallery?.title || titleFallback);
+    return `${prefix}_${baseName}.zip`;
+  }, [gallery?.title, isFinalGallery, t]);
 
   const selectionStateQueryKey = useMemo(
     () => ["gallery_selection_state", resolvedGalleryId],
@@ -844,6 +863,26 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     if (!hasMultipleSets) return filteredPhotosUnsorted;
     return orderedSets.flatMap((set) => filteredPhotosBySetId[set.id] ?? []);
   }, [filteredPhotosBySetId, filteredPhotosUnsorted, hasMultipleSets, orderedSets]);
+
+  const starredCount = useMemo(() => resolvedPhotos.filter((photo) => photo.isStarred).length, [resolvedPhotos]);
+  const totalPhotoCount = useMemo(() => resolvedPhotos.length, [resolvedPhotos]);
+  const canBulkDownload = bulkDownloadEnabled && totalPhotoCount > 0;
+  const bulkDownloadTelemetryContext = useMemo(
+    () => ({
+      galleryType: isFinalGallery ? "final" : "proof",
+      source: isInternalUserView ? "owner" : "client",
+      photoCount: totalPhotoCount,
+    }),
+    [isFinalGallery, isInternalUserView, totalPhotoCount]
+  );
+  const totalSelectedCount = useMemo(
+    () => resolvedPhotos.filter((photo) => photo.selections.length > 0).length,
+    [resolvedPhotos]
+  );
+  const unselectedCount = useMemo(
+    () => resolvedPhotos.filter((photo) => photo.selections.length === 0).length,
+    [resolvedPhotos]
+  );
 
   const coverUrl = useMemo(() => {
     const coverAssetId = typeof brandingData.coverAssetId === "string" ? brandingData.coverAssetId : "";
@@ -1368,6 +1407,140 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     },
   });
 
+  const triggerBulkDownload = useCallback(
+    (downloadUrl: string, force = false) => {
+      if (!downloadUrl) return;
+      if (!force && bulkDownloadTriggeredRef.current) return;
+      bulkDownloadTriggeredRef.current = true;
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = bulkDownloadFileName;
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    },
+    [bulkDownloadFileName]
+  );
+
+  const handleBulkDownloadReady = useCallback(
+    (downloadUrl: string) => {
+      setBulkDownloadDownloadUrl(downloadUrl);
+      setBulkDownloadStatus("ready");
+      triggerBulkDownload(downloadUrl);
+      trackEvent("gallery_bulk_download_ready", bulkDownloadTelemetryContext);
+    },
+    [bulkDownloadTelemetryContext, triggerBulkDownload]
+  );
+
+  const handleBulkDownloadFailure = useCallback(
+    (status: string) => {
+      setBulkDownloadStatus("failed");
+      setBulkDownloadDownloadUrl(null);
+      setBulkDownloadJobId(null);
+      trackEvent("gallery_bulk_download_failed", { ...bulkDownloadTelemetryContext, status });
+    },
+    [bulkDownloadTelemetryContext]
+  );
+
+  const bulkDownloadRequestMutation = useMutation({
+    mutationFn: async () => {
+      if (!resolvedGalleryId) throw new Error("Missing gallery");
+      const { data, error } = await supabase.functions.invoke("gallery-download", {
+        body: {
+          action: "request",
+          galleryId: resolvedGalleryId,
+          downloadFileName: bulkDownloadFileName,
+        },
+      });
+      if (error) throw error;
+      return data as {
+        jobId?: string;
+        status?: string;
+        downloadUrl?: string;
+        expiresAt?: string;
+      };
+    },
+    onSuccess: (data) => {
+      const status = typeof data?.status === "string" ? data.status : "pending";
+      const jobId = typeof data?.jobId === "string" ? data.jobId : null;
+      setBulkDownloadJobId(jobId);
+
+      if (status === "ready" && data?.downloadUrl) {
+        handleBulkDownloadReady(data.downloadUrl);
+        return;
+      }
+
+      if (!jobId) {
+        handleBulkDownloadFailure("missing_job");
+        return;
+      }
+
+      if (status === "failed" || status === "expired") {
+        handleBulkDownloadFailure(status);
+        return;
+      }
+
+      setBulkDownloadStatus("preparing");
+    },
+    onError: () => {
+      setBulkDownloadStatus("failed");
+      setBulkDownloadJobId(null);
+      setBulkDownloadDownloadUrl(null);
+      i18nToast.error(t("sessionDetail.gallery.clientPreview.toast.bulkDownloadFailed"), {
+        duration: 2500,
+      });
+      trackEvent("gallery_bulk_download_failed", {
+        ...bulkDownloadTelemetryContext,
+        status: "request_failed",
+      });
+    },
+  });
+
+  useQuery({
+    queryKey: ["gallery_bulk_download_status", resolvedGalleryId, bulkDownloadJobId, bulkDownloadFileName],
+    enabled: bulkDownloadStatus === "preparing" && Boolean(resolvedGalleryId && bulkDownloadJobId),
+    refetchInterval: bulkDownloadStatus === "preparing" ? 3000 : false,
+    retry: false,
+    queryFn: async () => {
+      if (!resolvedGalleryId || !bulkDownloadJobId) return null;
+      const { data, error } = await supabase.functions.invoke("gallery-download", {
+        body: {
+          action: "status",
+          galleryId: resolvedGalleryId,
+          jobId: bulkDownloadJobId,
+          downloadFileName: bulkDownloadFileName,
+        },
+      });
+      if (error) throw error;
+      return data as {
+        status?: string;
+        downloadUrl?: string;
+      };
+    },
+    onSuccess: (data) => {
+      const status = typeof data?.status === "string" ? data.status : "";
+      if (status === "ready" && data?.downloadUrl) {
+        handleBulkDownloadReady(data.downloadUrl);
+        return;
+      }
+      if (status === "failed" || status === "expired") {
+        handleBulkDownloadFailure(status);
+      }
+    },
+    onError: () => {
+      handleBulkDownloadFailure("status_failed");
+    },
+  });
+
+  const resetBulkDownloadState = useCallback(() => {
+    setBulkDownloadStatus("idle");
+    setBulkDownloadJobId(null);
+    setBulkDownloadDownloadUrl(null);
+    bulkDownloadTriggeredRef.current = false;
+    bulkDownloadRequestMutation.reset();
+  }, [bulkDownloadRequestMutation]);
+
   const handleExportSelections = useCallback(() => {
     setExportSheetOpen(true);
   }, []);
@@ -1457,11 +1630,41 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     return urlData.signedUrl;
   }, []);
 
+  const handleBulkDownloadDialogChange = useCallback(
+    (open: boolean) => {
+      if (!open && bulkDownloadStatus === "preparing") return;
+      if (!open) {
+        resetBulkDownloadState();
+      }
+      setIsBulkDownloadModalOpen(open);
+    },
+    [bulkDownloadStatus, resetBulkDownloadState]
+  );
+
+  const handleBulkDownloadConfirm = useCallback(() => {
+    if (!canBulkDownload) return;
+    setBulkDownloadStatus("preparing");
+    bulkDownloadTriggeredRef.current = false;
+    bulkDownloadRequestMutation.mutate();
+    trackEvent("gallery_bulk_download_requested", bulkDownloadTelemetryContext);
+  }, [bulkDownloadRequestMutation, bulkDownloadTelemetryContext, canBulkDownload]);
+
+  const handleBulkDownloadRetry = useCallback(() => {
+    setBulkDownloadStatus("confirm");
+    setBulkDownloadDownloadUrl(null);
+    setBulkDownloadJobId(null);
+    bulkDownloadTriggeredRef.current = false;
+    bulkDownloadRequestMutation.reset();
+  }, [bulkDownloadRequestMutation]);
+
   const handleBulkDownloadClick = useCallback(() => {
-    i18nToast.info(t("sessionDetail.gallery.clientPreview.toast.bulkDownloadSoon"), {
-      duration: 2500,
-    });
-  }, [i18nToast, t]);
+    if (!bulkDownloadEnabled) return;
+    setBulkDownloadStatus("confirm");
+    setBulkDownloadDownloadUrl(null);
+    setBulkDownloadJobId(null);
+    bulkDownloadTriggeredRef.current = false;
+    setIsBulkDownloadModalOpen(true);
+  }, [bulkDownloadEnabled]);
 
   const handleExit = useCallback(() => {
     if (routeGalleryId) {
@@ -2155,17 +2358,6 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     );
   };
 
-  const starredCount = useMemo(() => resolvedPhotos.filter((photo) => photo.isStarred).length, [resolvedPhotos]);
-  const totalPhotoCount = useMemo(() => resolvedPhotos.length, [resolvedPhotos]);
-  const totalSelectedCount = useMemo(
-    () => resolvedPhotos.filter((photo) => photo.selections.length > 0).length,
-    [resolvedPhotos]
-  );
-  const unselectedCount = useMemo(
-    () => resolvedPhotos.filter((photo) => photo.selections.length === 0).length,
-    [resolvedPhotos]
-  );
-
   // Status Logic for Navbar
   const { areAllMandatoryComplete, hasIncompleteMandatory } = useMemo(() => {
     // If no rules, nothing to complete
@@ -2401,15 +2593,21 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
             </button>
 
             {/* Grid Size Controls */}
-            <button
-              type="button"
-              onClick={handleBulkDownloadClick}
-              className="hidden lg:flex items-center justify-center bg-gray-100 text-gray-700 rounded-lg p-2 hover:bg-gray-200 transition-colors"
-              aria-label={t("sessionDetail.gallery.clientPreview.actions.downloadAll")}
-              title={t("sessionDetail.gallery.clientPreview.actions.downloadAll")}
-            >
-              <Download size={16} aria-hidden="true" />
-            </button>
+            {bulkDownloadEnabled ? (
+              <button
+                type="button"
+                onClick={handleBulkDownloadClick}
+                disabled={!canBulkDownload}
+                className={`hidden lg:flex items-center justify-center rounded-lg p-2 transition-colors ${canBulkDownload
+                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  : "bg-gray-50 text-gray-300 cursor-not-allowed"
+                  }`}
+                aria-label={t("sessionDetail.gallery.clientPreview.actions.downloadAll")}
+                title={t("sessionDetail.gallery.clientPreview.actions.downloadAll")}
+              >
+                <Download size={16} aria-hidden="true" />
+              </button>
+            ) : null}
             <div className="hidden lg:flex items-center bg-gray-100 rounded-lg p-1 mr-2">
               <button
                 type="button"
@@ -2886,6 +3084,181 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
       />
 
       {renderSelectionSheet()}
+
+      <Dialog open={isBulkDownloadModalOpen} onOpenChange={handleBulkDownloadDialogChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {bulkDownloadStatus === "preparing"
+                ? t("sessionDetail.gallery.clientPreview.bulkDownload.preparingTitle")
+                : bulkDownloadStatus === "ready"
+                  ? t("sessionDetail.gallery.clientPreview.bulkDownload.readyTitle")
+                  : bulkDownloadStatus === "failed"
+                    ? t("sessionDetail.gallery.clientPreview.bulkDownload.failedTitle")
+                    : t("sessionDetail.gallery.clientPreview.bulkDownload.confirmTitle")}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {bulkDownloadStatus === "confirm" ? (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex gap-3">
+                <div className="w-8 h-8 bg-slate-200/60 rounded-full flex items-center justify-center shrink-0">
+                  <Download size={16} className="text-slate-700" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 text-sm mb-1">
+                    {t("sessionDetail.gallery.clientPreview.bulkDownload.confirmTitle")}
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {t("sessionDetail.gallery.clientPreview.bulkDownload.confirmDescription", {
+                      count: totalPhotoCount,
+                    })}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {bulkDownloadStatus === "preparing" ? (
+              <div className="flex gap-3 items-start">
+                <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center shrink-0">
+                  <Loader2 size={16} className="text-slate-500 animate-spin" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 text-sm mb-1">
+                    {t("sessionDetail.gallery.clientPreview.bulkDownload.preparingTitle")}
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {t("sessionDetail.gallery.clientPreview.bulkDownload.preparingDescription")}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {bulkDownloadStatus === "ready" ? (
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex gap-3">
+                <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={16} className="text-emerald-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-emerald-900 text-sm mb-1">
+                    {t("sessionDetail.gallery.clientPreview.bulkDownload.readyTitle")}
+                  </h4>
+                  <p className="text-xs text-emerald-800 leading-relaxed">
+                    {t("sessionDetail.gallery.clientPreview.bulkDownload.readyDescription")}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {bulkDownloadStatus === "failed" ? (
+              <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex gap-3">
+                <div className="w-8 h-8 bg-rose-100 rounded-full flex items-center justify-center shrink-0">
+                  <X size={16} className="text-rose-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-rose-900 text-sm mb-1">
+                    {t("sessionDetail.gallery.clientPreview.bulkDownload.failedTitle")}
+                  </h4>
+                  <p className="text-xs text-rose-800 leading-relaxed">
+                    {t("sessionDetail.gallery.clientPreview.bulkDownload.failedDescription")}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <DialogFooter className="flex gap-3 sm:justify-between p-6 pt-2 bg-gray-50/50">
+            {bulkDownloadStatus === "confirm" ? (
+              <>
+                <DialogClose asChild>
+                  <button
+                    type="button"
+                    className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                  >
+                    {tCommon("buttons.cancel")}
+                  </button>
+                </DialogClose>
+                <button
+                  type="button"
+                  onClick={handleBulkDownloadConfirm}
+                  disabled={!canBulkDownload || bulkDownloadRequestMutation.isPending}
+                  className={`flex-1 py-3 font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${!canBulkDownload || bulkDownloadRequestMutation.isPending
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-slate-900 text-white hover:bg-black"
+                    }`}
+                >
+                  {bulkDownloadRequestMutation.isPending ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Download size={16} />
+                  )}
+                  {t("sessionDetail.gallery.clientPreview.bulkDownload.confirmAction")}
+                </button>
+              </>
+            ) : null}
+
+            {bulkDownloadStatus === "preparing" ? (
+              <button
+                type="button"
+                disabled
+                className="w-full py-3 bg-gray-200 text-gray-500 font-bold rounded-xl text-sm flex items-center justify-center gap-2"
+              >
+                <Loader2 size={16} className="animate-spin" />
+                {t("sessionDetail.gallery.clientPreview.bulkDownload.preparingAction")}
+              </button>
+            ) : null}
+
+            {bulkDownloadStatus === "ready" ? (
+              <>
+                <DialogClose asChild>
+                  <button
+                    type="button"
+                    className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                  >
+                    {tCommon("buttons.close")}
+                  </button>
+                </DialogClose>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (bulkDownloadDownloadUrl) {
+                      triggerBulkDownload(bulkDownloadDownloadUrl, true);
+                    }
+                  }}
+                  disabled={!bulkDownloadDownloadUrl}
+                  className={`flex-1 py-3 font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${bulkDownloadDownloadUrl
+                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    }`}
+                >
+                  <Download size={16} />
+                  {t("sessionDetail.gallery.clientPreview.bulkDownload.downloadNow")}
+                </button>
+              </>
+            ) : null}
+
+            {bulkDownloadStatus === "failed" ? (
+              <>
+                <DialogClose asChild>
+                  <button
+                    type="button"
+                    className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                  >
+                    {tCommon("buttons.close")}
+                  </button>
+                </DialogClose>
+                <button
+                  type="button"
+                  onClick={handleBulkDownloadRetry}
+                  className="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-colors text-sm flex items-center justify-center gap-2 shadow-sm"
+                >
+                  {tCommon("buttons.tryAgain")}
+                </button>
+              </>
+            ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isConfirmationModalOpen} onOpenChange={setIsConfirmationModalOpen}>
         <DialogContent className="sm:max-w-md">

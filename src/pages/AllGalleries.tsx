@@ -921,7 +921,7 @@ export default function AllGalleries() {
     const summaryColumn: AdvancedTableColumn<GalleryListItem> = {
       id: "summary",
       label: t("galleries.table.summaryColumn"),
-      render: (row) => (isSelectionGalleryType(row.type) ? renderSelectionProgress(row) : renderSizeAndTime(row)),
+      render: (row) => (isSelectionGalleryType(row.type) ? renderSelectionProgress(row) : null),
     };
 
     const lastActionColumn: AdvancedTableColumn<GalleryListItem> = {
@@ -995,7 +995,7 @@ export default function AllGalleries() {
       return [...baseColumns, lastActionColumn, sizeAndTimeColumn, actionsColumn];
     }
 
-    return [...baseColumns, summaryColumn, lastActionColumn, actionsColumn];
+    return [...baseColumns, summaryColumn, lastActionColumn, sizeAndTimeColumn, actionsColumn];
   }, [i18n.language, isGallerySizeLoading, locale, navigate, t, typeFilter]);
 
   const galleryCountLabel = useMemo(

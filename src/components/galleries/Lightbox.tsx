@@ -187,7 +187,9 @@ export function Lightbox({
   const { t } = useTranslation("pages");
   const i18nToast = useI18nToast();
   const currentPhoto = photos[currentIndex];
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => mode === "admin");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(
+    () => mode === "admin" || (mode === "client" && rules.length > 0)
+  );
   const [isMobileSelectionPanelOpen, setIsMobileSelectionPanelOpen] = useState(false);
   const hasSelectionRules = rules.length > 0;
   const [originalUrlVersion, setOriginalUrlVersion] = useState(0);
@@ -454,6 +456,13 @@ export function Lightbox({
     readOnly,
   ]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    if (mode !== "client") return;
+    if (!hasSelectionRules) return;
+    setIsSidebarOpen(true);
+  }, [hasSelectionRules, isOpen, mode]);
+
   if (!isOpen || !currentPhoto) return null;
 
   const desktopContainerClassName = `fixed inset-0 z-[200] ${mode === "client" ? "hidden md:flex" : "flex"
@@ -704,7 +713,7 @@ export function Lightbox({
             </div>
 
               <div className="flex items-start gap-3 shrink-0">
-                {mode === "client" ? (
+                {mode === "client" && !hasSelectionRules ? (
                   <div className="flex flex-col items-end gap-2">
                     <button
                       type="button"

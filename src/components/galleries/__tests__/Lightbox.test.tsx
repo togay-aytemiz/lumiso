@@ -72,6 +72,42 @@ describe("Lightbox", () => {
     expect(screen.getByText(/selection details|seçim detayları/i)).toBeInTheDocument();
   });
 
+  it("shows selection sidebar in client mode when there are rules", () => {
+    render(
+      <Lightbox
+        isOpen
+        onClose={jest.fn()}
+        photos={[
+          {
+            id: "photo-1",
+            url: "https://example.com/1.jpg",
+            filename: "1.jpg",
+            isFavorite: false,
+            isStarred: false,
+            selections: [],
+          },
+        ]}
+        currentIndex={0}
+        onNavigate={jest.fn()}
+        rules={[
+          {
+            id: "rule-1",
+            title: "Cover",
+            serviceName: null,
+            currentCount: 0,
+            maxCount: 1,
+          },
+        ]}
+        onToggleRule={jest.fn()}
+        onToggleStar={jest.fn()}
+        mode="client"
+      />
+    );
+
+    expect(screen.getByText(/add to lists|listelere ekle/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /download|indir/i })).not.toBeInTheDocument();
+  });
+
   it("handles keyboard shortcuts in client mode", () => {
     const onClose = jest.fn();
     const onNavigate = jest.fn();

@@ -922,7 +922,7 @@
           "confirmDescription": "We'll prepare a single .zip file with {{count}} photos. This can take a few minutes. Continue?",
           "confirmAction": "Prepare download",
           "preparingTitle": "Preparing your download",
-          "preparingDescription": "This can take a few minutes. We'll start the download automatically when it's ready, so please keep this window open.",
+          "preparingDescription": "This can take a few minutes. We'll start the download automatically when it's ready. You can close this window.",
           "readyTitle": "Download is starting",
           "readyDescription": "If the download doesn't start automatically, click below to try again. You can close this window.",
           "downloadNow": "Start download",

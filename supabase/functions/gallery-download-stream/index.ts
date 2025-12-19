@@ -300,10 +300,15 @@ const streamGalleryZip = async (
   }
 
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
-  const zipWriter = new ZipWriter(writable, {
-    zip64: true,
-    level: ZIP_COMPRESSION_LEVEL,
-  });
+  const zipWriter = new ZipWriter(
+    writable,
+    {
+      zip64: true,
+      level: ZIP_COMPRESSION_LEVEL,
+      useWebWorkers: false,
+      useCompressionStream: false,
+    } as unknown as Parameters<typeof ZipWriter>[1],
+  );
 
   const errorMessages: string[] = [];
   const recordError = (message: string, error?: unknown) => {
@@ -365,9 +370,15 @@ const streamGalleryZip = async (
         }
 
         try {
-          await zipWriter.add(entryName, response.body, {
-            level: ZIP_COMPRESSION_LEVEL,
-          });
+          await zipWriter.add(
+            entryName,
+            response.body,
+            {
+              level: ZIP_COMPRESSION_LEVEL,
+              useWebWorkers: false,
+              useCompressionStream: false,
+            } as unknown as Parameters<InstanceType<typeof ZipWriter>["add"]>[2],
+          );
         } catch (error) {
           recordError(`Failed to add asset ${asset.id}`, error);
           writerFailed = true;
@@ -389,9 +400,15 @@ const streamGalleryZip = async (
       ].join("\n");
 
       try {
-        await zipWriter.add("_download_errors.txt", new TextReader(report), {
-          level: ZIP_COMPRESSION_LEVEL,
-        });
+        await zipWriter.add(
+          "_download_errors.txt",
+          new TextReader(report),
+          {
+            level: ZIP_COMPRESSION_LEVEL,
+            useWebWorkers: false,
+            useCompressionStream: false,
+          } as unknown as Parameters<InstanceType<typeof ZipWriter>["add"]>[2],
+        );
       } catch (error) {
         console.error("gallery-download-stream: failed to add error report", error);
       }

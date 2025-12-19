@@ -19,8 +19,9 @@ import { parseGalleryWatermarkFromBranding } from "@/lib/galleryWatermark";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { trackEvent } from "@/lib/telemetry";
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
-import { sanitizeFileBasename } from "@/lib/fileNames";
+import { getBasename, getFileExtension, sanitizeFileBasename, stripFileExtension } from "@/lib/fileNames";
 import { FloatingActionBar } from "@/components/galleries/FloatingActionBar";
+import { Zip, ZipPassThrough } from "fflate";
 import {
   ArrowDown,
   ArrowRight,
@@ -154,6 +155,33 @@ const GALLERY_ASSET_SIGNED_URL_TTL_SECONDS = 60 * 60;
 const SET_SECTION_ID_PREFIX = "client-preview-set-section-";
 const SET_SENTINEL_ID_PREFIX = "client-preview-set-sentinel-";
 const SECTION_SKELETON_COUNT = 10;
+
+const sanitizeZipEntryName = (value: string) => {
+  const withoutControlChars = Array.from(value)
+    .filter((char) => char.charCodeAt(0) >= 32)
+    .join("");
+  const normalized = withoutControlChars
+    .trim()
+    .replace(/[<>:"/\\|?*]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  const capped = normalized.length > 200 ? normalized.slice(0, 200) : normalized;
+  return capped || "photo";
+};
+
+const ensureUniqueFileName = (baseName: string, extension: string, used: Set<string>) => {
+  const safeBase = sanitizeZipEntryName(baseName);
+  const safeExt = extension.trim().replace(/^\./, "").toLowerCase();
+  const suffix = safeExt ? `.${safeExt}` : "";
+  let candidate = `${safeBase}${suffix}`;
+  let index = 1;
+  while (used.has(candidate.toLowerCase())) {
+    index += 1;
+    candidate = `${safeBase}_${index}${suffix}`;
+  }
+  used.add(candidate.toLowerCase());
+  return candidate;
+};
 
 // Helper to determine rule status
 const getRuleStatus = (
@@ -326,6 +354,9 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   >("idle");
   const [bulkDownloadDownloadUrl, setBulkDownloadDownloadUrl] = useState<string | null>(null);
   const bulkDownloadTriggeredRef = useRef(false);
+  const bulkDownloadAbortRef = useRef<AbortController | null>(null);
+  const bulkDownloadObjectUrlRef = useRef<string | null>(null);
+  const isMountedRef = useRef(true);
 
   const [viewerId, setViewerId] = useState<string | null>(null);
 
@@ -373,8 +404,6 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     const baseName = sanitizeFileBasename(gallery?.title || titleFallback);
     return `${prefix}_${baseName}.zip`;
   }, [gallery?.title, isFinalGallery, t]);
-  const bulkDownloadFunctionsBase =
-    import.meta.env.VITE_SUPABASE_URL || "https://rifdykpdubrowzbylffe.supabase.co";
 
   const selectionStateQueryKey = useMemo(
     () => ["gallery_selection_state", resolvedGalleryId],
@@ -1408,6 +1437,24 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     },
   });
 
+  const revokeBulkDownloadUrl = useCallback((url: string | null) => {
+    if (!url) return;
+    if (typeof URL === "undefined" || typeof URL.revokeObjectURL !== "function") return;
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const setBulkDownloadUrl = useCallback(
+    (url: string | null) => {
+      const current = bulkDownloadObjectUrlRef.current;
+      if (current && current !== url) {
+        revokeBulkDownloadUrl(current);
+      }
+      bulkDownloadObjectUrlRef.current = url;
+      setBulkDownloadDownloadUrl(url);
+    },
+    [revokeBulkDownloadUrl]
+  );
+
   const triggerBulkDownload = useCallback(
     (downloadUrl: string, force = false) => {
       if (!downloadUrl) return;
@@ -1424,51 +1471,38 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     [bulkDownloadFileName]
   );
 
-  const buildBulkDownloadUrl = useCallback(
-    (accessToken: string) => {
-      const url = new URL(`${bulkDownloadFunctionsBase}/functions/v1/gallery-download-stream`);
-      url.searchParams.set("galleryId", resolvedGalleryId ?? "");
-      url.searchParams.set("downloadFileName", bulkDownloadFileName);
-      url.searchParams.set("accessToken", accessToken);
-      return url.toString();
+  const handleBulkDownloadReady = useCallback(
+    (downloadUrl: string) => {
+      if (!isMountedRef.current) return;
+      setBulkDownloadStatus("ready");
+      setBulkDownloadUrl(downloadUrl);
+      triggerBulkDownload(downloadUrl);
+      trackEvent("gallery_bulk_download_ready", bulkDownloadTelemetryContext);
     },
-    [bulkDownloadFileName, bulkDownloadFunctionsBase, resolvedGalleryId]
+    [bulkDownloadTelemetryContext, setBulkDownloadUrl, triggerBulkDownload]
   );
 
-  const bulkDownloadStartMutation = useMutation({
-    mutationFn: async () => {
-      if (!resolvedGalleryId) throw new Error("Missing gallery");
-      const { data, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      const accessToken = data.session?.access_token;
-      if (!accessToken) throw new Error("Missing viewer session");
-      return buildBulkDownloadUrl(accessToken);
-    },
-    onSuccess: (downloadUrl) => {
-      setBulkDownloadDownloadUrl(downloadUrl);
-      setBulkDownloadStatus("ready");
-      triggerBulkDownload(downloadUrl, true);
-      trackEvent("gallery_bulk_download_requested", bulkDownloadTelemetryContext);
-    },
-    onError: () => {
+  const handleBulkDownloadFailure = useCallback(
+    (status: string) => {
+      if (!isMountedRef.current) return;
       setBulkDownloadStatus("failed");
-      setBulkDownloadDownloadUrl(null);
-      i18nToast.error(t("sessionDetail.gallery.clientPreview.toast.bulkDownloadFailed"), {
-        duration: 2500,
-      });
-      trackEvent("gallery_bulk_download_failed", {
-        ...bulkDownloadTelemetryContext,
-        status: "request_failed",
-      });
+      setBulkDownloadUrl(null);
+      trackEvent("gallery_bulk_download_failed", { ...bulkDownloadTelemetryContext, status });
     },
-  });
+    [bulkDownloadTelemetryContext, setBulkDownloadUrl]
+  );
 
-  const resetBulkDownloadState = useCallback(() => {
-    setBulkDownloadStatus("idle");
-    setBulkDownloadDownloadUrl(null);
-    bulkDownloadTriggeredRef.current = false;
-    bulkDownloadStartMutation.reset();
-  }, [bulkDownloadStartMutation]);
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      bulkDownloadAbortRef.current?.abort();
+      const currentUrl = bulkDownloadObjectUrlRef.current;
+      if (currentUrl) {
+        revokeBulkDownloadUrl(currentUrl);
+        bulkDownloadObjectUrlRef.current = null;
+      }
+    };
+  }, [revokeBulkDownloadUrl]);
 
   const handleExportSelections = useCallback(() => {
     setExportSheetOpen(true);
@@ -1539,7 +1573,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     [queryClient, resolvedGalleryId]
   );
 
-  const resolveLightboxOriginalUrl = useCallback(async (photo: { id: string; originalPath?: string | null }) => {
+  const resolveOriginalUrl = useCallback(async (photo: { id: string; originalPath?: string | null }) => {
     const storagePath = typeof photo.originalPath === "string" ? photo.originalPath : "";
     if (!storagePath) return null;
 
@@ -1559,10 +1593,132 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     return urlData.signedUrl;
   }, []);
 
+  const buildBulkDownloadZip = useCallback(async () => {
+    if (resolvedPhotos.length === 0) {
+      throw new Error("No photos available");
+    }
+
+    bulkDownloadAbortRef.current?.abort();
+    const controller = new AbortController();
+    bulkDownloadAbortRef.current = controller;
+
+    const variant = isFinalGallery ? "original" : "web";
+    const photos = resolvedPhotos;
+
+    return await new Promise<Blob>((resolve, reject) => {
+      let settled = false;
+      const chunks: Uint8Array[] = [];
+      const zip = new Zip((error, data, final) => {
+        if (settled) return;
+        if (error) {
+          settled = true;
+          reject(error);
+          return;
+        }
+        if (data) chunks.push(data);
+        if (final) {
+          settled = true;
+          resolve(new Blob(chunks, { type: "application/zip" }));
+        }
+      });
+
+      const usedNames = new Set<string>();
+
+      const run = async () => {
+        for (const photo of photos) {
+          if (controller.signal.aborted) {
+            throw new Error("Bulk download cancelled");
+          }
+
+          let downloadUrl = "";
+          if (variant === "original") {
+            if (!photo.originalPath) {
+              throw new Error("Missing original asset");
+            }
+            const originalUrl = await resolveOriginalUrl(photo);
+            if (!originalUrl) {
+              throw new Error("Missing original asset");
+            }
+            downloadUrl = originalUrl;
+          } else {
+            if (!photo.url) {
+              throw new Error("Missing web asset");
+            }
+            downloadUrl = photo.url;
+          }
+
+          const extension =
+            variant === "original"
+              ? getFileExtension(getBasename(photo.originalPath ?? "")) || getFileExtension(photo.filename)
+              : getFileExtension(getBasename(downloadUrl)) || getFileExtension(photo.filename);
+
+          const fallbackSource = variant === "original" ? photo.originalPath ?? "" : downloadUrl;
+          const baseName =
+            stripFileExtension((photo.filename || "").trim()) ||
+            stripFileExtension(getBasename(fallbackSource)) ||
+            "photo";
+          const entryName = ensureUniqueFileName(baseName, extension, usedNames);
+
+          const response = await fetch(downloadUrl, { signal: controller.signal });
+          if (!response.ok) {
+            throw new Error(`Failed to fetch asset ${photo.id}`);
+          }
+
+          const buffer = new Uint8Array(await response.arrayBuffer());
+          const entry = new ZipPassThrough(entryName);
+          zip.add(entry);
+          entry.push(buffer, true);
+        }
+
+        zip.end();
+      };
+
+      run().catch((error) => {
+        if (settled) return;
+        settled = true;
+        reject(error as Error);
+      });
+    });
+  }, [isFinalGallery, resolveOriginalUrl, resolvedPhotos]);
+
+  const bulkDownloadCreateMutation = useMutation({
+    mutationFn: async () => await buildBulkDownloadZip(),
+    onSuccess: (zipBlob) => {
+      if (!isMountedRef.current) return;
+      if (typeof URL === "undefined" || typeof URL.createObjectURL !== "function") {
+        handleBulkDownloadFailure("object_url_unavailable");
+        i18nToast.error(t("sessionDetail.gallery.clientPreview.toast.bulkDownloadFailed"), {
+          duration: 2500,
+        });
+        return;
+      }
+      const downloadUrl = URL.createObjectURL(zipBlob);
+      handleBulkDownloadReady(downloadUrl);
+    },
+    onError: () => {
+      if (!isMountedRef.current) return;
+      handleBulkDownloadFailure("zip_failed");
+      i18nToast.error(t("sessionDetail.gallery.clientPreview.toast.bulkDownloadFailed"), {
+        duration: 2500,
+      });
+    },
+    onSettled: () => {
+      bulkDownloadAbortRef.current = null;
+    },
+  });
+
+  const resetBulkDownloadState = useCallback(() => {
+    setBulkDownloadStatus("idle");
+    setBulkDownloadUrl(null);
+    bulkDownloadTriggeredRef.current = false;
+    bulkDownloadAbortRef.current?.abort();
+    bulkDownloadAbortRef.current = null;
+    bulkDownloadCreateMutation.reset();
+  }, [bulkDownloadCreateMutation, setBulkDownloadUrl]);
+
   const handleBulkDownloadDialogChange = useCallback(
     (open: boolean) => {
-      if (!open && bulkDownloadStatus === "preparing") return;
-      if (!open) {
+      if (!open && (bulkDownloadStatus === "confirm" || bulkDownloadStatus === "failed")) {
         resetBulkDownloadState();
       }
       setIsBulkDownloadModalOpen(open);
@@ -1571,28 +1727,39 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   );
 
   const handleBulkDownloadConfirm = useCallback(() => {
-    if (!canBulkDownload || bulkDownloadStartMutation.isPending) return;
+    if (!canBulkDownload || bulkDownloadCreateMutation.isPending) return;
     setBulkDownloadStatus("preparing");
-    setBulkDownloadDownloadUrl(null);
+    setBulkDownloadUrl(null);
     bulkDownloadTriggeredRef.current = false;
-    bulkDownloadStartMutation.mutate();
-  }, [bulkDownloadStartMutation, bulkDownloadStartMutation.isPending, canBulkDownload]);
+    bulkDownloadAbortRef.current?.abort();
+    bulkDownloadAbortRef.current = null;
+    bulkDownloadCreateMutation.mutate();
+    trackEvent("gallery_bulk_download_requested", bulkDownloadTelemetryContext);
+  }, [bulkDownloadCreateMutation, bulkDownloadTelemetryContext, canBulkDownload, setBulkDownloadUrl]);
 
   const handleBulkDownloadRetry = useCallback(() => {
     setBulkDownloadStatus("confirm");
-    setBulkDownloadDownloadUrl(null);
+    setBulkDownloadUrl(null);
     bulkDownloadTriggeredRef.current = false;
-    bulkDownloadStartMutation.reset();
-  }, [bulkDownloadStartMutation]);
+    bulkDownloadAbortRef.current?.abort();
+    bulkDownloadAbortRef.current = null;
+    bulkDownloadCreateMutation.reset();
+  }, [bulkDownloadCreateMutation, setBulkDownloadUrl]);
 
   const handleBulkDownloadClick = useCallback(() => {
     if (!bulkDownloadEnabled) return;
+    if (bulkDownloadStatus !== "idle" && bulkDownloadStatus !== "confirm") {
+      setIsBulkDownloadModalOpen(true);
+      return;
+    }
     setBulkDownloadStatus("confirm");
-    setBulkDownloadDownloadUrl(null);
+    setBulkDownloadUrl(null);
     bulkDownloadTriggeredRef.current = false;
-    bulkDownloadStartMutation.reset();
+    bulkDownloadAbortRef.current?.abort();
+    bulkDownloadAbortRef.current = null;
+    bulkDownloadCreateMutation.reset();
     setIsBulkDownloadModalOpen(true);
-  }, [bulkDownloadEnabled, bulkDownloadStartMutation]);
+  }, [bulkDownloadCreateMutation, bulkDownloadEnabled, bulkDownloadStatus, setBulkDownloadUrl]);
 
   const handleExit = useCallback(() => {
     if (routeGalleryId) {
@@ -1614,7 +1781,6 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     setIsConfirmationModalOpen(false);
     lockSelectionsMutation.mutate({ note: photographerNote });
   };
-
 
   const toggleRuleSelect = useCallback(
     (photoId: string, ruleId: string) => {
@@ -3006,7 +3172,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
         favoritesEnabled={favoritesEnabled}
         onImageError={handleAssetImageError}
         enableOriginalSwap={isFinalGallery}
-        resolveOriginalUrl={isFinalGallery ? resolveLightboxOriginalUrl : undefined}
+        resolveOriginalUrl={isFinalGallery ? resolveOriginalUrl : undefined}
         watermark={watermark}
         isSelectionsLocked={isSelectionsLocked}
       />
@@ -3105,13 +3271,13 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                   <button
                     type="button"
                     onClick={handleBulkDownloadConfirm}
-                    disabled={!canBulkDownload || bulkDownloadStartMutation.isPending}
-                    className={`flex-1 py-3 font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${!canBulkDownload || bulkDownloadStartMutation.isPending
+                    disabled={!canBulkDownload || bulkDownloadCreateMutation.isPending}
+                    className={`flex-1 py-3 font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${!canBulkDownload || bulkDownloadCreateMutation.isPending
                       ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                       : "bg-slate-900 text-white hover:bg-black"
                       }`}
                   >
-                    {bulkDownloadStartMutation.isPending ? (
+                    {bulkDownloadCreateMutation.isPending ? (
                       <Loader2 size={16} className="animate-spin" />
                     ) : (
                       <Download size={16} />

@@ -5,7 +5,7 @@
       {
         "external_id": "GAL-DOWNLOAD-401",
         "title": "Proof galeri toplu indirme akisi",
-        "description": "Proof (Secim) tip galeride toplu indirme modalini ve zip indirmenin otomatik baslamasini dogrular.",
+        "description": "Proof (Secim) tip galeride toplu indirme modalini, hazirlaniyor/hazir durumlarini ve zip indirmenin baslamasini dogrular.",
         "steps": [
           {
             "action": "Proof tip bir galeriyi paylasim linkiyle acin ve galerinin yuklenmesini bekleyin.",
@@ -17,7 +17,7 @@
           },
           {
             "action": "Onayla butonuna basin ve modal acik kalirken hazirlanma durumunu izleyin.",
-            "expected_result": "Modal hazirlaniyor durumuna gecer. Sonrasinda indirme basliyor durumu gorunur ve indirme otomatik baslamazsa tekrar baslatma butonu yer alir."
+            "expected_result": "Modal hazirlaniyor durumuna gecer. Zip hazir olunca indirme hazir durumu ve indirmeyi baslat butonu gorunur."
           },
           {
             "action": "Indirme basladiginda dosyanin adini kontrol edin.",
@@ -29,7 +29,7 @@
       {
         "external_id": "GAL-DOWNLOAD-402",
         "title": "Final galeri toplu indirme akisi",
-        "description": "Final tip galeride toplu indirme modalini ve zip indirmenin otomatik baslamasini dogrular.",
+        "description": "Final tip galeride toplu indirme modalini, hazirlaniyor/hazir durumlarini ve zip indirmenin baslamasini dogrular.",
         "steps": [
           {
             "action": "Final tip bir galeriyi paylasim linkiyle acin ve fotograflarin yuklenmesini bekleyin.",
@@ -37,7 +37,7 @@
           },
           {
             "action": "Indirme ikonuna basin ve onayla butonunu secin.",
-            "expected_result": "Hazirlaniyor durumu gorunur, tek spinner yer alir ve indirme basliyor durumunda tekrar baslatma aksiyonu gorunur."
+            "expected_result": "Hazirlaniyor durumu gorunur, tek spinner yer alir ve zip hazir olunca indirmeyi baslat aksiyonu gorunur."
           },
           {
             "action": "Indirme basladiginda dosya adini kontrol edin.",

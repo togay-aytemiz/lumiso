@@ -35,7 +35,8 @@ Use this guide whenever we need to apply database migrations to the Lumiso produ
 
 5. **Deploy edge functions (if updated)**  
    ```bash
-   npx supabase functions deploy gallery-download-stream
+   npx supabase functions deploy gallery-download
+   npx supabase functions deploy gallery-download-processor
    ```  
    Repeat for any other Supabase Edge functions touched in the release.
 

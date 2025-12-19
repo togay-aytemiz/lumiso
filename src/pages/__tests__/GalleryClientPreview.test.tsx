@@ -1194,18 +1194,40 @@ describe("GalleryClientPreview", () => {
     });
   });
 
-  it("opens bulk download modal and starts download", async () => {
-    const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
-    supabaseMock.auth.getSession.mockResolvedValue({
-      data: { session: { access_token: "token-123" } },
+  it("opens bulk download modal and prepares a client-side zip", async () => {
+    const originalStorageFrom = supabaseMock.storage.from.getMockImplementation();
+    const createSignedUrlMock = jest.fn().mockResolvedValue({
+      data: { signedUrl: "https://example.com/signed-url" },
       error: null,
+    });
+    supabaseMock.storage.from.mockReturnValue({
+      createSignedUrl: createSignedUrlMock,
+    });
+
+    const originalFetch = global.fetch;
+    const originalAnchorClick = HTMLAnchorElement.prototype.click;
+    Object.defineProperty(HTMLAnchorElement.prototype, "click", {
+      value: jest.fn(),
+      writable: true,
+    });
+
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(4)),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const originalCreateObjectURL = URL.createObjectURL;
+    Object.defineProperty(URL, "createObjectURL", {
+      value: jest.fn(() => "blob:zip"),
+      writable: true,
     });
 
     supabaseMock.from.mockImplementation((table: string) => {
       const builder = supabaseMock.__createQueryBuilder();
       if (table === "galleries") {
         return builder.__setResponse({
-          data: { id: "gallery-123", title: "My Gallery", type: "proof", branding: {} },
+          data: { id: "gallery-123", title: "My Gallery", type: "final", branding: {} },
           error: null,
         });
       }
@@ -1217,8 +1239,8 @@ describe("GalleryClientPreview", () => {
           data: [
             {
               id: "asset-1",
-              storage_path_web: "org/gallery/asset.jpg",
-              storage_path_original: null,
+              storage_path_web: "org/gallery/asset.webp",
+              storage_path_original: "org/gallery/asset.jpg",
               status: "ready",
               metadata: { originalName: "asset.jpg" },
               created_at: "2024-01-01T00:00:00Z",
@@ -1238,25 +1260,40 @@ describe("GalleryClientPreview", () => {
       return builder;
     });
 
-    try {
-      render(<GalleryClientPreview />);
+    render(<GalleryClientPreview />);
 
-      const downloadButton = await screen.findByRole("button", { name: /download all|hepsini indir/i });
-      await waitFor(() => {
-        expect(downloadButton).not.toBeDisabled();
-      });
-      fireEvent.click(downloadButton);
+    const downloadButton = await screen.findByRole("button", { name: /download all|hepsini indir/i });
+    await waitFor(() => {
+      expect(downloadButton).not.toBeDisabled();
+    });
+    fireEvent.click(downloadButton);
 
-      const dialog = await screen.findByRole("dialog");
-      const confirmButton = within(dialog).getByRole("button", { name: /prepare download|indirmeyi hazirla/i });
-      fireEvent.click(confirmButton);
+    const dialog = await screen.findByRole("dialog");
+    const confirmButton = within(dialog).getByRole("button", { name: /prepare download|indirmeyi hazirla/i });
+    fireEvent.click(confirmButton);
 
-      await waitFor(() => {
-        expect(supabaseMock.auth.getSession).toHaveBeenCalled();
-        expect(clickSpy).toHaveBeenCalled();
-      });
-    } finally {
-      clickSpy.mockRestore();
+    await waitFor(() => {
+      expect(createSignedUrlMock).toHaveBeenCalledWith(
+        "org/gallery/asset.jpg",
+        expect.any(Number)
+      );
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    if (originalStorageFrom) {
+      supabaseMock.storage.from.mockImplementation(originalStorageFrom);
     }
+    global.fetch = originalFetch;
+    Object.defineProperty(HTMLAnchorElement.prototype, "click", {
+      value: originalAnchorClick,
+      writable: true,
+    });
+    Object.defineProperty(URL, "createObjectURL", {
+      value: originalCreateObjectURL,
+      writable: true,
+    });
   });
 });

@@ -152,10 +152,15 @@ const streamZipForJob = async (supabase: SupabaseAdminLike, job: GalleryDownload
 
   const zipPath = `${job.gallery_id}/${job.id}.zip`;
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
-  const zipWriter = new ZipWriter(writable, {
-    zip64: true,
-    level: ZIP_COMPRESSION_LEVEL,
-  });
+  const zipWriter = new ZipWriter(
+    writable,
+    {
+      zip64: true,
+      level: ZIP_COMPRESSION_LEVEL,
+      useWebWorkers: false,
+      useCompressionStream: false,
+    } as unknown as Parameters<typeof ZipWriter>[1],
+  );
 
   const uploadPromise = supabase.storage.from(DOWNLOAD_BUCKET).upload(zipPath, readable, {
     contentType: "application/zip",
@@ -204,9 +209,15 @@ const streamZipForJob = async (supabase: SupabaseAdminLike, job: GalleryDownload
           throw new Error(`Failed to fetch asset ${asset.id}`);
         }
 
-        await zipWriter.add(entryName, response.body, {
-          level: ZIP_COMPRESSION_LEVEL,
-        });
+        await zipWriter.add(
+          entryName,
+          response.body,
+          {
+            level: ZIP_COMPRESSION_LEVEL,
+            useWebWorkers: false,
+            useCompressionStream: false,
+          } as unknown as Parameters<InstanceType<typeof ZipWriter>["add"]>[2],
+        );
       }
 
       offset += pageSize;

@@ -4,6 +4,7 @@ import type { GalleryWatermarkConfig } from "@/lib/galleryWatermark";
 import { GalleryWatermarkOverlay } from "./GalleryWatermarkOverlay";
 import { MobilePhotoSelectionSheet } from "./MobilePhotoSelectionSheet";
 import { useI18nToast } from "@/lib/toastHelpers";
+import { buildDownloadFilename, getBasename, getFileExtension } from "@/lib/fileNames";
 import {
   Carousel,
   CarouselContent,
@@ -47,25 +48,6 @@ export type LightboxRule = {
 };
 
 type LightboxMode = "admin" | "client";
-
-const stripFileExtension = (value: string) => value.replace(/\.[^/.]+$/, "");
-
-const getBasename = (value: string) => {
-  const withoutQuery = value.split("?")[0]?.split("#")[0] ?? value;
-  const parts = withoutQuery.split("/");
-  return parts[parts.length - 1] || withoutQuery || value;
-};
-
-const getFileExtension = (filename: string) => {
-  const match = filename.match(/\.([a-z0-9]+)$/i);
-  return match?.[1]?.toLowerCase() ?? "";
-};
-
-const buildDownloadFilename = ({ originalName, extension }: { originalName: string; extension: string }) => {
-  const base = stripFileExtension((originalName || "").trim()) || "photo";
-  const ext = (extension || "").trim().replace(/^\./, "");
-  return ext ? `${base}.${ext}` : base;
-};
 
 const buildSignedDownloadUrl = ({ signedUrl, fileName }: { signedUrl: string; fileName: string }) => {
   try {

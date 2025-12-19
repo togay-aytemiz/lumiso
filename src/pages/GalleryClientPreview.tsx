@@ -322,10 +322,8 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   const [photographerNote, setPhotographerNote] = useState("");
   const [isBulkDownloadModalOpen, setIsBulkDownloadModalOpen] = useState(false);
   const [bulkDownloadStatus, setBulkDownloadStatus] = useState<
-    "idle" | "confirm" | "preparing" | "ready" | "failed"
+    "idle" | "confirm" | "preparing" | "failed"
   >("idle");
-  const [bulkDownloadJobId, setBulkDownloadJobId] = useState<string | null>(null);
-  const [bulkDownloadDownloadUrl, setBulkDownloadDownloadUrl] = useState<string | null>(null);
   const bulkDownloadTriggeredRef = useRef(false);
 
   const [viewerId, setViewerId] = useState<string | null>(null);
@@ -374,6 +372,8 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     const baseName = sanitizeFileBasename(gallery?.title || titleFallback);
     return `${prefix}_${baseName}.zip`;
   }, [gallery?.title, isFinalGallery, t]);
+  const bulkDownloadFunctionsBase =
+    import.meta.env.VITE_SUPABASE_URL || "https://rifdykpdubrowzbylffe.supabase.co";
 
   const selectionStateQueryKey = useMemo(
     () => ["gallery_selection_state", resolvedGalleryId],
@@ -1423,70 +1423,32 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     [bulkDownloadFileName]
   );
 
-  const handleBulkDownloadReady = useCallback(
-    (downloadUrl: string) => {
-      setBulkDownloadDownloadUrl(downloadUrl);
-      setBulkDownloadStatus("ready");
-      triggerBulkDownload(downloadUrl);
-      trackEvent("gallery_bulk_download_ready", bulkDownloadTelemetryContext);
+  const buildBulkDownloadUrl = useCallback(
+    (accessToken: string) => {
+      const url = new URL(`${bulkDownloadFunctionsBase}/functions/v1/gallery-download-stream`);
+      url.searchParams.set("galleryId", resolvedGalleryId ?? "");
+      url.searchParams.set("downloadFileName", bulkDownloadFileName);
+      url.searchParams.set("accessToken", accessToken);
+      return url.toString();
     },
-    [bulkDownloadTelemetryContext, triggerBulkDownload]
+    [bulkDownloadFileName, bulkDownloadFunctionsBase, resolvedGalleryId]
   );
 
-  const handleBulkDownloadFailure = useCallback(
-    (status: string) => {
-      setBulkDownloadStatus("failed");
-      setBulkDownloadDownloadUrl(null);
-      setBulkDownloadJobId(null);
-      trackEvent("gallery_bulk_download_failed", { ...bulkDownloadTelemetryContext, status });
-    },
-    [bulkDownloadTelemetryContext]
-  );
-
-  const bulkDownloadRequestMutation = useMutation({
+  const bulkDownloadStartMutation = useMutation({
     mutationFn: async () => {
       if (!resolvedGalleryId) throw new Error("Missing gallery");
-      const { data, error } = await supabase.functions.invoke("gallery-download", {
-        body: {
-          action: "request",
-          galleryId: resolvedGalleryId,
-          downloadFileName: bulkDownloadFileName,
-        },
-      });
+      const { data, error } = await supabase.auth.getSession();
       if (error) throw error;
-      return data as {
-        jobId?: string;
-        status?: string;
-        downloadUrl?: string;
-        expiresAt?: string;
-      };
+      const accessToken = data.session?.access_token;
+      if (!accessToken) throw new Error("Missing viewer session");
+      return buildBulkDownloadUrl(accessToken);
     },
-    onSuccess: (data) => {
-      const status = typeof data?.status === "string" ? data.status : "pending";
-      const jobId = typeof data?.jobId === "string" ? data.jobId : null;
-      setBulkDownloadJobId(jobId);
-
-      if (status === "ready" && data?.downloadUrl) {
-        handleBulkDownloadReady(data.downloadUrl);
-        return;
-      }
-
-      if (!jobId) {
-        handleBulkDownloadFailure("missing_job");
-        return;
-      }
-
-      if (status === "failed" || status === "expired") {
-        handleBulkDownloadFailure(status);
-        return;
-      }
-
-      setBulkDownloadStatus("preparing");
+    onSuccess: (downloadUrl) => {
+      triggerBulkDownload(downloadUrl, true);
+      trackEvent("gallery_bulk_download_requested", bulkDownloadTelemetryContext);
     },
     onError: () => {
       setBulkDownloadStatus("failed");
-      setBulkDownloadJobId(null);
-      setBulkDownloadDownloadUrl(null);
       i18nToast.error(t("sessionDetail.gallery.clientPreview.toast.bulkDownloadFailed"), {
         duration: 2500,
       });
@@ -1497,49 +1459,11 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     },
   });
 
-  useQuery({
-    queryKey: ["gallery_bulk_download_status", resolvedGalleryId, bulkDownloadJobId, bulkDownloadFileName],
-    enabled: bulkDownloadStatus === "preparing" && Boolean(resolvedGalleryId && bulkDownloadJobId),
-    refetchInterval: bulkDownloadStatus === "preparing" ? 3000 : false,
-    retry: false,
-    queryFn: async () => {
-      if (!resolvedGalleryId || !bulkDownloadJobId) return null;
-      const { data, error } = await supabase.functions.invoke("gallery-download", {
-        body: {
-          action: "status",
-          galleryId: resolvedGalleryId,
-          jobId: bulkDownloadJobId,
-          downloadFileName: bulkDownloadFileName,
-        },
-      });
-      if (error) throw error;
-      return data as {
-        status?: string;
-        downloadUrl?: string;
-      };
-    },
-    onSuccess: (data) => {
-      const status = typeof data?.status === "string" ? data.status : "";
-      if (status === "ready" && data?.downloadUrl) {
-        handleBulkDownloadReady(data.downloadUrl);
-        return;
-      }
-      if (status === "failed" || status === "expired") {
-        handleBulkDownloadFailure(status);
-      }
-    },
-    onError: () => {
-      handleBulkDownloadFailure("status_failed");
-    },
-  });
-
   const resetBulkDownloadState = useCallback(() => {
     setBulkDownloadStatus("idle");
-    setBulkDownloadJobId(null);
-    setBulkDownloadDownloadUrl(null);
     bulkDownloadTriggeredRef.current = false;
-    bulkDownloadRequestMutation.reset();
-  }, [bulkDownloadRequestMutation]);
+    bulkDownloadStartMutation.reset();
+  }, [bulkDownloadStartMutation]);
 
   const handleExportSelections = useCallback(() => {
     setExportSheetOpen(true);
@@ -1642,29 +1566,25 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   );
 
   const handleBulkDownloadConfirm = useCallback(() => {
-    if (!canBulkDownload) return;
+    if (!canBulkDownload || bulkDownloadStartMutation.isPending) return;
     setBulkDownloadStatus("preparing");
     bulkDownloadTriggeredRef.current = false;
-    bulkDownloadRequestMutation.mutate();
-    trackEvent("gallery_bulk_download_requested", bulkDownloadTelemetryContext);
-  }, [bulkDownloadRequestMutation, bulkDownloadTelemetryContext, canBulkDownload]);
+    bulkDownloadStartMutation.mutate();
+  }, [bulkDownloadStartMutation, bulkDownloadStartMutation.isPending, canBulkDownload]);
 
   const handleBulkDownloadRetry = useCallback(() => {
     setBulkDownloadStatus("confirm");
-    setBulkDownloadDownloadUrl(null);
-    setBulkDownloadJobId(null);
     bulkDownloadTriggeredRef.current = false;
-    bulkDownloadRequestMutation.reset();
-  }, [bulkDownloadRequestMutation]);
+    bulkDownloadStartMutation.reset();
+  }, [bulkDownloadStartMutation]);
 
   const handleBulkDownloadClick = useCallback(() => {
     if (!bulkDownloadEnabled) return;
     setBulkDownloadStatus("confirm");
-    setBulkDownloadDownloadUrl(null);
-    setBulkDownloadJobId(null);
     bulkDownloadTriggeredRef.current = false;
+    bulkDownloadStartMutation.reset();
     setIsBulkDownloadModalOpen(true);
-  }, [bulkDownloadEnabled]);
+  }, [bulkDownloadEnabled, bulkDownloadStartMutation]);
 
   const handleExit = useCallback(() => {
     if (routeGalleryId) {
@@ -3091,11 +3011,9 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
             <DialogTitle>
               {bulkDownloadStatus === "preparing"
                 ? t("sessionDetail.gallery.clientPreview.bulkDownload.preparingTitle")
-                : bulkDownloadStatus === "ready"
-                  ? t("sessionDetail.gallery.clientPreview.bulkDownload.readyTitle")
-                  : bulkDownloadStatus === "failed"
-                    ? t("sessionDetail.gallery.clientPreview.bulkDownload.failedTitle")
-                    : t("sessionDetail.gallery.clientPreview.bulkDownload.confirmTitle")}
+                : bulkDownloadStatus === "failed"
+                  ? t("sessionDetail.gallery.clientPreview.bulkDownload.failedTitle")
+                  : t("sessionDetail.gallery.clientPreview.bulkDownload.confirmTitle")}
             </DialogTitle>
           </DialogHeader>
 
@@ -3126,22 +3044,6 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                 <p className="text-xs text-slate-600 leading-relaxed">
                   {t("sessionDetail.gallery.clientPreview.bulkDownload.preparingDescription")}
                 </p>
-              </div>
-            ) : null}
-
-            {bulkDownloadStatus === "ready" ? (
-              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex gap-3">
-                <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
-                  <CheckCircle2 size={16} className="text-emerald-600" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-emerald-900 text-sm mb-1">
-                    {t("sessionDetail.gallery.clientPreview.bulkDownload.readyTitle")}
-                  </h4>
-                  <p className="text-xs text-emerald-800 leading-relaxed">
-                    {t("sessionDetail.gallery.clientPreview.bulkDownload.readyDescription")}
-                  </p>
-                </div>
               </div>
             ) : null}
 
@@ -3177,47 +3079,18 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                   <button
                     type="button"
                     onClick={handleBulkDownloadConfirm}
-                    disabled={!canBulkDownload || bulkDownloadRequestMutation.isPending}
-                    className={`flex-1 py-3 font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${!canBulkDownload || bulkDownloadRequestMutation.isPending
+                    disabled={!canBulkDownload || bulkDownloadStartMutation.isPending}
+                    className={`flex-1 py-3 font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${!canBulkDownload || bulkDownloadStartMutation.isPending
                       ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                       : "bg-slate-900 text-white hover:bg-black"
                       }`}
                   >
-                    {bulkDownloadRequestMutation.isPending ? (
+                    {bulkDownloadStartMutation.isPending ? (
                       <Loader2 size={16} className="animate-spin" />
                     ) : (
                       <Download size={16} />
                     )}
                     {t("sessionDetail.gallery.clientPreview.bulkDownload.confirmAction")}
-                  </button>
-                </>
-              ) : null}
-
-              {bulkDownloadStatus === "ready" ? (
-                <>
-                  <DialogClose asChild>
-                    <button
-                      type="button"
-                      className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
-                    >
-                      {tCommon("buttons.close")}
-                    </button>
-                  </DialogClose>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (bulkDownloadDownloadUrl) {
-                        triggerBulkDownload(bulkDownloadDownloadUrl, true);
-                      }
-                    }}
-                    disabled={!bulkDownloadDownloadUrl}
-                    className={`flex-1 py-3 font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${bulkDownloadDownloadUrl
-                      ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      }`}
-                  >
-                    <Download size={16} />
-                    {t("sessionDetail.gallery.clientPreview.bulkDownload.downloadNow")}
                   </button>
                 </>
               ) : null}

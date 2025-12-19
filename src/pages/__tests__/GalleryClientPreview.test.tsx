@@ -19,6 +19,7 @@ const supabaseMock = supabase as unknown as {
   from: jest.Mock;
   auth: {
     getUser: jest.Mock;
+    getSession: jest.Mock;
   };
   storage: {
     from: jest.Mock;
@@ -1193,9 +1194,10 @@ describe("GalleryClientPreview", () => {
     });
   });
 
-  it("opens bulk download modal and requests a job", async () => {
-    supabaseMock.functions.invoke.mockResolvedValueOnce({
-      data: { jobId: "job-1", status: "pending" },
+  it("opens bulk download modal and starts download", async () => {
+    const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    supabaseMock.auth.getSession.mockResolvedValue({
+      data: { session: { access_token: "token-123" } },
       error: null,
     });
 
@@ -1236,25 +1238,25 @@ describe("GalleryClientPreview", () => {
       return builder;
     });
 
-    render(<GalleryClientPreview />);
+    try {
+      render(<GalleryClientPreview />);
 
-    const downloadButton = await screen.findByRole("button", { name: /download all|hepsini indir/i });
-    await waitFor(() => {
-      expect(downloadButton).not.toBeDisabled();
-    });
-    fireEvent.click(downloadButton);
+      const downloadButton = await screen.findByRole("button", { name: /download all|hepsini indir/i });
+      await waitFor(() => {
+        expect(downloadButton).not.toBeDisabled();
+      });
+      fireEvent.click(downloadButton);
 
-    const dialog = await screen.findByRole("dialog");
-    const confirmButton = within(dialog).getByRole("button", { name: /prepare download|indirmeyi hazirla/i });
-    fireEvent.click(confirmButton);
+      const dialog = await screen.findByRole("dialog");
+      const confirmButton = within(dialog).getByRole("button", { name: /prepare download|indirmeyi hazirla/i });
+      fireEvent.click(confirmButton);
 
-    await waitFor(() => {
-      expect(supabaseMock.functions.invoke).toHaveBeenCalledWith(
-        "gallery-download",
-        expect.objectContaining({
-          body: expect.objectContaining({ action: "request", galleryId: "gallery-123" }),
-        })
-      );
-    });
+      await waitFor(() => {
+        expect(supabaseMock.auth.getSession).toHaveBeenCalled();
+        expect(clickSpy).toHaveBeenCalled();
+      });
+    } finally {
+      clickSpy.mockRestore();
+    }
   });
 });

@@ -1,6 +1,5 @@
 # Release Notes
 
 ## 2026-12-18
-- Added async gallery bulk download that prepares a zip server-side with a 3-hour TTL.
-- Added background processor + cleanup cron for generated gallery download zips.
-- Rollout: deploy new Supabase Edge functions, verify cron job runs, and monitor `gallery-downloads` storage usage.
+- Switched gallery bulk download to on-demand zip streaming via `gallery-download-stream` (no temp zip storage).
+- Rollout: deploy the `gallery-download-stream` Edge function and monitor download latency for large galleries.

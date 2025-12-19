@@ -33,6 +33,12 @@ Use this guide whenever we need to apply database migrations to the Lumiso produ
    ```  
    This should again report that the remote database is up to date.
 
+5. **Deploy edge functions (if updated)**  
+   ```bash
+   npx supabase functions deploy gallery-download-stream
+   ```  
+   Repeat for any other Supabase Edge functions touched in the release.
+
 ## Post-Deployment Checks
 - Spot-check key tables in Supabase Studio if data changes are expected (e.g., new columns populated by backfill scripts).
 - Record the migration file names and timestamp in the deployment notes or ticket.

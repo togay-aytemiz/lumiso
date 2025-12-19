@@ -137,6 +137,7 @@ export interface AdvancedDataTableProps<T> {
   searchDelay?: number;
   searchMinChars?: number;
   searchLoading?: boolean;
+  searchPosition?: "start" | "end";
   className?: string;
   onLoadMore?: () => void;
   hasMore?: boolean;
@@ -187,6 +188,7 @@ export function AdvancedDataTable<T>({
   searchDelay = 300,
   searchMinChars = 0,
   searchLoading = false,
+  searchPosition = "start",
   className,
   onLoadMore,
   hasMore,
@@ -502,16 +504,34 @@ export function AdvancedDataTable<T>({
 
             {shouldRenderControls && (
               <div className="flex w-full sm:w-auto flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-end sm:flex-shrink-0">
-                {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
-                {(actions || (!isMobile && filters)) && (
-                  <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
-                    {!isMobile && filterTriggerButton}
-                    {actions && (
-                      <div className="flex w-full basis-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-                        {actions}
+                {searchPosition === "end" ? (
+                  <>
+                    {(actions || (!isMobile && filters)) && (
+                      <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
+                        {!isMobile && filterTriggerButton}
+                        {actions && (
+                          <div className="flex w-full basis-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                            {actions}
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
+                    {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
+                  </>
+                ) : (
+                  <>
+                    {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
+                    {(actions || (!isMobile && filters)) && (
+                      <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
+                        {!isMobile && filterTriggerButton}
+                        {actions && (
+                          <div className="flex w-full basis-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                            {actions}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}

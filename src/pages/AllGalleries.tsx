@@ -846,18 +846,26 @@ export default function AllGalleries() {
     return [...baseColumns, summaryColumn, lastActionColumn, actionsColumn];
   }, [i18n.language, isGallerySizeLoading, locale, navigate, t, typeFilter]);
 
-  const summaryText = useMemo(() => {
-    return t("galleries.table.summary", { count: filtered.length });
-  }, [filtered.length, t]);
+  const galleryCountLabel = useMemo(
+    () => numberFormatter.format(filtered.length),
+    [filtered.length, numberFormatter]
+  );
 
   const tableTitle = useMemo(
-    () => <span className="text-lg font-semibold">{t("galleries.tableTitle")}</span>,
-    [t]
+    () => (
+      <div className="flex items-center gap-2">
+        <span className="text-base font-semibold text-foreground">{t("galleries.tableTitle")}</span>
+        <Badge variant="secondary" className="px-2 py-0.5 text-xs font-semibold">
+          {galleryCountLabel}
+        </Badge>
+      </div>
+    ),
+    [galleryCountLabel, t]
   );
 
   const statusControls = useMemo(
     () => (
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
           {t("galleries.filters.statusLabel")}
         </span>
@@ -866,6 +874,7 @@ export default function AllGalleries() {
           onValueChange={(value) => setStatusFilter(value as StatusFilter)}
           options={statusOptions}
           size="sm"
+          className="w-fit"
         />
       </div>
     ),
@@ -946,7 +955,12 @@ export default function AllGalleries() {
         </section>
 
         <div className="flex flex-col gap-3">
-          <SegmentedControl value={typeFilter} onValueChange={handleTypeChange} options={typeOptions} />
+          <SegmentedControl
+            value={typeFilter}
+            onValueChange={handleTypeChange}
+            options={typeOptions}
+            className="w-fit"
+          />
         </div>
 
         <AdvancedDataTable
@@ -956,7 +970,7 @@ export default function AllGalleries() {
           isLoading={isLoading}
           title={tableTitle}
           actions={statusControls}
-          summary={{ text: summaryText }}
+          searchPosition="end"
           searchValue={searchTerm}
           onSearchChange={setSearchTerm}
           searchPlaceholder={t("galleries.search")}

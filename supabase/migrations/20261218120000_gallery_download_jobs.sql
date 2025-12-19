@@ -77,7 +77,10 @@ values ('gallery-downloads', 'gallery-downloads', false)
 on conflict (id) do nothing;
 
 -- Schedule background processing + cleanup
-select cron.unschedule('gallery-download-processor-every-minute');
+select cron.unschedule('gallery-download-processor-every-minute')
+where exists (
+  select 1 from cron.job where jobname = 'gallery-download-processor-every-minute'
+);
 
 select cron.schedule(
   'gallery-download-processor-every-minute',

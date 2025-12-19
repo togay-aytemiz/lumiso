@@ -3123,14 +3123,9 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                 <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center shrink-0">
                   <Loader2 size={16} className="text-slate-500 animate-spin" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm mb-1">
-                    {t("sessionDetail.gallery.clientPreview.bulkDownload.preparingTitle")}
-                  </h4>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {t("sessionDetail.gallery.clientPreview.bulkDownload.preparingDescription")}
-                  </p>
-                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {t("sessionDetail.gallery.clientPreview.bulkDownload.preparingDescription")}
+                </p>
               </div>
             ) : null}
 
@@ -3167,96 +3162,87 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
             ) : null}
           </div>
 
-          <DialogFooter className="flex gap-3 sm:justify-between p-6 pt-2 bg-gray-50/50">
-            {bulkDownloadStatus === "confirm" ? (
-              <>
-                <DialogClose asChild>
+          {bulkDownloadStatus !== "preparing" ? (
+            <DialogFooter className="flex gap-3 sm:justify-between p-6 pt-2 bg-gray-50/50">
+              {bulkDownloadStatus === "confirm" ? (
+                <>
+                  <DialogClose asChild>
+                    <button
+                      type="button"
+                      className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                    >
+                      {tCommon("buttons.cancel")}
+                    </button>
+                  </DialogClose>
                   <button
                     type="button"
-                    className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                    onClick={handleBulkDownloadConfirm}
+                    disabled={!canBulkDownload || bulkDownloadRequestMutation.isPending}
+                    className={`flex-1 py-3 font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${!canBulkDownload || bulkDownloadRequestMutation.isPending
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-slate-900 text-white hover:bg-black"
+                      }`}
                   >
-                    {tCommon("buttons.cancel")}
+                    {bulkDownloadRequestMutation.isPending ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Download size={16} />
+                    )}
+                    {t("sessionDetail.gallery.clientPreview.bulkDownload.confirmAction")}
                   </button>
-                </DialogClose>
-                <button
-                  type="button"
-                  onClick={handleBulkDownloadConfirm}
-                  disabled={!canBulkDownload || bulkDownloadRequestMutation.isPending}
-                  className={`flex-1 py-3 font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${!canBulkDownload || bulkDownloadRequestMutation.isPending
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-slate-900 text-white hover:bg-black"
-                    }`}
-                >
-                  {bulkDownloadRequestMutation.isPending ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
+                </>
+              ) : null}
+
+              {bulkDownloadStatus === "ready" ? (
+                <>
+                  <DialogClose asChild>
+                    <button
+                      type="button"
+                      className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                    >
+                      {tCommon("buttons.close")}
+                    </button>
+                  </DialogClose>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (bulkDownloadDownloadUrl) {
+                        triggerBulkDownload(bulkDownloadDownloadUrl, true);
+                      }
+                    }}
+                    disabled={!bulkDownloadDownloadUrl}
+                    className={`flex-1 py-3 font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${bulkDownloadDownloadUrl
+                      ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      }`}
+                  >
                     <Download size={16} />
-                  )}
-                  {t("sessionDetail.gallery.clientPreview.bulkDownload.confirmAction")}
-                </button>
-              </>
-            ) : null}
+                    {t("sessionDetail.gallery.clientPreview.bulkDownload.downloadNow")}
+                  </button>
+                </>
+              ) : null}
 
-            {bulkDownloadStatus === "preparing" ? (
-              <button
-                type="button"
-                disabled
-                className="w-full py-3 bg-gray-200 text-gray-500 font-bold rounded-xl text-sm flex items-center justify-center gap-2"
-              >
-                <Loader2 size={16} className="animate-spin" />
-                {t("sessionDetail.gallery.clientPreview.bulkDownload.preparingAction")}
-              </button>
-            ) : null}
-
-            {bulkDownloadStatus === "ready" ? (
-              <>
-                <DialogClose asChild>
+              {bulkDownloadStatus === "failed" ? (
+                <>
+                  <DialogClose asChild>
+                    <button
+                      type="button"
+                      className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                    >
+                      {tCommon("buttons.close")}
+                    </button>
+                  </DialogClose>
                   <button
                     type="button"
-                    className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                    onClick={handleBulkDownloadRetry}
+                    className="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-colors text-sm flex items-center justify-center gap-2 shadow-sm"
                   >
-                    {tCommon("buttons.close")}
+                    {tCommon("buttons.tryAgain")}
                   </button>
-                </DialogClose>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (bulkDownloadDownloadUrl) {
-                      triggerBulkDownload(bulkDownloadDownloadUrl, true);
-                    }
-                  }}
-                  disabled={!bulkDownloadDownloadUrl}
-                  className={`flex-1 py-3 font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${bulkDownloadDownloadUrl
-                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    }`}
-                >
-                  <Download size={16} />
-                  {t("sessionDetail.gallery.clientPreview.bulkDownload.downloadNow")}
-                </button>
-              </>
-            ) : null}
-
-            {bulkDownloadStatus === "failed" ? (
-              <>
-                <DialogClose asChild>
-                  <button
-                    type="button"
-                    className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
-                  >
-                    {tCommon("buttons.close")}
-                  </button>
-                </DialogClose>
-                <button
-                  type="button"
-                  onClick={handleBulkDownloadRetry}
-                  className="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-colors text-sm flex items-center justify-center gap-2 shadow-sm"
-                >
-                  {tCommon("buttons.tryAgain")}
-                </button>
-              </>
-            ) : null}
-          </DialogFooter>
+                </>
+              ) : null}
+            </DialogFooter>
+          ) : null}
         </DialogContent>
       </Dialog>
 

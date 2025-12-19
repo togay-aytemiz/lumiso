@@ -109,7 +109,7 @@ Templates attach to services/packages; when a session includes that deliverable,
 
 ### Phase 2 — Delivery & Hardening
 - [ ] Multiple rounds per session (e.g., Seçim → Final or custom types) with version indicators and optional copy-forward of selections between rounds.
-- [ ] Download rules per gallery (disable downloads for proofs; allow originals for finals), optional zip export for photographer.
+- [ ] Download rules per gallery (disable downloads for proofs; allow originals for finals) and optional photographer zip export. (Client bulk download zip shipped: proof uses web conversions, final uses originals; no per-gallery toggle yet.)
 - [ ] Selection export (CSV/JSON + thumbnails) and “lock selections” to prevent edits post-approval.
 - [ ] Client invites/audience list (emails) with activity tracking (viewed, favorited, downloaded) and reminder emails.
 - [ ] Galleries index page with filters (status, session, project, client).
@@ -169,6 +169,7 @@ Templates attach to services/packages; when a session includes that deliverable,
 - ✅ **Access & branding**: `/g/:publicId` + PIN gate (anonymous session); optional studio logo/name via `gallery-branding`; tab title set from gallery + business name.
 - ✅ **Layout & performance**: responsive grid with lazy paging per set; signed URLs via `createSignedUrl` and auto-refresh on broken images; lightbox with keyboard/swipe + improved mobile zoom/slide.
 - ✅ **Selection UX**: favorites + per-rule selections persisted to `client_selections`; counters + “selected/unselected” filters; mobile tasks sheet; “Gönder/Onayla” locks actions in UI (not yet persisted).
+- ✅ **Bulk download**: client-side zip generation in client view/preview; proof galleries use web conversions and final galleries use originals; progress + cancel; signed URL refresh on failure.
 - ✅ **Watermark**: configurable overlay (text/logo, opacity, placement) rendered client-side (not baked into files).
 - ⚠️ **Privacy note**: OG previews use `/og/g/:publicId` to show a cover image via a service-role signed URL redirect; consider a “no cover preview” option for stricter privacy.
-- 🔜 **Next**: persist selection submission state + admin visibility/notifications; enforce `published`/`expires_at`; delivery downloads/zip + activity tracking.
+- 🔜 **Next**: persist selection submission state + admin visibility/notifications; enforce `published`/`expires_at`; download controls (per-gallery permissions, large-gallery fallback) + activity tracking.

@@ -3,6 +3,7 @@
 ## 2025-12-19
 - Gallery bulk download now generates the .zip in the client (final galleries use originals; proof galleries use web conversions).
 - Client download no longer depends on `gallery-download` or `gallery-download-processor`, removing the stuck "preparing" state.
+- Bulk download preparation can be canceled without surfacing an error state.
 - Rollout: deploy the updated client bundle; no Supabase function deployment required for this change.
 
 ## 2026-12-18

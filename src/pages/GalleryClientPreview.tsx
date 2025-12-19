@@ -185,6 +185,33 @@ const ensureUniqueFileName = (baseName: string, extension: string, used: Set<str
   return candidate;
 };
 
+const resolveBulkDownloadConcurrency = (total: number) => {
+  let concurrency = Math.min(BULK_DOWNLOAD_CONCURRENCY, total);
+  if (typeof navigator !== "undefined" && typeof navigator.deviceMemory === "number") {
+    if (navigator.deviceMemory <= 2) {
+      concurrency = Math.min(concurrency, 1);
+    } else if (navigator.deviceMemory <= 4) {
+      concurrency = Math.min(concurrency, 2);
+    }
+  }
+  if (total >= 800) {
+    concurrency = 1;
+  } else if (total >= 400) {
+    concurrency = Math.min(concurrency, 2);
+  }
+  return Math.max(1, concurrency);
+};
+
+const isBulkDownloadAbortError = (error: unknown) => {
+  if (!error) return false;
+  if (error instanceof DOMException && error.name === "AbortError") return true;
+  if (error instanceof Error) {
+    if (error.name === "AbortError") return true;
+    return error.message === "Bulk download cancelled";
+  }
+  return false;
+};
+
 // Helper to determine rule status
 const getRuleStatus = (
   rule: ClientPreviewRuleBase & { currentCount: number },
@@ -1728,7 +1755,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
           updateProgress();
         };
 
-        const workerCount = Math.min(BULK_DOWNLOAD_CONCURRENCY, photos.length);
+        const workerCount = resolveBulkDownloadConcurrency(photos.length);
         const workers = Array.from({ length: workerCount }, async () => {
           while (true) {
             const current = nextIndex;
@@ -1764,7 +1791,8 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
       const downloadUrl = URL.createObjectURL(zipBlob);
       handleBulkDownloadReady(downloadUrl);
     },
-    onError: () => {
+    onError: (error) => {
+      if (isBulkDownloadAbortError(error)) return;
       if (!isMountedRef.current) return;
       handleBulkDownloadFailure("zip_failed");
       i18nToast.error(t("sessionDetail.gallery.clientPreview.toast.bulkDownloadFailed"), {
@@ -1775,6 +1803,24 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
       bulkDownloadAbortRef.current = null;
     },
   });
+
+  const handleBulkDownloadCancel = useCallback(() => {
+    if (bulkDownloadStatus !== "preparing") return;
+    bulkDownloadAbortRef.current?.abort();
+    bulkDownloadAbortRef.current = null;
+    setBulkDownloadStatus("confirm");
+    setBulkDownloadUrl(null);
+    setBulkDownloadProgress(null);
+    bulkDownloadTriggeredRef.current = false;
+    bulkDownloadCreateMutation.reset();
+    trackEvent("gallery_bulk_download_cancelled", bulkDownloadTelemetryContext);
+  }, [
+    bulkDownloadCreateMutation,
+    bulkDownloadStatus,
+    bulkDownloadTelemetryContext,
+    setBulkDownloadProgress,
+    setBulkDownloadUrl,
+  ]);
 
   const resetBulkDownloadState = useCallback(() => {
     setBulkDownloadStatus("idle");
@@ -3336,7 +3382,17 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
             ) : null}
           </div>
 
-          {bulkDownloadStatus !== "preparing" ? (
+          {bulkDownloadStatus === "preparing" ? (
+            <DialogFooter className="flex gap-3 sm:justify-between p-6 pt-2 bg-gray-50/50">
+              <button
+                type="button"
+                onClick={handleBulkDownloadCancel}
+                className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
+              >
+                {tCommon("buttons.cancel")}
+              </button>
+            </DialogFooter>
+          ) : (
             <DialogFooter className="flex gap-3 sm:justify-between p-6 pt-2 bg-gray-50/50">
               {bulkDownloadStatus === "confirm" ? (
                 <>
@@ -3416,7 +3472,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                 </>
               ) : null}
             </DialogFooter>
-          ) : null}
+          )}
         </DialogContent>
       </Dialog>
 

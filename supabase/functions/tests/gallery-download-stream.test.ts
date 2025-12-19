@@ -132,7 +132,7 @@ Deno.test("gallery-download-stream streams zip when access is granted", async ()
   url.searchParams.set("downloadFileName", "My Download.zip");
   const request = new Request(url.toString());
 
-  let receivedParams: { galleryId: string; assetVariant: string } | null = null;
+  let receivedAssetVariant: string | null = null;
 
   const response = await galleryDownloadStreamHandler(request, {
     createClient: () =>
@@ -146,13 +146,13 @@ Deno.test("gallery-download-stream streams zip when access is granted", async ()
         },
       }),
     streamZip: async (_supabase, params) => {
-      receivedParams = params;
+      receivedAssetVariant = params.assetVariant;
       return createMockStream();
     },
   });
 
   assertEquals(response.status, 200);
-  assertEquals(receivedParams?.assetVariant, "original");
+  assertEquals(receivedAssetVariant, "original");
   assertEquals(response.headers.get("Content-Type"), "application/zip");
   assertMatch(response.headers.get("Content-Disposition") ?? "", /My_Download\.zip/);
 });

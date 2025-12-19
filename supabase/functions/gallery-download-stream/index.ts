@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { ZipWriter } from "npm:@zip.js/zip.js@2.7.24";
+import { TextReader, ZipWriter } from "npm:@zip.js/zip.js@2.7.24";
 import { getErrorMessage } from "../_shared/error-utils.ts";
 
 const corsHeaders = {
@@ -303,56 +303,101 @@ const streamGalleryZip = async (
   const zipWriter = new ZipWriter(writable, {
     zip64: true,
     level: ZIP_COMPRESSION_LEVEL,
-    useWebWorkers: false,
-    useCompressionStream: false,
   });
+
+  const errorMessages: string[] = [];
+  const recordError = (message: string, error?: unknown) => {
+    errorMessages.push(message);
+    if (error) {
+      console.error("gallery-download-stream:", message, error);
+      return;
+    }
+    console.error("gallery-download-stream:", message);
+  };
 
   const usedNames = new Set<string>();
   const done = (async () => {
-    try {
-      let offset = 0;
-      while (true) {
-        const assets = await fetchAssetPage(supabase, params.galleryId, offset);
-        if (assets.length === 0) {
-          if (offset === 0) {
-            throw new Error("No assets available");
-          }
-          break;
+    let offset = 0;
+    let writerFailed = false;
+
+    while (true) {
+      let assets: GalleryAssetRow[] = [];
+      try {
+        assets = await fetchAssetPage(supabase, params.galleryId, offset);
+      } catch (error) {
+        recordError("Failed to load gallery assets", error);
+        break;
+      }
+
+      if (assets.length === 0) {
+        if (offset === 0) {
+          recordError("No assets available");
+        }
+        break;
+      }
+
+      for (const asset of assets) {
+        const storagePath = resolveAssetPath(asset, params.assetVariant);
+        if (!storagePath) {
+          recordError(`Missing storage path for asset ${asset.id}`);
+          continue;
         }
 
-        for (const asset of assets) {
-          const storagePath = resolveAssetPath(asset, params.assetVariant);
-          if (!storagePath) {
-            throw new Error("Missing storage path for asset");
-          }
+        const entryName = ensureUniqueFileName(resolveEntryName(asset, params.assetVariant), usedNames);
+        const objectUrl = buildStorageObjectUrl(supabaseUrl, ASSETS_BUCKET, storagePath);
 
-          const entryName = ensureUniqueFileName(resolveEntryName(asset, params.assetVariant), usedNames);
-          const objectUrl = buildStorageObjectUrl(supabaseUrl, ASSETS_BUCKET, storagePath);
-          const response = await fetch(objectUrl, {
+        let response: Response;
+        try {
+          response = await fetch(objectUrl, {
             headers: {
               Authorization: `Bearer ${serviceRoleKey}`,
               apikey: serviceRoleKey,
             },
           });
+        } catch (error) {
+          recordError(`Failed to fetch asset ${asset.id}`, error);
+          continue;
+        }
 
-          if (!response.ok || !response.body) {
-            throw new Error(`Failed to fetch asset ${asset.id}`);
-          }
+        if (!response.ok || !response.body) {
+          recordError(`Failed to fetch asset ${asset.id}`);
+          continue;
+        }
 
+        try {
           await zipWriter.add(entryName, response.body, {
             level: ZIP_COMPRESSION_LEVEL,
-            useWebWorkers: false,
-            useCompressionStream: false,
           });
-        }
-
-        if (assets.length < ZIP_PAGE_SIZE) {
+        } catch (error) {
+          recordError(`Failed to add asset ${asset.id}`, error);
+          writerFailed = true;
           break;
         }
-
-        offset += assets.length;
       }
 
+      if (writerFailed || assets.length < ZIP_PAGE_SIZE) {
+        break;
+      }
+
+      offset += assets.length;
+    }
+
+    if (errorMessages.length > 0 && !writerFailed) {
+      const report = [
+        "Some files could not be included in this download:",
+        ...errorMessages.map((message) => `- ${message}`),
+      ].join("\n");
+
+      try {
+        await zipWriter.add("_download_errors.txt", new TextReader(report), {
+          level: ZIP_COMPRESSION_LEVEL,
+        });
+      } catch (error) {
+        console.error("gallery-download-stream: failed to add error report", error);
+      }
+    }
+
+    try {
       await zipWriter.close();
     } catch (error) {
       try {

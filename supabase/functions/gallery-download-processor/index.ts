@@ -155,8 +155,6 @@ const streamZipForJob = async (supabase: SupabaseAdminLike, job: GalleryDownload
   const zipWriter = new ZipWriter(writable, {
     zip64: true,
     level: ZIP_COMPRESSION_LEVEL,
-    useWebWorkers: false,
-    useCompressionStream: false,
   });
 
   const uploadPromise = supabase.storage.from(DOWNLOAD_BUCKET).upload(zipPath, readable, {
@@ -208,8 +206,6 @@ const streamZipForJob = async (supabase: SupabaseAdminLike, job: GalleryDownload
 
         await zipWriter.add(entryName, response.body, {
           level: ZIP_COMPRESSION_LEVEL,
-          useWebWorkers: false,
-          useCompressionStream: false,
         });
       }
 

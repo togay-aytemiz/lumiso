@@ -17,7 +17,7 @@
           },
           {
             "action": "Onayla butonuna basin ve modal acik kalirken hazirlanma durumunu izleyin.",
-            "expected_result": "Modal hazirlaniyor durumuna gecer. Tek spinner ve indirme hazir olunca otomatik baslayacagina dair mesaj gorunur."
+            "expected_result": "Modal hazirlaniyor durumuna gecer. Sonrasinda indirme basliyor durumu gorunur ve indirme otomatik baslamazsa tekrar baslatma butonu yer alir."
           },
           {
             "action": "Indirme basladiginda dosyanin adini kontrol edin.",
@@ -37,7 +37,7 @@
           },
           {
             "action": "Indirme ikonuna basin ve onayla butonunu secin.",
-            "expected_result": "Hazirlaniyor durumu gorunur, tek spinner yer alir ve modal kapanmaz."
+            "expected_result": "Hazirlaniyor durumu gorunur, tek spinner yer alir ve indirme basliyor durumunda tekrar baslatma aksiyonu gorunur."
           },
           {
             "action": "Indirme basladiginda dosya adini kontrol edin.",

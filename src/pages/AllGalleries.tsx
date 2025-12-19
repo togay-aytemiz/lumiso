@@ -117,7 +117,13 @@ interface GalleryListItem {
   exportRules: SelectionExportRule[];
 }
 
-type SegmentFilter = "active" | "action" | "approved" | "archived";
+type GalleryTypeFilter = "all" | "selection" | "final";
+type StatusFilter = "active" | "pending" | "approved" | "archived";
+type GalleryFilterOptions = {
+  typeFilter: GalleryTypeFilter;
+  statusFilter: StatusFilter;
+  searchTerm: string;
+};
 
 type GalleryQueryResult = GalleryRow & {
   sessions?: SessionRow | SessionRow[] | null;
@@ -126,6 +132,8 @@ type GalleryQueryResult = GalleryRow & {
 };
 
 const COVER_SIGNED_URL_TTL_SECONDS = 60 * 60;
+const isSelectionGalleryType = (value: string) => value === "proof";
+const isFinalGalleryType = (value: string) => value === "final";
 
 const normalizeSelectionRules = (branding?: Record<string, unknown> | null) => {
   const template = branding?.["selectionTemplate"];
@@ -354,6 +362,44 @@ const useGalleryList = () => {
   });
 };
 
+export const filterGalleriesByView = (
+  galleries: GalleryListItem[],
+  { typeFilter, statusFilter, searchTerm }: GalleryFilterOptions
+) => {
+  const matchesType = (gallery: GalleryListItem) => {
+    if (typeFilter === "selection") return isSelectionGalleryType(gallery.type);
+    if (typeFilter === "final") return isFinalGalleryType(gallery.type);
+    return true;
+  };
+
+  const matchesStatus = (gallery: GalleryListItem) => {
+    switch (statusFilter) {
+      case "archived":
+        return gallery.status === "archived";
+      case "approved":
+        return typeFilter === "selection" && (gallery.isLocked || gallery.status === "approved");
+      case "pending":
+        return typeFilter === "selection" && gallery.status === "published" && !gallery.isLocked;
+      case "active":
+      default:
+        return gallery.status !== "archived";
+    }
+  };
+
+  const matchesSearch = (gallery: GalleryListItem) => {
+    if (!searchTerm.trim()) return true;
+    const needle = searchTerm.toLowerCase();
+    return (
+      gallery.title.toLowerCase().includes(needle) ||
+      (gallery.session?.session_name?.toLowerCase().includes(needle) ?? false) ||
+      (gallery.project?.name?.toLowerCase().includes(needle) ?? false) ||
+      (gallery.session?.lead?.name?.toLowerCase().includes(needle) ?? false)
+    );
+  };
+
+  return galleries.filter((gallery) => matchesType(gallery) && matchesStatus(gallery) && matchesSearch(gallery));
+};
+
 const formatRelativeTime = (value: string | null, locale: Locale) => {
   if (!value) return null;
   const date = new Date(value);
@@ -368,7 +414,8 @@ export default function AllGalleries() {
   const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en").startsWith("tr") ? tr : enUS;
   const numberFormatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
 
-  const [segment, setSegment] = useState<SegmentFilter>("active");
+  const [typeFilter, setTypeFilter] = useState<GalleryTypeFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
     columnId: "updatedAt",
     direction: "asc",
@@ -478,37 +525,46 @@ export default function AllGalleries() {
     return base;
   }, [galleries]);
 
+  const typeOptions = useMemo(
+    () => [
+      { label: t("galleries.filters.type.all"), value: "all" },
+      { label: t("galleries.filters.type.selection"), value: "selection" },
+      { label: t("galleries.filters.type.final"), value: "final" },
+    ],
+    [t]
+  );
+
+  const statusOptions = useMemo(() => {
+    if (typeFilter === "selection") {
+      return [
+        { label: t("galleries.segments.active"), value: "active" },
+        { label: t("galleries.segments.pending"), value: "pending" },
+        { label: t("galleries.segments.approved"), value: "approved" },
+        { label: t("galleries.segments.archived"), value: "archived" },
+      ];
+    }
+    return [
+      { label: t("galleries.segments.active"), value: "active" },
+      { label: t("galleries.segments.archived"), value: "archived" },
+    ];
+  }, [t, typeFilter]);
+
+  const handleTypeChange = (value: string) => {
+    const nextType = value as GalleryTypeFilter;
+    setTypeFilter(nextType);
+    setStatusFilter("active");
+  };
+
   const filtered = useMemo(() => {
-    const matchesSegment = (gallery: GalleryListItem) => {
-      switch (segment) {
-        case "archived":
-          return gallery.status === "archived";
-        case "approved":
-          return gallery.isLocked || gallery.status === "approved";
-        case "action":
-          return gallery.status === "published" && !gallery.isLocked;
-        case "active":
-        default:
-          return gallery.status !== "archived";
-      }
-    };
-
-    const matchesSearch = (gallery: GalleryListItem) => {
-      if (!searchTerm.trim()) return true;
-      const needle = searchTerm.toLowerCase();
-      return (
-        gallery.title.toLowerCase().includes(needle) ||
-        (gallery.session?.session_name?.toLowerCase().includes(needle) ?? false) ||
-        (gallery.project?.name?.toLowerCase().includes(needle) ?? false) ||
-        (gallery.session?.lead?.name?.toLowerCase().includes(needle) ?? false)
-      );
-    };
-
-    const filteredRows = galleriesWithSize.filter((gallery) => matchesSegment(gallery) && matchesSearch(gallery));
+    const filteredRows = filterGalleriesByView(galleriesWithSize, {
+      typeFilter,
+      statusFilter,
+      searchTerm,
+    });
 
     const sorted = [...filteredRows].sort((a, b) => {
       const approvedRank = (row: GalleryListItem) => (row.isLocked || row.status === "approved" ? 0 : 1);
-      if (segment === "active") {
+      if (statusFilter === "active") {
         const rankDifference = approvedRank(a) - approvedRank(b);
         if (rankDifference !== 0) return rankDifference;
       }
@@ -540,192 +596,281 @@ export default function AllGalleries() {
     });
 
     return sorted;
-  }, [galleriesWithSize, segment, sortState, searchTerm]);
+  }, [galleriesWithSize, sortState, searchTerm, statusFilter, typeFilter]);
 
-  const columns = useMemo<AdvancedTableColumn<GalleryListItem>[]>(
-    () => [
-      {
-        id: "gallery",
-        label: t("galleries.table.gallery"),
-        sortable: true,
-        sortId: "title",
-        render: (row) => (
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-xl border border-border overflow-hidden bg-muted/40 shadow-sm">
-              {row.coverUrl ? (
-                <img src={row.coverUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-                  <Images className="h-5 w-5" />
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col">
-              <span className="font-semibold text-foreground">{row.title}</span>
-              <span className="text-xs text-muted-foreground">
-                {row.eventDate ? formatDate(row.eventDate) : t("galleries.table.noEvent")}
-              </span>
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: "client",
-        label: t("galleries.table.client"),
-        sortable: true,
-        sortId: "client",
-        render: (row) => (
-          <div className="flex flex-col gap-0.5">
-            <button
-              type="button"
-              className={cn(
-                "text-left text-sm font-semibold text-primary hover:underline",
-                !row.session?.lead?.id && "cursor-not-allowed text-muted-foreground hover:no-underline"
-              )}
-              onClick={(event) => {
-                event.stopPropagation();
-                if (!row.session?.lead?.id) return;
-                navigate(`/leads/${row.session.lead.id}`);
-              }}
-              disabled={!row.session?.lead?.id}
-            >
-              {row.session?.lead?.name ?? t("galleries.table.noClient")}
-            </button>
-            <span className="text-[11px] text-muted-foreground">
-              {row.session?.lead?.email || row.session?.lead?.phone || ""}
+  const columns = useMemo<AdvancedTableColumn<GalleryListItem>[]>(() => {
+    const renderSelectionProgress = (row: GalleryListItem) => {
+      const required = row.requiredCount > 0 ? row.requiredCount : Math.max(row.selectionCount, 1);
+      const percent = Math.min(100, Math.round((row.selectionCount / required) * 100));
+      return (
+        <div className="min-w-[180px]">
+          <div className="flex items-center justify-between text-xs font-medium text-muted-foreground mb-1">
+            <span className="text-foreground font-semibold">
+              {t("galleries.table.selected", { count: row.selectionCount })}
             </span>
+            <span>{t("galleries.table.required", { count: required })}</span>
           </div>
-        ),
-      },
-      {
-        id: "links",
-        label: t("galleries.table.links"),
-        render: (row) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="surface" size="sm" className="btn-surface-accent h-9">
-                {t("galleries.table.quickAccess")}
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-72">
-              <DropdownMenuLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("galleries.table.linkTypes.session")}
-              </DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigate(`/sessions/${row.session?.id ?? ""}`)} disabled={!row.session}>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                {row.session?.session_name || t("galleries.table.noSession")}
-              </DropdownMenuItem>
-              <DropdownMenuLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("galleries.table.linkTypes.project")}
-              </DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigate(`/projects/${row.project?.id ?? ""}`)} disabled={!row.project}>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                {row.project?.name || t("galleries.table.noProject")}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate(`/galleries/${row.id}`)}>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                {t("galleries.table.openGallery")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
-      },
-      {
-        id: "status",
-        label: t("galleries.table.status"),
-        render: (row) => (
-          <div className="flex flex-col gap-1">
-            <GalleryStatusChip status={row.status} size="sm" />
-            {row.selectionNote && (
-              <Badge variant="outline" className="flex items-center gap-1 w-fit text-xs">
-                <MessageSquare className="h-3 w-3" />
-                {row.selectionNote}
-              </Badge>
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div
+              className={cn("h-full rounded-full", percent >= 100 ? "bg-emerald-500" : "bg-amber-500")}
+              style={{ width: `${percent}%` }}
+            />
+          </div>
+        </div>
+      );
+    };
+
+    const renderSizeValue = (row: GalleryListItem) =>
+      isGallerySizeLoading && row.sizeBytes === undefined ? (
+        <span className="inline-block h-4 w-16 animate-pulse rounded bg-muted" aria-hidden />
+      ) : (
+        <span className="tabular-nums">{formatBytes(row.sizeBytes, i18n.language)}</span>
+      );
+
+    const renderSizeAndTime = (row: GalleryListItem) => (
+      <div className="flex flex-col gap-0.5 text-sm">
+        <div className="text-foreground">{renderSizeValue(row)}</div>
+        <span className="text-xs text-muted-foreground">{t("galleries.table.timeRemainingPlaceholder")}</span>
+      </div>
+    );
+
+    const renderLastAction = (row: GalleryListItem) => {
+      const relative = formatRelativeTime(row.updatedAt, locale);
+      return (
+        <div className="flex flex-col text-sm">
+          <div className="flex items-center gap-1 text-foreground">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            {formatDate(row.updatedAt)}
+          </div>
+          {relative && <span className="text-[11px] text-muted-foreground pl-5">{relative}</span>}
+        </div>
+      );
+    };
+
+    const galleryColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "gallery",
+      label: t("galleries.table.gallery"),
+      sortable: true,
+      sortId: "title",
+      render: (row) => (
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-xl border border-border overflow-hidden bg-muted/40 shadow-sm">
+            {row.coverUrl ? (
+              <img src={row.coverUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                <Images className="h-5 w-5" />
+              </div>
             )}
           </div>
-        ),
-      },
-      {
-        id: "progress",
-        label: t("galleries.table.progress"),
-        render: (row) => {
-          const required = row.requiredCount > 0 ? row.requiredCount : Math.max(row.selectionCount, 1);
-          const percent = Math.min(100, Math.round((row.selectionCount / required) * 100));
-          return (
-            <div className="min-w-[180px]">
-              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground mb-1">
-                <span className="text-foreground font-semibold">{t("galleries.table.selected", { count: row.selectionCount })}</span>
-                <span>
-                  {t("galleries.table.required", { count: required })}
-                </span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  className={cn("h-full rounded-full", percent >= 100 ? "bg-emerald-500" : "bg-amber-500")}
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
-            </div>
-          );
-        },
-      },
-      {
-        id: "approval",
-        label: t("galleries.table.approval"),
-        sortable: true,
-        sortId: "updatedAt",
-        render: (row) => {
-          const relative = formatRelativeTime(row.lockedAt, locale);
-          return (
-            <div className="flex flex-col text-sm">
-              <div className="flex items-center gap-1 text-foreground">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                {row.lockedAt ? formatDate(row.lockedAt) : t("galleries.table.noApproval")}
-              </div>
-              {relative && <span className="text-[11px] text-muted-foreground pl-5">{relative}</span>}
-            </div>
-          );
-        },
-      },
-      {
-        id: "size",
-        label: t("galleries.table.size"),
-        sortable: true,
-        sortId: "sizeBytes",
-        align: "right",
-        render: (row) =>
-          isGallerySizeLoading && row.sizeBytes === undefined ? (
-            <span className="ml-auto inline-block h-4 w-16 animate-pulse rounded bg-muted" aria-hidden />
-          ) : (
-            <span className="tabular-nums">{formatBytes(row.sizeBytes, i18n.language)}</span>
-          ),
-      },
-      {
-        id: "actions",
-        label: t("galleries.table.actions"),
-        align: "right",
-        render: (row) => (
-          <div className="flex items-center justify-end gap-2">
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setExportGalleryId(row.id)}>
-              <Download className="h-4 w-4" />
-              <span className="sr-only">{t("galleries.table.export")}</span>
-            </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(`/galleries/${row.id}`)}>
-              <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">{t("galleries.table.view")}</span>
-            </Button>
+          <div className="flex flex-col">
+            <span className="font-semibold text-foreground">{row.title}</span>
+            <span className="text-xs text-muted-foreground">
+              {row.eventDate ? formatDate(row.eventDate) : t("galleries.table.noEvent")}
+            </span>
           </div>
-        ),
+        </div>
+      ),
+    };
+
+    const clientColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "client",
+      label: t("galleries.table.client"),
+      sortable: true,
+      sortId: "client",
+      render: (row) => (
+        <div className="flex flex-col gap-0.5">
+          <button
+            type="button"
+            className={cn(
+              "text-left text-sm font-semibold text-primary hover:underline",
+              !row.session?.lead?.id && "cursor-not-allowed text-muted-foreground hover:no-underline"
+            )}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!row.session?.lead?.id) return;
+              navigate(`/leads/${row.session.lead.id}`);
+            }}
+            disabled={!row.session?.lead?.id}
+          >
+            {row.session?.lead?.name ?? t("galleries.table.noClient")}
+          </button>
+          <span className="text-[11px] text-muted-foreground">
+            {row.session?.lead?.email || row.session?.lead?.phone || ""}
+          </span>
+        </div>
+      ),
+    };
+
+    const linksColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "links",
+      label: t("galleries.table.links"),
+      render: (row) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="surface" size="sm" className="btn-surface-accent h-9">
+              {t("galleries.table.quickAccess")}
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-72">
+            <DropdownMenuLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t("galleries.table.linkTypes.session")}
+            </DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => navigate(`/sessions/${row.session?.id ?? ""}`)} disabled={!row.session}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              {row.session?.session_name || t("galleries.table.noSession")}
+            </DropdownMenuItem>
+            <DropdownMenuLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t("galleries.table.linkTypes.project")}
+            </DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => navigate(`/projects/${row.project?.id ?? ""}`)} disabled={!row.project}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              {row.project?.name || t("galleries.table.noProject")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate(`/galleries/${row.id}`)}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              {t("galleries.table.openGallery")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    };
+
+    const statusColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "status",
+      label: t("galleries.table.status"),
+      render: (row) => (
+        <div className="flex flex-col gap-1">
+          <GalleryStatusChip status={row.status} size="sm" />
+          {isSelectionGalleryType(row.type) && row.selectionNote ? (
+            <Badge variant="outline" className="flex items-center gap-1 w-fit text-xs">
+              <MessageSquare className="h-3 w-3" />
+              {row.selectionNote}
+            </Badge>
+          ) : null}
+        </div>
+      ),
+    };
+
+    const progressColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "progress",
+      label: t("galleries.table.progress"),
+      render: (row) => renderSelectionProgress(row),
+    };
+
+    const approvalColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "approval",
+      label: t("galleries.table.approval"),
+      sortable: true,
+      sortId: "updatedAt",
+      render: (row) => {
+        const relative = formatRelativeTime(row.lockedAt, locale);
+        return (
+          <div className="flex flex-col text-sm">
+            <div className="flex items-center gap-1 text-foreground">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              {row.lockedAt ? formatDate(row.lockedAt) : t("galleries.table.noApproval")}
+            </div>
+            {relative && <span className="text-[11px] text-muted-foreground pl-5">{relative}</span>}
+          </div>
+        );
       },
-    ],
-    [i18n.language, isGallerySizeLoading, locale, navigate, t]
-  );
+    };
+
+    const sizeAndTimeColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "sizeAndTime",
+      label: t("galleries.table.sizeAndTime"),
+      sortable: true,
+      sortId: "sizeBytes",
+      render: (row) => renderSizeAndTime(row),
+    };
+
+    const sizeColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "size",
+      label: t("galleries.table.size"),
+      sortable: true,
+      sortId: "sizeBytes",
+      align: "right",
+      render: (row) =>
+        isGallerySizeLoading && row.sizeBytes === undefined ? (
+          <span className="ml-auto inline-block h-4 w-16 animate-pulse rounded bg-muted" aria-hidden />
+        ) : (
+          <span className="tabular-nums">{formatBytes(row.sizeBytes, i18n.language)}</span>
+        ),
+    };
+
+    const summaryColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "summary",
+      label: t("galleries.table.summaryColumn"),
+      render: (row) => (isSelectionGalleryType(row.type) ? renderSelectionProgress(row) : renderSizeAndTime(row)),
+    };
+
+    const lastActionColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "lastAction",
+      label: t("galleries.table.lastAction"),
+      sortable: true,
+      sortId: "updatedAt",
+      render: (row) => renderLastAction(row),
+    };
+
+    const actionsColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "actions",
+      label: t("galleries.table.actions"),
+      align: "right",
+      render: (row) => (
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setExportGalleryId(row.id)}>
+            <Download className="h-4 w-4" />
+            <span className="sr-only">{t("galleries.table.export")}</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(`/galleries/${row.id}`)}>
+            <MoreHorizontal className="h-4 w-4" />
+            <span className="sr-only">{t("galleries.table.view")}</span>
+          </Button>
+        </div>
+      ),
+    };
+
+    const baseColumns = [galleryColumn, clientColumn, linksColumn, statusColumn];
+
+    if (typeFilter === "selection") {
+      return [...baseColumns, progressColumn, approvalColumn, sizeAndTimeColumn, actionsColumn];
+    }
+
+    if (typeFilter === "final") {
+      return [...baseColumns, lastActionColumn, sizeColumn, actionsColumn];
+    }
+
+    return [...baseColumns, summaryColumn, lastActionColumn, actionsColumn];
+  }, [i18n.language, isGallerySizeLoading, locale, navigate, t, typeFilter]);
 
   const summaryText = useMemo(() => {
     return t("galleries.table.summary", { count: filtered.length });
   }, [filtered.length, t]);
+
+  const tableTitle = useMemo(
+    () => <span className="text-lg font-semibold">{t("galleries.tableTitle")}</span>,
+    [t]
+  );
+
+  const statusControls = useMemo(
+    () => (
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          {t("galleries.filters.statusLabel")}
+        </span>
+        <SegmentedControl
+          value={statusFilter}
+          onValueChange={(value) => setStatusFilter(value as StatusFilter)}
+          options={statusOptions}
+          size="sm"
+        />
+      </div>
+    ),
+    [statusFilter, statusOptions, t]
+  );
 
   const emptyState = useMemo(() => {
     const isSearching = searchTerm.trim().length > 0;
@@ -759,11 +904,11 @@ export default function AllGalleries() {
         icon={Images}
         iconVariant="pill"
         iconColor="indigo"
-        title={t(`galleries.emptyState.segments.${segment}.title`)}
-        description={t(`galleries.emptyState.segments.${segment}.description`)}
+        title={t(`galleries.emptyState.segments.${statusFilter}.title`)}
+        description={t(`galleries.emptyState.segments.${statusFilter}.description`)}
       />
     );
-  }, [galleries.length, searchTerm, segment, t]);
+  }, [galleries.length, searchTerm, statusFilter, t]);
 
   const exportTarget = useMemo(() => filtered.find((gallery) => gallery.id === exportGalleryId) ?? null, [exportGalleryId, filtered]);
 
@@ -800,17 +945,8 @@ export default function AllGalleries() {
           ))}
         </section>
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <SegmentedControl
-            value={segment}
-            onValueChange={(value) => setSegment(value as SegmentFilter)}
-            options={[
-              { label: t("galleries.segments.active"), value: "active" },
-              { label: t("galleries.segments.action"), value: "action" },
-              { label: t("galleries.segments.approved"), value: "approved" },
-              { label: t("galleries.segments.archived"), value: "archived" },
-            ]}
-          />
+        <div className="flex flex-col gap-3">
+          <SegmentedControl value={typeFilter} onValueChange={handleTypeChange} options={typeOptions} />
         </div>
 
         <AdvancedDataTable
@@ -818,12 +954,9 @@ export default function AllGalleries() {
           columns={columns}
           rowKey={(row) => row.id}
           isLoading={isLoading}
-          actions={
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="h-2 w-2 rounded-full bg-primary/80" aria-hidden />
-              <span>{summaryText}</span>
-            </div>
-          }
+          title={tableTitle}
+          actions={statusControls}
+          summary={{ text: summaryText }}
           searchValue={searchTerm}
           onSearchChange={setSearchTerm}
           searchPlaceholder={t("galleries.search")}

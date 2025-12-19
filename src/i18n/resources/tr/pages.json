@@ -4071,15 +4071,24 @@
     "actions": {
       "create": "Yeni galeri"
     },
+    "tableTitle": "Galeri Kayıtları",
     "stats": {
       "actionNeeded": "Bekleyen",
       "approved": "Onaylanan",
       "active": "Aktif",
       "archived": "Arşiv"
     },
+    "filters": {
+      "type": {
+        "all": "Tüm Galeriler",
+        "selection": "Fotoğraf Seçimi",
+        "final": "Final Teslimat"
+      },
+      "statusLabel": "Durum:"
+    },
     "segments": {
       "active": "Aktif",
-      "action": "Bekleyen",
+      "pending": "Bekleyen",
       "approved": "Onaylanan",
       "archived": "Arşiv"
     },
@@ -4098,8 +4107,8 @@
           "title": "Aktif galeri yok",
           "description": "Müşteriyle paylaşılan aktif galeriler burada listelenir."
         },
-        "action": {
-          "title": "Bekleyen bir şey yok",
+        "pending": {
+          "title": "Bekleyen seçim yok",
           "description": "Müşteri seçimi bekleyen galeriler burada görünür."
         },
         "approved": {
@@ -4131,6 +4140,10 @@
       "required": "{{count}} zorunlu",
       "approval": "Son onay",
       "size": "Boyut",
+      "sizeAndTime": "Boyut & Kalan Süre",
+      "summaryColumn": "Özet",
+      "lastAction": "Son işlem",
+      "timeRemainingPlaceholder": "Kalan süre yakında",
       "noApproval": "Henüz onay yok",
       "actions": "İşlemler",
       "export": "Seçimleri dışa aktar",

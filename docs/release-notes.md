@@ -4,6 +4,8 @@
 - Gallery bulk download now generates the .zip in the client (final galleries use originals; proof galleries use web conversions).
 - Client download no longer depends on `gallery-download` or `gallery-download-processor`, removing the stuck "preparing" state.
 - Bulk download preparation can be canceled without surfacing an error state.
+- Gallery list now switches between All/Selection/Final views with contextual status filters and table columns.
+- Gallery list table header now includes an in-table title with the status segment alongside search.
 - Rollout: deploy the updated client bundle; no Supabase function deployment required for this change.
 
 ## 2026-12-18

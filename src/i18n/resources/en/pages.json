@@ -4055,15 +4055,24 @@
     "actions": {
       "create": "New gallery"
     },
+    "tableTitle": "Gallery records",
     "stats": {
       "actionNeeded": "Action needed",
       "approved": "Approved",
       "active": "Active",
       "archived": "Archived"
     },
+    "filters": {
+      "type": {
+        "all": "All galleries",
+        "selection": "Photo selection",
+        "final": "Final delivery"
+      },
+      "statusLabel": "Status:"
+    },
     "segments": {
       "active": "Active",
-      "action": "Action needed",
+      "pending": "Pending",
       "approved": "Approved",
       "archived": "Archived"
     },
@@ -4082,8 +4091,8 @@
           "title": "No active galleries",
           "description": "Active galleries appear here once they're shared with clients."
         },
-        "action": {
-          "title": "Nothing needs your attention",
+        "pending": {
+          "title": "No pending selections",
           "description": "Galleries waiting for client selections will appear here."
         },
         "approved": {
@@ -4115,6 +4124,10 @@
       "required": "{{count}} required",
       "approval": "Last approval",
       "size": "Size",
+      "sizeAndTime": "Size & time remaining",
+      "summaryColumn": "Summary",
+      "lastAction": "Last action",
+      "timeRemainingPlaceholder": "Time remaining soon",
       "noApproval": "No approval yet",
       "actions": "Actions",
       "export": "Export selections",

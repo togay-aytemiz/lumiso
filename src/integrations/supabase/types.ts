@@ -272,6 +272,7 @@ export type Database = {
           expires_at: string | null
           id: string
           pin_hash: string | null
+          previous_status: string | null
           project_id: string | null
           public_id: string | null
           published_at: string | null
@@ -288,6 +289,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           pin_hash?: string | null
+          previous_status?: string | null
           project_id?: string | null
           public_id?: string | null
           published_at?: string | null
@@ -304,6 +306,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           pin_hash?: string | null
+          previous_status?: string | null
           project_id?: string | null
           public_id?: string | null
           published_at?: string | null
@@ -391,6 +394,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "gallery_access_grants_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gallery_download_events: {
+        Row: {
+          created_at: string
+          downloaded_at: string
+          gallery_id: string
+          id: string
+          viewer_id: string
+        }
+        Insert: {
+          created_at?: string
+          downloaded_at?: string
+          gallery_id: string
+          id?: string
+          viewer_id: string
+        }
+        Update: {
+          created_at?: string
+          downloaded_at?: string
+          gallery_id?: string
+          id?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_download_events_gallery_id_fkey"
             columns: ["gallery_id"]
             isOneToOne: false
             referencedRelation: "galleries"

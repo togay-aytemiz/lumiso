@@ -1503,6 +1503,19 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     [bulkDownloadFileName]
   );
 
+  const recordBulkDownload = useCallback(async () => {
+    if (!isFinalGallery) return;
+    if (!resolvedGalleryId || !viewerId) return;
+    const { error } = await supabase.from("gallery_download_events").insert({
+      gallery_id: resolvedGalleryId,
+      viewer_id: viewerId,
+      downloaded_at: new Date().toISOString(),
+    });
+    if (error) {
+      console.warn("GalleryClientPreview: Failed to record bulk download", { galleryId: resolvedGalleryId, error });
+    }
+  }, [isFinalGallery, resolvedGalleryId, viewerId]);
+
   const handleBulkDownloadReady = useCallback(
     (downloadUrl: string) => {
       if (!isMountedRef.current) return;
@@ -1511,8 +1524,9 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
       setBulkDownloadProgress(null);
       triggerBulkDownload(downloadUrl);
       trackEvent("gallery_bulk_download_ready", bulkDownloadTelemetryContext);
+      void recordBulkDownload();
     },
-    [bulkDownloadTelemetryContext, setBulkDownloadProgress, setBulkDownloadUrl, triggerBulkDownload]
+    [bulkDownloadTelemetryContext, recordBulkDownload, setBulkDownloadProgress, setBulkDownloadUrl, triggerBulkDownload]
   );
 
   const handleBulkDownloadFailure = useCallback(

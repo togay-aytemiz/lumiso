@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import type { Locale } from "date-fns";
 import { enUS, tr } from "date-fns/locale";
@@ -15,7 +15,19 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { StorageWidget } from "@/components/ui/storage-widget";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +46,8 @@ import { countUniqueSelectedAssets } from "@/lib/gallerySelections";
 import { SelectionExportSheet, type SelectionExportPhoto, type SelectionExportRule } from "@/components/galleries/SelectionExportSheet";
 import { FAVORITES_FILTER_ID } from "@/components/galleries/SelectionDashboard";
 import { GALLERY_ASSETS_BUCKET } from "@/lib/galleryAssets";
+import { deleteGalleryWithAssets } from "@/lib/galleryDeletion";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { ORG_GALLERY_STORAGE_LIMIT_BYTES } from "@/lib/storageLimits";
 import {
@@ -46,8 +60,10 @@ import {
   ExternalLink,
   Images,
   Layers,
+  Loader2,
   MessageSquare,
   MoreHorizontal,
+  Trash2,
 } from "lucide-react";
 
 interface GalleryRow {
@@ -59,6 +75,7 @@ interface GalleryRow {
   updated_at: string;
   created_at: string;
   published_at: string | null;
+  expires_at: string | null;
   session_id: string | null;
   project_id: string | null;
   selection_state?:
@@ -97,6 +114,11 @@ interface AssetRow {
   metadata: Record<string, unknown> | null;
 }
 
+interface DownloadEventRow {
+  gallery_id: string;
+  downloaded_at: string;
+}
+
 interface GalleryListItem {
   id: string;
   title: string;
@@ -104,6 +126,7 @@ interface GalleryListItem {
   type: string;
   updatedAt: string;
   eventDate: string | null;
+  expiresAt: string | null;
   session: SessionRow | null;
   project: ProjectRow | null;
   selectionNote: string | null;
@@ -112,6 +135,7 @@ interface GalleryListItem {
   selectionCount: number;
   requiredCount: number;
   sizeBytes?: number | null;
+  downloadedAt: string | null;
   coverUrl: string;
   exportPhotos: SelectionExportPhoto[];
   exportRules: SelectionExportRule[];
@@ -200,7 +224,7 @@ const useGalleryList = () => {
       const { data, error } = await supabase
         .from("galleries")
         .select(
-          "id,title,status,type,branding,updated_at,created_at,published_at,session_id,project_id,gallery_selection_states(is_locked,locked_at,note,updated_at),sessions(id,session_name,session_date,project:projects(id,name),lead:leads(id,name,email,phone)),projects(id,name)"
+          "id,title,status,type,branding,updated_at,created_at,published_at,expires_at,session_id,project_id,gallery_selection_states(is_locked,locked_at,note,updated_at),sessions(id,session_name,session_date,project:projects(id,name),lead:leads(id,name,email,phone)),projects(id,name)"
         )
         .order("updated_at", { ascending: true });
 
@@ -223,7 +247,7 @@ const useGalleryList = () => {
       );
       const galleryIds = galleries.map((gallery) => gallery.id);
 
-      const [sessionResponse, projectResponse, selectionResponse] = await Promise.all([
+      const [sessionResponse, projectResponse, selectionResponse, downloadResponse] = await Promise.all([
         sessionIds.length
           ? supabase
               .from("sessions")
@@ -239,6 +263,12 @@ const useGalleryList = () => {
               .select("gallery_id,asset_id,selection_part")
               .in("gallery_id", galleryIds)
           : Promise.resolve({ data: [] as SelectionRow[] }),
+        galleryIds.length
+          ? supabase
+              .from("gallery_download_events")
+              .select("gallery_id,downloaded_at")
+              .in("gallery_id", galleryIds)
+          : Promise.resolve({ data: [] as DownloadEventRow[] }),
       ]);
 
       const sessionMap = new Map((sessionResponse.data ?? []).map((entry) => [entry.id, entry]));
@@ -247,6 +277,25 @@ const useGalleryList = () => {
       const selectionRows = (selectionResponse.data ?? []).filter(
         (entry): entry is SelectionRow => Boolean(entry) && typeof entry.gallery_id === "string"
       );
+
+      const downloadRows = (downloadResponse.data ?? []).filter(
+        (entry): entry is DownloadEventRow =>
+          Boolean(entry) && typeof entry.gallery_id === "string" && typeof entry.downloaded_at === "string"
+      );
+
+      const downloadsByGallery = new Map<string, string>();
+      downloadRows.forEach((entry) => {
+        const existing = downloadsByGallery.get(entry.gallery_id);
+        if (!existing) {
+          downloadsByGallery.set(entry.gallery_id, entry.downloaded_at);
+          return;
+        }
+        const existingTime = new Date(existing).getTime();
+        const nextTime = new Date(entry.downloaded_at).getTime();
+        if (Number.isNaN(existingTime) || nextTime > existingTime) {
+          downloadsByGallery.set(entry.gallery_id, entry.downloaded_at);
+        }
+      });
 
       const selectionsByGallery = new Map<string, SelectionRow[]>();
       const selectedAssetIds = new Set<string>();
@@ -343,6 +392,7 @@ const useGalleryList = () => {
           type: gallery.type,
           updatedAt: gallery.updated_at,
           eventDate: getEventDate(gallery.branding, session?.session_date ?? null),
+          expiresAt: gallery.expires_at ?? null,
           session,
           project,
           selectionNote: selectionState?.note ?? null,
@@ -353,6 +403,7 @@ const useGalleryList = () => {
           coverUrl: typeof coverAssetId === "string" ? signedCoverUrls.get(coverAssetId) ?? "" : "",
           exportPhotos,
           exportRules: normalizeSelectionRules(gallery.branding),
+          downloadedAt: downloadsByGallery.get(gallery.id) ?? null,
         };
       });
 
@@ -377,9 +428,18 @@ export const filterGalleriesByView = (
       case "archived":
         return gallery.status === "archived";
       case "approved":
-        return typeFilter === "selection" && (gallery.isLocked || gallery.status === "approved");
+        return (
+          typeFilter === "selection" &&
+          gallery.status !== "archived" &&
+          (gallery.isLocked || gallery.status === "approved")
+        );
       case "pending":
-        return typeFilter === "selection" && gallery.status === "published" && !gallery.isLocked;
+        return (
+          typeFilter === "selection" &&
+          gallery.status !== "archived" &&
+          gallery.status === "published" &&
+          !gallery.isLocked
+        );
       case "active":
       default:
         return gallery.status !== "archived";
@@ -407,9 +467,18 @@ const formatRelativeTime = (value: string | null, locale: Locale) => {
   return formatDistanceToNow(date, { addSuffix: true, locale });
 };
 
+const formatTimeRemaining = (value: string | null, locale: Locale) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return formatDistanceToNow(date, { locale });
+};
+
 export default function AllGalleries() {
   const { t, i18n } = useTranslation("pages");
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const i18nToast = useI18nToast();
   const { activeOrganization, loading: organizationLoading } = useOrganization();
   const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en").startsWith("tr") ? tr : enUS;
   const numberFormatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
@@ -422,6 +491,9 @@ export default function AllGalleries() {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [exportGalleryId, setExportGalleryId] = useState<string | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<GalleryListItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<GalleryListItem | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const { data: galleries = [], isLoading } = useGalleryList();
 
@@ -598,6 +670,44 @@ export default function AllGalleries() {
     return sorted;
   }, [galleriesWithSize, sortState, searchTerm, statusFilter, typeFilter]);
 
+  const archiveGalleryMutation = useMutation({
+    mutationFn: async (target: GalleryListItem) => {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from("galleries")
+        .update({ status: "archived", previous_status: target.status, updated_at: now })
+        .eq("id", target.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setArchiveTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["galleries"] });
+      i18nToast.success(t("galleries.toast.archiveSuccess"));
+    },
+    onError: () => {
+      i18nToast.error(t("galleries.toast.archiveError"));
+    },
+  });
+
+  const deleteGalleryMutation = useMutation({
+    mutationFn: async (target: GalleryListItem) => {
+      await deleteGalleryWithAssets({
+        galleryId: target.id,
+        sessionId: target.session?.id ?? null,
+        organizationId: activeOrganization?.id ?? null,
+      });
+    },
+    onSuccess: () => {
+      setDeleteTarget(null);
+      setDeleteConfirmText("");
+      queryClient.invalidateQueries({ queryKey: ["galleries"] });
+      i18nToast.success(t("galleries.toast.deleteSuccess"));
+    },
+    onError: () => {
+      i18nToast.error(t("galleries.toast.deleteError"));
+    },
+  });
+
   const columns = useMemo<AdvancedTableColumn<GalleryListItem>[]>(() => {
     const renderSelectionProgress = (row: GalleryListItem) => {
       const required = row.requiredCount > 0 ? row.requiredCount : Math.max(row.selectionCount, 1);
@@ -627,20 +737,27 @@ export default function AllGalleries() {
         <span className="tabular-nums">{formatBytes(row.sizeBytes, i18n.language)}</span>
       );
 
-    const renderSizeAndTime = (row: GalleryListItem) => (
-      <div className="flex flex-col gap-0.5 text-sm">
-        <div className="text-foreground">{renderSizeValue(row)}</div>
-        <span className="text-xs text-muted-foreground">{t("galleries.table.timeRemainingPlaceholder")}</span>
-      </div>
-    );
+    const renderSizeAndTime = (row: GalleryListItem) => {
+      const timeRemaining = formatTimeRemaining(row.expiresAt, locale);
+      return (
+        <div className="flex flex-col gap-0.5 text-sm">
+          <div className="text-foreground">{renderSizeValue(row)}</div>
+          {timeRemaining ? (
+            <span className="text-xs text-muted-foreground">
+              {t("galleries.table.timeRemaining", { value: timeRemaining })}
+            </span>
+          ) : null}
+        </div>
+      );
+    };
 
-    const renderLastAction = (row: GalleryListItem) => {
-      const relative = formatRelativeTime(row.updatedAt, locale);
+    const renderLastAction = (value: string) => {
+      const relative = formatRelativeTime(value, locale);
       return (
         <div className="flex flex-col text-sm">
           <div className="flex items-center gap-1 text-foreground">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            {formatDate(row.updatedAt)}
+            {formatDate(value)}
           </div>
           {relative && <span className="text-[11px] text-muted-foreground pl-5">{relative}</span>}
         </div>
@@ -741,17 +858,31 @@ export default function AllGalleries() {
     const statusColumn: AdvancedTableColumn<GalleryListItem> = {
       id: "status",
       label: t("galleries.table.status"),
-      render: (row) => (
-        <div className="flex flex-col gap-1">
-          <GalleryStatusChip status={row.status} size="sm" />
-          {isSelectionGalleryType(row.type) && row.selectionNote ? (
-            <Badge variant="outline" className="flex items-center gap-1 w-fit text-xs">
-              <MessageSquare className="h-3 w-3" />
-              {row.selectionNote}
-            </Badge>
-          ) : null}
-        </div>
-      ),
+      render: (row) => {
+        const showDownloadStatus =
+          isFinalGalleryType(row.type) && row.status !== "archived" && Boolean(row.downloadedAt);
+
+        return (
+          <div className="flex flex-col gap-1">
+            {showDownloadStatus ? (
+              <Badge
+                variant="outline"
+                className="w-fit border-emerald-200/70 bg-emerald-50/80 text-xs font-semibold text-emerald-700"
+              >
+                {t("galleries.table.downloadedStatus")}
+              </Badge>
+            ) : (
+              <GalleryStatusChip status={row.status} size="sm" />
+            )}
+            {isSelectionGalleryType(row.type) && row.selectionNote ? (
+              <Badge variant="outline" className="flex items-center gap-1 w-fit text-xs">
+                <MessageSquare className="h-3 w-3" />
+                {row.selectionNote}
+              </Badge>
+            ) : null}
+          </div>
+        );
+      },
     };
 
     const progressColumn: AdvancedTableColumn<GalleryListItem> = {
@@ -787,20 +918,6 @@ export default function AllGalleries() {
       render: (row) => renderSizeAndTime(row),
     };
 
-    const sizeColumn: AdvancedTableColumn<GalleryListItem> = {
-      id: "size",
-      label: t("galleries.table.size"),
-      sortable: true,
-      sortId: "sizeBytes",
-      align: "right",
-      render: (row) =>
-        isGallerySizeLoading && row.sizeBytes === undefined ? (
-          <span className="ml-auto inline-block h-4 w-16 animate-pulse rounded bg-muted" aria-hidden />
-        ) : (
-          <span className="tabular-nums">{formatBytes(row.sizeBytes, i18n.language)}</span>
-        ),
-    };
-
     const summaryColumn: AdvancedTableColumn<GalleryListItem> = {
       id: "summary",
       label: t("galleries.table.summaryColumn"),
@@ -812,7 +929,11 @@ export default function AllGalleries() {
       label: t("galleries.table.lastAction"),
       sortable: true,
       sortId: "updatedAt",
-      render: (row) => renderLastAction(row),
+      render: (row) => {
+        const actionDate =
+          isFinalGalleryType(row.type) && row.downloadedAt ? row.downloadedAt : row.updatedAt;
+        return renderLastAction(actionDate);
+      },
     };
 
     const actionsColumn: AdvancedTableColumn<GalleryListItem> = {
@@ -825,10 +946,41 @@ export default function AllGalleries() {
             <Download className="h-4 w-4" />
             <span className="sr-only">{t("galleries.table.export")}</span>
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(`/galleries/${row.id}`)}>
-            <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">{t("galleries.table.view")}</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">{t("sessionDetail.gallery.actions.more")}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[180px]">
+              <DropdownMenuLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("galleries.table.actions")}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={() => {
+                  if (row.status === "archived") return;
+                  setArchiveTarget(row);
+                }}
+                disabled={row.status === "archived"}
+                className="cursor-pointer gap-2"
+              >
+                <Archive className="h-4 w-4" />
+                {t("sessionDetail.gallery.actions.archive")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  setDeleteTarget(row);
+                  setDeleteConfirmText("");
+                }}
+                className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+                {t("sessionDetail.gallery.actions.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     };
@@ -840,7 +992,7 @@ export default function AllGalleries() {
     }
 
     if (typeFilter === "final") {
-      return [...baseColumns, lastActionColumn, sizeColumn, actionsColumn];
+      return [...baseColumns, lastActionColumn, sizeAndTimeColumn, actionsColumn];
     }
 
     return [...baseColumns, summaryColumn, lastActionColumn, actionsColumn];
@@ -862,6 +1014,15 @@ export default function AllGalleries() {
     ),
     [galleryCountLabel, t]
   );
+
+  const expectedGalleryNameForDelete = useMemo(
+    () => deleteTarget?.title?.trim() ?? "",
+    [deleteTarget?.title]
+  );
+
+  const canConfirmGalleryDelete =
+    expectedGalleryNameForDelete.length > 0 &&
+    deleteConfirmText.trim() === expectedGalleryNameForDelete;
 
   const statusControls = useMemo(
     () => (
@@ -987,6 +1148,97 @@ export default function AllGalleries() {
           photos={exportTarget?.exportPhotos ?? []}
           rules={exportTarget?.exportRules ?? []}
         />
+
+        <AlertDialog open={Boolean(archiveTarget)} onOpenChange={(open) => !open && setArchiveTarget(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("galleries.confirmations.archive.title")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("galleries.confirmations.archive.description")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel disabled={archiveGalleryMutation.isPending}>
+                {t("buttons.cancel", { defaultValue: "Cancel" })}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => archiveTarget && archiveGalleryMutation.mutate(archiveTarget)}
+                disabled={!archiveTarget || archiveGalleryMutation.isPending}
+              >
+                {archiveGalleryMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t("galleries.confirmations.archive.confirming")}
+                  </>
+                ) : (
+                  t("galleries.confirmations.archive.confirm")
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog
+          open={Boolean(deleteTarget)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDeleteTarget(null);
+              setDeleteConfirmText("");
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t("sessionDetail.gallery.delete.title", { defaultValue: "Delete gallery" })}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("sessionDetail.gallery.delete.description", {
+                  defaultValue:
+                    "This action cannot be undone. The gallery and all media will be permanently deleted.",
+                })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="gallery-delete-confirm">
+                {t("sessionDetail.gallery.delete.confirmLabel", { defaultValue: "Type the gallery name to delete" })}
+              </Label>
+              <Input
+                id="gallery-delete-confirm"
+                value={deleteConfirmText}
+                onChange={(event) => setDeleteConfirmText(event.target.value)}
+                placeholder={expectedGalleryNameForDelete}
+                autoFocus
+                disabled={deleteGalleryMutation.isPending}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("sessionDetail.gallery.delete.confirmHint", {
+                  defaultValue: `Gallery name: ${expectedGalleryNameForDelete}`,
+                  name: expectedGalleryNameForDelete,
+                })}
+              </p>
+            </div>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel onClick={() => setDeleteTarget(null)} disabled={deleteGalleryMutation.isPending}>
+                {t("buttons.cancel", { defaultValue: "Cancel" })}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteTarget && deleteGalleryMutation.mutate(deleteTarget)}
+                disabled={!canConfirmGalleryDelete || deleteGalleryMutation.isPending}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleteGalleryMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t("sessionDetail.gallery.delete.deleting", { defaultValue: "Deleting..." })}
+                  </>
+                ) : (
+                  t("sessionDetail.gallery.delete.confirmButton", { defaultValue: "Delete gallery" })
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

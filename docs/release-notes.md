@@ -6,7 +6,10 @@
 - Bulk download preparation can be canceled without surfacing an error state.
 - Gallery list now switches between All/Selection/Final views with contextual status filters and table columns.
 - Gallery list table header now keeps the title + count on the left, with the status segment placed just before the search input.
+- Final delivery downloads are tracked so lists can show a Downloaded status and last action, with size/time rows staying blank until an expiration date is set.
+- Gallery list actions now include Archive/Delete confirmations, and archived items are restricted to the Archive segment.
 - Rollout: deploy the updated client bundle; no Supabase function deployment required for this change.
+- Rollout (DB): apply `supabase/migrations/20261219110000_gallery_download_events.sql`.
 
 ## 2026-12-18
 - Gallery bulk download uses async zip generation via `gallery-download-processor`, with storage-backed downloads for large files.

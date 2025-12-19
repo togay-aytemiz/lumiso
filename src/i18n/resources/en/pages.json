@@ -4076,6 +4076,20 @@
       "approved": "Approved",
       "archived": "Archived"
     },
+    "confirmations": {
+      "archive": {
+        "title": "Archive gallery?",
+        "description": "This will move the gallery to archived and disable editing. You can restore it later.",
+        "confirm": "Archive gallery",
+        "confirming": "Archiving..."
+      }
+    },
+    "toast": {
+      "archiveSuccess": "Gallery archived.",
+      "archiveError": "Couldn't archive the gallery. Please try again.",
+      "deleteSuccess": "Gallery deleted.",
+      "deleteError": "Couldn't delete the gallery. Please try again."
+    },
     "search": "Search galleries",
     "emptyState": {
       "none": {
@@ -4128,10 +4142,12 @@
       "summaryColumn": "Summary",
       "lastAction": "Last action",
       "timeRemainingPlaceholder": "Time remaining soon",
+      "timeRemaining": "{{value}} left",
       "noApproval": "No approval yet",
       "actions": "Actions",
       "export": "Export selections",
       "view": "View details",
+      "downloadedStatus": "Downloaded",
       "summary": "{{count}} galleries",
       "noEvent": "No event date",
       "noClient": "No client"

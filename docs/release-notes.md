@@ -10,6 +10,7 @@
 - Gallery list actions now include Archive/Delete confirmations, and archived items are restricted to the Archive segment.
 - All galleries view now shows size in its own column, leaving summary empty for final galleries.
 - All galleries view now orders columns as Last action → Size & time remaining → Actions.
+- Selection progress now counts per required rule, even when the same photo is used across multiple required selections.
 - Rollout: deploy the updated client bundle; no Supabase function deployment required for this change.
 - Rollout (DB): apply `supabase/migrations/20261219110000_gallery_download_events.sql`.
 

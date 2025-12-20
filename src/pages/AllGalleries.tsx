@@ -42,7 +42,7 @@ import { getKpiIconPreset } from "@/components/ui/kpi-presets";
 import { supabase } from "@/integrations/supabase/client";
 import { GalleryStatusChip, type GalleryStatus } from "@/components/galleries/GalleryStatusChip";
 import { cn, formatBytes, formatDate } from "@/lib/utils";
-import { countUniqueSelectedAssets } from "@/lib/gallerySelections";
+import { countSelectionsByParts, countUniqueSelectedAssets, normalizeSelectionPartKey } from "@/lib/gallerySelections";
 import { SelectionExportSheet, type SelectionExportPhoto, type SelectionExportRule } from "@/components/galleries/SelectionExportSheet";
 import { FAVORITES_FILTER_ID } from "@/components/galleries/SelectionDashboard";
 import { GALLERY_ASSETS_BUCKET } from "@/lib/galleryAssets";
@@ -172,6 +172,24 @@ const normalizeSelectionRules = (branding?: Record<string, unknown> | null) => {
       return { id, title } satisfies SelectionExportRule;
     })
     .filter(Boolean) as SelectionExportRule[];
+};
+
+const getSelectionPartKeys = (branding?: Record<string, unknown> | null) => {
+  const template = branding?.["selectionTemplate"];
+  if (!Array.isArray(template)) return [] as string[];
+
+  const keys = template
+    .map((rule) => {
+      if (!rule || typeof rule !== "object") return null;
+      const id = typeof rule["id"] === "string" ? rule["id"].trim() : "";
+      const part = typeof rule["part"] === "string" ? rule["part"].trim() : "";
+      const candidate = id || part;
+      if (!candidate) return null;
+      return normalizeSelectionPartKey(candidate);
+    })
+    .filter(Boolean) as string[];
+
+  return Array.from(new Set(keys));
 };
 
 const deriveRequiredCount = (branding?: Record<string, unknown> | null) => {
@@ -382,7 +400,14 @@ const useGalleryList = () => {
         })();
 
         const requiredCount = deriveRequiredCount(gallery.branding);
-        const selectionCount = countUniqueSelectedAssets(selections, { favoritesSelectionPartKey: FAVORITES_FILTER_ID });
+        const selectionPartKeys = getSelectionPartKeys(gallery.branding);
+        const partSelectionCount = countSelectionsByParts(selections, selectionPartKeys, {
+          favoritesSelectionPartKey: FAVORITES_FILTER_ID,
+        });
+        const selectionCount =
+          selectionPartKeys.length > 0 && (partSelectionCount.hasMatches || selections.length === 0)
+            ? partSelectionCount.count
+            : countUniqueSelectedAssets(selections, { favoritesSelectionPartKey: FAVORITES_FILTER_ID });
         const coverAssetId = gallery.branding?.["coverAssetId"];
 
         return {

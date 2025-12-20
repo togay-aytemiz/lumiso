@@ -1,4 +1,4 @@
-import { countUniqueSelectedAssets } from "@/lib/gallerySelections";
+import { countSelectionsByParts, countUniqueSelectedAssets } from "@/lib/gallerySelections";
 
 describe("gallerySelections", () => {
   describe("countUniqueSelectedAssets", () => {
@@ -36,5 +36,28 @@ describe("gallerySelections", () => {
       ).toBe(1);
     });
   });
-});
 
+  describe("countSelectionsByParts", () => {
+    it("counts selections per part and allows the same asset in multiple parts", () => {
+      const selections = [
+        { asset_id: "asset-1", selection_part: "album" },
+        { asset_id: "asset-1", selection_part: "print" },
+        { asset_id: "asset-2", selection_part: "album" },
+        { asset_id: "asset-1", selection_part: "favorites" },
+      ];
+
+      const result = countSelectionsByParts(selections, ["album", "print"], { favoritesSelectionPartKey: "favorites" });
+
+      expect(result).toEqual({ count: 3, hasMatches: true });
+    });
+
+    it("returns no matches when there are no valid parts", () => {
+      const selections = [{ asset_id: "asset-1", selection_part: "album" }];
+
+      expect(countSelectionsByParts(selections, [], { favoritesSelectionPartKey: "favorites" })).toEqual({
+        count: 0,
+        hasMatches: false,
+      });
+    });
+  });
+});

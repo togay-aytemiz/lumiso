@@ -2,7 +2,11 @@
 
 ## 2025-12-20
 - Reduced duplicate organization and organization_settings fetches by caching org detail lookups, reusing org ids from local storage, and treating missing settings as a cache hit.
-- Rollout: deploy the updated client bundle; no Supabase changes required.
+- Organization realtime updates now refresh local caches directly, and template variables reuse cached org settings/lead fields to avoid extra fetches.
+- Added throttles for org/org_settings refreshes and disabled background polling for org settings.
+- Edge messaging guard caches org membership checks to cut repeated service_role lookups.
+- Daily summary scheduler now batches org/org_settings lookups and only runs guard/email work when the scheduled time matches.
+- Rollout: deploy the updated client bundle and re-deploy Edge functions (messaging guard + daily summary scheduler).
 
 ## 2025-12-19
 - Gallery bulk download now generates the .zip in the client (final galleries use originals; proof galleries use web conversions).

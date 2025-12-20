@@ -132,9 +132,9 @@ export const useOrganizationSettings = () => {
     enabled: !!activeOrganizationId,
     staleTime: ORGANIZATION_SETTINGS_CACHE_TTL,
     initialData: cachedSnapshot === undefined ? undefined : cachedSnapshot,
-    refetchInterval: 5 * 60 * 1000, // 5 minutes (reduced from 90s)
+    refetchInterval: false,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
+    refetchOnReconnect: false,
   });
 
   const settings = useMemo(() => normalizeSettings(data), [data]);

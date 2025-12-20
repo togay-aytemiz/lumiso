@@ -59,10 +59,64 @@ export function useOrganization() {
 }
 
 const ORG_DETAILS_CACHE_TTL_MS = 5 * 60 * 1000;
+const ORG_DETAILS_MIN_FETCH_INTERVAL_MS = 60 * 1000;
+const ORG_DETAILS_STORAGE_PREFIX = "lumiso:organization_details:";
 
 type OrgDetailsCacheEntry = {
   data: Organization | null;
   cachedAt: number;
+};
+
+const getOrgDetailsStorageKey = (orgId: string) =>
+  `${ORG_DETAILS_STORAGE_PREFIX}${orgId}`;
+
+const readOrgDetailsFromStorage = (
+  orgId: string,
+  ttl: number = ORG_DETAILS_CACHE_TTL_MS
+): OrgDetailsCacheEntry | undefined => {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = window.localStorage.getItem(getOrgDetailsStorageKey(orgId));
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw) as OrgDetailsCacheEntry;
+    if (!parsed || typeof parsed !== "object") return undefined;
+    if (typeof parsed.cachedAt !== "number") return undefined;
+    if (Date.now() - parsed.cachedAt > ttl) return undefined;
+    return parsed;
+  } catch {
+    return undefined;
+  }
+};
+
+const writeOrgDetailsToStorage = (orgId: string, data: Organization | null) => {
+  if (typeof window === "undefined") return;
+  if (!data) return;
+  try {
+    window.localStorage.setItem(
+      getOrgDetailsStorageKey(orgId),
+      JSON.stringify({ data, cachedAt: Date.now() } satisfies OrgDetailsCacheEntry)
+    );
+  } catch {
+    // Best-effort only
+  }
+};
+
+const clearOrgDetailsStorage = (orgId?: string | null) => {
+  if (typeof window === "undefined") return;
+  try {
+    if (orgId) {
+      window.localStorage.removeItem(getOrgDetailsStorageKey(orgId));
+      return;
+    }
+    for (let i = window.localStorage.length - 1; i >= 0; i -= 1) {
+      const key = window.localStorage.key(i);
+      if (key && key.startsWith(ORG_DETAILS_STORAGE_PREFIX)) {
+        window.localStorage.removeItem(key);
+      }
+    }
+  } catch {
+    // Best-effort only
+  }
 };
 
 const orgDetailsCache = new Map<string, OrgDetailsCacheEntry>();
@@ -76,21 +130,50 @@ const getOrgDetailsFromCache = (
   if (entry && Date.now() - entry.cachedAt < ttl) {
     return entry.data;
   }
+  const stored = readOrgDetailsFromStorage(orgId, ttl);
+  if (stored !== undefined) {
+    orgDetailsCache.set(orgId, stored);
+    return stored.data;
+  }
   return undefined;
 };
 
 const setOrgDetailsCache = (orgId: string, data: Organization | null) => {
   orgDetailsCache.set(orgId, { data, cachedAt: Date.now() });
+  writeOrgDetailsToStorage(orgId, data);
 };
 
 const clearOrgDetailsCache = (orgId?: string | null) => {
   if (!orgId) {
     orgDetailsCache.clear();
     orgDetailsInflight.clear();
+    clearOrgDetailsStorage();
     return;
   }
   orgDetailsCache.delete(orgId);
   orgDetailsInflight.delete(orgId);
+  clearOrgDetailsStorage(orgId);
+};
+
+const resolveOrganization = (org: Organization) => {
+  const normalized: Organization = {
+    ...org,
+    membership_status: (org.membership_status as MembershipStatus | null) ?? null,
+    computed_trial_started_at: null,
+    computed_trial_ends_at: null,
+    membership_access_blocked: false,
+  };
+  const resolution = resolveMembershipStatus(normalized);
+  return {
+    normalized: {
+      ...normalized,
+      membership_status: resolution.status,
+      computed_trial_started_at: resolution.trialStartedAt,
+      computed_trial_ends_at: resolution.trialEndsAt,
+      membership_access_blocked: resolution.shouldBlockAccess,
+    },
+    resolution,
+  };
 };
 
 interface OrganizationProviderProps {
@@ -102,6 +185,8 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const [activeOrganization, setActiveOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const activeOrganizationIdRef = useRef<string | null>(null);
+  const activeOrganizationRef = useRef<Organization | null>(null);
+  const lastOrgFetchAtRef = useRef(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation(["messages", "common"]);
@@ -111,6 +196,10 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     activeOrganizationIdRef.current = activeOrganizationId;
   }, [activeOrganizationId]);
 
+  useEffect(() => {
+    activeOrganizationRef.current = activeOrganization;
+  }, [activeOrganization]);
+
   const fetchActiveOrganization = useCallback(
     async (options?: { silent?: boolean; force?: boolean }) => {
       const skipLoadingState = options?.silent ?? false;
@@ -119,6 +208,13 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         if (!skipLoadingState) {
           setLoading(true);
         }
+
+      const nowTs = Date.now();
+      if (!forceFetch && nowTs - lastOrgFetchAtRef.current < ORG_DETAILS_MIN_FETCH_INTERVAL_MS) {
+        if (activeOrganizationRef.current?.id) {
+          return;
+        }
+      }
 
       const cachedOrgId = activeOrganizationIdRef.current;
       let orgId = cachedOrgId;
@@ -148,6 +244,8 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
             return;
           }
         }
+
+        lastOrgFetchAtRef.current = Date.now();
 
         const inflightRequest = orgDetailsInflight.get(orgId);
         if (inflightRequest) {
@@ -196,16 +294,9 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
             return null;
           }
 
-          let normalizedOrg: Organization = {
-            ...org,
-            membership_status: (org.membership_status as MembershipStatus | null) ?? null,
-            computed_trial_started_at: null,
-            computed_trial_ends_at: null,
-            membership_access_blocked: false,
-          };
-          const resolution = resolveMembershipStatus(normalizedOrg);
+          const { normalized: normalizedOrg, resolution } = resolveOrganization(org as Organization);
 
-          if (shouldPersistMembershipStatus(normalizedOrg, resolution)) {
+          if (shouldPersistMembershipStatus(org as Organization, resolution)) {
             const { error: statusUpdateError } = await supabase
               .from('organizations')
               .update({ membership_status: resolution.status })
@@ -213,18 +304,10 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
 
             if (statusUpdateError) {
               console.error('Failed to persist membership status:', statusUpdateError);
-            } else {
-              normalizedOrg = { ...normalizedOrg, membership_status: resolution.status };
             }
           }
 
-          return {
-            ...normalizedOrg,
-            membership_status: resolution.status,
-            computed_trial_started_at: resolution.trialStartedAt,
-            computed_trial_ends_at: resolution.trialEndsAt,
-            membership_access_blocked: resolution.shouldBlockAccess,
-          };
+          return normalizedOrg;
         })()
           .then((resolvedOrg) => {
             setOrgDetailsCache(orgId, resolvedOrg);
@@ -553,7 +636,12 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
           });
 
           if (hasRelevantChange) {
-            void fetchActiveOrganization({ silent: true, force: true });
+            if (!payload.new) return;
+            const { normalized } = resolveOrganization(payload.new as Organization);
+            setOrgDetailsCache(normalized.id, normalized);
+            setActiveOrganizationId(normalized.id);
+            setActiveOrganization(normalized);
+            reportRecovery();
           }
         }
       )
@@ -562,7 +650,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeOrganizationId, fetchActiveOrganization]);
+  }, [activeOrganizationId, reportRecovery]);
 
   return (
     <OrganizationContext.Provider

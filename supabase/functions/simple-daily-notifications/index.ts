@@ -56,6 +56,20 @@ type UserSettingsRow = {
   notification_global_enabled: boolean;
 };
 
+type OrganizationSettingsRow = {
+  organization_id: string;
+  timezone: string | null;
+  preferred_locale: string | null;
+  photography_business_name: string | null;
+  primary_brand_color: string | null;
+  date_format: string | null;
+  time_format: string | null;
+};
+
+type UserWithOrganization = UserSettingsRow & {
+  organizationId: string | null;
+};
+
 type LeadRelation = {
   id: string;
   name: string | null;
@@ -150,7 +164,22 @@ type SkippedReasons = {
   emailFailed: number;
 };
 
-export const handler = async (req: Request): Promise<Response> => {
+interface HandlerDependencies {
+  getNow?: () => Date;
+}
+
+const getOrgTimeString = (now: Date, timeZone: string) => {
+  const orgTime = now.toLocaleString('en-US', { timeZone, hour12: false });
+  const orgDate = new Date(orgTime);
+  const orgHour = String(orgDate.getHours()).padStart(2, '0');
+  const orgMinute = String(orgDate.getMinutes()).padStart(2, '0');
+  return `${orgHour}:${orgMinute}`;
+};
+
+export const handler = async (
+  req: Request,
+  deps: HandlerDependencies = {}
+): Promise<Response> => {
   console.log('Simple daily notification processor started');
   
   if (req.method === 'OPTIONS') {
@@ -161,12 +190,13 @@ export const handler = async (req: Request): Promise<Response> => {
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   );
+  const getNow = deps.getNow ?? (() => new Date());
 
   try {
     const { action, user_id }: ProcessorRequest = await req.json().catch(() => ({ action: 'process' }));
     
     // Get current UTC time for processing
-    const currentTime = new Date();
+    const currentTime = getNow();
     console.log(`Processing at UTC: ${currentTime.toISOString()}`);
     
     // We'll handle timezone conversion per user/organization basis
@@ -221,24 +251,95 @@ export const handler = async (req: Request): Promise<Response> => {
       emailFailed: 0
     };
 
-    for (const userSettings of users) {
-      try {
-        console.log(`Processing user ${userSettings.user_id} with scheduled time ${userSettings.notification_scheduled_time}`);
-        
-        // First, get the user's organization ID
-        const { data: userOrg, error: orgError } = await supabaseAdmin
-          .from('organizations')
-          .select('id')
-          .eq('owner_id', userSettings.user_id)
-          .maybeSingle();
+    const usersNeedingOrg = users;
+    const orgIdByUserId = new Map<string, string>();
 
-        const organizationId = userOrg?.id;
+    if (usersNeedingOrg.length > 0) {
+      const ownerIds = Array.from(new Set(usersNeedingOrg.map((user) => user.user_id)));
+      const { data: orgRows, error: orgError } = await supabaseAdmin
+        .from('organizations')
+        .select('id, owner_id')
+        .in('owner_id', ownerIds);
 
-        if (!organizationId) {
-          console.error(`No organization found for user ${userSettings.user_id}`);
-          skippedReasons.noOrganization++;
+      if (orgError) {
+        console.error('Error fetching organizations:', orgError);
+        throw orgError;
+      }
+
+      for (const org of orgRows ?? []) {
+        if (org?.owner_id && org?.id && !orgIdByUserId.has(org.owner_id)) {
+          orgIdByUserId.set(org.owner_id, org.id);
+        }
+      }
+    }
+
+    const usersWithOrg: UserWithOrganization[] = users.map((user) => ({
+      ...user,
+      organizationId: orgIdByUserId.get(user.user_id) ?? null,
+    }));
+
+    const orgIds = Array.from(new Set(
+      usersWithOrg
+        .map((user) => user.organizationId)
+        .filter((orgId): orgId is string => typeof orgId === 'string' && orgId.length > 0)
+    ));
+
+    const orgSettingsById = new Map<string, OrganizationSettingsRow>();
+
+    if (orgIds.length > 0) {
+      const { data: orgSettingsRows, error: orgSettingsError } = await supabaseAdmin
+        .from('organization_settings')
+        .select('organization_id, timezone, preferred_locale, photography_business_name, primary_brand_color, date_format, time_format')
+        .in('organization_id', orgIds);
+
+      if (orgSettingsError) {
+        console.error('Error fetching organization settings:', orgSettingsError);
+        throw orgSettingsError;
+      }
+
+      for (const settings of orgSettingsRows ?? []) {
+        if (settings?.organization_id) {
+          orgSettingsById.set(settings.organization_id, settings as OrganizationSettingsRow);
+        }
+      }
+    }
+
+    const orgTimeById = new Map<string, string>();
+    if (action !== 'test') {
+      for (const orgId of orgIds) {
+        const orgSettings = orgSettingsById.get(orgId);
+        const orgTimezone = orgSettings?.timezone || 'UTC';
+        orgTimeById.set(orgId, getOrgTimeString(currentTime, orgTimezone));
+      }
+    }
+
+    const dueUsers: Array<UserSettingsRow & { organizationId: string }> = [];
+    for (const userSettings of usersWithOrg) {
+      const organizationId = userSettings.organizationId;
+      if (!organizationId) {
+        console.error(`No organization found for user ${userSettings.user_id}`);
+        skippedReasons.noOrganization++;
+        continue;
+      }
+
+      if (action !== 'test') {
+        const orgTimeString = orgTimeById.get(organizationId);
+        if (orgTimeString !== userSettings.notification_scheduled_time) {
+          skippedReasons.wrongTime++;
           continue;
         }
+      }
+
+      dueUsers.push({ ...userSettings, organizationId });
+    }
+
+    const todayStr = currentTime.toISOString().split('T')[0];
+
+    for (const userSettings of dueUsers) {
+      try {
+        console.log(`Processing user ${userSettings.user_id} with scheduled time ${userSettings.notification_scheduled_time}`);
+
+        const organizationId = userSettings.organizationId;
 
         const guard = await getMessagingGuard(supabaseAdmin, organizationId);
         if (guard?.hardBlocked) {
@@ -246,38 +347,8 @@ export const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        console.log(`Found organization ${organizationId} for user ${userSettings.user_id}`);
-        
-        const { data: orgSettings } = await supabaseAdmin
-          .from('organization_settings')
-          .select('timezone, preferred_locale, photography_business_name, primary_brand_color, date_format, time_format')
-          .eq('organization_id', organizationId)
-          .maybeSingle();
-
+        const orgSettings = orgSettingsById.get(organizationId) ?? null;
         const orgTimezone = orgSettings?.timezone || 'UTC';
-
-        // Skip if testing mode and no specific user ID
-        if (action !== 'test') {
-          // Convert current UTC time to organization timezone
-          const orgTime = new Date().toLocaleString('en-US', { 
-            timeZone: orgTimezone,
-            hour12: false 
-          });
-          
-          const orgDate = new Date(orgTime);
-          const orgHour = String(orgDate.getHours()).padStart(2, '0');
-          const orgMinute = String(orgDate.getMinutes()).padStart(2, '0');
-          const orgTimeString = `${orgHour}:${orgMinute}`;
-          
-          console.log(`Organization timezone: ${orgTimezone}, Local time: ${orgTimeString}, Scheduled: ${userSettings.notification_scheduled_time}`);
-          
-          // Skip if it's not time for this user in their timezone
-          if (orgTimeString !== userSettings.notification_scheduled_time) {
-            console.log(`Skipping user ${userSettings.user_id} - not their scheduled time (${orgTimeString} vs ${userSettings.notification_scheduled_time})`);
-            skippedReasons.wrongTime++;
-            continue;
-          }
-        }
         
         // Get user profile for full name
         const { data: profile, error: profileError } = await supabaseAdmin
@@ -324,8 +395,7 @@ export const handler = async (req: Request): Promise<Response> => {
         const t = localization.t;
 
         // Get today's date
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
+        const today = currentTime;
         console.log(`Today's date: ${todayStr}`);
 
         // Get today's sessions with comprehensive data

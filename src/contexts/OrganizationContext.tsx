@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -101,10 +101,15 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null);
   const [activeOrganization, setActiveOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
+  const activeOrganizationIdRef = useRef<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation(["messages", "common"]);
   const { reportNetworkError, reportRecovery } = useConnectivity();
+
+  useEffect(() => {
+    activeOrganizationIdRef.current = activeOrganizationId;
+  }, [activeOrganizationId]);
 
   const fetchActiveOrganization = useCallback(
     async (options?: { silent?: boolean; force?: boolean }) => {
@@ -115,14 +120,17 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
           setLoading(true);
         }
 
-        // Use the organization utils function
+      const cachedOrgId = activeOrganizationIdRef.current;
+      let orgId = cachedOrgId;
+      if (!orgId) {
         const { getUserOrganizationId } = await import('@/lib/organizationUtils');
-        const orgId = await getUserOrganizationId();
+        orgId = await getUserOrganizationId();
+      }
 
-        if (!orgId) {
-          setActiveOrganizationId(null);
-          setActiveOrganization(null);
-          clearOrgDetailsCache();
+      if (!orgId) {
+        setActiveOrganizationId(null);
+        setActiveOrganization(null);
+        clearOrgDetailsCache();
           return;
         }
 

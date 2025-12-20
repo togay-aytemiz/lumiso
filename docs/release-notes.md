@@ -1,7 +1,7 @@
 # Release Notes
 
 ## 2025-12-20
-- Reduced duplicate organization and organization_settings fetches by caching org detail lookups and treating missing settings as a cache hit.
+- Reduced duplicate organization and organization_settings fetches by caching org detail lookups, reusing org ids from local storage, and treating missing settings as a cache hit.
 - Rollout: deploy the updated client bundle; no Supabase changes required.
 
 ## 2025-12-19

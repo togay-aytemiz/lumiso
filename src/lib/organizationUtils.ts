@@ -7,6 +7,8 @@ let cacheExpiry: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const DEFAULT_TRIAL_DAYS = 14;
 let membershipTableUnavailable = false;
+const ORG_ID_STORAGE_PREFIX = "lumiso:organization_id:";
+const ORG_ID_STORAGE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
 // Track the last time membership was verified to avoid repeated DB calls
 let lastMembershipVerified: number = 0;
@@ -19,6 +21,69 @@ type MembershipUpdates = {
   status?: string;
   role?: string;
   system_role?: string;
+};
+
+type StoredOrganizationId = {
+  userId: string;
+  orgId: string;
+  cachedAt: number;
+};
+
+const getOrgStorageKey = (userId: string) =>
+  `${ORG_ID_STORAGE_PREFIX}${userId}`;
+
+const readOrgIdFromStorage = (
+  userId: string,
+  ttl: number = ORG_ID_STORAGE_TTL
+): string | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(getOrgStorageKey(userId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredOrganizationId;
+    if (!parsed || typeof parsed !== "object") return null;
+    if (parsed.userId !== userId) return null;
+    if (!parsed.orgId) return null;
+    if (Date.now() - parsed.cachedAt > ttl) return null;
+    return parsed.orgId;
+  } catch {
+    return null;
+  }
+};
+
+const writeOrgIdToStorage = (userId: string, orgId: string) => {
+  if (typeof window === "undefined") return;
+  try {
+    const payload: StoredOrganizationId = {
+      userId,
+      orgId,
+      cachedAt: Date.now(),
+    };
+    window.localStorage.setItem(
+      getOrgStorageKey(userId),
+      JSON.stringify(payload)
+    );
+  } catch {
+    // Best-effort only
+  }
+};
+
+const clearOrgIdStorage = (userId?: string) => {
+  if (typeof window === "undefined") return;
+  try {
+    if (userId) {
+      window.localStorage.removeItem(getOrgStorageKey(userId));
+      return;
+    }
+    for (let i = window.localStorage.length - 1; i >= 0; i -= 1) {
+      const key = window.localStorage.key(i);
+      if (key && key.startsWith(ORG_ID_STORAGE_PREFIX)) {
+        window.localStorage.removeItem(key);
+      }
+    }
+  } catch {
+    // Best-effort only
+  }
 };
 
 const handleMembershipTableError = (error: unknown) => {
@@ -153,6 +218,17 @@ async function getUserOrganizationIdInternal(): Promise<string | null> {
       return null;
     }
 
+    const storedOrgId = readOrgIdFromStorage(user.id);
+    if (storedOrgId) {
+      cachedOrganizationId = storedOrgId;
+      cacheExpiry = Date.now() + CACHE_DURATION;
+      if (Date.now() - lastMembershipVerified > MEMBERSHIP_VERIFY_INTERVAL) {
+        ensureOwnerMembership(user.id, storedOrgId).then(() => {
+          lastMembershipVerified = Date.now();
+        });
+      }
+      return storedOrgId;
+    }
 
     // For single photographer: find organization owned by this user
     const { data: organization, error: orgError } = await supabase
@@ -166,6 +242,7 @@ async function getUserOrganizationIdInternal(): Promise<string | null> {
       await ensureOwnerMembership(user.id, organization.id);
       cachedOrganizationId = organization.id;
       cacheExpiry = Date.now() + CACHE_DURATION;
+      writeOrgIdToStorage(user.id, organization.id);
       console.log('Found organization ID for single user:', cachedOrganizationId);
       return cachedOrganizationId;
     }
@@ -244,6 +321,7 @@ async function getUserOrganizationIdInternal(): Promise<string | null> {
         await ensureOwnerMembership(user.id, newOrg.id);
         cachedOrganizationId = newOrg.id;
         cacheExpiry = Date.now() + CACHE_DURATION;
+        writeOrgIdToStorage(user.id, newOrg.id);
         return newOrg.id;
       }
     }
@@ -262,4 +340,5 @@ export function clearOrganizationCache() {
   lastMembershipVerified = 0;
   membershipTableUnavailable = false;
   inflightRequest = null;
+  clearOrgIdStorage();
 }

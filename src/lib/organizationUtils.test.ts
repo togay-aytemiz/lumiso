@@ -35,6 +35,29 @@ let consoleLogSpy: jest.SpyInstance<void, [message?: unknown, ...optionalParams:
 let consoleWarnSpy: jest.SpyInstance<void, [message?: unknown, ...optionalParams: unknown[]]>;
 let consoleErrorSpy: jest.SpyInstance<void, [message?: unknown, ...optionalParams: unknown[]]>;
 
+const setupLocalStorage = () => {
+  const store: Record<string, string> = {};
+  Object.defineProperty(window, "localStorage", {
+    value: {
+      getItem: jest.fn((key: string) => (key in store ? store[key] : null)),
+      setItem: jest.fn((key: string, value: string) => {
+        store[key] = value;
+      }),
+      removeItem: jest.fn((key: string) => {
+        delete store[key];
+      }),
+      clear: jest.fn(() => {
+        Object.keys(store).forEach((key) => delete store[key]);
+      }),
+      key: jest.fn((index: number) => Object.keys(store)[index] ?? null),
+      get length() {
+        return Object.keys(store).length;
+      },
+    },
+    configurable: true,
+  });
+};
+
 const createSelectChain = (result: { data: unknown; error: unknown }) => {
   const single = jest.fn().mockResolvedValue(result);
   const chain = {
@@ -73,8 +96,9 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  clearOrganizationCache();
   jest.clearAllMocks();
+  setupLocalStorage();
+  clearOrganizationCache();
 });
 
 afterEach(() => {
@@ -99,6 +123,24 @@ describe("getUserOrganizationId", () => {
     dateNowSpy.mockReturnValue(MOCK_NOW + 60_000);
 
     await expect(getUserOrganizationId()).resolves.toBe("org-1");
+    expect(mockSupabase.fromMock).not.toHaveBeenCalled();
+  });
+
+  it("uses stored organization id from localStorage when available", async () => {
+    mockSupabase.getUser.mockResolvedValue({
+      data: { user: { id: "user-1" } },
+    });
+
+    window.localStorage.setItem(
+      "lumiso:organization_id:user-1",
+      JSON.stringify({
+        userId: "user-1",
+        orgId: "org-local",
+        cachedAt: MOCK_NOW,
+      })
+    );
+
+    await expect(getUserOrganizationId()).resolves.toBe("org-local");
     expect(mockSupabase.fromMock).not.toHaveBeenCalled();
   });
 

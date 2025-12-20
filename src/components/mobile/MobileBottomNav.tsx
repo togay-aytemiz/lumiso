@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { 
+import {
   LayoutDashboard,
   Users,
   FolderOpen,
@@ -155,13 +155,13 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
   // Hide on auth routes, keyboard open, and during onboarding
   useEffect(() => {
     const isAuthRoute = location.pathname === '/auth';
-    
+
     const handleResize = () => {
       // Hide when keyboard is likely open (viewport height reduced significantly)
-      const isKeyboardOpen = window.visualViewport 
+      const isKeyboardOpen = window.visualViewport
         ? window.visualViewport.height < window.innerHeight * 0.75
         : false;
-      
+
       setIsVisible(!isAuthRoute && !isKeyboardOpen && !hideForOnboarding);
     };
 
@@ -322,7 +322,6 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     { key: "dashboard", title: t("menu.dashboard"), icon: LayoutDashboard, path: '/' },
     { key: "leads", title: t("menu.leads"), icon: Users, path: '/leads' },
     { key: "projects", title: t("menu.projects"), icon: FolderOpen, path: '/projects' },
-    { key: "galleries", title: t("menu.galleries"), icon: Images, path: '/galleries' },
     { key: "bookings", title: t("menu.sessions"), icon: CalendarRange, action: () => setBookingsOpen(true) },
     { key: "more", title: t("menu.more"), icon: MoreHorizontal, action: () => setMoreOpen(true) }
   ];
@@ -408,7 +407,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     location.pathname.startsWith(path)
   );
 
-  const isMoreActive = ['/payments', '/settings'].some(path =>
+  const isMoreActive = ['/galleries', '/payments', '/settings'].some(path =>
     location.pathname.startsWith(path)
   ) || isAutomationActive;
 
@@ -429,14 +428,14 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
 
   return (
     <>
-      <nav 
+      <nav
         ref={navRef}
         className={cn(
           "md:hidden fixed bottom-0 left-0 right-0 border-t mobile-bottom-nav transition-colors",
           overlayActive ? "z-30" : "z-50",
           overlayActive ? navOverlayClasses : navBackgroundClasses
         )}
-        style={{ 
+        style={{
           paddingBottom: 'max(env(safe-area-inset-bottom), 8px)',
           position: 'fixed',
           bottom: 0,
@@ -446,7 +445,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
           {tabs.map((tab, index) => {
             const Icon = tab.icon;
             let active = false;
-            
+
             if (tab.path) {
               active = isActive(tab.path);
             } else if (tab.key === "bookings") {
@@ -478,13 +477,13 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
                   buttonHoverClasses
                 )}
               >
-                <Icon 
+                <Icon
                   className={cn(
                     "h-5 w-5 mb-1",
                     active ? activeColor : inactiveColor
-                  )} 
+                  )}
                 />
-                <span 
+                <span
                   className={cn(
                     "text-[10px] font-medium leading-tight",
                     active ? activeColor : inactiveColor
@@ -492,7 +491,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
                 >
                   {tab.title}
                 </span>
-                
+
                 {tab.badge && tab.badge > 0 && (
                   <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
                     {tab.badge > 9 ? '9+' : tab.badge}
@@ -534,9 +533,9 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
         }
       />
 
-      <HelpModal 
-        isOpen={helpOpen} 
-        onOpenChange={setHelpOpen} 
+      <HelpModal
+        isOpen={helpOpen}
+        onOpenChange={setHelpOpen}
       />
     </>
   );

@@ -44,7 +44,7 @@ export function GalleryStatusChip({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border font-semibold tracking-wide shadow-sm backdrop-blur-md",
+        "inline-flex items-center w-fit rounded-full border font-semibold tracking-wide shadow-sm backdrop-blur-md",
         SIZE_CLASSES[size],
         STATUS_CLASSES[status],
         className

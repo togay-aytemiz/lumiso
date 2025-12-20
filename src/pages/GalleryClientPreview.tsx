@@ -1399,6 +1399,13 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
           { onConflict: "gallery_id" }
         );
       if (error) throw error;
+
+      // Also update the gallery status to approved
+      const { error: statusError } = await supabase
+        .from("galleries")
+        .update({ status: "approved", updated_at: now })
+        .eq("id", resolvedGalleryId);
+      if (statusError) throw statusError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });
@@ -2098,20 +2105,20 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
               onClick={() => openViewer(photo.id)}
               className="overflow-hidden rounded-sm bg-gray-100 relative cursor-pointer"
             >
-                {photo.url && !brokenPhotoIds.has(photo.id) ? (
-                  <img
-                    src={photo.url}
-                    alt={photo.filename}
-                    width={photo.width && photo.width > 0 ? photo.width : 3}
-                    height={photo.height && photo.height > 0 ? photo.height : 4}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-auto object-cover transition-transform duration-500 md:group-hover:scale-105"
-                    onError={() => handleAssetImageError(photo.id)}
-                  />
-                ) : (
-                  <div className="w-full aspect-[3/4] bg-gray-200 flex items-center justify-center text-gray-500">
-                    <ImageIcon size={32} />
+              {photo.url && !brokenPhotoIds.has(photo.id) ? (
+                <img
+                  src={photo.url}
+                  alt={photo.filename}
+                  width={photo.width && photo.width > 0 ? photo.width : 3}
+                  height={photo.height && photo.height > 0 ? photo.height : 4}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-auto object-cover transition-transform duration-500 md:group-hover:scale-105"
+                  onError={() => handleAssetImageError(photo.id)}
+                />
+              ) : (
+                <div className="w-full aspect-[3/4] bg-gray-200 flex items-center justify-center text-gray-500">
+                  <ImageIcon size={32} />
                 </div>
               )}
 
@@ -2313,22 +2320,22 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                   </div>
                 ) : null}
 
-                  {favoritesEnabled ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleFavorite(photo.id);
-                      }}
-                      className={`w-11 h-11 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-md transition-all duration-200 pointer-events-auto active:scale-95
+                {favoritesEnabled ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleFavorite(photo.id);
+                    }}
+                    className={`w-11 h-11 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-md transition-all duration-200 pointer-events-auto active:scale-95
                         ${photo.isFavorite
-                          ? "bg-red-500 text-white scale-100"
-                          : "bg-black/40 text-white md:hover:bg-white md:hover:text-red-500 backdrop-blur-sm"
-                        }`}
-                      title={
-                        photo.isFavorite
-                          ? t("sessionDetail.gallery.clientPreview.actions.removeFromFavorites")
-                          : t("sessionDetail.gallery.clientPreview.actions.addToFavorites")
+                        ? "bg-red-500 text-white scale-100"
+                        : "bg-black/40 text-white md:hover:bg-white md:hover:text-red-500 backdrop-blur-sm"
+                      }`}
+                    title={
+                      photo.isFavorite
+                        ? t("sessionDetail.gallery.clientPreview.actions.removeFromFavorites")
+                        : t("sessionDetail.gallery.clientPreview.actions.addToFavorites")
                     }
                     aria-label={
                       photo.isFavorite
@@ -2344,19 +2351,19 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
               </div>
             </div>
 
-              {!isMenuOpen ? (
-                <div
-                  onClick={() => openViewer(photo.id)}
-                  className="absolute inset-0 bg-black/20 opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-4 pointer-events-none z-10"
-                >
-                  <div className="flex flex-col items-center gap-2 text-white transform translate-y-4 md:group-hover:translate-y-0 transition-transform duration-300">
-                    <Maximize2 size={32} strokeWidth={1.5} className="drop-shadow-lg" />
-                    <span className="text-[10px] uppercase tracking-widest font-medium drop-shadow-md">
-                      {t("sessionDetail.gallery.clientPreview.actions.inspect")}
-                    </span>
-                  </div>
+            {!isMenuOpen ? (
+              <div
+                onClick={() => openViewer(photo.id)}
+                className="absolute inset-0 bg-black/20 opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-4 pointer-events-none z-10"
+              >
+                <div className="flex flex-col items-center gap-2 text-white transform translate-y-4 md:group-hover:translate-y-0 transition-transform duration-300">
+                  <Maximize2 size={32} strokeWidth={1.5} className="drop-shadow-lg" />
+                  <span className="text-[10px] uppercase tracking-widest font-medium drop-shadow-md">
+                    {t("sessionDetail.gallery.clientPreview.actions.inspect")}
+                  </span>
                 </div>
-              ) : null}
+              </div>
+            ) : null}
           </div>
         );
       })}
@@ -2435,9 +2442,9 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                   onClick={handleOpenConfirmation}
                   className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm uppercase tracking-widest shadow-lg transition-all
                     ${areAllMandatoryComplete
-                    ? "bg-gray-900 text-white hover:bg-black hover:scale-[1.02] active:scale-[0.98]"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }
+                      ? "bg-gray-900 text-white hover:bg-black hover:scale-[1.02] active:scale-[0.98]"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    }
                   `}
                 >
                   {showClientReopenedBanner
@@ -2897,113 +2904,113 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
             <div className="flex items-start gap-3 min-w-max">
               {isSelectionGallery
                 ? selectionRules.map((rule) => {
-                    const isActive = activeFilter === rule.id;
-                    const status = getRuleStatus(rule, t);
-                    const serviceName = rule.serviceName?.trim() ?? "";
-                    const showRange =
-                      rule.minCount > 0 && rule.maxCount != null && rule.maxCount !== rule.minCount;
-                    const desktopDenominator =
-                      rule.maxCount != null
-                        ? showRange
-                          ? `${rule.minCount}-${rule.maxCount}`
-                          : `${rule.maxCount}`
-                        : rule.minCount > 0
-                          ? `${rule.minCount}+`
-                          : "0";
+                  const isActive = activeFilter === rule.id;
+                  const status = getRuleStatus(rule, t);
+                  const serviceName = rule.serviceName?.trim() ?? "";
+                  const showRange =
+                    rule.minCount > 0 && rule.maxCount != null && rule.maxCount !== rule.minCount;
+                  const desktopDenominator =
+                    rule.maxCount != null
+                      ? showRange
+                        ? `${rule.minCount}-${rule.maxCount}`
+                        : `${rule.maxCount}`
+                      : rule.minCount > 0
+                        ? `${rule.minCount}+`
+                        : "0";
 
-                    return (
-                      <button
-                        key={rule.id}
-                        type="button"
-                        data-touch-target="compact"
-                        onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
-                        className={`group relative flex items-center gap-3 min-w-[240px] shrink-0 rounded-full border bg-white px-4 py-2 transition-all text-left hover:shadow-sm ${isActive
-                          ? "border-emerald-600 bg-emerald-50 ring-1 ring-emerald-200"
-                          : status.borderColor
-                          }`}
+                  return (
+                    <button
+                      key={rule.id}
+                      type="button"
+                      data-touch-target="compact"
+                      onClick={() => setActiveFilter(isActive ? "all" : rule.id)}
+                      className={`group relative flex items-center gap-3 min-w-[240px] shrink-0 rounded-full border bg-white px-4 py-2 transition-all text-left hover:shadow-sm ${isActive
+                        ? "border-emerald-600 bg-emerald-50 ring-1 ring-emerald-200"
+                        : status.borderColor
+                        }`}
+                    >
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-full border ${status.isComplete ? "bg-emerald-500 border-emerald-500 text-white" : "bg-gray-50 border-gray-200 text-gray-300"}`}
                       >
-                        <div
-                          className={`flex h-8 w-8 items-center justify-center rounded-full border ${status.isComplete ? "bg-emerald-500 border-emerald-500 text-white" : "bg-gray-50 border-gray-200 text-gray-300"}`}
-                        >
-                          {status.isComplete ? (
-                            <Check size={16} strokeWidth={3} />
-                          ) : (
-                            <div className="h-2 w-2 rounded-full bg-gray-300" />
-                          )}
-                        </div>
+                        {status.isComplete ? (
+                          <Check size={16} strokeWidth={3} />
+                        ) : (
+                          <div className="h-2 w-2 rounded-full bg-gray-300" />
+                        )}
+                      </div>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1 text-sm font-semibold text-gray-900 leading-snug truncate">
-                            <span className="truncate">{rule.title}</span>
-                            {rule.required ? <span className="text-red-500">*</span> : null}
-                          </div>
-                          {serviceName ? (
-                            <p className="text-xs text-gray-500 truncate">{serviceName}</p>
-                          ) : null}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1 text-sm font-semibold text-gray-900 leading-snug truncate">
+                          <span className="truncate">{rule.title}</span>
+                          {rule.required ? <span className="text-red-500">*</span> : null}
                         </div>
-
-                        <div className="text-right">
-                          <div className="flex items-baseline justify-end gap-1">
-                            <span className="text-base font-bold text-gray-900 tabular-nums leading-none">
-                              {rule.currentCount}
-                            </span>
-                            <span className="text-xs font-semibold text-gray-500 tabular-nums">
-                              / {desktopDenominator}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })
-                : (
-                    <>
-                      <button
-                        type="button"
-                        data-touch-target="compact"
-                        onClick={() => {
-                          setActiveFilter("all");
-                          scrollToContentStart();
-                        }}
-                        className={`group relative inline-flex items-center gap-2 shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-all hover:shadow-sm ${activeFilter === "all"
-                          ? "border-gray-900 bg-gray-900 text-white"
-                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
-                          }`}
-                        aria-current={activeFilter === "all" ? "page" : undefined}
-                      >
-                        {t("sessionDetail.gallery.clientPreview.filters.all")}
-                      </button>
-
-                      <button
-                        type="button"
-                        data-touch-target="compact"
-                        disabled={!favoritesEnabled}
-                        onClick={() => {
-                          setActiveFilter("favorites");
-                          scrollToContentStart();
-                        }}
-                        className={`group relative inline-flex items-center gap-2 shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-all hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${activeFilter === "favorites"
-                          ? "border-red-500 bg-red-500 text-white shadow-sm"
-                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
-                          }`}
-                        aria-current={activeFilter === "favorites" ? "page" : undefined}
-                      >
-                        <Heart
-                          size={16}
-                          fill={activeFilter === "favorites" ? "currentColor" : "none"}
-                          className={activeFilter === "favorites" ? "" : "text-red-500"}
-                          aria-hidden="true"
-                        />
-                        <span>{t("sessionDetail.gallery.clientPreview.filters.favorites")}</span>
-                        {favoritePhotoIds.size > 0 ? (
-                          <span
-                            className={`ml-1 inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[11px] font-bold tabular-nums ${activeFilter === "favorites" ? "bg-white/20 text-white" : "bg-red-50 text-red-600"}`}
-                          >
-                            {favoritePhotoIds.size}
-                          </span>
+                        {serviceName ? (
+                          <p className="text-xs text-gray-500 truncate">{serviceName}</p>
                         ) : null}
-                      </button>
-                    </>
-                  )}
+                      </div>
+
+                      <div className="text-right">
+                        <div className="flex items-baseline justify-end gap-1">
+                          <span className="text-base font-bold text-gray-900 tabular-nums leading-none">
+                            {rule.currentCount}
+                          </span>
+                          <span className="text-xs font-semibold text-gray-500 tabular-nums">
+                            / {desktopDenominator}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+                : (
+                  <>
+                    <button
+                      type="button"
+                      data-touch-target="compact"
+                      onClick={() => {
+                        setActiveFilter("all");
+                        scrollToContentStart();
+                      }}
+                      className={`group relative inline-flex items-center gap-2 shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-all hover:shadow-sm ${activeFilter === "all"
+                        ? "border-gray-900 bg-gray-900 text-white"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                        }`}
+                      aria-current={activeFilter === "all" ? "page" : undefined}
+                    >
+                      {t("sessionDetail.gallery.clientPreview.filters.all")}
+                    </button>
+
+                    <button
+                      type="button"
+                      data-touch-target="compact"
+                      disabled={!favoritesEnabled}
+                      onClick={() => {
+                        setActiveFilter("favorites");
+                        scrollToContentStart();
+                      }}
+                      className={`group relative inline-flex items-center gap-2 shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-all hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${activeFilter === "favorites"
+                        ? "border-red-500 bg-red-500 text-white shadow-sm"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                        }`}
+                      aria-current={activeFilter === "favorites" ? "page" : undefined}
+                    >
+                      <Heart
+                        size={16}
+                        fill={activeFilter === "favorites" ? "currentColor" : "none"}
+                        className={activeFilter === "favorites" ? "" : "text-red-500"}
+                        aria-hidden="true"
+                      />
+                      <span>{t("sessionDetail.gallery.clientPreview.filters.favorites")}</span>
+                      {favoritePhotoIds.size > 0 ? (
+                        <span
+                          className={`ml-1 inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[11px] font-bold tabular-nums ${activeFilter === "favorites" ? "bg-white/20 text-white" : "bg-red-50 text-red-600"}`}
+                        >
+                          {favoritePhotoIds.size}
+                        </span>
+                      ) : null}
+                    </button>
+                  </>
+                )}
             </div>
           </div>
         ) : null}
@@ -3222,14 +3229,14 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                 </button>
               ) : null}
 
-                <button
-                  type="button"
-                  disabled={!favoritesEnabled}
-                  onClick={() => handleMobileTabChange("favorites")}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "favorites" ? "text-red-500 bg-red-50" : "text-gray-400"
-                    } ${favoritesEnabled ? "" : "opacity-50 cursor-not-allowed"}`}
-                  aria-current={mobileTab === "favorites" ? "page" : undefined}
-                >
+              <button
+                type="button"
+                disabled={!favoritesEnabled}
+                onClick={() => handleMobileTabChange("favorites")}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "favorites" ? "text-red-500 bg-red-50" : "text-gray-400"
+                  } ${favoritesEnabled ? "" : "opacity-50 cursor-not-allowed"}`}
+                aria-current={mobileTab === "favorites" ? "page" : undefined}
+              >
                 <div className="relative">
                   <Heart
                     size={22}
@@ -3246,40 +3253,40 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
                 </div>
                 <span className="text-[10px] font-bold mt-0.5">
                   {t("sessionDetail.gallery.clientPreview.filters.favorites")}
+                </span>
+              </button>
+
+              {isSelectionGallery && starredCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => handleMobileTabChange("starred")}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "starred" ? "text-amber-500 bg-amber-50" : "text-gray-400"
+                    }`}
+                  aria-current={mobileTab === "starred" ? "page" : undefined}
+                >
+                  <div className="relative">
+                    <Star
+                      size={22}
+                      fill={mobileTab === "starred" ? "currentColor" : "none"}
+                      strokeWidth={mobileTab === "starred" ? 2.5 : 2}
+                      aria-hidden="true"
+                    />
+                    <div
+                      className={`absolute -top-1.5 -right-2 min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[9px] font-bold border-2 border-white shadow-sm transition-colors ${mobileTab === "starred" ? "bg-amber-500 text-white" : "bg-gray-200 text-gray-600"
+                        }`}
+                    >
+                      {starredCount}
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold mt-0.5">
+                    {t("sessionDetail.gallery.clientPreview.bottomNav.starred")}
                   </span>
                 </button>
-
-                {isSelectionGallery && starredCount > 0 ? (
-                  <button
-                    type="button"
-                    onClick={() => handleMobileTabChange("starred")}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${mobileTab === "starred" ? "text-amber-500 bg-amber-50" : "text-gray-400"
-                      }`}
-                    aria-current={mobileTab === "starred" ? "page" : undefined}
-                  >
-                    <div className="relative">
-                      <Star
-                        size={22}
-                        fill={mobileTab === "starred" ? "currentColor" : "none"}
-                        strokeWidth={mobileTab === "starred" ? 2.5 : 2}
-                        aria-hidden="true"
-                      />
-                      <div
-                        className={`absolute -top-1.5 -right-2 min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[9px] font-bold border-2 border-white shadow-sm transition-colors ${mobileTab === "starred" ? "bg-amber-500 text-white" : "bg-gray-200 text-gray-600"
-                          }`}
-                      >
-                        {starredCount}
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold mt-0.5">
-                      {t("sessionDetail.gallery.clientPreview.bottomNav.starred")}
-                    </span>
-                  </button>
-                ) : null}
-              </div>
-            </nav>
-          ) : null
-        }
+              ) : null}
+            </div>
+          </nav>
+        ) : null
+      }
 
       <SelectionExportSheet
         open={exportSheetOpen}

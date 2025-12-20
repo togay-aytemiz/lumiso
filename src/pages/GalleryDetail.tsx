@@ -736,12 +736,13 @@ export default function GalleryDetail() {
 
   const unlockSelectionsMutation = useMutation({
     mutationFn: async () => {
-      if (!id) return;
+      if (!id || !data) return;
       const now = new Date().toISOString();
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id ?? null;
 
-      const { error } = await supabase
+      // Update selection state
+      const { error: selectionError } = await supabase
         .from("gallery_selection_states")
         .upsert(
           {
@@ -753,7 +754,18 @@ export default function GalleryDetail() {
           },
           { onConflict: "gallery_id" }
         );
-      if (error) throw error;
+      if (selectionError) throw selectionError;
+
+      // Automatically revert status to Müşteri Bekleniyor (published)
+      const { error: galleryError } = await supabase
+        .from("galleries")
+        .update({
+          status: "published",
+          previous_status: data.status,
+          updated_at: now,
+        })
+        .eq("id", id);
+      if (galleryError) throw galleryError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: selectionStateQueryKey });

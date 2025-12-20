@@ -580,7 +580,7 @@
       },
       "statuses": {
         "draft": "Taslak",
-        "published": "Paylaşıldı",
+        "published": "Müşteri Bekleniyor",
         "approved": "Onaylandı",
         "archived": "Arşivlendi"
       },
@@ -4073,9 +4073,10 @@
     },
     "tableTitle": "Galeri Kayıtları",
     "stats": {
-      "actionNeeded": "Bekleyen",
-      "approved": "Onaylanan",
-      "active": "Aktif",
+      "waitingForClient": "Müşteri Bekleniyor",
+      "actionNeeded": "Aksiyon Bekleyen",
+      "selectionType": "Fotoğraf Seçimi",
+      "finalType": "Final Teslimat",
       "archived": "Arşiv"
     },
     "filters": {
@@ -4103,6 +4104,8 @@
     "toast": {
       "archiveSuccess": "Galeri arşivlendi.",
       "archiveError": "Galeri arşivlenemedi. Lütfen tekrar deneyin.",
+      "unarchiveSuccess": "Galeri arşivden çıkarıldı.",
+      "unarchiveError": "Galeri arşivden çıkarılamadı. Lütfen tekrar deneyin.",
       "deleteSuccess": "Galeri silindi.",
       "deleteError": "Galeri silinemedi. Lütfen tekrar deneyin."
     },
@@ -4149,6 +4152,7 @@
       "noProject": "Proje yok",
       "openGallery": "Galeriyi aç",
       "status": "Durum",
+      "customerNotes": "Müşteri Notları",
       "progress": "Seçim ilerlemesi",
       "selected": "{{count}} seçildi",
       "required": "{{count}} zorunlu",
@@ -4159,6 +4163,8 @@
       "lastAction": "Son işlem",
       "timeRemainingPlaceholder": "Kalan süre yakında",
       "timeRemaining": "{{value}} kaldı",
+      "photoCountHeader": "Fotoğraf Sayısı",
+      "photoCount": "{{count}} Fotoğraf",
       "noApproval": "Henüz onay yok",
       "actions": "İşlemler",
       "export": "Seçimleri dışa aktar",

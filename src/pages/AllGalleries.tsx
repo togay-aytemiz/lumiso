@@ -39,6 +39,12 @@ import {
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset } from "@/components/ui/kpi-presets";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { GalleryStatusChip, type GalleryStatus } from "@/components/galleries/GalleryStatusChip";
 import { cn, formatBytes, formatDate } from "@/lib/utils";
@@ -59,9 +65,7 @@ import {
   Download,
   ExternalLink,
   Images,
-  Layers,
   Loader2,
-  MessageSquare,
   MoreHorizontal,
   Trash2,
 } from "lucide-react";
@@ -78,15 +82,17 @@ interface GalleryRow {
   expires_at: string | null;
   session_id: string | null;
   project_id: string | null;
+  previous_status: string | null;
   selection_state?:
-    | {
-        is_locked: boolean;
-        locked_at: string | null;
-        note: string | null;
-        updated_at: string;
-      }
-    | null
-    | undefined;
+  | {
+    is_locked: boolean;
+    locked_at: string | null;
+    note: string | null;
+    updated_at: string;
+  }
+  | null
+  | undefined;
+  gallery_assets?: { id: string }[];
 }
 
 interface SessionRow {
@@ -139,6 +145,8 @@ interface GalleryListItem {
   coverUrl: string;
   exportPhotos: SelectionExportPhoto[];
   exportRules: SelectionExportRule[];
+  previousStatus: GalleryStatus | null;
+  totalAssetCount: number;
 }
 
 type GalleryTypeFilter = "all" | "selection" | "final";
@@ -242,7 +250,7 @@ const useGalleryList = () => {
       const { data, error } = await supabase
         .from("galleries")
         .select(
-          "id,title,status,type,branding,updated_at,created_at,published_at,expires_at,session_id,project_id,gallery_selection_states(is_locked,locked_at,note,updated_at),sessions(id,session_name,session_date,project:projects(id,name),lead:leads(id,name,email,phone)),projects(id,name)"
+          "id,title,status,type,branding,updated_at,created_at,published_at,expires_at,session_id,project_id,previous_status,gallery_selection_states(is_locked,locked_at,note,updated_at),sessions(id,session_name,session_date,project:projects(id,name),lead:leads(id,name,email,phone)),projects(id,name),gallery_assets(id)"
         )
         .order("updated_at", { ascending: true });
 
@@ -268,24 +276,24 @@ const useGalleryList = () => {
       const [sessionResponse, projectResponse, selectionResponse, downloadResponse] = await Promise.all([
         sessionIds.length
           ? supabase
-              .from("sessions")
-              .select("id,session_name,session_date,project:projects(id,name),lead:leads(id,name,email,phone)")
-              .in("id", sessionIds)
+            .from("sessions")
+            .select("id,session_name,session_date,project:projects(id,name),lead:leads(id,name,email,phone)")
+            .in("id", sessionIds)
           : Promise.resolve({ data: [] as SessionRow[] }),
         projectIds.length
           ? supabase.from("projects").select("id,name").in("id", projectIds)
           : Promise.resolve({ data: [] as ProjectRow[] }),
         galleryIds.length
           ? supabase
-              .from("client_selections")
-              .select("gallery_id,asset_id,selection_part")
-              .in("gallery_id", galleryIds)
+            .from("client_selections")
+            .select("gallery_id,asset_id,selection_part")
+            .in("gallery_id", galleryIds)
           : Promise.resolve({ data: [] as SelectionRow[] }),
         galleryIds.length
           ? supabase
-              .from("gallery_download_events")
-              .select("gallery_id,downloaded_at")
-              .in("gallery_id", galleryIds)
+            .from("gallery_download_events")
+            .select("gallery_id,downloaded_at")
+            .in("gallery_id", galleryIds)
           : Promise.resolve({ data: [] as DownloadEventRow[] }),
       ]);
 
@@ -337,9 +345,9 @@ const useGalleryList = () => {
       const assetResponse =
         assetIds.length > 0
           ? await supabase
-              .from("gallery_assets")
-              .select("id,storage_path_web,metadata")
-              .in("id", assetIds)
+            .from("gallery_assets")
+            .select("id,storage_path_web,metadata")
+            .in("id", assetIds)
           : { data: [] as AssetRow[] };
 
       const assetMap = new Map((assetResponse.data ?? []).map((asset) => [asset.id, asset]));
@@ -429,6 +437,8 @@ const useGalleryList = () => {
           exportPhotos,
           exportRules: normalizeSelectionRules(gallery.branding),
           downloadedAt: downloadsByGallery.get(gallery.id) ?? null,
+          previousStatus: (gallery.previous_status as GalleryStatus) ?? null,
+          totalAssetCount: gallery.gallery_assets?.length ?? 0,
         };
       });
 
@@ -601,23 +611,34 @@ export default function AllGalleries() {
   );
 
   const stats = useMemo(() => {
-    const base = { active: 0, actionNeeded: 0, approved: 0, archived: 0 };
+    const base = {
+      waitingForClient: 0,
+      actionNeeded: 0,
+      selectionGalleries: 0,
+      finalGalleries: 0,
+      archived: 0,
+    };
+
     galleries.forEach((gallery) => {
       if (gallery.status === "archived") {
         base.archived += 1;
         return;
       }
-      if (gallery.isLocked || gallery.status === "approved") {
-        base.approved += 1;
-        base.active += 1;
-        return;
+
+      const isSelection = isSelectionGalleryType(gallery.type);
+      const isFinal = isFinalGalleryType(gallery.type);
+
+      if (isSelection) {
+        base.selectionGalleries += 1;
+        // Status KPIs only for selection workflow
+        if (gallery.isLocked || gallery.status === "approved") {
+          base.actionNeeded += 1;
+        } else if (gallery.status === "published") {
+          base.waitingForClient += 1;
+        }
+      } else if (isFinal) {
+        base.finalGalleries += 1;
       }
-      if (gallery.status === "published") {
-        base.actionNeeded += 1;
-        base.active += 1;
-        return;
-      }
-      base.active += 1;
     });
     return base;
   }, [galleries]);
@@ -714,6 +735,25 @@ export default function AllGalleries() {
     },
   });
 
+  const unarchiveGalleryMutation = useMutation({
+    mutationFn: async (target: GalleryListItem) => {
+      const now = new Date().toISOString();
+      const newStatus = target.previousStatus || "published";
+      const { error } = await supabase
+        .from("galleries")
+        .update({ status: newStatus, previous_status: null, updated_at: now })
+        .eq("id", target.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["galleries"] });
+      i18nToast.success(t("galleries.toast.unarchiveSuccess"));
+    },
+    onError: () => {
+      i18nToast.error(t("galleries.toast.unarchiveError"));
+    },
+  });
+
   const deleteGalleryMutation = useMutation({
     mutationFn: async (target: GalleryListItem) => {
       await deleteGalleryWithAssets({
@@ -743,7 +783,14 @@ export default function AllGalleries() {
             <span className="text-foreground font-semibold">
               {t("galleries.table.selected", { count: row.selectionCount })}
             </span>
-            <span>{t("galleries.table.required", { count: required })}</span>
+            <div className="flex items-center gap-2">
+              <span>{t("galleries.table.required", { count: required })}</span>
+              <span className="h-3 w-px bg-border" />
+              <div className="flex items-center gap-1">
+                <Images className="h-3 w-3" />
+                <span className="text-foreground">{row.totalAssetCount}</span>
+              </div>
+            </div>
           </div>
           <div className="h-2 rounded-full bg-muted overflow-hidden">
             <div
@@ -897,15 +944,39 @@ export default function AllGalleries() {
                 {t("galleries.table.downloadedStatus")}
               </Badge>
             ) : (
-              <GalleryStatusChip status={row.status} size="sm" />
+              <GalleryStatusChip
+                status={isSelectionGalleryType(row.type) && row.isLocked ? "approved" : row.status}
+                size="sm"
+              />
             )}
-            {isSelectionGalleryType(row.type) && row.selectionNote ? (
-              <Badge variant="outline" className="flex items-center gap-1 w-fit text-xs">
-                <MessageSquare className="h-3 w-3" />
-                {row.selectionNote}
-              </Badge>
-            ) : null}
           </div>
+        );
+      },
+    };
+
+    const notesColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "notes",
+      label: t("galleries.table.customerNotes"),
+      render: (row) => {
+        if (!row.selectionNote) return null;
+
+        return (
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="max-w-[200px] text-xs text-muted-foreground line-clamp-3 cursor-help leading-normal">
+                  {row.selectionNote}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                align="start"
+                className="max-w-[300px] p-3 text-xs leading-relaxed"
+              >
+                {row.selectionNote}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       },
     };
@@ -946,7 +1017,20 @@ export default function AllGalleries() {
     const summaryColumn: AdvancedTableColumn<GalleryListItem> = {
       id: "summary",
       label: t("galleries.table.summaryColumn"),
-      render: (row) => (isSelectionGalleryType(row.type) ? renderSelectionProgress(row) : null),
+      render: (row) => {
+        if (isSelectionGalleryType(row.type)) {
+          return renderSelectionProgress(row);
+        }
+        if (isFinalGalleryType(row.type)) {
+          return (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Images className="h-3.5 w-3.5" />
+              {t("galleries.table.photoCount", { count: row.totalAssetCount })}
+            </div>
+          );
+        }
+        return null;
+      },
     };
 
     const lastActionColumn: AdvancedTableColumn<GalleryListItem> = {
@@ -959,6 +1043,19 @@ export default function AllGalleries() {
           isFinalGalleryType(row.type) && row.downloadedAt ? row.downloadedAt : row.updatedAt;
         return renderLastAction(actionDate);
       },
+    };
+
+    const photoCountColumn: AdvancedTableColumn<GalleryListItem> = {
+      id: "photoCount",
+      label: t("galleries.table.photoCountHeader"),
+      sortable: true,
+      sortId: "totalAssetCount",
+      render: (row) => (
+        <div className="flex items-center gap-1.5 text-sm text-foreground">
+          <Images className="h-4 w-4 text-muted-foreground" />
+          {row.totalAssetCount}
+        </div>
+      ),
     };
 
     const actionsColumn: AdvancedTableColumn<GalleryListItem> = {
@@ -983,17 +1080,27 @@ export default function AllGalleries() {
                 {t("galleries.table.actions")}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => {
-                  if (row.status === "archived") return;
-                  setArchiveTarget(row);
-                }}
-                disabled={row.status === "archived"}
-                className="cursor-pointer gap-2"
-              >
-                <Archive className="h-4 w-4" />
-                {t("sessionDetail.gallery.actions.archive")}
-              </DropdownMenuItem>
+              {row.status !== "archived" ? (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setArchiveTarget(row);
+                  }}
+                  className="cursor-pointer gap-2"
+                >
+                  <Archive className="h-4 w-4" />
+                  {t("sessionDetail.gallery.actions.archive")}
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    unarchiveGalleryMutation.mutate(row);
+                  }}
+                  className="cursor-pointer gap-2"
+                >
+                  <Archive className="h-4 w-4" />
+                  {t("sessionDetail.gallery.actions.restore")}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onSelect={() => {
                   setDeleteTarget(row);
@@ -1010,14 +1117,16 @@ export default function AllGalleries() {
       ),
     };
 
-    const baseColumns = [galleryColumn, clientColumn, linksColumn, statusColumn];
+    const baseColumns = [galleryColumn, clientColumn, linksColumn, statusColumn, notesColumn];
 
     if (typeFilter === "selection") {
       return [...baseColumns, progressColumn, approvalColumn, sizeAndTimeColumn, actionsColumn];
     }
 
     if (typeFilter === "final") {
-      return [...baseColumns, lastActionColumn, sizeAndTimeColumn, actionsColumn];
+      // Notes column not shown for final delivery
+      const finalColumns = [galleryColumn, clientColumn, linksColumn, statusColumn];
+      return [...finalColumns, lastActionColumn, photoCountColumn, sizeAndTimeColumn, actionsColumn];
     }
 
     return [...baseColumns, summaryColumn, lastActionColumn, sizeAndTimeColumn, actionsColumn];
@@ -1116,17 +1225,68 @@ export default function AllGalleries() {
       </PageHeader>
 
       <div className="space-y-6 p-4 sm:p-6">
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
           <StorageWidget
             usedBytes={orgUsedBytes}
             totalBytes={orgLimitBytes}
             isLoading={isLoading || orgGalleryBytesLoading || organizationLoading}
           />
           {([
-            { id: "action", label: t("galleries.stats.actionNeeded"), value: stats.actionNeeded, icon: AlertTriangle, preset: getKpiIconPreset("amber") },
-            { id: "approved", label: t("galleries.stats.approved"), value: stats.approved, icon: CheckCircle2, preset: getKpiIconPreset("emerald") },
-            { id: "active", label: t("galleries.stats.active"), value: stats.active, icon: Layers, preset: getKpiIconPreset("indigo") },
-            { id: "archived", label: t("galleries.stats.archived"), value: stats.archived, icon: Archive, preset: getKpiIconPreset("slate") },
+            {
+              id: "waiting",
+              label: t("galleries.stats.waitingForClient"),
+              value: stats.waitingForClient,
+              icon: Clock,
+              preset: getKpiIconPreset("sky"),
+              onClick: () => {
+                setTypeFilter("selection");
+                setStatusFilter("pending");
+              },
+            },
+            {
+              id: "action",
+              label: t("galleries.stats.actionNeeded"),
+              value: stats.actionNeeded,
+              icon: AlertTriangle,
+              preset: getKpiIconPreset("amber"),
+              onClick: () => {
+                setTypeFilter("selection");
+                setStatusFilter("approved");
+              },
+            },
+            {
+              id: "selection",
+              label: t("galleries.stats.selectionType"),
+              value: stats.selectionGalleries,
+              icon: Images,
+              preset: getKpiIconPreset("indigo"),
+              onClick: () => {
+                setTypeFilter("selection");
+                setStatusFilter("active");
+              },
+            },
+            {
+              id: "final",
+              label: t("galleries.stats.finalType"),
+              value: stats.finalGalleries,
+              icon: CheckCircle2,
+              preset: getKpiIconPreset("emerald"),
+              onClick: () => {
+                setTypeFilter("final");
+                setStatusFilter("active");
+              },
+            },
+            {
+              id: "archived",
+              label: t("galleries.stats.archived"),
+              value: stats.archived,
+              icon: Archive,
+              preset: getKpiIconPreset("slate"),
+              onClick: () => {
+                setTypeFilter("all");
+                setStatusFilter("archived");
+              },
+            },
           ] as const).map((card) => (
             <KpiCard
               key={card.id}
@@ -1135,6 +1295,8 @@ export default function AllGalleries() {
               icon={card.icon}
               title={card.label}
               value={numberFormatter.format(card.value)}
+              onClick={card.onClick}
+              showClickArrow
               {...card.preset}
             />
           ))}

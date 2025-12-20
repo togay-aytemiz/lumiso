@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2025-12-20
+- Reduced duplicate organization and organization_settings fetches by caching org detail lookups and treating missing settings as a cache hit.
+- Rollout: deploy the updated client bundle; no Supabase changes required.
+
 ## 2025-12-19
 - Gallery bulk download now generates the .zip in the client (final galleries use originals; proof galleries use web conversions).
 - Client download no longer depends on `gallery-download` or `gallery-download-processor`, removing the stuck "preparing" state.

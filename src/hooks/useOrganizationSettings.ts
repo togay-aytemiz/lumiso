@@ -109,7 +109,7 @@ export const useOrganizationSettings = () => {
     () =>
       activeOrganizationId
         ? getOrganizationSettingsFromCache(activeOrganizationId)
-        : null,
+        : undefined,
     [activeOrganizationId]
   );
 
@@ -131,8 +131,8 @@ export const useOrganizationSettings = () => {
     },
     enabled: !!activeOrganizationId,
     staleTime: ORGANIZATION_SETTINGS_CACHE_TTL,
-    initialData: cachedSnapshot ?? undefined,
-    refetchInterval: 90 * 1000,
+    initialData: cachedSnapshot === undefined ? undefined : cachedSnapshot,
+    refetchInterval: 5 * 60 * 1000, // 5 minutes (reduced from 90s)
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });

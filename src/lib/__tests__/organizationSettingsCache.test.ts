@@ -129,4 +129,12 @@ describe("organizationSettingsCache", () => {
     expect(result).toEqual({ id: "settings-5" });
     expect(supabaseMock.from).not.toHaveBeenCalled();
   });
+
+  it("returns cached null without hitting Supabase when fresh", async () => {
+    setOrganizationSettingsCache("org-1", null);
+
+    const result = await fetchOrganizationSettingsWithCache("org-1");
+    expect(result).toBeNull();
+    expect(supabaseMock.from).not.toHaveBeenCalled();
+  });
 });

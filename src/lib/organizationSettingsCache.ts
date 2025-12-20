@@ -88,7 +88,7 @@ const writeToStorage = (organizationId: string, entry: CacheEntry) => {
 export const getOrganizationSettingsFromCache = (
   organizationId: string,
   ttl: number = CACHE_TTL_MS
-): CachedOrganizationSettings | null => {
+): CachedOrganizationSettings | null | undefined => {
   const existing = memoryCache.get(organizationId);
   const expiresAt = now() - ttl;
 
@@ -102,7 +102,7 @@ export const getOrganizationSettingsFromCache = (
     return stored.data;
   }
 
-  return null;
+  return undefined;
 };
 
 export const setOrganizationSettingsCache = (
@@ -209,7 +209,7 @@ export const fetchOrganizationSettingsWithCache = async (
 
   if (!options.force) {
     const cached = getOrganizationSettingsFromCache(organizationId, ttl);
-    if (cached !== null) {
+    if (cached !== undefined) {
       return cached;
     }
   }

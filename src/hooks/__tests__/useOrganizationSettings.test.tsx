@@ -125,7 +125,7 @@ beforeEach(() => {
   mockedUseToast.mockReturnValue({
     toast: jest.fn(),
   });
-  mockedGetFromCache.mockReturnValue(null);
+  mockedGetFromCache.mockReturnValue(undefined);
   mockedFetchWithCache.mockResolvedValue({
     id: "settings-1",
     organization_id: "org-1",

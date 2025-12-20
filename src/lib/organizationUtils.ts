@@ -8,6 +8,13 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const DEFAULT_TRIAL_DAYS = 14;
 let membershipTableUnavailable = false;
 
+// Track the last time membership was verified to avoid repeated DB calls
+let lastMembershipVerified: number = 0;
+const MEMBERSHIP_VERIFY_INTERVAL = 10 * 60 * 1000; // 10 minutes
+
+// In-flight request deduplication
+let inflightRequest: Promise<string | null> | null = null;
+
 type MembershipUpdates = {
   status?: string;
   role?: string;
@@ -101,7 +108,38 @@ const ensureOwnerMembership = async (userId: string, organizationId: string) => 
 };
 
 export async function getUserOrganizationId(): Promise<string | null> {
+  // Return in-flight request if one exists (deduplication)
+  if (inflightRequest) {
+    return inflightRequest;
+  }
+
+  // Wrap the actual fetch logic in a promise for deduplication
+  inflightRequest = getUserOrganizationIdInternal();
+
   try {
+    return await inflightRequest;
+  } finally {
+    inflightRequest = null;
+  }
+}
+
+async function getUserOrganizationIdInternal(): Promise<string | null> {
+  try {
+    // Fast path: return cached value immediately without any DB calls
+    if (cachedOrganizationId && Date.now() < cacheExpiry) {
+      // Only verify membership periodically, not on every call
+      if (Date.now() - lastMembershipVerified > MEMBERSHIP_VERIFY_INTERVAL) {
+        // Fire and forget - don't block on this
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user) {
+          ensureOwnerMembership(authData.user.id, cachedOrganizationId).then(() => {
+            lastMembershipVerified = Date.now();
+          });
+        }
+      }
+      return cachedOrganizationId;
+    }
+
     const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError) {
       console.error("Error fetching authenticated user:", authError);
@@ -115,11 +153,6 @@ export async function getUserOrganizationId(): Promise<string | null> {
       return null;
     }
 
-    // Check cache after we know the user, and ensure membership is in place
-    if (cachedOrganizationId && Date.now() < cacheExpiry) {
-      await ensureOwnerMembership(user.id, cachedOrganizationId);
-      return cachedOrganizationId;
-    }
 
     // For single photographer: find organization owned by this user
     const { data: organization, error: orgError } = await supabase
@@ -165,39 +198,39 @@ export async function getUserOrganizationId(): Promise<string | null> {
       if (newOrg?.id) {
         try {
           // Create organization settings
-          await supabase.rpc('ensure_organization_settings', { 
+          await supabase.rpc('ensure_organization_settings', {
             org_id: newOrg.id,
             detected_locale:
               typeof navigator !== "undefined" ? navigator.language : undefined,
           });
 
           // Create default lead field definitions
-          await supabase.rpc('ensure_default_lead_field_definitions', { 
-            org_id: newOrg.id, 
-            user_uuid: user.id 
+          await supabase.rpc('ensure_default_lead_field_definitions', {
+            org_id: newOrg.id,
+            user_uuid: user.id
           });
 
           // Create default lead statuses
-          await supabase.rpc('ensure_default_lead_statuses_for_org', { 
-            user_uuid: user.id, 
-            org_id: newOrg.id 
+          await supabase.rpc('ensure_default_lead_statuses_for_org', {
+            user_uuid: user.id,
+            org_id: newOrg.id
           });
 
           // Create default project statuses
-          await supabase.rpc('ensure_default_project_statuses_for_org', { 
-            user_uuid: user.id, 
-            org_id: newOrg.id 
+          await supabase.rpc('ensure_default_project_statuses_for_org', {
+            user_uuid: user.id,
+            org_id: newOrg.id
           });
 
           // Create default session statuses
-          await supabase.rpc('ensure_default_session_statuses', { 
+          await supabase.rpc('ensure_default_session_statuses', {
             user_uuid: user.id,
-            org_id: newOrg.id 
+            org_id: newOrg.id
           });
 
           // Create default project types
-          await supabase.rpc('ensure_default_project_types_for_org', { 
-            user_uuid: user.id, 
+          await supabase.rpc('ensure_default_project_types_for_org', {
+            user_uuid: user.id,
             org_id: newOrg.id,
             locale:
               typeof navigator !== "undefined" ? navigator.language : undefined
@@ -226,5 +259,7 @@ export async function getUserOrganizationId(): Promise<string | null> {
 export function clearOrganizationCache() {
   cachedOrganizationId = null;
   cacheExpiry = 0;
+  lastMembershipVerified = 0;
   membershipTableUnavailable = false;
+  inflightRequest = null;
 }

@@ -35,7 +35,7 @@ export function useOrganizationData<T>(
     enabled: !orgLoading && !!activeOrganizationId && (options?.enabled ?? true),
     staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes
     gcTime: options?.gcTime ?? 10 * 60 * 1000, // 10 minutes
-    refetchInterval: options?.refetchInterval ?? 2 * 60 * 1000,
+    refetchInterval: options?.refetchInterval ?? 5 * 60 * 1000, // 5 minutes (reduced frequency)
     refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
     refetchOnReconnect: true,
   });
@@ -83,7 +83,6 @@ export function useLeadStatuses() {
     },
     enabled: !!activeOrganizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });

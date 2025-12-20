@@ -146,6 +146,74 @@ describe("OrganizationContext", () => {
     });
   });
 
+  it("dedupes inflight organization detail fetches", async () => {
+    mockGetUserOrganizationId.mockResolvedValue("org-inflight");
+
+    let resolveSingle:
+      | ((value: { data: { id: string; name: string; owner_id: string; membership_status: string }; error: null }) => void)
+      | null = null;
+    const singlePromise = new Promise<{
+      data: { id: string; name: string; owner_id: string; membership_status: string };
+      error: null;
+    }>((resolve) => {
+      resolveSingle = resolve;
+    });
+
+    mockSupabaseFrom.mockImplementation((table: string) => {
+      if (table === "organizations") {
+        const chain = {
+          select: jest.fn(),
+          eq: jest.fn(),
+          single: jest.fn(),
+        };
+        chain.select.mockReturnValue(chain);
+        chain.eq.mockReturnValue(chain);
+        chain.single.mockReturnValue(singlePromise);
+        return chain;
+      }
+      if (table === "user_settings") {
+        return { update: jest.fn(() => createUpdateChain()) };
+      }
+      return createGenericChain();
+    });
+
+    const { hook } = renderWithProviders();
+
+    await waitFor(() => {
+      const organizationCalls = mockSupabaseFrom.mock.calls.filter(
+        ([table]) => table === "organizations"
+      );
+      expect(organizationCalls.length).toBe(1);
+    });
+
+    let refreshPromise: Promise<void> | undefined;
+    act(() => {
+      refreshPromise = hook.result.current.refreshOrganization();
+    });
+
+    const organizationCallsAfterRefresh = mockSupabaseFrom.mock.calls.filter(
+      ([table]) => table === "organizations"
+    );
+    expect(organizationCallsAfterRefresh.length).toBe(1);
+
+    resolveSingle?.({
+      data: {
+        id: "org-inflight",
+        name: "Primary Org",
+        owner_id: "user-1",
+        membership_status: "trial",
+      },
+      error: null,
+    });
+
+    await act(async () => {
+      await refreshPromise;
+    });
+
+    await waitFor(() => expect(hook.result.current.loading).toBe(false));
+    expect(hook.result.current.activeOrganizationId).toBe("org-inflight");
+  });
+
   it("refreshes organization data and triggers toast on manual switch", async () => {
     const toastMock =
       (await import("@/hooks/use-toast")).toastMock as jest.Mock;

@@ -5,7 +5,7 @@ import SessionTypesSection from "@/components/SessionTypesSection";
 import PackagesSection from "@/components/PackagesSection";
 import ServicesSection from "@/components/ServicesSection";
 // Permissions removed for single photographer mode
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { useNavigate } from "react-router-dom";

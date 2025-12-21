@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";

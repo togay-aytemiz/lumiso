@@ -14,7 +14,7 @@ jest.mock("@/contexts/OrganizationContext", () => ({
   useOrganization: () => ({ activeOrganization: { id: "org-1" } }),
 }));
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: () => ({
     currentStep: 0,
     shouldLockNavigation: false,

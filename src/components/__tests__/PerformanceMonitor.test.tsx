@@ -1,8 +1,8 @@
 import React from "react";
 import { act, render } from "@testing-library/react";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
 }));
 

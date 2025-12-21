@@ -28,7 +28,7 @@ import {
   useServices,
   useOrganizationTaxProfile,
 } from "@/hooks/useOrganizationData";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
 import { cn } from "@/lib/utils";

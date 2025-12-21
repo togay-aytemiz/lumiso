@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { AlertTriangle, Clock, Loader2 } from "lucide-react";
 import { useSessionTypes } from "@/hooks/useOrganizationData";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 
 export const SessionTypeStep = () => {
   const { state } = useSessionPlanningContext();

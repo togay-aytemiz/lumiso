@@ -20,7 +20,7 @@ jest.mock("react-i18next", () => ({
   }),
 }));
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: () => mockUseOnboarding(),
 }));
 

@@ -340,7 +340,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         }
       }
     },
-    []
+    [reportNetworkError, reportRecovery]
   );
 
   const refreshOrganization = async () => {

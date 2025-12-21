@@ -2,13 +2,13 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { render, screen } from "@testing-library/react";
 import ProtectedRoute from "../ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 
 jest.mock("@/contexts/AuthContext", () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
 }));
 

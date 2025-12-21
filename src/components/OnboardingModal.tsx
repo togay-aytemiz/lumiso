@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { toast as toastFn } from "@/hooks/use-toast";
 import { BaseOnboardingModal, type OnboardingAction } from "./shared/BaseOnboardingModal";

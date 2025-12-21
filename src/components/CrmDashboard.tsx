@@ -21,7 +21,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useConnectivity } from "@/contexts/useConnectivity";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type LeadWithStatusRow = LeadRow & {
@@ -568,7 +568,7 @@ const CrmDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [organizationId]);
+  }, [organizationId, reportNetworkError, reportRecovery]);
 
   useEffect(() => {
     fetchData();

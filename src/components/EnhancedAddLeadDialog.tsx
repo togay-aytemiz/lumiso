@@ -24,7 +24,7 @@ import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { useNavigate } from "react-router-dom";
 import { useOptionalOrganization } from "@/hooks/useOptionalOrganization";
 import type { Database } from "@/integrations/supabase/types";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 
 interface EnhancedAddLeadDialogProps {
   open: boolean;

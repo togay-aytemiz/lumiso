@@ -85,12 +85,15 @@ const Tooltip = ({ delayDuration, disableHoverableContent, open: openProp, defau
     return () => window.clearTimeout(timer)
   }, [isControlled, isTouch, onOpenChange, resolvedOpen])
 
-  const handleOpenChange = (next: boolean) => {
-    if (!isControlled) {
-      setOpenState(next)
-    }
-    onOpenChange?.(next)
-  }
+  const handleOpenChange = React.useCallback(
+    (next: boolean) => {
+      if (!isControlled) {
+        setOpenState(next)
+      }
+      onOpenChange?.(next)
+    },
+    [isControlled, onOpenChange]
+  )
 
   const contextValue = React.useMemo(
     () => ({

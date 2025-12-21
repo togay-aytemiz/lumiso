@@ -5,7 +5,7 @@ import { EntityFilters } from "@/legacy/components/common/EntityFilters";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { LeadService, LeadWithCustomFields } from "@/services/LeadService";
 import { useEntityData } from "@/hooks/useEntityData";
 import { useLeadTableColumns } from "@/hooks/useLeadTableColumns";

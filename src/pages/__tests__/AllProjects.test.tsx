@@ -4,7 +4,7 @@ import AllProjects from "../AllProjects";
 import { toast } from "@/hooks/use-toast";
 import { useProjectsListFilters, useProjectsArchivedFilters } from "@/pages/projects/hooks/useProjectsFilters";
 import { useProjectsData } from "@/pages/projects/hooks/useProjectsData";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useConnectivity } from "@/contexts/useConnectivity";
 import { useProjectTypes, useProjectStatuses, useServices } from "@/hooks/useOrganizationData";
@@ -158,7 +158,7 @@ jest.mock("@/pages/projects/hooks/useProjectsData", () => ({
   useProjectsData: jest.fn(),
 }));
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
 }));
 

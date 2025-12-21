@@ -6,7 +6,7 @@ import { useLeadDetailData } from "@/hooks/useLeadDetailData";
 import { toast } from "@/hooks/use-toast";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useSessionActions } from "@/hooks/useSessionActions";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 
@@ -24,7 +24,7 @@ jest.mock("@/hooks/useOrganizationQuickSettings", () => ({
 jest.mock("@/hooks/useLeadStatusActions", () => ({
   useLeadStatusActions: jest.fn(),
 }));
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
 }));
 jest.mock("@/hooks/useSessionActions", () => ({

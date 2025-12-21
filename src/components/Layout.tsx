@@ -5,7 +5,7 @@ import { OnboardingModal } from "@/components/OnboardingModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
 import { useLayoutEffect, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import OfflineBanner from "@/components/OfflineBanner";
 import RoutePrefetcher from "@/components/RoutePrefetcher";
 import { useIsMobile } from "@/hooks/use-mobile";

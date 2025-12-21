@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/components/SelectionTemplateSection";
+import { deserializeSelectionTemplate, type SelectionTemplateRuleForm } from "@/lib/selectionTemplate";
 import { GalleryWatermarkOverlay } from "@/components/galleries/GalleryWatermarkOverlay";
 import { Lightbox } from "@/components/galleries/Lightbox";
 import { MobilePhotoSelectionSheet } from "@/components/galleries/MobilePhotoSelectionSheet";

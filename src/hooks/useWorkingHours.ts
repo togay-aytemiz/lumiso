@@ -46,7 +46,7 @@ export function useWorkingHours() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [t, toast]);
 
   const updateWorkingHour = async (dayOfWeek: number, updates: Partial<WorkingHour>) => {
     try {

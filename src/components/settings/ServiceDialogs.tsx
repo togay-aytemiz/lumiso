@@ -17,13 +17,13 @@ import { cn } from "@/lib/utils";
 import { useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 import { DEFAULT_ORGANIZATION_TAX_PROFILE } from "@/lib/organizationSettingsCache";
 import { DEFAULT_CATEGORIES, DEFAULT_CATEGORY_DEFINITIONS, ServiceType } from "@/constants/serviceCategories";
+import { SelectionTemplateSection } from "@/components/SelectionTemplateSection";
 import {
-  SelectionTemplateSection,
-  type SelectionTemplateRuleForm,
   createRuleId,
   deserializeSelectionTemplate,
   normalizeSelectionTemplate,
-} from "@/components/SelectionTemplateSection";
+  type SelectionTemplateRuleForm,
+} from "@/lib/selectionTemplate";
 
 interface ServiceFormState {
   name: string;

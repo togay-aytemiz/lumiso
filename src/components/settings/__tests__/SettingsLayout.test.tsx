@@ -38,7 +38,7 @@ jest.mock("@/contexts/SettingsContext", () => ({
   useSettingsContext: () => useSettingsContextMock(),
 }));
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: () => useOnboardingMock(),
 }));
 

@@ -33,7 +33,7 @@ import {
   TutorialStep,
 } from "@/components/shared/OnboardingTutorial";
 import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
 import { useTranslation } from "react-i18next";

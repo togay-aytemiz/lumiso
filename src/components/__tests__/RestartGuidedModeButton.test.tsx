@@ -2,7 +2,7 @@ import userEvent from "@testing-library/user-event";
 import { render, screen, waitFor } from "@/utils/testUtils";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { useNavigate } from "react-router-dom";
 
@@ -10,7 +10,7 @@ jest.mock("@/contexts/AuthContext", () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
 }));
 

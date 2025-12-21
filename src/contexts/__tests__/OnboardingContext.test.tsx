@@ -1,5 +1,6 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { OnboardingProvider, useOnboarding } from "../OnboardingContext";
+import { OnboardingProvider } from "../OnboardingContext";
+import { useOnboarding } from "../useOnboarding";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { ONBOARDING_STEPS, TOTAL_STEPS } from "@/constants/onboarding";
 import type { ReactNode } from "react";

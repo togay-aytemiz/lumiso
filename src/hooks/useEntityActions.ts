@@ -65,7 +65,7 @@ export function useEntityActions() {
 
       return null;
     }
-  }, []);
+  }, [t]);
 
   const getActionState = useCallback((actionName: string): EntityActionState => {
     return actionStates[actionName] || { loading: false, error: null };

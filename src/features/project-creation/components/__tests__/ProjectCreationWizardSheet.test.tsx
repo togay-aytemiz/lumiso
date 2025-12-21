@@ -19,7 +19,7 @@ jest.mock("@/components/ui/use-toast", () => ({
   useToast: () => ({ toast: jest.fn() }),
 }));
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: () => ({
     currentStep: "project-wizard",
     shouldLockNavigation: false,

@@ -978,6 +978,7 @@ export function useLeadsFilters({
     getAppliedValueForField,
     handleCheckboxChange,
     handleManualApply,
+    handleInactiveToggle,
     handleSelectSingleChange,
     handleSelectToggle,
     handleStatusClear,

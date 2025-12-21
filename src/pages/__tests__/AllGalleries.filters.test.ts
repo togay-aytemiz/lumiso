@@ -1,6 +1,4 @@
-import { filterGalleriesByView } from "../AllGalleries";
-
-type GalleryListItem = Parameters<typeof filterGalleriesByView>[0][number];
+import { filterGalleriesByView, type GalleryListItem } from "@/lib/galleryFilters";
 
 const createGallery = (overrides: Partial<GalleryListItem> = {}): GalleryListItem => ({
   id: "gallery-1",

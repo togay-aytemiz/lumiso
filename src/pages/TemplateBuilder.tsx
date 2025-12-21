@@ -230,7 +230,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
         lastAutoSavedVersionRef.current = dirtyVersionRef.current;
       }
     }
-  }, [template, saveTemplate, templateName, subject, preheader, blocks, navigate]);
+  }, [template, saveTemplate, templateName, subject, preheader, blocks, navigate, isUntitledTemplate]);
 
   const handleAutoSave = useCallback(async () => {
     if (savingRef.current) return;
@@ -261,8 +261,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     blocks,
     isDraft,
     template?.category,
-    templateId,
-    navigate,
   ]);
 
   useEffect(() => {
@@ -331,7 +329,17 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
         navigate(`/template-builder?id=${publishedTemplate.id}`, { replace: true });
       }
     }
-  }, [templateName, subject, preheader, blocks, template?.category, publishTemplate, templateId, navigate]);
+  }, [
+    templateName,
+    subject,
+    preheader,
+    blocks,
+    template?.category,
+    publishTemplate,
+    templateId,
+    navigate,
+    isUntitledTemplate,
+  ]);
 
   const handleOpenHelp = useCallback(() => {
     setHelpModalOpen(true);

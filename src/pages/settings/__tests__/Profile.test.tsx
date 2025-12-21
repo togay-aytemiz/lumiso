@@ -12,7 +12,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useToast } from "@/hooks/use-toast";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useOrganization } from "@/contexts/OrganizationContext";
 
 const mockHeader = jest.fn();
@@ -189,7 +189,7 @@ jest.mock("@/hooks/useSettingsCategorySection", () => ({
 jest.mock("@/hooks/use-toast", () => ({
   useToast: jest.fn(),
 }));
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
 }));
 jest.mock("@/contexts/OrganizationContext", () => ({

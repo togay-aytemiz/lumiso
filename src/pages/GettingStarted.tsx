@@ -10,7 +10,7 @@ import { GuidedStepProgress } from "@/components/GuidedStepProgress";
 import { HelpModal } from "@/components/modals/HelpModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useTranslation } from "react-i18next";
 import { ONBOARDING_STEPS } from "@/constants/onboarding";
 import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";

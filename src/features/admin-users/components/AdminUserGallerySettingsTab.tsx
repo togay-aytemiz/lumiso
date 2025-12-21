@@ -231,7 +231,7 @@ export function AdminUserGallerySettingsTab({ organizationId, limitBytes, onSave
     },
   });
 
-  const galleries = galleriesQuery.data ?? [];
+  const galleries = useMemo(() => galleriesQuery.data ?? [], [galleriesQuery.data]);
   const orgUsedBytes = useMemo(
     () => galleries.reduce((sum, row) => sum + (Number.isFinite(row.galleryBytes) ? row.galleryBytes : 0), 0),
     [galleries]

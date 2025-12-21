@@ -30,13 +30,13 @@ import { Lightbox } from "@/components/galleries/Lightbox";
 import { GalleryShareSheet } from "@/components/galleries/GalleryShareSheet";
 import { SelectionExportSheet } from "@/components/galleries/SelectionExportSheet";
 import { GalleryStatusChip } from "@/components/galleries/GalleryStatusChip";
+import { SelectionTemplateSection } from "@/components/SelectionTemplateSection";
 import {
-  SelectionTemplateSection,
-  type SelectionTemplateRuleForm,
   createEmptyRule,
   deserializeSelectionTemplate,
   normalizeSelectionTemplate,
-} from "@/components/SelectionTemplateSection";
+  type SelectionTemplateRuleForm,
+} from "@/lib/selectionTemplate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -881,7 +881,7 @@ export default function GalleryDetail() {
     };
     setBaseline(nextBaseline);
     baselineRef.current = nextBaseline;
-  }, [data, parseSelectionTemplateGroups]);
+  }, [data, hasGallerySettingsUnsavedChanges, parseSelectionTemplateGroups]);
 
   useLayoutEffect(() => {
     if (galleryAssetsSyncTimerRef.current) {

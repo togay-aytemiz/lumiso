@@ -20,13 +20,13 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { LucideIcon } from "lucide-react";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { SelectionTemplateSection } from "@/components/SelectionTemplateSection";
 import {
-  SelectionTemplateSection,
-  type SelectionTemplateRuleForm,
   createEmptyRule,
   deserializeSelectionTemplate,
   normalizeSelectionTemplate,
-} from "@/components/SelectionTemplateSection";
+  type SelectionTemplateRuleForm,
+} from "@/lib/selectionTemplate";
 import {
   Plus,
   Image as ImageIcon,
@@ -431,7 +431,7 @@ export default function SessionGallery({
     },
   });
 
-  const galleries = data ?? [];
+  const galleries = useMemo(() => data ?? [], [data]);
   const hasGalleries = galleries.length > 0;
   const galleryIds = useMemo(() => galleries.map((gallery) => gallery.id), [galleries]);
 

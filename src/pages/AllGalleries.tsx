@@ -49,6 +49,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { GalleryStatusChip, type GalleryStatus } from "@/components/galleries/GalleryStatusChip";
 import { cn, formatBytes, formatDate } from "@/lib/utils";
 import { countSelectionsByParts, countUniqueSelectedAssets, normalizeSelectionPartKey } from "@/lib/gallerySelections";
+import {
+  filterGalleriesByView,
+  isFinalGalleryType,
+  isSelectionGalleryType,
+  type GalleryFilterOptions,
+  type GalleryListItem,
+  type GalleryTypeFilter,
+  type StatusFilter,
+} from "@/lib/galleryFilters";
 import { SelectionExportSheet, type SelectionExportPhoto, type SelectionExportRule } from "@/components/galleries/SelectionExportSheet";
 import { FAVORITES_FILTER_ID } from "@/components/galleries/SelectionDashboard";
 import { GALLERY_ASSETS_BUCKET } from "@/lib/galleryAssets";
@@ -125,38 +134,6 @@ interface DownloadEventRow {
   downloaded_at: string;
 }
 
-interface GalleryListItem {
-  id: string;
-  title: string;
-  status: GalleryStatus;
-  type: string;
-  updatedAt: string;
-  eventDate: string | null;
-  expiresAt: string | null;
-  session: SessionRow | null;
-  project: ProjectRow | null;
-  selectionNote: string | null;
-  isLocked: boolean;
-  lockedAt: string | null;
-  selectionCount: number;
-  requiredCount: number;
-  sizeBytes?: number | null;
-  downloadedAt: string | null;
-  coverUrl: string;
-  exportPhotos: SelectionExportPhoto[];
-  exportRules: SelectionExportRule[];
-  previousStatus: GalleryStatus | null;
-  totalAssetCount: number;
-}
-
-type GalleryTypeFilter = "all" | "selection" | "final";
-type StatusFilter = "active" | "pending" | "approved" | "archived";
-type GalleryFilterOptions = {
-  typeFilter: GalleryTypeFilter;
-  statusFilter: StatusFilter;
-  searchTerm: string;
-};
-
 type GalleryQueryResult = GalleryRow & {
   sessions?: SessionRow | SessionRow[] | null;
   projects?: ProjectRow | ProjectRow[] | null;
@@ -164,8 +141,6 @@ type GalleryQueryResult = GalleryRow & {
 };
 
 const COVER_SIGNED_URL_TTL_SECONDS = 60 * 60;
-const isSelectionGalleryType = (value: string) => value === "proof";
-const isFinalGalleryType = (value: string) => value === "final";
 
 const normalizeSelectionRules = (branding?: Record<string, unknown> | null) => {
   const template = branding?.["selectionTemplate"];
@@ -446,53 +421,6 @@ const useGalleryList = () => {
     },
     staleTime: 60_000,
   });
-};
-
-export const filterGalleriesByView = (
-  galleries: GalleryListItem[],
-  { typeFilter, statusFilter, searchTerm }: GalleryFilterOptions
-) => {
-  const matchesType = (gallery: GalleryListItem) => {
-    if (typeFilter === "selection") return isSelectionGalleryType(gallery.type);
-    if (typeFilter === "final") return isFinalGalleryType(gallery.type);
-    return true;
-  };
-
-  const matchesStatus = (gallery: GalleryListItem) => {
-    switch (statusFilter) {
-      case "archived":
-        return gallery.status === "archived";
-      case "approved":
-        return (
-          typeFilter === "selection" &&
-          gallery.status !== "archived" &&
-          (gallery.isLocked || gallery.status === "approved")
-        );
-      case "pending":
-        return (
-          typeFilter === "selection" &&
-          gallery.status !== "archived" &&
-          gallery.status === "published" &&
-          !gallery.isLocked
-        );
-      case "active":
-      default:
-        return gallery.status !== "archived";
-    }
-  };
-
-  const matchesSearch = (gallery: GalleryListItem) => {
-    if (!searchTerm.trim()) return true;
-    const needle = searchTerm.toLowerCase();
-    return (
-      gallery.title.toLowerCase().includes(needle) ||
-      (gallery.session?.session_name?.toLowerCase().includes(needle) ?? false) ||
-      (gallery.project?.name?.toLowerCase().includes(needle) ?? false) ||
-      (gallery.session?.lead?.name?.toLowerCase().includes(needle) ?? false)
-    );
-  };
-
-  return galleries.filter((gallery) => matchesType(gallery) && matchesStatus(gallery) && matchesSearch(gallery));
 };
 
 const formatRelativeTime = (value: string | null, locale: Locale) => {
@@ -1130,7 +1058,7 @@ export default function AllGalleries() {
     }
 
     return [...baseColumns, summaryColumn, lastActionColumn, sizeAndTimeColumn, actionsColumn];
-  }, [i18n.language, isGallerySizeLoading, locale, navigate, t, typeFilter]);
+  }, [i18n.language, isGallerySizeLoading, locale, navigate, t, typeFilter, unarchiveGalleryMutation]);
 
   const galleryCountLabel = useMemo(
     () => numberFormatter.format(filtered.length),

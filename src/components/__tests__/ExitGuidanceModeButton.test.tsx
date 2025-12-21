@@ -2,14 +2,14 @@ import userEvent from "@testing-library/user-event";
 import { render, screen, waitFor } from "@/utils/testUtils";
 import { ExitGuidanceModeButton } from "@/components/ExitGuidanceModeButton";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useI18nToast } from "@/lib/toastHelpers";
 
 jest.mock("@/contexts/AuthContext", () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
 }));
 

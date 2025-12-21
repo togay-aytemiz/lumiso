@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { OnboardingModal } from "../OnboardingModal";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { toast } from "@/hooks/use-toast";
 import type { ReactNode } from "react";
@@ -39,7 +39,7 @@ jest.mock("@/contexts/AuthContext", () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
 }));
 

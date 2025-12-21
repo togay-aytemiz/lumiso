@@ -21,7 +21,7 @@ import {
   Shield,
 } from "lucide-react";
 import logo from "@/assets/Logo.png";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import {
   Sidebar,
   SidebarContent,

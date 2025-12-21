@@ -28,7 +28,10 @@ export const BasicsStep = () => {
   const { data: projectTypes = [], isLoading, error, refetch } = useProjectTypes();
   const { settings, loading: settingsLoading } = useOrganizationSettings();
   const taxProfile = settings?.taxProfile ?? null;
-  const preferredProjectTypeSlugs = settings?.preferred_project_types ?? [];
+  const preferredProjectTypeSlugs = useMemo(
+    () => settings?.preferred_project_types ?? [],
+    [settings?.preferred_project_types]
+  );
 
   const preferredProjectTypeKeys = useMemo(
     () =>

@@ -91,7 +91,7 @@ export function useLeadsWithCustomFields() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [t, toast]);
 
   useEffect(() => {
     void fetchLeadsWithCustomFields();

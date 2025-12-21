@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -180,39 +180,41 @@ export function ProfileIntakeGate({
   const { toast } = useToast();
   const { t, i18n } = useTranslation(["pages", "common"]);
 
-  const buildPlaceholders = (key: "displayName" | "businessName") => {
-    const base = t(`pages:profileIntake.${key}.placeholder`, {
-      defaultValue: "",
-    });
-    const variants = t(`pages:profileIntake.${key}.placeholderVariants`, {
-      returnObjects: true,
-      defaultValue: [],
-    }) as unknown;
-    const list = Array.isArray(variants)
-      ? variants.filter(
-          (item): item is string => typeof item === "string" && item.trim()
-        )
-      : [];
-    const unique: string[] = [];
-    const addUnique = (value?: string) => {
-      if (!value) return;
-      if (!unique.includes(value)) {
-        unique.push(value);
-      }
-    };
-    addUnique(base);
-    list.forEach((entry) => addUnique(entry.trim()));
-    return unique.length > 0 ? unique : [base].filter(Boolean);
-  };
+  const buildPlaceholders = useCallback(
+    (key: "displayName" | "businessName") => {
+      const base = t(`pages:profileIntake.${key}.placeholder`, {
+        defaultValue: "",
+      });
+      const variants = t(`pages:profileIntake.${key}.placeholderVariants`, {
+        returnObjects: true,
+        defaultValue: [],
+      }) as unknown;
+      const list = Array.isArray(variants)
+        ? variants.filter(
+            (item): item is string => typeof item === "string" && item.trim()
+          )
+        : [];
+      const unique: string[] = [];
+      const addUnique = (value?: string) => {
+        if (!value) return;
+        if (!unique.includes(value)) {
+          unique.push(value);
+        }
+      };
+      addUnique(base);
+      list.forEach((entry) => addUnique(entry.trim()));
+      return unique.length > 0 ? unique : [base].filter(Boolean);
+    },
+    [t]
+  );
 
   const displayNamePlaceholders = useMemo(
     () => buildPlaceholders("displayName"),
-    // Recompute on language change so variants stay localized
-    [t, i18n.language]
+    [buildPlaceholders]
   );
   const businessNamePlaceholders = useMemo(
     () => buildPlaceholders("businessName"),
-    [t, i18n.language]
+    [buildPlaceholders]
   );
   const animatedDisplayPlaceholder = useTypewriterPlaceholder(
     displayNamePlaceholders

@@ -101,7 +101,7 @@ export const useProjectSheetController = (
         setLoadingProjectId(null);
       }
     },
-    [loadingProjectId, resolveLeadDetails]
+    [loadingProjectId, resolveLeadDetails, t]
   );
 
   const onProjectSheetOpenChange = useCallback((nextOpen: boolean) => {

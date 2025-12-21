@@ -23,7 +23,7 @@ import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { trimAndNormalizeSpaces, createTrimmedBlurHandler } from "@/lib/inputUtils";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { OnboardingChecklistItem } from "@/components/shared/OnboardingChecklistItem";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useTranslation } from "react-i18next";
 import { useSettingsFileUploader } from "@/hooks/useSettingsFileUploader";
 

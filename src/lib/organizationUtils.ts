@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Cache for organization ID to reduce database calls
 let cachedOrganizationId: string | null = null;
+let cachedOrganizationUserId: string | null = null;
 let cacheExpiry: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const DEFAULT_TRIAL_DAYS = 14;
@@ -84,6 +85,13 @@ const clearOrgIdStorage = (userId?: string) => {
   } catch {
     // Best-effort only
   }
+};
+
+const resetOrganizationCache = () => {
+  cachedOrganizationId = null;
+  cachedOrganizationUserId = null;
+  cacheExpiry = 0;
+  lastMembershipVerified = 0;
 };
 
 const handleMembershipTableError = (error: unknown) => {
@@ -190,21 +198,6 @@ export async function getUserOrganizationId(): Promise<string | null> {
 
 async function getUserOrganizationIdInternal(): Promise<string | null> {
   try {
-    // Fast path: return cached value immediately without any DB calls
-    if (cachedOrganizationId && Date.now() < cacheExpiry) {
-      // Only verify membership periodically, not on every call
-      if (Date.now() - lastMembershipVerified > MEMBERSHIP_VERIFY_INTERVAL) {
-        // Fire and forget - don't block on this
-        const { data: authData } = await supabase.auth.getUser();
-        if (authData?.user) {
-          ensureOwnerMembership(authData.user.id, cachedOrganizationId).then(() => {
-            lastMembershipVerified = Date.now();
-          });
-        }
-      }
-      return cachedOrganizationId;
-    }
-
     const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError) {
       console.error("Error fetching authenticated user:", authError);
@@ -218,9 +211,27 @@ async function getUserOrganizationIdInternal(): Promise<string | null> {
       return null;
     }
 
+    // Fast path: return cached value once we confirm the current user
+    if (cachedOrganizationId && Date.now() < cacheExpiry) {
+      if (cachedOrganizationUserId && cachedOrganizationUserId !== user.id) {
+        resetOrganizationCache();
+      } else {
+        cachedOrganizationUserId = user.id;
+        // Only verify membership periodically, not on every call
+        if (Date.now() - lastMembershipVerified > MEMBERSHIP_VERIFY_INTERVAL) {
+          // Fire and forget - don't block on this
+          ensureOwnerMembership(user.id, cachedOrganizationId).then(() => {
+            lastMembershipVerified = Date.now();
+          });
+        }
+        return cachedOrganizationId;
+      }
+    }
+
     const storedOrgId = readOrgIdFromStorage(user.id);
     if (storedOrgId) {
       cachedOrganizationId = storedOrgId;
+      cachedOrganizationUserId = user.id;
       cacheExpiry = Date.now() + CACHE_DURATION;
       if (Date.now() - lastMembershipVerified > MEMBERSHIP_VERIFY_INTERVAL) {
         ensureOwnerMembership(user.id, storedOrgId).then(() => {
@@ -241,6 +252,7 @@ async function getUserOrganizationIdInternal(): Promise<string | null> {
     if (!orgError && organization?.id) {
       await ensureOwnerMembership(user.id, organization.id);
       cachedOrganizationId = organization.id;
+      cachedOrganizationUserId = user.id;
       cacheExpiry = Date.now() + CACHE_DURATION;
       writeOrgIdToStorage(user.id, organization.id);
       console.log('Found organization ID for single user:', cachedOrganizationId);
@@ -320,6 +332,7 @@ async function getUserOrganizationIdInternal(): Promise<string | null> {
 
         await ensureOwnerMembership(user.id, newOrg.id);
         cachedOrganizationId = newOrg.id;
+        cachedOrganizationUserId = user.id;
         cacheExpiry = Date.now() + CACHE_DURATION;
         writeOrgIdToStorage(user.id, newOrg.id);
         return newOrg.id;
@@ -335,9 +348,7 @@ async function getUserOrganizationIdInternal(): Promise<string | null> {
 }
 
 export function clearOrganizationCache() {
-  cachedOrganizationId = null;
-  cacheExpiry = 0;
-  lastMembershipVerified = 0;
+  resetOrganizationCache();
   membershipTableUnavailable = false;
   inflightRequest = null;
   clearOrgIdStorage();

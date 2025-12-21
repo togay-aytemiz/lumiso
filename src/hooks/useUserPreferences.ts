@@ -1,8 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { OnboardingStage } from "@/constants/onboarding";
+import type { Database } from "@/integrations/supabase/types";
 
 export interface UserPreferences {
   // User Settings
@@ -37,6 +39,8 @@ export interface UserPreferences {
   // Timestamps
   lastUpdated: string;
 }
+
+type UserSettingsRow = Database["public"]["Tables"]["user_settings"]["Row"];
 
 const PREFERENCES_CACHE_KEY = "user-preferences";
 const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours in ms
@@ -92,8 +96,8 @@ async function fetchUserPreferences(userId: string): Promise<UserPreferences> {
       updated_at
     `;
 
-  let data: any;
-  let error: any;
+  let data: UserSettingsRow | null = null;
+  let error: PostgrestError | null = null;
 
   ({ data, error } = await supabase
     .from('user_settings')

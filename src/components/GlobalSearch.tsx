@@ -43,6 +43,7 @@ interface SearchResult {
   customFieldKey?: string;
   customFieldValue?: string | null;
   status: string;
+  createdAt?: string | null;
   icon: React.ReactNode;
 }
 
@@ -53,6 +54,7 @@ interface Lead {
   phone?: string;
   status: string;
   status_id: string | null;
+  created_at?: string | null;
 }
 
 type CustomFieldMatch = LeadFieldValueRow & {
@@ -357,7 +359,6 @@ const GlobalSearch = ({
           matchedContent: "", // No matched content for recent items
           status: lead.status,
           icon: <User className="h-4 w-4" />,
-          // @ts-ignore - adding created_at for sorting locally if needed
           createdAt: lead.created_at,
         }));
 
@@ -375,15 +376,15 @@ const GlobalSearch = ({
             matchedContent: project.description || "",
             status: lead?.status || "unknown",
             icon: <FolderOpen className="h-4 w-4" />,
-            // @ts-ignore
             createdAt: project.created_at,
           };
         });
 
         // Combine and sort by created_at desc
         const combined = [...formattedLeads, ...formattedProjects].sort((a, b) => {
-          // @ts-ignore
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          return bTime - aTime;
         });
 
         setRecentItems(combined.slice(0, 5));

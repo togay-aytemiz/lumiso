@@ -24,6 +24,17 @@ type SupabaseQueryResult<T> = {
   error: { message: string } | Error | null;
 };
 
+type SupabaseQueryBuilder = {
+  select: (columns: string) => SupabaseQueryBuilder;
+  eq: (column: string, value: unknown) => SupabaseQueryBuilder;
+  delete: () => SupabaseQueryBuilder;
+  maybeSingle: <T>() => Promise<SupabaseQueryResult<T>>;
+  single: <T>() => Promise<SupabaseQueryResult<T>>;
+  then: <T, TResult = SupabaseQueryResult<T>>(
+    onfulfilled: (value: SupabaseQueryResult<T>) => TResult | PromiseLike<TResult>,
+  ) => Promise<TResult>;
+};
+
 type GalleryRow = { id: string; title: string; session_id: string | null };
 type SessionRow = { organization_id: string | null };
 type UserRoleRow = { id: string };
@@ -31,11 +42,11 @@ type GalleryAssetRow = { storage_path_web: string | null; storage_path_original:
 
 type StorageListItem = { name: string };
 
-interface SupabaseAdminLike {
+export interface SupabaseAdminLike {
   auth: {
     getUser: (jwt: string) => Promise<SupabaseAuthResult>;
   };
-  from: (table: string) => any;
+  from: (table: string) => SupabaseQueryBuilder;
   storage: {
     from: (
       bucketId: string,

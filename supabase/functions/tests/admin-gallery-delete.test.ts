@@ -1,5 +1,8 @@
 import { assertEquals } from "std/testing/asserts.ts";
-import { handler as adminGalleryDeleteHandler } from "../admin-gallery-delete/index.ts";
+import {
+  handler as adminGalleryDeleteHandler,
+  type SupabaseAdminLike,
+} from "../admin-gallery-delete/index.ts";
 
 async function readJson(response: Response) {
   const text = await response.text();
@@ -14,11 +17,16 @@ type MockOptions = {
   assets?: Array<{ web: string | null; original: string | null }>;
 };
 
-function createMockSupabase(options: MockOptions) {
+type SupabaseAdminMock = SupabaseAdminLike & {
+  __removeCalls: string[][];
+  __deleteCalls: Array<{ table: string; id: unknown }>;
+};
+
+function createMockSupabase(options: MockOptions): SupabaseAdminMock {
   const removeCalls: string[][] = [];
   const deleteCalls: Array<{ table: string; id: unknown }> = [];
 
-  const mock = {
+  const mock: SupabaseAdminMock = {
     auth: {
       async getUser(_jwt: string) {
         if (!options.userId) {
@@ -93,7 +101,7 @@ function createMockSupabase(options: MockOptions) {
           }
           return { data: null, error: null };
         },
-        then(onFulfilled: (value: any) => unknown) {
+        then<TResult>(onFulfilled: (value: { data: unknown; error: unknown }) => TResult) {
           if (table === "gallery_assets" && mode === "select") {
             const rows = (options.assets ?? []).map((asset) => ({
               storage_path_web: asset.web,
@@ -134,7 +142,7 @@ Deno.test("admin-gallery-delete returns 401 when authorization header is missing
         isAdmin: true,
         gallery: { id: "gallery-1", title: "Gallery", sessionId: "session-1" },
         organizationId: "org-1",
-      }) as any,
+      }),
   });
 
   assertEquals(response.status, 401);
@@ -156,7 +164,7 @@ Deno.test("admin-gallery-delete returns 403 when user is not admin", async () =>
         isAdmin: false,
         gallery: { id: "gallery-1", title: "Gallery", sessionId: "session-1" },
         organizationId: "org-1",
-      }) as any,
+      }),
   });
 
   assertEquals(response.status, 403);
@@ -178,7 +186,7 @@ Deno.test("admin-gallery-delete returns 400 when confirm title is provided but d
         isAdmin: true,
         gallery: { id: "gallery-1", title: "Gallery", sessionId: "session-1" },
         organizationId: "org-1",
-      }) as any,
+      }),
   });
 
   assertEquals(response.status, 400);
@@ -205,7 +213,7 @@ Deno.test("admin-gallery-delete removes storage paths and deletes gallery", asyn
   });
 
   const response = await adminGalleryDeleteHandler(request, {
-    createClient: () => mockSupabase as any,
+    createClient: () => mockSupabase,
   });
 
   assertEquals(response.status, 200);

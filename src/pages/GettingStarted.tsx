@@ -68,6 +68,13 @@ const OnboardingUserMenu = ({ variant }: OnboardingUserMenuProps) => {
   const { isTrial, daysLeft } = useOrganizationTrialStatus();
   const navigate = useNavigate();
 
+  const trialLabel = useMemo(() => {
+    if (!isTrial) return null;
+    if (daysLeft == null) return tNavigation("trialIndicator.expired", { defaultValue: "Deneme süresi doldu" });
+    if (daysLeft === 0) return tNavigation("trialIndicator.endsToday", { defaultValue: "Deneme bugün bitiyor" });
+    return tNavigation("trialIndicator.daysLeft", { count: daysLeft, defaultValue: "{{count}} gün kaldı" });
+  }, [daysLeft, isTrial, tNavigation]);
+
   if (!user) return null;
 
   const displayName =
@@ -88,13 +95,6 @@ const OnboardingUserMenu = ({ variant }: OnboardingUserMenuProps) => {
     }
     return "U";
   })();
-
-  const trialLabel = useMemo(() => {
-    if (!isTrial) return null;
-    if (daysLeft == null) return tNavigation("trialIndicator.expired", { defaultValue: "Deneme süresi doldu" });
-    if (daysLeft === 0) return tNavigation("trialIndicator.endsToday", { defaultValue: "Deneme bugün bitiyor" });
-    return tNavigation("trialIndicator.daysLeft", { count: daysLeft, defaultValue: "{{count}} gün kaldı" });
-  }, [daysLeft, isTrial, tNavigation]);
 
   const handleSignOut = async () => {
     try {

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-type GenericSupabaseClient = SupabaseClient<any, any, any>;
+type GenericSupabaseClient = SupabaseClient;
 
 type OrganizationRow = {
   id: string;

@@ -69,7 +69,8 @@ beforeEach(() => {
 
     expect(onSave).toHaveBeenCalledWith({ enabled: true, days: 3 });
     expect(toastMock).toHaveBeenCalledWith({
-      title: "Saved Notifications",
+      title: "Settings saved",
+      description: "Saved Notifications settings",
       duration: 3000,
     });
     expect(result.current.isDirty).toBe(false);
@@ -83,7 +84,7 @@ beforeEach(() => {
 
     expect(toastMock).toHaveBeenCalledWith({
       title: "Error",
-      description: "Failed to save Notifications. Please try again.",
+      description: "save failed",
       variant: "destructive",
       duration: 5000,
     });
@@ -114,7 +115,8 @@ beforeEach(() => {
 
     expect(onSave).toHaveBeenCalledWith({ enabled: true });
     expect(toastMock).toHaveBeenCalledWith({
-      title: "Updated AutoSave",
+      title: "Changes updated",
+      description: "AutoSave updated",
       duration: 2000,
     });
     expect(result.current.showSuccess).toBe(true);

@@ -74,11 +74,7 @@ describe("GalleryDetailSettings", () => {
               onOpenOrganizationBranding: jest.fn(),
             }}
             privacy={{
-              settings: { passwordEnabled: false },
-              onSettingsChange: jest.fn(),
-              passwordDraft: "",
-              onPasswordDraftChange: jest.fn(),
-              onGeneratePassword: jest.fn(),
+              pin: "",
             }}
             saveBar={{
               show: false,
@@ -133,11 +129,7 @@ describe("GalleryDetailSettings", () => {
             onOpenOrganizationBranding: jest.fn(),
           }}
           privacy={{
-            settings: { passwordEnabled: false },
-            onSettingsChange: jest.fn(),
-            passwordDraft: "",
-            onPasswordDraftChange: jest.fn(),
-            onGeneratePassword: jest.fn(),
+            pin: "",
           }}
           saveBar={{
             show: false,
@@ -196,11 +188,7 @@ describe("GalleryDetailSettings", () => {
             onOpenOrganizationBranding: jest.fn(),
           }}
           privacy={{
-            settings: { passwordEnabled: false },
-            onSettingsChange: jest.fn(),
-            passwordDraft: "",
-            onPasswordDraftChange: jest.fn(),
-            onGeneratePassword: jest.fn(),
+            pin: "",
           }}
           saveBar={{
             show: false,

@@ -21,6 +21,7 @@ jest.mock("@/contexts/OrganizationContext", () => ({
 jest.mock("@/hooks/useOrganizationData", () => ({
   useProjectTypes: () => ({ data: [{ id: "wedding", name: "Wedding" }] }),
   usePackageDeliveryMethods: () => ({ data: [] }),
+  useOrganizationTaxProfile: () => ({ data: { vatExempt: false } }),
 }));
 
 type DeepPartial<T> = {

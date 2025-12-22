@@ -27,6 +27,32 @@ jest.mock("@/components/ProjectSheetView", () => ({
   ProjectSheetView: () => <div data-testid="project-sheet-view" />,
 }));
 
+const translationMap: Record<string, string> = {
+  "activitiesHistory.historyMessages.projectCreated": 'Project "{{name}}" created',
+  "activitiesHistory.historyMessages.sessionCreated": 'Session "{{name}}" created',
+  "activityLogs.lead_created": "Lead created",
+  "success.saved": "Saved successfully",
+  "activity.note": "Note",
+  "activity.added_to_lead": "added to the lead successfully",
+  "reminders.markCompleteSuccessTitle": "Reminder marked as completed",
+  "reminders.statusUpdateDescription": "Reminder status updated successfully.",
+};
+
+const interpolateTranslation = (
+  template: string,
+  options?: Record<string, unknown>
+) => {
+  if (!options) {
+    return template;
+  }
+
+  return template.replace(/{{(\w+)}}/g, (_match, key) =>
+    Object.prototype.hasOwnProperty.call(options, key)
+      ? String(options[key])
+      : ""
+  );
+};
+
 type ActivityFormProps = {
   onSubmit: (content: string, isReminder: boolean) => void;
 };
@@ -124,7 +150,13 @@ describe("LeadActivitySection", () => {
     toastMock.mockReset();
 
     mockUseFormsTranslation.mockReturnValue({
-      t: (key: string) => key,
+      t: (key: string, options?: Record<string, unknown>) => {
+        const template = translationMap[key];
+        if (!template) {
+          return key;
+        }
+        return interpolateTranslation(template, options);
+      },
     });
     mockGetUserOrganizationId.mockResolvedValue("org-123");
     supabaseAuthGetUserMock.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
@@ -327,7 +359,7 @@ describe("LeadActivitySection", () => {
     fireEvent.click(screen.getByTestId("segment-history"));
 
     await waitFor(() => {
-      expect(screen.getByText("activityLogs.lead_created")).toBeInTheDocument();
+      expect(screen.getByText("Lead created")).toBeInTheDocument();
       expect(screen.getByText('Project "Project A" created')).toBeInTheDocument();
       expect(screen.getByText('Session "Kickoff" created')).toBeInTheDocument();
     });
@@ -356,8 +388,8 @@ describe("LeadActivitySection", () => {
     });
 
     expect(toastMock).toHaveBeenNthCalledWith(1, {
-      title: "Success",
-      description: "Note added successfully.",
+      title: "Saved successfully",
+      description: "Note added to the lead successfully.",
     });
 
     expect(onActivityUpdated).toHaveBeenCalledTimes(1);
@@ -371,8 +403,8 @@ describe("LeadActivitySection", () => {
     });
 
     expect(toastMock).toHaveBeenNthCalledWith(2, {
-      title: "Task marked as completed",
-      description: "Task status updated successfully.",
+      title: "Reminder marked as completed",
+      description: "Reminder status updated successfully.",
     });
 
     expect(onActivityUpdated).toHaveBeenCalledTimes(2);

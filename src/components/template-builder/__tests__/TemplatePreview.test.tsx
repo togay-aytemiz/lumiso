@@ -35,6 +35,16 @@ jest.mock("@/hooks/useOrganizationSettings", () => ({
   useOrganizationSettings: () => useOrganizationSettingsMock(),
 }));
 
+jest.mock("@/contexts/OrganizationContext", () => ({
+  useOrganization: () => ({
+    activeOrganization: { id: "org-1" },
+    activeOrganizationId: "org-1",
+    loading: false,
+    refreshOrganization: jest.fn(),
+    setActiveOrganization: jest.fn(),
+  }),
+}));
+
 jest.mock("@/lib/templateUtils", () => ({
   ...jest.requireActual("@/lib/templateUtils"),
   generatePlainText: (...args: unknown[]) => generatePlainTextMock(...args),
@@ -87,7 +97,10 @@ beforeEach(() => {
   invokeMock.mockReset().mockResolvedValue({ data: { ok: true }, error: null });
   clipboardWriteMock.mockClear();
   useOrganizationSettingsMock.mockReturnValue({ settings: null });
-  useAuthMock.mockReturnValue({ user: { email: "user@example.com" } });
+  useAuthMock.mockReturnValue({
+    user: { email: "user@example.com" },
+    session: { access_token: "token" },
+  });
   generatePlainTextMock.mockReturnValue("Plain text body");
 });
 

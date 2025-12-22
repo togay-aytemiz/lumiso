@@ -12,9 +12,38 @@ jest.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
+const translationMap: Record<string, string> = {
+  "templateBuilder.imageManager.storage.usage": "{{count}}/{{max}} images",
+  "templateBuilder.imageManager.storage.size": "{{used}}/{{limit}}",
+  "templateBuilder.imageManager.storage.manage": "Manage Images",
+  "templateBuilder.imageManager.storage.limitReached": "Limit Reached",
+  "templateBuilder.imageManager.storage.nearLimit": "Near Limit",
+};
+
+const interpolateTranslation = (
+  template: string,
+  options?: Record<string, unknown>
+) => {
+  if (!options) {
+    return template;
+  }
+
+  return template.replace(/{{(\w+)}}/g, (_match, key) =>
+    Object.prototype.hasOwnProperty.call(options, key)
+      ? String(options[key])
+      : ""
+  );
+};
+
 jest.mock("react-i18next", () => ({
   useTranslation: jest.fn(() => ({
-    t: (key: string) => key,
+    t: (key: string, options?: Record<string, unknown>) => {
+      const template = translationMap[key];
+      if (!template) {
+        return key;
+      }
+      return interpolateTranslation(template, options);
+    },
   })),
 }));
 

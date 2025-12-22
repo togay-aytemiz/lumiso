@@ -59,7 +59,7 @@ export function useEntityData<T>({
 
   useEffect(() => {
     fetchData();
-  }, [fetchData, dependencies]);
+  }, [fetchData, ...dependencies]);
 
   return {
     data,

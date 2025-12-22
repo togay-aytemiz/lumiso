@@ -18,10 +18,37 @@ interface ImageLibrarySheetMockProps {
 
 const imageLibraryCalls: ImageLibrarySheetMockProps[] = [];
 
+const translationMap: Record<string, string> = {
+  "templateBuilder.warnings.tooLong": "{{count}}/60 characters (too long)",
+  "templateBuilder.warnings.spamWords": "Spam words:",
+  "templateBuilder.warnings.moreSpamWords": "+{{count}} more",
+};
+
+const interpolateTranslation = (
+  template: string,
+  options?: Record<string, unknown>
+) => template.replace(/\{\{(\w+)\}\}/g, (_, key) => String(options?.[key] ?? ""));
+
 jest.mock("react-i18next", () => ({
   useTranslation: jest.fn(() => ({
-    t: (key: string) => key,
+    t: (key: string, options?: Record<string, unknown>) => {
+      const template = translationMap[key];
+      if (!template) {
+        return key;
+      }
+      return interpolateTranslation(template, options);
+    },
   })),
+}));
+
+jest.mock("@/contexts/OrganizationContext", () => ({
+  useOrganization: () => ({
+    activeOrganization: { id: "org-1" },
+    activeOrganizationId: "org-1",
+    loading: false,
+    refreshOrganization: jest.fn(),
+    setActiveOrganization: jest.fn(),
+  }),
 }));
 
 jest.mock("../BlockEditor", () => {
@@ -375,7 +402,6 @@ describe("OptimizedTemplateEditor", () => {
       <OptimizedTemplateEditor blocks={newBlocks} onBlocksChange={onBlocksChange} />
     );
 
-    fireEvent.click(screen.getByText("templateBuilder.blockTitles.image"));
     const openLibraryButton = await screen.findByRole("button", {
       name: "templateBuilder.blockEditor.image.openLibrary",
     });
@@ -428,7 +454,7 @@ describe("InlineSubjectEditor", () => {
     fireEvent.click(screen.getByTestId("emoji-picker"));
     expect((input as HTMLInputElement).value).toContain("😀");
 
-    fireEvent.click(screen.getByRole("button", { name: "{…}" }));
+    fireEvent.click(screen.getByRole("button", { name: /\{\u2026\}/ }));
     expect((input as HTMLInputElement).value).toContain("{variable}");
 
     fireEvent.keyDown(input, { key: "Escape" });
@@ -452,7 +478,7 @@ describe("InlinePreheaderEditor", () => {
     const input = screen.getByRole("textbox");
     fireEvent.change(input, { target: { value: "Updated content" } });
 
-    fireEvent.click(screen.getByRole("button", { name: "{…}" }));
+    fireEvent.click(screen.getByRole("button", { name: /\{\u2026\}/ }));
     expect(input).toHaveValue("Updated content{variable}");
 
     fireEvent.keyDown(input, { key: "Enter" });

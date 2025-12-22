@@ -9,6 +9,10 @@ jest.mock("@/components/UserMenu", () => ({
   UserMenu: () => <div data-testid="user-menu" />,
 }));
 
+jest.mock("@/components/AddAction", () => ({
+  AddAction: () => <button type="button">Add lead</button>,
+}));
+
 describe("PageHeader", () => {
   it("renders sticky header with title and layout components", () => {
     const { container } = render(

@@ -27,6 +27,30 @@ jest.mock("@/hooks/useLeadStatusActions", () => ({
 jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
 }));
+jest.mock("@/contexts/OrganizationContext", () => ({
+  useOrganization: jest.fn(() => ({
+    activeOrganizationId: "org-1",
+    activeOrganization: { id: "org-1" },
+    loading: false,
+    refreshOrganization: jest.fn(),
+    setActiveOrganization: jest.fn(),
+  })),
+}));
+jest.mock("@/components/ui/tooltip", () => ({
+  TooltipProvider: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  TooltipTrigger: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TooltipContent: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TooltipContentDark: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
 jest.mock("@/hooks/useSessionActions", () => ({
   useSessionActions: jest.fn(),
 }));
@@ -69,12 +93,12 @@ const commonTranslatorMock = createTranslator();
 
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useMessagesTranslation: () => ({ t: translatorMock }),
-  useFormsTranslation: () => ({ t: formsTranslatorMock }),
+  useFormsTranslation: () => ({ t: formsTranslatorMock, i18n: { language: "en" } }),
   useCommonTranslation: () => ({ t: commonTranslatorMock }),
 }));
 
 jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: createTranslator() }),
+  useTranslation: () => ({ t: createTranslator(), i18n: { language: "en" } }),
 }));
 
 jest.mock("react-router-dom", () => ({
@@ -174,7 +198,12 @@ type LeadDetailHookResponse = {
   summaryQuery: { refetch: jest.Mock<unknown, []> };
   latestLeadActivity: unknown;
   latestActivityQuery: { refetch: jest.Mock<unknown, []> };
-  leadStatuses: Array<{ id: string; name: string; is_system_final: boolean }>;
+  leadStatuses: Array<{
+    id: string;
+    name: string;
+    is_system_final: boolean;
+    lifecycle?: string | null;
+  }>;
   sessionMetrics: {
     todayCount: number;
     todayNext: unknown;
@@ -291,8 +320,18 @@ function createLeadDetailResponse(
     latestLeadActivity: null,
     latestActivityQuery: { refetch: jest.fn() },
     leadStatuses: [
-      { id: "status-completed", name: "Completed", is_system_final: true },
-      { id: "status-lost", name: "Lost", is_system_final: true },
+      {
+        id: "status-completed",
+        name: "Completed",
+        is_system_final: true,
+        lifecycle: "completed",
+      },
+      {
+        id: "status-lost",
+        name: "Lost",
+        is_system_final: true,
+        lifecycle: "cancelled",
+      },
     ],
     sessionMetrics: {
       todayCount: 0,

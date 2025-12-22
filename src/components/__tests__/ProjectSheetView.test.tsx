@@ -37,6 +37,46 @@ jest.mock("@/hooks/use-mobile", () => ({
   useIsMobile: jest.fn(),
 }));
 
+jest.mock("@/contexts/OrganizationContext", () => ({
+  useOrganization: jest.fn(() => ({
+    activeOrganizationId: "org-1",
+    activeOrganization: { id: "org-1" },
+    loading: false,
+    refreshOrganization: jest.fn(),
+    setActiveOrganization: jest.fn(),
+  })),
+}));
+
+jest.mock("@/features/project-creation", () => ({
+  ProjectCreationWizardSheet: ({ isOpen }: { isOpen?: boolean }) =>
+    isOpen ? <div data-testid="project-creation-wizard" /> : null,
+}));
+
+jest.mock("@/components/SessionSchedulingSheet", () => ({
+  SessionSchedulingSheet: () => (
+    <div data-testid="session-scheduling-sheet" />
+  ),
+}));
+
+jest.mock("@/components/ProjectPackageSummaryCard", () => ({
+  ProjectPackageSummaryCard: ({
+    onEditDetails,
+    onEditPackage,
+  }: {
+    onEditDetails?: () => void;
+    onEditPackage?: () => void;
+  }) => (
+    <div>
+      <button type="button" data-testid="edit-project-details" onClick={onEditDetails}>
+        edit-details
+      </button>
+      <button type="button" data-testid="edit-project-package" onClick={onEditPackage}>
+        edit-package
+      </button>
+    </div>
+  ),
+}));
+
 type WithChildren = { children?: ReactNode };
 
 interface ProjectStagePipelineMockProps {
@@ -183,6 +223,9 @@ jest.mock("@/components/ui/dropdown-menu", () => ({
 jest.mock("@/components/ui/sheet", () => ({
   Sheet: ({ children }: WithChildren) => <div data-testid="sheet">{children}</div>,
   SheetContent: ({ children }: WithChildren) => <div>{children}</div>,
+  SheetHeader: ({ children }: WithChildren) => <div>{children}</div>,
+  SheetTitle: ({ children }: WithChildren) => <div>{children}</div>,
+  SheetFooter: ({ children }: WithChildren) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/ui/dialog", () => ({
@@ -212,6 +255,7 @@ jest.mock("@/components/ui/alert-dialog", () => ({
 }));
 
 jest.mock("react-i18next", () => ({
+  __esModule: true,
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) => {
       if (options && typeof options.amount !== "undefined") {
@@ -223,6 +267,8 @@ jest.mock("react-i18next", () => ({
       return key;
     },
   }),
+  Trans: ({ i18nKey, children }: { i18nKey?: string; children?: ReactNode }) =>
+    children ?? i18nKey ?? null,
 }));
 
 jest.mock("@/hooks/useTypedTranslation", () => ({
@@ -346,8 +392,8 @@ const projectTypeResponse: SupabaseResponse<{ id: string; name: string }> = {
   error: null,
 };
 
-const projectStatusResponse: SupabaseResponse<{ id: string; name: string }> = {
-  data: { id: "status-active", name: "active" },
+const projectStatusResponse: SupabaseResponse<Array<{ id: string; name: string; color: string }>> = {
+  data: [{ id: "status-active", name: "active", color: "#2E7D32" }],
   error: null,
 };
 
@@ -457,33 +503,16 @@ describe("ProjectSheetView", () => {
     expect(screen.getByTestId("project-todos-section")).toBeInTheDocument();
   });
 
-  it("allows editing and saving project details", async () => {
-    const { onProjectUpdated } = renderComponent();
+  it("opens the edit wizard from the package summary card", async () => {
+    renderComponent();
 
     await waitFor(() => screen.getByTestId("project-payments-section"));
 
-    fireEvent.click(screen.getByText("project_sheet.edit_project"));
+    fireEvent.click(screen.getByTestId("edit-project-details"));
 
-    const nameInput = screen.getByPlaceholderText("labels.project_name") as HTMLInputElement;
-    fireEvent.change(nameInput, { target: { value: "Updated Project" } });
-
-    const descriptionTextarea = screen.getByPlaceholderText("labels.project_description") as HTMLTextAreaElement;
-    fireEvent.change(descriptionTextarea, { target: { value: "New description" } });
-
-    const typeSelect = screen.getByTestId("project-type-select") as HTMLSelectElement;
-    fireEvent.change(typeSelect, { target: { value: "type-2" } });
-
-    fireEvent.click(screen.getByText("common:buttons.save"));
-
-    await waitFor(() => {
-      expect(supabase.auth.getUser).toHaveBeenCalled();
-      expect(mockToast).toHaveBeenCalledWith({
-        title: "Success",
-        description: "success.projectUpdated",
-      });
-    });
-
-    expect(onProjectUpdated).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.getByTestId("project-creation-wizard")).toBeInTheDocument()
+    );
   });
 
   it("shows archive confirmation when outstanding payments exist", async () => {

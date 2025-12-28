@@ -52,17 +52,28 @@ export const deleteGalleryWithAssets = async ({ galleryId, sessionId, organizati
 
   const { data: assetRows, error: assetError } = await supabase
     .from("gallery_assets")
-    .select("storage_path_web,storage_path_original")
+    .select("storage_path_web,storage_path_original,metadata")
     .eq("gallery_id", galleryId);
   if (assetError) throw assetError;
 
   (assetRows ?? []).forEach((row) => {
-    const typedRow = row as { storage_path_web: string | null; storage_path_original: string | null };
+    const typedRow = row as {
+      storage_path_web: string | null;
+      storage_path_original: string | null;
+      metadata?: unknown;
+    };
+    const rawMetadata = typedRow.metadata;
+    const metadata =
+      rawMetadata && typeof rawMetadata === "object" && !Array.isArray(rawMetadata)
+        ? (rawMetadata as Record<string, unknown>)
+        : {};
+    const thumbPath = typeof metadata.thumbPath === "string" ? metadata.thumbPath : null;
     if (typedRow.storage_path_web) storagePaths.add(typedRow.storage_path_web);
     if (typedRow.storage_path_original) storagePaths.add(typedRow.storage_path_original);
+    if (thumbPath) storagePaths.add(thumbPath);
   });
 
-  const folderCandidates = [basePrefix, `${basePrefix}/proof`, `${basePrefix}/original`];
+  const folderCandidates = [basePrefix, `${basePrefix}/proof`, `${basePrefix}/original`, `${basePrefix}/thumb`];
 
   await Promise.all(
     folderCandidates.map(async (folder) => {

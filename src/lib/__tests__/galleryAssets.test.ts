@@ -1,4 +1,8 @@
-import { buildGalleryOriginalPath, isSupabaseStorageObjectMissingError } from "@/lib/galleryAssets";
+import {
+  buildGalleryOriginalPath,
+  buildGalleryThumbnailPath,
+  isSupabaseStorageObjectMissingError,
+} from "@/lib/galleryAssets";
 
 describe("galleryAssets", () => {
   describe("isSupabaseStorageObjectMissingError", () => {
@@ -30,6 +34,19 @@ describe("galleryAssets", () => {
           extension: "jpg",
         })
       ).toBe("org-1/galleries/gallery-1/original/asset-1.jpg");
+    });
+  });
+
+  describe("buildGalleryThumbnailPath", () => {
+    it("builds a thumbnail asset path", () => {
+      expect(
+        buildGalleryThumbnailPath({
+          organizationId: "org-1",
+          galleryId: "gallery-1",
+          assetId: "asset-1",
+          extension: "webp",
+        })
+      ).toBe("org-1/galleries/gallery-1/thumb/asset-1.webp");
     });
   });
 });

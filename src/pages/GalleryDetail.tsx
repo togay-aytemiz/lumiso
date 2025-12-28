@@ -70,9 +70,15 @@ import { Progress } from "@/components/ui/progress";
 import { cn, formatBytes, getUserLocale } from "@/lib/utils";
 import { deleteGalleryWithAssets } from "@/lib/galleryDeletion";
 import {
+  type ConvertedProof,
   buildGalleryOriginalPath,
   buildGalleryProofPath,
-  convertImageToProof,
+  buildGalleryThumbnailPath,
+  convertImageToVariants,
+  DEFAULT_PROOF_LONG_EDGE_PX,
+  DEFAULT_PROOF_WEBP_QUALITY,
+  DEFAULT_THUMB_LONG_EDGE_PX,
+  DEFAULT_THUMB_WEBP_QUALITY,
   GALLERY_ASSETS_BUCKET,
   getStorageBasename,
   isSupabaseStorageObjectMissingError,
@@ -1016,8 +1022,11 @@ export default function GalleryDetail() {
         const name = originalName || (row.storage_path_web ? getStorageBasename(row.storage_path_web) : "photo");
         const proofSize = typeof metadata.proofSize === "number" ? metadata.proofSize : 0;
         const originalSize = typeof metadata.originalSize === "number" ? metadata.originalSize : 0;
+        const thumbSize = typeof metadata.thumbSize === "number" ? metadata.thumbSize : 0;
         const hasOriginal = typeof row.storage_path_original === "string" && row.storage_path_original.length > 0;
-        const size = hasOriginal ? proofSize + originalSize : proofSize || originalSize || 0;
+        const size = hasOriginal
+          ? proofSize + originalSize + thumbSize
+          : proofSize + thumbSize || originalSize + thumbSize || thumbSize || 0;
         const starred = metadata.starred === true;
         const status: UploadStatus =
           row.status === "ready" ? "done" : row.status === "failed" ? "error" : "processing";
@@ -2599,8 +2608,10 @@ export default function GalleryDetail() {
         let uploadExtension: string;
         let uploadWidth: number | null;
         let uploadHeight: number | null;
+        let thumbnail: ConvertedProof | null = null;
         let totalUploadBytes: number;
         let storagePathWeb: string;
+        let storagePathThumb: string | null = null;
         let storagePathOriginal: string | null = null;
         let originalUploadContentType: string | null = null;
 
@@ -2608,22 +2619,29 @@ export default function GalleryDetail() {
           const originalExtension = resolveImageExtension(sourceFile);
           const originalContentType = resolveImageContentType(sourceFile, originalExtension);
           originalUploadContentType = originalContentType;
-          const webPreview = await convertImageToProof(sourceFile, {
-            longEdgePx: FINAL_WEB_LONG_EDGE_PX,
-            webpQuality: FINAL_WEBP_QUALITY,
+          const { proof, thumbnail: generatedThumbnail } = await convertImageToVariants(sourceFile, {
+            proof: { longEdgePx: FINAL_WEB_LONG_EDGE_PX, webpQuality: FINAL_WEBP_QUALITY },
+            thumbnail: { longEdgePx: DEFAULT_THUMB_LONG_EDGE_PX, webpQuality: DEFAULT_THUMB_WEBP_QUALITY },
           });
 
-          uploadBlob = webPreview.blob;
-          uploadContentType = webPreview.contentType;
-          uploadExtension = webPreview.extension;
-          uploadWidth = webPreview.width;
-          uploadHeight = webPreview.height;
+          uploadBlob = proof.blob;
+          uploadContentType = proof.contentType;
+          uploadExtension = proof.extension;
+          uploadWidth = proof.width;
+          uploadHeight = proof.height;
+          thumbnail = generatedThumbnail;
 
           storagePathWeb = buildGalleryProofPath({
             organizationId: activeOrganizationId,
             galleryId: id,
             assetId,
             extension: uploadExtension,
+          });
+          storagePathThumb = buildGalleryThumbnailPath({
+            organizationId: activeOrganizationId,
+            galleryId: id,
+            assetId,
+            extension: generatedThumbnail.extension,
           });
           storagePathOriginal = buildGalleryOriginalPath({
             organizationId: activeOrganizationId,
@@ -2632,21 +2650,31 @@ export default function GalleryDetail() {
             extension: originalExtension,
           });
 
-          totalUploadBytes = uploadBlob.size + sourceFile.size;
+          totalUploadBytes = uploadBlob.size + sourceFile.size + generatedThumbnail.blob.size;
         } else {
-          const proof = await convertImageToProof(sourceFile);
+          const { proof, thumbnail: generatedThumbnail } = await convertImageToVariants(sourceFile, {
+            proof: { longEdgePx: DEFAULT_PROOF_LONG_EDGE_PX, webpQuality: DEFAULT_PROOF_WEBP_QUALITY },
+            thumbnail: { longEdgePx: DEFAULT_THUMB_LONG_EDGE_PX, webpQuality: DEFAULT_THUMB_WEBP_QUALITY },
+          });
           uploadBlob = proof.blob;
           uploadContentType = proof.contentType;
           uploadExtension = proof.extension;
           uploadWidth = proof.width;
           uploadHeight = proof.height;
-          totalUploadBytes = uploadBlob.size;
+          thumbnail = generatedThumbnail;
+          totalUploadBytes = uploadBlob.size + generatedThumbnail.blob.size;
 
           storagePathWeb = buildGalleryProofPath({
             organizationId: activeOrganizationId,
             galleryId: id,
             assetId,
             extension: uploadExtension,
+          });
+          storagePathThumb = buildGalleryThumbnailPath({
+            organizationId: activeOrganizationId,
+            galleryId: id,
+            assetId,
+            extension: generatedThumbnail.extension,
           });
         }
 
@@ -2723,6 +2751,18 @@ export default function GalleryDetail() {
         if (uploadError) throw uploadError;
         uploadedPaths.push(storagePathWeb);
 
+        if (thumbnail && storagePathThumb) {
+          const { error: uploadThumbError } = await supabase.storage
+            .from(GALLERY_ASSETS_BUCKET)
+            .upload(storagePathThumb, thumbnail.blob, {
+              contentType: thumbnail.contentType,
+              cacheControl: "3600",
+              upsert: true,
+            });
+          if (uploadThumbError) throw uploadThumbError;
+          uploadedPaths.push(storagePathThumb);
+        }
+
         if (storagePathOriginal) {
           const { error: uploadOriginalError } = await supabase.storage
             .from(GALLERY_ASSETS_BUCKET)
@@ -2746,6 +2786,11 @@ export default function GalleryDetail() {
           originalType: sourceFile.type,
           proofSize: uploadBlob.size,
           proofType: uploadContentType,
+          thumbSize: thumbnail?.blob.size ?? 0,
+          thumbType: thumbnail?.contentType ?? null,
+          thumbWidth: thumbnail?.width ?? null,
+          thumbHeight: thumbnail?.height ?? null,
+          thumbPath: storagePathThumb,
           setId: current.setId,
           starred: Boolean(current.starred),
         };
@@ -2950,13 +2995,21 @@ export default function GalleryDetail() {
       try {
         const { data: rows, error: fetchError } = await supabase
           .from("gallery_assets")
-          .select("id,storage_path_web,storage_path_original")
+          .select("id,storage_path_web,storage_path_original,metadata")
           .eq("gallery_id", id)
           .in("id", assetIds);
         if (fetchError) throw fetchError;
 
         const storagePaths = (rows ?? [])
-          .flatMap((row) => [row.storage_path_web, row.storage_path_original])
+          .flatMap((row) => {
+            const rawMetadata = (row as { metadata?: unknown }).metadata;
+            const metadata =
+              rawMetadata && typeof rawMetadata === "object" && !Array.isArray(rawMetadata)
+                ? (rawMetadata as Record<string, unknown>)
+                : {};
+            const thumbPath = typeof metadata.thumbPath === "string" ? metadata.thumbPath : null;
+            return [row.storage_path_web, row.storage_path_original, thumbPath];
+          })
           .filter((value): value is string => typeof value === "string" && value.length > 0);
 
         const { error: deleteError } = await supabase

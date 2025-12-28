@@ -14,7 +14,7 @@ type MockOptions = {
   isAdmin?: boolean;
   gallery?: { id: string; title: string; sessionId: string | null } | null;
   organizationId?: string | null;
-  assets?: Array<{ web: string | null; original: string | null }>;
+  assets?: Array<{ web: string | null; original: string | null; thumb?: string | null }>;
 };
 
 type SupabaseAdminMock = SupabaseAdminLike & {
@@ -106,6 +106,7 @@ function createMockSupabase(options: MockOptions): SupabaseAdminMock {
             const rows = (options.assets ?? []).map((asset) => ({
               storage_path_web: asset.web,
               storage_path_original: asset.original,
+              metadata: asset.thumb ? { thumbPath: asset.thumb } : null,
             }));
             return Promise.resolve(onFulfilled({ data: rows, error: null }));
           }

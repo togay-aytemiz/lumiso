@@ -754,6 +754,121 @@ describe("GalleryClientPreview", () => {
     expect(coverImage).toHaveAttribute("src", "https://example.com/asset-2");
   });
 
+  it("uses thumbnail urls for the hero cover when available", async () => {
+    supabaseMock.storage.from.mockImplementation(() => ({
+      createSignedUrl: jest.fn().mockImplementation((path: string) => {
+        const url = path.includes("/thumb/")
+          ? "https://example.com/cover-thumb"
+          : "https://example.com/cover-web";
+        return Promise.resolve({ data: { signedUrl: url }, error: null });
+      }),
+    }));
+
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: {
+            id: "gallery-123",
+            title: "My Gallery",
+            type: "final",
+            branding: { coverAssetId: "asset-1" },
+          },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              status: "ready",
+              metadata: {
+                originalName: "cover.jpg",
+                setId: "set-1",
+                starred: false,
+                thumbPath: "org/galleries/gallery-123/thumb/asset-1.webp",
+              },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    const coverImage = await screen.findByAltText(/cover photo|kapak fotoğrafı/i);
+    expect(coverImage).toHaveAttribute("src", "https://example.com/cover-thumb");
+  });
+
+  it("uses thumbnail urls in the grid when available", async () => {
+    supabaseMock.storage.from.mockImplementation(() => ({
+      createSignedUrl: jest.fn().mockImplementation((path: string) => {
+        const url = path.includes("/thumb/")
+          ? "https://example.com/thumb-1"
+          : "https://example.com/web-1";
+        return Promise.resolve({ data: { signedUrl: url }, error: null });
+      }),
+    }));
+
+    supabaseMock.from.mockImplementation((table: string) => {
+      const builder = supabaseMock.__createQueryBuilder();
+      if (table === "galleries") {
+        return builder.__setResponse({
+          data: { id: "gallery-123", title: "My Gallery", type: "proof", branding: {} },
+          error: null,
+        });
+      }
+      if (table === "gallery_sets") {
+        return builder.__setResponse({
+          data: [{ id: "set-1", name: "Highlights", description: null, order_index: 1 }],
+          error: null,
+        });
+      }
+      if (table === "gallery_assets") {
+        return builder.__setResponse({
+          data: [
+            {
+              id: "asset-1",
+              storage_path_web: "org/galleries/gallery-123/proof/asset-1.webp",
+              status: "ready",
+              metadata: {
+                originalName: "a.jpg",
+                setId: "set-1",
+                starred: false,
+                thumbPath: "org/galleries/gallery-123/thumb/asset-1.webp",
+              },
+              created_at: "2025-01-01T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "client_selections") {
+        return builder.__setResponse({ data: [], error: null });
+      }
+      return builder;
+    });
+
+    render(<GalleryClientPreview />);
+
+    const image = await screen.findByAltText("a.jpg");
+    expect(image).toHaveAttribute("src", "https://example.com/thumb-1");
+  });
+
   it("cleans up missing assets when storage objects are gone", async () => {
     const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     try {

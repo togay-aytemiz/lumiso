@@ -38,7 +38,11 @@ type SupabaseQueryBuilder = {
 type GalleryRow = { id: string; title: string; session_id: string | null };
 type SessionRow = { organization_id: string | null };
 type UserRoleRow = { id: string };
-type GalleryAssetRow = { storage_path_web: string | null; storage_path_original: string | null };
+type GalleryAssetRow = {
+  storage_path_web: string | null;
+  storage_path_original: string | null;
+  metadata: Record<string, unknown> | null;
+};
 
 type StorageListItem = { name: string };
 
@@ -242,7 +246,7 @@ export const handler = async (
 
     const { data: assetRows, error: assetError } = await supabaseAdmin
       .from("gallery_assets")
-      .select("storage_path_web,storage_path_original")
+      .select("storage_path_web,storage_path_original,metadata")
       .eq("gallery_id", galleryId)
       .then((result: SupabaseQueryResult<GalleryAssetRow[]>) => result);
 
@@ -254,11 +258,14 @@ export const handler = async (
     assetsList.forEach((row) => {
       if (row.storage_path_web) storagePaths.add(row.storage_path_web);
       if (row.storage_path_original) storagePaths.add(row.storage_path_original);
+      const metadata = row.metadata ?? {};
+      const thumbPath = typeof metadata.thumbPath === "string" ? metadata.thumbPath : null;
+      if (thumbPath) storagePaths.add(thumbPath);
     });
 
     const bucket = supabaseAdmin.storage.from("gallery-assets");
     const basePrefix = `${organizationId}/galleries/${galleryId}`;
-    const folderCandidates = [basePrefix, `${basePrefix}/proof`, `${basePrefix}/original`];
+    const folderCandidates = [basePrefix, `${basePrefix}/proof`, `${basePrefix}/original`, `${basePrefix}/thumb`];
 
     const folderResults = await Promise.all(
       folderCandidates.map(async (folder) => await listStorageFilesInFolder(bucket, folder)),

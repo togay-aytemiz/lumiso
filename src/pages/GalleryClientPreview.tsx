@@ -89,6 +89,7 @@ type GalleryAssetRow = {
 type ClientPreviewPhotoBase = {
   id: string;
   url: string;
+  thumbnailUrl: string;
   storagePathWeb: string | null;
   originalPath: string | null;
   filename: string;
@@ -354,10 +355,12 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [sheetPhotoId, setSheetPhotoId] = useState<string | null>(null);
   const [brokenPhotoIds, setBrokenPhotoIds] = useState<Set<string>>(() => new Set());
+  const [thumbnailFallbackIds, setThumbnailFallbackIds] = useState<Set<string>>(() => new Set());
   const lastSignedUrlRefreshAtRef = useRef(0);
   const lastPhotoUrlByIdRef = useRef<Map<string, string>>(new Map());
   const originalSignedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
   const webSignedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
+  const thumbCoverageTrackedRef = useRef<Set<string>>(new Set());
 
   const [favoritePhotoIds, setFavoritePhotoIds] = useState<Set<string>>(() => new Set());
   const favoritesTouchedRef = useRef(false);
@@ -511,6 +514,22 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
           return { id: row.id, signedUrl: urlData?.signedUrl ?? "", missing: false };
         })
       );
+
+      const thumbSignedUrls = await Promise.all(
+        readyRows.map(async (row) => {
+          const metadata = row.metadata ?? {};
+          const thumbPath = typeof metadata.thumbPath === "string" ? metadata.thumbPath : "";
+          if (!thumbPath) return { id: row.id, signedUrl: "" };
+          const { data: urlData, error: urlError } = await supabase.storage
+            .from(GALLERY_ASSETS_BUCKET)
+            .createSignedUrl(thumbPath, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
+          if (urlError) {
+            console.warn("Failed to create signed url for gallery thumbnail", urlError);
+            return { id: row.id, signedUrl: "" };
+          }
+          return { id: row.id, signedUrl: urlData?.signedUrl ?? "" };
+        })
+      );
       const missingAssetIds = signedUrls.filter((entry) => entry.missing).map((entry) => entry.id);
       if (missingAssetIds.length > 0) {
         const { error: cleanupError } = await supabase
@@ -525,6 +544,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
 
       const missingIds = new Set(missingAssetIds);
       const signedUrlById = new Map(signedUrls.map((entry) => [entry.id, entry.signedUrl]));
+      const thumbUrlById = new Map(thumbSignedUrls.map((entry) => [entry.id, entry.signedUrl]));
 
       return readyRows.filter((row) => !missingIds.has(row.id)).map((row) => {
         const metadata = row.metadata ?? {};
@@ -534,12 +554,14 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
           originalName || (row.storage_path_web ? getStorageBasename(row.storage_path_web) : "photo");
         const isStarred = metadata.starred === true;
         const url = signedUrlById.get(row.id) ?? "";
+        const thumbnailUrl = thumbUrlById.get(row.id) ?? "";
         const width = parsePositiveNumber(row.width) ?? parsePositiveNumber(metadata.width);
         const height = parsePositiveNumber(row.height) ?? parsePositiveNumber(metadata.height);
 
         return {
           id: row.id,
           url,
+          thumbnailUrl,
           storagePathWeb: row.storage_path_web,
           originalPath: row.storage_path_original,
           filename,
@@ -880,6 +902,25 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     });
   }, [favoritePhotoIds, favoritesEnabled, orderedSets, photoSelectionsById, photosBase]);
 
+  useEffect(() => {
+    if (!resolvedGalleryId || !photosBase) return;
+    if (thumbCoverageTrackedRef.current.has(resolvedGalleryId)) return;
+
+    const totalCount = photosBase.length;
+    const thumbCount = photosBase.filter((photo) => Boolean(photo.thumbnailUrl)).length;
+    if (totalCount > 0) {
+      trackEvent("gallery_thumbnail_coverage", {
+        galleryType: isFinalGallery ? "final" : "proof",
+        source: isInternalUserView ? "owner" : "client",
+        totalCount,
+        thumbCount,
+        coveragePercent: Math.round((thumbCount / totalCount) * 100),
+      });
+    }
+
+    thumbCoverageTrackedRef.current.add(resolvedGalleryId);
+  }, [isFinalGallery, isInternalUserView, photosBase, resolvedGalleryId]);
+
   const exportDisabled = useMemo(
     () => !resolvedPhotos.some((photo) => photo.isFavorite || photo.selections.length > 0),
     [resolvedPhotos]
@@ -947,18 +988,18 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
   );
 
   const coverUrl = useMemo(() => {
+    const resolveCoverUrl = (photo: ClientPreviewPhoto) => photo.thumbnailUrl || photo.url;
     const coverAssetId = typeof brandingData.coverAssetId === "string" ? brandingData.coverAssetId : "";
     if (coverAssetId) {
-      const match = resolvedPhotos.find((photo) => photo.id === coverAssetId && photo.url);
-      if (match?.url) return match.url;
-      const first = resolvedPhotos.find((photo) => Boolean(photo.url));
-      return first?.url ?? "";
+      const match = resolvedPhotos.find((photo) => photo.id === coverAssetId);
+      const matchUrl = match ? resolveCoverUrl(match) : "";
+      if (matchUrl) return matchUrl;
     }
 
     const storedCoverUrl = typeof brandingData.coverUrl === "string" ? brandingData.coverUrl : "";
     if (storedCoverUrl) return storedCoverUrl;
-    const first = resolvedPhotos.find((photo) => Boolean(photo.url));
-    return first?.url ?? "";
+    const first = resolvedPhotos.find((photo) => Boolean(resolveCoverUrl(photo)));
+    return first ? resolveCoverUrl(first) : "";
   }, [brandingData.coverAssetId, brandingData.coverUrl, resolvedPhotos]);
 
   useEffect(() => {
@@ -2098,6 +2139,20 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
         const resolvedSelectionIds = selectionIds.filter((selectionId) => selectionRuleTitleById.has(selectionId));
         const visibleSelectionIds = resolvedSelectionIds.slice(0, 2);
         const remainingSelectionCount = Math.max(0, resolvedSelectionIds.length - visibleSelectionIds.length);
+        const useThumbnail = Boolean(photo.thumbnailUrl) && !thumbnailFallbackIds.has(photo.id);
+        const gridSrc = useThumbnail ? photo.thumbnailUrl : photo.url;
+        const handleGridImageError = () => {
+          if (useThumbnail && photo.url) {
+            setThumbnailFallbackIds((prev) => {
+              if (prev.has(photo.id)) return prev;
+              const next = new Set(prev);
+              next.add(photo.id);
+              return next;
+            });
+            return;
+          }
+          handleAssetImageError(photo.id);
+        };
 
         return (
           <div key={photo.id} className="group relative z-0" style={{ zIndex: isMenuOpen ? 50 : 0 }}>
@@ -2105,16 +2160,16 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
               onClick={() => openViewer(photo.id)}
               className="overflow-hidden rounded-sm bg-gray-100 relative cursor-pointer"
             >
-              {photo.url && !brokenPhotoIds.has(photo.id) ? (
+              {gridSrc && !brokenPhotoIds.has(photo.id) ? (
                 <img
-                  src={photo.url}
+                  src={gridSrc}
                   alt={photo.filename}
                   width={photo.width && photo.width > 0 ? photo.width : 3}
                   height={photo.height && photo.height > 0 ? photo.height : 4}
                   loading="lazy"
                   decoding="async"
                   className="w-full h-auto object-cover transition-transform duration-500 md:group-hover:scale-105"
-                  onError={() => handleAssetImageError(photo.id)}
+                  onError={handleGridImageError}
                 />
               ) : (
                 <div className="w-full aspect-[3/4] bg-gray-200 flex items-center justify-center text-gray-500">
@@ -2376,6 +2431,20 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
     if (!photo) return null;
 
     const closeSheet = () => setSheetPhotoId(null);
+    const sheetUsesThumbnail = Boolean(photo.thumbnailUrl) && !thumbnailFallbackIds.has(photo.id);
+    const sheetPhotoUrl = sheetUsesThumbnail ? photo.thumbnailUrl : photo.url;
+    const handleSheetImageError = () => {
+      if (sheetUsesThumbnail && photo.url) {
+        setThumbnailFallbackIds((prev) => {
+          if (prev.has(photo.id)) return prev;
+          const next = new Set(prev);
+          next.add(photo.id);
+          return next;
+        });
+        return;
+      }
+      handleAssetImageError(photo.id);
+    };
 
     return (
       <MobilePhotoSelectionSheet
@@ -2383,7 +2452,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
         onOpenChange={(nextOpen) => {
           if (!nextOpen) closeSheet();
         }}
-        photo={{ id: photo.id, url: photo.url, filename: photo.filename }}
+        photo={{ id: photo.id, url: sheetPhotoUrl, filename: photo.filename }}
         rules={selectionRules.map((rule) => ({
           id: rule.id,
           title: rule.title,
@@ -2396,7 +2465,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
         selectedRuleIds={photo.selections}
         onToggleRule={(ruleId) => toggleRuleSelect(photo.id, ruleId)}
         photoImageBroken={brokenPhotoIds.has(photo.id)}
-        onPhotoImageError={() => handleAssetImageError(photo.id)}
+        onPhotoImageError={handleSheetImageError}
         zIndexClassName="z-[200]"
       />
     );

@@ -56,7 +56,6 @@ const buildFallbackFileName = (title: string, galleryType: string) => {
 type GalleryDownloadStreamRequest = {
   galleryId?: string;
   downloadFileName?: string;
-  accessToken?: string;
 };
 
 type SupabaseUser = { id: string };
@@ -435,7 +434,6 @@ const parseRequestPayload = async (req: Request): Promise<GalleryDownloadStreamR
     return {
       galleryId: url.searchParams.get("galleryId") ?? undefined,
       downloadFileName: url.searchParams.get("downloadFileName") ?? undefined,
-      accessToken: url.searchParams.get("accessToken") ?? undefined,
     };
   }
 
@@ -444,6 +442,12 @@ const parseRequestPayload = async (req: Request): Promise<GalleryDownloadStreamR
   } catch {
     return {};
   }
+};
+
+const getAccessToken = (req: Request) => {
+  const authHeader = req.headers.get("authorization") ?? "";
+  if (!authHeader) return "";
+  return authHeader.replace("Bearer ", "").trim();
 };
 
 export const handler = async (
@@ -457,7 +461,7 @@ export const handler = async (
   try {
     const payload = await parseRequestPayload(req);
     const galleryId = typeof payload.galleryId === "string" ? payload.galleryId.trim() : "";
-    const accessToken = typeof payload.accessToken === "string" ? payload.accessToken.trim() : "";
+    const accessToken = getAccessToken(req);
 
     if (!galleryId) {
       return new Response(JSON.stringify({ error: "galleryId is required" }), {

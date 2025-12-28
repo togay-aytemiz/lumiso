@@ -5,7 +5,8 @@ import { getErrorMessage } from "../_shared/error-utils.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-gallery-download-processor-secret",
 };
 
 const DOWNLOAD_BUCKET = "gallery-downloads";
@@ -105,6 +106,7 @@ interface ProcessorDependencies {
   processJob?: (supabase: SupabaseAdminLike, job: GalleryDownloadJobRow) => Promise<string>;
   maxJobsPerTick?: number;
   maxExpiredCleanup?: number;
+  authorizeRequest?: (req: Request) => Response | null;
 }
 
 type GalleryDownloadJobRow = {
@@ -129,6 +131,41 @@ const createSupabaseAdminClient = (): SupabaseAdminLike =>
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   ) as unknown as SupabaseAdminLike;
+
+const getBearerToken = (req: Request) => {
+  const authHeader = req.headers.get("authorization") ?? "";
+  if (!authHeader) return "";
+  return authHeader.replace("Bearer ", "").trim();
+};
+
+const authorizeProcessorRequest = (req: Request) => {
+  const processorSecret = Deno.env.get("GALLERY_DOWNLOAD_PROCESSOR_SECRET") ?? "";
+  const secretHeader = req.headers.get("x-gallery-download-processor-secret")?.trim() ?? "";
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const token = getBearerToken(req);
+
+  if (processorSecret && secretHeader === processorSecret) {
+    return null;
+  }
+
+  if (serviceRoleKey && token === serviceRoleKey) {
+    return null;
+  }
+
+  const hasAuthHeader = Boolean(req.headers.get("authorization"));
+  const hasSecretHeader = Boolean(secretHeader);
+  if (!hasAuthHeader && !hasSecretHeader) {
+    return new Response(JSON.stringify({ error: "Authorization header required" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  return new Response(JSON.stringify({ error: "Access denied" }), {
+    status: 403,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+};
 
 const resolveAssetPath = (asset: GalleryAssetRow, variant: string) => {
   if (variant === "original") {
@@ -374,6 +411,11 @@ export const handler = async (
   }
 
   try {
+    const authorizationError = (deps.authorizeRequest ?? authorizeProcessorRequest)(req);
+    if (authorizationError) {
+      return authorizationError;
+    }
+
     let payload: ProcessorRequest = { action: "tick" };
     try {
       payload = (await req.json()) as ProcessorRequest;

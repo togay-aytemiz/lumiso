@@ -105,8 +105,9 @@ Deno.test("gallery-download-stream returns 401 when access token is missing", as
 Deno.test("gallery-download-stream returns 403 when access is denied", async () => {
   const url = new URL("https://example.com");
   url.searchParams.set("galleryId", "gallery-1");
-  url.searchParams.set("accessToken", "token");
-  const request = new Request(url.toString());
+  const request = new Request(url.toString(), {
+    headers: { authorization: "Bearer token" },
+  });
 
   const response = await galleryDownloadStreamHandler(request, {
     createClient: () =>
@@ -128,9 +129,10 @@ Deno.test("gallery-download-stream returns 403 when access is denied", async () 
 Deno.test("gallery-download-stream streams zip when access is granted", async () => {
   const url = new URL("https://example.com");
   url.searchParams.set("galleryId", "gallery-1");
-  url.searchParams.set("accessToken", "token");
   url.searchParams.set("downloadFileName", "My Download.zip");
-  const request = new Request(url.toString());
+  const request = new Request(url.toString(), {
+    headers: { authorization: "Bearer token" },
+  });
 
   let receivedAssetVariant: string | null = null;
 

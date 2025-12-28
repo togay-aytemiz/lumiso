@@ -124,6 +124,9 @@ import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-p
 
 type GalleryType = "proof" | "retouch" | "final" | "other";
 type GalleryStatus = "draft" | "published" | "approved" | "archived";
+type LooseSupabaseClient = {
+  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+};
 
 type SelectionSettings = {
   enabled: boolean;
@@ -818,24 +821,23 @@ export default function GalleryDetail() {
     },
   });
 
-  const { data: galleryAccess, isLoading: galleryAccessLoading } = useQuery({
-    queryKey: ["gallery_access", id],
+  const { data: galleryPin, isLoading: galleryPinLoading } = useQuery({
+    queryKey: ["gallery_pin", id],
     enabled: Boolean(id),
-    queryFn: async (): Promise<{ pin: string } | null> => {
+    queryFn: async (): Promise<string | null> => {
       if (!id) return null;
-      const { data, error } = await supabase
-        .from("gallery_access")
-        .select("pin")
-        .eq("gallery_id", id)
-        .maybeSingle();
+      const { data, error } = await (supabase as unknown as LooseSupabaseClient).rpc("get_gallery_pin", {
+        gallery_uuid: id,
+      });
       if (error) throw error;
-      return data && typeof data.pin === "string" ? { pin: data.pin } : null;
+      const resolvedPin = typeof data === "string" ? data.trim() : "";
+      return resolvedPin || null;
     },
   });
 
   const privacyInfo = useMemo<GalleryPrivacyInfo>(
-    () => ({ pin: galleryAccess?.pin ?? "", isLoading: galleryAccessLoading }),
-    [galleryAccess?.pin, galleryAccessLoading]
+    () => ({ pin: galleryPin ?? "", isLoading: galleryPinLoading }),
+    [galleryPin, galleryPinLoading]
   );
 
   useEffect(() => {

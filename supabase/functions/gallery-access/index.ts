@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { getErrorMessage } from "../_shared/error-utils.ts";
 
 const corsHeaders = {
@@ -43,6 +44,7 @@ interface SupabaseAdminLike {
 
 interface HandlerDependencies {
   createClient?: () => SupabaseAdminLike;
+  verifyPin?: (input: string, hash: string) => boolean | Promise<boolean>;
 }
 
 function createSupabaseAdminClient(): SupabaseAdminLike {
@@ -130,22 +132,24 @@ export const handler = async (
 
     const { data: accessRow, error: accessError } = await supabaseAdmin
       .from("gallery_access")
-      .select("pin")
+      .select("pin_hash")
       .eq("gallery_id", galleryId)
-      .maybeSingle<{ pin: string }>();
+      .maybeSingle<{ pin_hash: string }>();
 
     if (accessError) {
       throw accessError;
     }
 
-    if (!accessRow?.pin) {
+    if (!accessRow?.pin_hash) {
       return new Response(
         JSON.stringify({ error: "Gallery access not configured" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    if (normalizePin(accessRow.pin) !== pin) {
+    const verifyPin = deps.verifyPin ?? ((input, hash) => compare(input, hash));
+    const isValid = await verifyPin(pin, accessRow.pin_hash);
+    if (!isValid) {
       return new Response(
         JSON.stringify({ error: "Invalid PIN" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },

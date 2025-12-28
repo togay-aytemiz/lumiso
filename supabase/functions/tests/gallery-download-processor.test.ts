@@ -1,5 +1,14 @@
 import { assertEquals } from "std/testing/asserts.ts";
-import { cleanupExpiredJobs, processPendingJobs } from "../gallery-download-processor/index.ts";
+import {
+  cleanupExpiredJobs,
+  handler as galleryDownloadProcessorHandler,
+  processPendingJobs,
+} from "../gallery-download-processor/index.ts";
+
+async function readJson(response: Response) {
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
+}
 
 function createMockSupabase(options: {
   pendingJobs?: Array<{ id: string; gallery_id: string; status: string; asset_variant: string; expires_at: string; storage_path: string | null }>;
@@ -105,4 +114,41 @@ Deno.test("cleanupExpiredJobs removes storage paths and marks expired", async ()
   assertEquals(result.cleaned, 2);
   assertEquals(supabase.__removedPaths, ["gallery-1/job-1.zip"]);
   assertEquals(supabase.__updates.length, 2);
+});
+
+Deno.test("gallery-download-processor handler rejects unauthorized requests", async () => {
+  const request = new Request("https://example.com", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "tick" }),
+  });
+
+  const response = await galleryDownloadProcessorHandler(request, {
+    authorizeRequest: () =>
+      new Response(JSON.stringify({ error: "Access denied" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      }),
+  });
+
+  assertEquals(response.status, 403);
+  const body = await readJson(response);
+  assertEquals(body, { error: "Access denied" });
+});
+
+Deno.test("gallery-download-processor handler processes when authorized", async () => {
+  const request = new Request("https://example.com", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "tick" }),
+  });
+
+  const response = await galleryDownloadProcessorHandler(request, {
+    authorizeRequest: () => null,
+    createClient: () => createMockSupabase({ pendingJobs: [], expiredJobs: [] }),
+  });
+
+  assertEquals(response.status, 200);
+  const body = await readJson(response);
+  assertEquals(body.success, true);
 });

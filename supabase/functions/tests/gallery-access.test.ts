@@ -8,7 +8,7 @@ async function readJson(response: Response) {
 
 function createMockSupabase(options: {
   galleryId?: string | null;
-  pin?: string | null;
+  pinHash?: string | null;
   userId?: string | null;
 }) {
   const upserts: Array<{ table: string; values: Record<string, unknown>; options?: unknown }> = [];
@@ -43,8 +43,8 @@ function createMockSupabase(options: {
 
           if (table === "gallery_access") {
             const galleryId = filters.gallery_id;
-            if (galleryId === options.galleryId && options.pin) {
-              return { data: { pin: options.pin } as unknown as T, error: null };
+            if (galleryId === options.galleryId && options.pinHash) {
+              return { data: { pin_hash: options.pinHash } as unknown as T, error: null };
             }
             return { data: null, error: null };
           }
@@ -71,7 +71,8 @@ Deno.test("gallery-access returns 401 when authorization header is missing", asy
   });
 
   const response = await galleryAccessHandler(request, {
-    createClient: () => createMockSupabase({ galleryId: "gallery-1", pin: "4T0PXF", userId: "viewer-1" }),
+    createClient: () => createMockSupabase({ galleryId: "gallery-1", pinHash: "4T0PXF", userId: "viewer-1" }),
+    verifyPin: (input, hash) => input === hash,
   });
 
   assertEquals(response.status, 401);
@@ -87,7 +88,8 @@ Deno.test("gallery-access returns 400 when publicId is missing", async () => {
   });
 
   const response = await galleryAccessHandler(request, {
-    createClient: () => createMockSupabase({ galleryId: "gallery-1", pin: "4T0PXF", userId: "viewer-1" }),
+    createClient: () => createMockSupabase({ galleryId: "gallery-1", pinHash: "4T0PXF", userId: "viewer-1" }),
+    verifyPin: (input, hash) => input === hash,
   });
 
   assertEquals(response.status, 400);
@@ -103,7 +105,8 @@ Deno.test("gallery-access returns 400 when pin is invalid", async () => {
   });
 
   const response = await galleryAccessHandler(request, {
-    createClient: () => createMockSupabase({ galleryId: "gallery-1", pin: "4T0PXF", userId: "viewer-1" }),
+    createClient: () => createMockSupabase({ galleryId: "gallery-1", pinHash: "4T0PXF", userId: "viewer-1" }),
+    verifyPin: (input, hash) => input === hash,
   });
 
   assertEquals(response.status, 400);
@@ -119,7 +122,8 @@ Deno.test("gallery-access returns 404 when gallery is not found", async () => {
   });
 
   const response = await galleryAccessHandler(request, {
-    createClient: () => createMockSupabase({ galleryId: "gallery-1", pin: "4T0PXF", userId: "viewer-1" }),
+    createClient: () => createMockSupabase({ galleryId: "gallery-1", pinHash: "4T0PXF", userId: "viewer-1" }),
+    verifyPin: (input, hash) => input === hash,
   });
 
   assertEquals(response.status, 404);
@@ -135,7 +139,8 @@ Deno.test("gallery-access returns 401 when pin is incorrect", async () => {
   });
 
   const response = await galleryAccessHandler(request, {
-    createClient: () => createMockSupabase({ galleryId: "gallery-1", pin: "4T0PXF", userId: "viewer-1" }),
+    createClient: () => createMockSupabase({ galleryId: "gallery-1", pinHash: "4T0PXF", userId: "viewer-1" }),
+    verifyPin: (input, hash) => input === hash,
   });
 
   assertEquals(response.status, 401);
@@ -144,7 +149,7 @@ Deno.test("gallery-access returns 401 when pin is incorrect", async () => {
 });
 
 Deno.test("gallery-access upserts a grant and returns galleryId when pin matches", async () => {
-  const mockSupabase = createMockSupabase({ galleryId: "gallery-1", pin: "4T0PXF", userId: "viewer-1" });
+  const mockSupabase = createMockSupabase({ galleryId: "gallery-1", pinHash: "4T0PXF", userId: "viewer-1" });
   const request = new Request("https://example.com", {
     method: "POST",
     headers: { "Content-Type": "application/json", authorization: "Bearer token" },
@@ -153,6 +158,7 @@ Deno.test("gallery-access upserts a grant and returns galleryId when pin matches
 
   const response = await galleryAccessHandler(request, {
     createClient: () => mockSupabase,
+    verifyPin: (input, hash) => input === hash,
   });
 
   assertEquals(response.status, 200);

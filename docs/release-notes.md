@@ -1,5 +1,11 @@
 # Release Notes
 
+## 2026-12-22
+- Gallery access PINs are now encrypted at rest and resolved via `get_gallery_pin` (owners only); existing plaintext PINs are cleared when the encryption key is configured.
+- Gallery download processor now requires a shared secret header (cron job updated); unauthorized calls are rejected.
+- Gallery download streaming accepts auth tokens via the Authorization header only (query token removed).
+- Rollout: add Vault secrets `gallery_pin_key` + `gallery_download_processor_secret`, set Edge secret `GALLERY_DOWNLOAD_PROCESSOR_SECRET`, then deploy Edge functions + apply `supabase/migrations/20261222100000_gallery_access_pin_encryption.sql` and `supabase/migrations/20261222101000_gallery_download_processor_secret_vault.sql`.
+
 ## 2025-12-20
 - Reduced duplicate organization and organization_settings fetches by caching org detail lookups, reusing org ids from local storage, and treating missing settings as a cache hit.
 - Organization realtime updates now refresh local caches directly, and template variables reuse cached org settings/lead fields to avoid extra fetches.

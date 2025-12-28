@@ -139,6 +139,7 @@ interface LightboxProps {
   activeRuleId?: string | null;
   favoritesEnabled?: boolean;
   onImageError?: (photoId: string) => void;
+  enableOriginalDownload?: boolean;
   enableOriginalSwap?: boolean;
   resolveOriginalUrl?: (photo: LightboxPhoto) => Promise<string | null>;
   watermark?: GalleryWatermarkConfig;
@@ -160,6 +161,7 @@ export function Lightbox({
   activeRuleId,
   favoritesEnabled = true,
   onImageError,
+  enableOriginalDownload = false,
   enableOriginalSwap = false,
   resolveOriginalUrl,
   watermark,
@@ -199,7 +201,8 @@ export function Lightbox({
   const hasSelections = (currentPhoto?.selections.length ?? 0) > 0;
   const isFavoriteToggleDisabled = readOnly || (mode === "client" && isSelectionsLocked);
   const [downloadPhotoId, setDownloadPhotoId] = useState<string | null>(null);
-  const shouldDownloadOriginal = enableOriginalSwap && typeof resolveOriginalUrl === "function";
+  const shouldDownloadOriginal = enableOriginalDownload && typeof resolveOriginalUrl === "function";
+  const shouldSwapToOriginal = enableOriginalSwap && typeof resolveOriginalUrl === "function";
   const downloadButtonLabel = t("sessionDetail.gallery.lightbox.actions.download");
   const isDownloadInProgress = mode === "client" && downloadPhotoId === currentPhoto?.id;
 
@@ -304,8 +307,7 @@ export function Lightbox({
 
   useEffect(() => {
     if (!isOpen) return;
-    if (!enableOriginalSwap) return;
-    if (typeof resolveOriginalUrl !== "function") return;
+    if (!shouldSwapToOriginal) return;
 
     const photo = photos[currentIndex];
     if (!photo?.originalPath) return;
@@ -315,7 +317,7 @@ export function Lightbox({
     let cancelled = false;
     originalUrlInFlightRef.current.add(photo.id);
 
-    void resolveOriginalUrl(photo)
+    void resolveOriginalUrl?.(photo)
       .then((signedUrl) => {
         if (cancelled) return;
         if (!signedUrl) return;
@@ -337,16 +339,16 @@ export function Lightbox({
     return () => {
       cancelled = true;
     };
-  }, [currentIndex, enableOriginalSwap, isOpen, photos, resolveOriginalUrl]);
+  }, [currentIndex, isOpen, photos, resolveOriginalUrl, shouldSwapToOriginal]);
 
   const getResolvedSrc = useMemo(() => {
     return (photo: LightboxPhoto) => {
-      if (!enableOriginalSwap) return { previewSrc: photo.url, originalSrc: null as string | null };
+      if (!shouldSwapToOriginal) return { previewSrc: photo.url, originalSrc: null as string | null };
       const originalSrc = originalUrlByIdRef.current.get(photo.id) ?? null;
       return { previewSrc: photo.url, originalSrc };
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enableOriginalSwap, originalUrlVersion]);
+  }, [originalUrlVersion, shouldSwapToOriginal]);
 
   useEffect(() => {
     if (isOpen) {

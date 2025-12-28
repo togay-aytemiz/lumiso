@@ -406,7 +406,7 @@ describe("Lightbox", () => {
     clickSpy.mockRestore();
   });
 
-  it("downloads original url when enableOriginalSwap is set", async () => {
+  it("downloads original url when enableOriginalDownload is set", async () => {
     const appendChildSpy = jest.spyOn(document.body, "appendChild");
     const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     const resolveOriginalUrl = jest
@@ -434,7 +434,7 @@ describe("Lightbox", () => {
         onToggleRule={jest.fn()}
         onToggleStar={jest.fn()}
         mode="client"
-        enableOriginalSwap
+        enableOriginalDownload
         resolveOriginalUrl={resolveOriginalUrl}
       />
     );

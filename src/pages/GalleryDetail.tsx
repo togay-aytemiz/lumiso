@@ -380,7 +380,6 @@ export default function GalleryDetail() {
 
   const signedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
   const signedUrlRefreshInFlightRef = useRef<Set<string>>(new Set());
-  const originalSignedUrlCacheRef = useRef<Map<string, { url: string; expiresAt: number }>>(new Map());
   const photoSelectionsTouchedRef = useRef(false);
 
   const [activeTab, setActiveTab] = useState<"photos" | "settings">("photos");
@@ -3643,26 +3642,6 @@ export default function GalleryDetail() {
     setLightboxOpen(true);
   }, []);
 
-  const resolveLightboxOriginalUrl = useCallback(async (photo: { id: string; originalPath?: string | null }) => {
-    const storagePath = typeof photo.originalPath === "string" ? photo.originalPath : "";
-    if (!storagePath) return null;
-
-    const now = Date.now();
-    const cached = originalSignedUrlCacheRef.current.get(photo.id);
-    if (cached && cached.expiresAt > now) return cached.url;
-
-    const { data: urlData, error } = await supabase.storage
-      .from(GALLERY_ASSETS_BUCKET)
-      .createSignedUrl(storagePath, GALLERY_ASSET_SIGNED_URL_TTL_SECONDS);
-    if (error || !urlData?.signedUrl) return null;
-
-    originalSignedUrlCacheRef.current.set(photo.id, {
-      url: urlData.signedUrl,
-      expiresAt: now + GALLERY_ASSET_SIGNED_URL_TTL_SECONDS * 1000 - 15_000,
-    });
-    return urlData.signedUrl;
-  }, []);
-
   const lightboxPhotos = useMemo(
     () =>
       filteredUploads.map((item) => {
@@ -5439,8 +5418,6 @@ export default function GalleryDetail() {
         onToggleStar={handleToggleStar}
         mode="admin"
         onImageError={refreshPreviewUrl}
-        enableOriginalSwap={isFinalGallery}
-        resolveOriginalUrl={isFinalGallery ? resolveLightboxOriginalUrl : undefined}
         isSelectionsLocked={isSelectionsLocked && !isSelectionUnlockedForMe}
         readOnly={isReadOnly}
       />

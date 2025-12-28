@@ -3308,7 +3308,7 @@ export default function GalleryClientPreview({ galleryId, branding }: GalleryCli
         activeRuleId={activeLightboxRuleId}
         favoritesEnabled={favoritesEnabled}
         onImageError={handleAssetImageError}
-        enableOriginalSwap={isFinalGallery}
+        enableOriginalDownload={isFinalGallery}
         resolveOriginalUrl={isFinalGallery ? resolveOriginalUrl : undefined}
         watermark={watermark}
         isSelectionsLocked={isSelectionsLocked}

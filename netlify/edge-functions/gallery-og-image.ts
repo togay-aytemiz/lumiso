@@ -12,6 +12,7 @@ type GalleryAssetRow = {
   storage_path_web: string | null;
   storage_path_original: string | null;
   status: string | null;
+  metadata: Record<string, unknown> | null;
 };
 
 const BUCKET = "gallery-assets";
@@ -59,7 +60,13 @@ function resolveAssetStoragePath(asset: GalleryAssetRow | null) {
   if (webPath) return webPath;
   const originalPath =
     typeof asset.storage_path_original === "string" ? normalizeStoragePath(asset.storage_path_original) : "";
-  return originalPath;
+  if (originalPath) return originalPath;
+  const metadata = asset.metadata && typeof asset.metadata === "object" ? asset.metadata : {};
+  const thumbPath =
+    typeof (metadata as { thumbPath?: unknown }).thumbPath === "string"
+      ? normalizeStoragePath((metadata as { thumbPath: string }).thumbPath)
+      : "";
+  return thumbPath;
 }
 
 async function fetchGallery(args: {
@@ -92,7 +99,7 @@ async function fetchCoverAsset(args: {
   coverAssetId: string;
 }): Promise<GalleryAssetRow | null> {
   const url = new URL(`${args.supabaseUrl.replace(/\/+$/, "")}/rest/v1/gallery_assets`);
-  url.searchParams.set("select", "id,gallery_id,storage_path_web,storage_path_original,status");
+  url.searchParams.set("select", "id,gallery_id,storage_path_web,storage_path_original,status,metadata");
   url.searchParams.append("id", `eq.${args.coverAssetId}`);
   url.searchParams.set("limit", "1");
 
@@ -117,12 +124,11 @@ async function fetchFallbackAsset(args: {
   galleryId: string;
 }): Promise<GalleryAssetRow | null> {
   const url = new URL(`${args.supabaseUrl.replace(/\/+$/, "")}/rest/v1/gallery_assets`);
-  url.searchParams.set("select", "id,gallery_id,storage_path_web,storage_path_original,status");
+  url.searchParams.set("select", "id,gallery_id,storage_path_web,storage_path_original,status,metadata");
   url.searchParams.append("gallery_id", `eq.${args.galleryId}`);
-  url.searchParams.append("status", "eq.ready");
   url.searchParams.append(
     "or",
-    "(storage_path_web.not.is.null,storage_path_original.not.is.null)"
+    "(storage_path_web.not.is.null,storage_path_original.not.is.null,metadata->>thumbPath.not.is.null)"
   );
   url.searchParams.set("order", "order_index.asc,created_at.asc");
   url.searchParams.set("limit", "1");

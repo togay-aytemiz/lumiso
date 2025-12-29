@@ -10,6 +10,8 @@ type GalleryAssetRow = {
   id: string;
   gallery_id: string;
   storage_path_web: string | null;
+  storage_path_original: string | null;
+  status: string | null;
 };
 
 const BUCKET = "gallery-assets";
@@ -43,6 +45,23 @@ function encodeStoragePath(path: string) {
     .join("/");
 }
 
+function normalizeStoragePath(path: string) {
+  const trimmed = path.trim();
+  if (!trimmed) return "";
+  const normalized = trimmed.startsWith("/") ? trimmed.slice(1) : trimmed;
+  const bucketPrefix = `${BUCKET}/`;
+  return normalized.startsWith(bucketPrefix) ? normalized.slice(bucketPrefix.length) : normalized;
+}
+
+function resolveAssetStoragePath(asset: GalleryAssetRow | null) {
+  if (!asset) return "";
+  const webPath = typeof asset.storage_path_web === "string" ? normalizeStoragePath(asset.storage_path_web) : "";
+  if (webPath) return webPath;
+  const originalPath =
+    typeof asset.storage_path_original === "string" ? normalizeStoragePath(asset.storage_path_original) : "";
+  return originalPath;
+}
+
 async function fetchGallery(args: {
   supabaseUrl: string;
   serviceRoleKey: string;
@@ -73,7 +92,7 @@ async function fetchCoverAsset(args: {
   coverAssetId: string;
 }): Promise<GalleryAssetRow | null> {
   const url = new URL(`${args.supabaseUrl.replace(/\/+$/, "")}/rest/v1/gallery_assets`);
-  url.searchParams.set("select", "id,gallery_id,storage_path_web");
+  url.searchParams.set("select", "id,gallery_id,storage_path_web,storage_path_original,status");
   url.searchParams.append("id", `eq.${args.coverAssetId}`);
   url.searchParams.set("limit", "1");
 
@@ -98,7 +117,7 @@ async function fetchFallbackAsset(args: {
   galleryId: string;
 }): Promise<GalleryAssetRow | null> {
   const url = new URL(`${args.supabaseUrl.replace(/\/+$/, "")}/rest/v1/gallery_assets`);
-  url.searchParams.set("select", "id,gallery_id,storage_path_web");
+  url.searchParams.set("select", "id,gallery_id,storage_path_web,storage_path_original,status");
   url.searchParams.append("gallery_id", `eq.${args.galleryId}`);
   url.searchParams.append("status", "eq.ready");
   url.searchParams.append("storage_path_web", "not.is.null");
@@ -181,12 +200,16 @@ export default async function galleryOgImage(request: Request, _context: Context
     const branding = gallery.branding && typeof gallery.branding === "object" ? gallery.branding : {};
     const coverAssetId = typeof branding.coverAssetId === "string" ? branding.coverAssetId.trim() : "";
 
-    const coverAsset =
-      (coverAssetId
-        ? await fetchCoverAsset({ supabaseUrl, serviceRoleKey, galleryId: gallery.id, coverAssetId })
-        : null) ?? (await fetchFallbackAsset({ supabaseUrl, serviceRoleKey, galleryId: gallery.id }));
+    const coverAsset = coverAssetId
+      ? await fetchCoverAsset({ supabaseUrl, serviceRoleKey, galleryId: gallery.id, coverAssetId })
+      : null;
+    const coverStoragePath = resolveAssetStoragePath(coverAsset);
+    const fallbackAsset = !coverStoragePath
+      ? await fetchFallbackAsset({ supabaseUrl, serviceRoleKey, galleryId: gallery.id })
+      : null;
+    const fallbackStoragePath = resolveAssetStoragePath(fallbackAsset);
+    const storagePath = coverStoragePath || fallbackStoragePath;
 
-    const storagePath = coverAsset?.storage_path_web ?? "";
     if (!storagePath) {
       return Response.redirect(fallbackUrl, 302);
     }

@@ -9,24 +9,33 @@ jest.mock("@/components/settings/SettingsPageWrapper", () => ({
   ),
 }));
 
-jest.mock("@/hooks/useOrganizationSettings", () => ({
-  useOrganizationSettings: () => ({
-    settings: {
-      taxProfile: {
-        taxOffice: "",
-        taxNumber: "",
-        address: "",
-        city: "",
-        country: "",
-      },
+jest.mock("@/hooks/useOrganizationSettings", () => {
+  const settings = {
+    taxProfile: {
+      legalEntityType: "company",
+      vatExempt: false,
+      taxOffice: "",
+      taxNumber: "",
+      address: "",
+      city: "",
+      country: "",
     },
-    loading: false,
-    uploading: false,
-    updateSettings: jest.fn(),
-    uploadLogo: jest.fn(),
-    deleteLogo: jest.fn(),
-  }),
-}));
+  };
+  const updateSettings = jest.fn();
+  const uploadLogo = jest.fn();
+  const deleteLogo = jest.fn();
+
+  return {
+    useOrganizationSettings: () => ({
+      settings,
+      loading: false,
+      uploading: false,
+      updateSettings,
+      uploadLogo,
+      deleteLogo,
+    }),
+  };
+});
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -34,14 +43,21 @@ jest.mock("react-i18next", () => ({
   }),
 }));
 
-jest.mock("@/contexts/SettingsContext", () => ({
-  useSettingsContext: () => ({
-    categoryChanges: {},
-    registerSectionHandler: jest.fn(),
-    unregisterSectionHandler: jest.fn(),
-    setSectionDirty: jest.fn(),
-  }),
-}));
+jest.mock("@/contexts/SettingsContext", () => {
+  const categoryChanges = {};
+  const registerSectionHandler = jest.fn();
+  const unregisterSectionHandler = jest.fn();
+  const setSectionDirty = jest.fn();
+
+  return {
+    useSettingsContext: () => ({
+      categoryChanges,
+      registerSectionHandler,
+      unregisterSectionHandler,
+      setSectionDirty,
+    }),
+  };
+});
 
 describe("Billing settings page", () => {
   it("renders billing copy", () => {

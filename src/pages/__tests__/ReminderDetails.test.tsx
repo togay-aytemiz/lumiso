@@ -59,6 +59,19 @@ jest.mock("@/hooks/useThrottledRefetchOnFocus", () => ({
   useThrottledRefetchOnFocus: jest.fn(),
 }));
 
+jest.mock("@/hooks/useOrganizationTimezone", () => ({
+  useOrganizationTimezone: () => ({ timezone: "UTC" }),
+}));
+
+jest.mock("@/hooks/usePageVideoPrompt", () => ({
+  usePageVideoPrompt: () => ({
+    isOpen: false,
+    close: jest.fn(),
+    markCompleted: jest.fn(),
+    snooze: jest.fn(),
+  }),
+}));
+
 jest.mock("react-router-dom", () => {
   const actual = jest.requireActual("react-router-dom");
   return {
@@ -544,8 +557,8 @@ describe("ReminderDetails page", () => {
 
     expect(mockToast).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Reminder marked as completed",
-        description: "Reminder status updated successfully.",
+        title: "reminders.markCompleteSuccessTitle",
+        description: "reminders.statusUpdateDescription",
       })
     );
 

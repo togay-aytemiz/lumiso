@@ -37,6 +37,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { logAuthEvent } from "@/lib/authTelemetry";
+import { getEnvValue } from "@/lib/env";
 
 const MAX_MULTI_SELECT = Infinity; // unlimited selections
 const TOTAL_STEPS = 3;
@@ -539,7 +540,7 @@ export function ProfileIntakeGate({
         const { data: sessionData } = await supabase.auth.getSession();
         const accessToken = sessionData.session?.access_token;
         const functionsBase =
-          import.meta.env.VITE_SUPABASE_URL ||
+          getEnvValue("VITE_SUPABASE_URL") ||
           "https://rifdykpdubrowzbylffe.supabase.co";
 
         if (accessToken) {

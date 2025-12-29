@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getEnvValue } from "@/lib/env";
 import { useTranslation } from "react-i18next";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
@@ -186,9 +187,7 @@ const parseReminderDateTime = (value: string) => {
 };
 
 const REMINDERS_VIDEO_ID =
-  (typeof import.meta !== "undefined" &&
-    (import.meta as { env?: Record<string, string> }).env?.VITE_REMINDERS_VIDEO_ID) ||
-  "IQ8ZNqhjhDQ";
+  getEnvValue("VITE_REMINDERS_VIDEO_ID") || "IQ8ZNqhjhDQ";
 
 const ReminderDetails = () => {
   const { t, i18n } = useTranslation("pages");

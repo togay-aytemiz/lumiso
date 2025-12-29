@@ -122,6 +122,15 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
   }),
 }));
 
+jest.mock("@/hooks/usePageVideoPrompt", () => ({
+  usePageVideoPrompt: () => ({
+    isOpen: false,
+    close: jest.fn(),
+    markCompleted: jest.fn(),
+    snooze: jest.fn(),
+  }),
+}));
+
 jest.mock("@/hooks/useThrottledRefetchOnFocus", () => ({
   useThrottledRefetchOnFocus: jest.fn<
     void,

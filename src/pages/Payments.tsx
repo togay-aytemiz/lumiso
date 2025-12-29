@@ -5,6 +5,7 @@ import { ProjectSheetView } from "@/components/ProjectSheetView";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getEnvValue } from "@/lib/env";
 import {
   format,
   subDays,
@@ -65,9 +66,7 @@ import { usePageVideoPrompt } from "@/hooks/usePageVideoPrompt";
 import { useOrganization } from "@/contexts/OrganizationContext";
 
 const PAYMENTS_VIDEO_ID =
-  (typeof import.meta !== "undefined" &&
-    (import.meta as { env?: Record<string, string> }).env?.VITE_PAYMENTS_VIDEO_ID) ||
-  "MoZbdO39530";
+  getEnvValue("VITE_PAYMENTS_VIDEO_ID") || "MoZbdO39530";
 
 const Payments = () => {
   const { t } = useTranslation("pages");

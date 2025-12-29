@@ -49,6 +49,9 @@ jest.mock("@/components/ui/tooltip", () => ({
   Tooltip: ({ children }: WithChildren) => <>{children}</>,
   TooltipTrigger: ({ children }: WithChildren) => <>{children}</>,
   TooltipContent: ({ children }: TooltipContentProps) => <div data-testid="tooltip-content">{children}</div>,
+  TooltipContentDark: ({ children }: TooltipContentProps) => (
+    <div data-testid="tooltip-content">{children}</div>
+  ),
 }));
 
 jest.mock("@/components/ui/long-press-button", () => ({

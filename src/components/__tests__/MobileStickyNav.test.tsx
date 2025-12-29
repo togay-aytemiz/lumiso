@@ -27,7 +27,7 @@ describe("MobileStickyNav", () => {
       </MemoryRouter>
     );
 
-    const bookingsButton = screen.getByRole("button", { name: "Bookings menu" });
+    const bookingsButton = screen.getByRole("button", { name: "Bookings" });
     expect(bookingsButton).toHaveAttribute("aria-expanded", "false");
 
     await user.click(bookingsButton);
@@ -60,7 +60,7 @@ describe("MobileStickyNav", () => {
       </MemoryRouter>
     );
 
-    const bookingsButton = screen.getByRole("button", { name: "Bookings menu" });
+    const bookingsButton = screen.getByRole("button", { name: "Bookings" });
 
     await user.click(bookingsButton);
     const remindersLink = await screen.findByRole("link", { name: "Reminders" });

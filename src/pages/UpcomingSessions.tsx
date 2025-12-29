@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getEnvValue } from "@/lib/env";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { useTranslation } from "react-i18next";
@@ -181,9 +182,7 @@ const getFallbackLifecycle = (status: string): SessionLifecycle => {
 };
 
 const SESSIONS_VIDEO_ID =
-  (typeof import.meta !== "undefined" &&
-    (import.meta as { env?: Record<string, string> }).env?.VITE_SESSIONS_VIDEO_ID) ||
-  "811vc59bciM";
+  getEnvValue("VITE_SESSIONS_VIDEO_ID") || "811vc59bciM";
 
 const getFallbackColor = (lifecycle: SessionLifecycle, isInitial: boolean) => {
   if (lifecycle === "completed") return "#22c55e"; // green

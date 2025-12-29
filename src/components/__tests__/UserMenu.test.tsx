@@ -32,6 +32,7 @@ describe("UserMenu", () => {
     jest.clearAllMocks();
     (useFormsTranslation as jest.Mock).mockReturnValue({
       t: (key: string) => key,
+      i18n: { language: "en" },
     });
     (useAuth as jest.Mock).mockReturnValue({
       user: { email: "jane@example.com" },

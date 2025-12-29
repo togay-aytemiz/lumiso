@@ -107,10 +107,16 @@ const renderLayout = (
 
 describe("SettingsLayout", () => {
   beforeEach(() => {
+    Object.defineProperty(HTMLElement.prototype, "scrollTo", {
+      configurable: true,
+      value: jest.fn(),
+      writable: true,
+    });
     useSettingsContextMock.mockReturnValue({
       hasCategoryChanges: (href: string) => href === "/settings/projects",
       cancelCategoryChanges: jest.fn(),
       saveCategoryChanges: jest.fn().mockResolvedValue(undefined),
+      categoryChanges: {},
     });
     useOnboardingMock.mockReturnValue({
       shouldLockNavigation: false,

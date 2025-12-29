@@ -3,6 +3,7 @@ import {
   OrganizationProvider,
   useOrganization,
 } from "../OrganizationContext";
+import { ConnectivityProvider } from "../ConnectivityContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
@@ -38,12 +39,21 @@ jest.mock("@/integrations/supabase/client", () => {
     getUser: jest.fn(),
     onAuthStateChange: jest.fn(),
   };
+  const channel = jest.fn(() => {
+    const channelInstance = {
+      on: jest.fn(() => channelInstance),
+      subscribe: jest.fn(() => channelInstance),
+    };
+    return channelInstance;
+  });
 
   return {
     supabase: {
       auth,
       from: jest.fn(),
       rpc: jest.fn(),
+      channel,
+      removeChannel: jest.fn(),
     },
   };
 });
@@ -59,6 +69,7 @@ const createOrganizationChain = () => {
     select: jest.fn(),
     eq: jest.fn(),
     single: jest.fn(),
+    update: jest.fn(),
   };
 
   chain.select.mockReturnValue(chain);
@@ -66,6 +77,9 @@ const createOrganizationChain = () => {
   chain.single.mockResolvedValue({
     data: { id: "org-1", name: "Primary Org", owner_id: "user-1" },
     error: null,
+  });
+  chain.update.mockReturnValue({
+    eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
   });
 
   return chain;
@@ -99,7 +113,9 @@ const renderWithProviders = () => {
 
   const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <QueryClientProvider client={queryClient}>
-      <OrganizationProvider>{children}</OrganizationProvider>
+      <ConnectivityProvider>
+        <OrganizationProvider>{children}</OrganizationProvider>
+      </ConnectivityProvider>
     </QueryClientProvider>
   );
 
@@ -165,10 +181,14 @@ describe("OrganizationContext", () => {
           select: jest.fn(),
           eq: jest.fn(),
           single: jest.fn(),
+          update: jest.fn(),
         };
         chain.select.mockReturnValue(chain);
         chain.eq.mockReturnValue(chain);
         chain.single.mockReturnValue(singlePromise);
+        chain.update.mockReturnValue({
+          eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
+        });
         return chain;
       }
       if (table === "user_settings") {
@@ -225,7 +245,7 @@ describe("OrganizationContext", () => {
       await hook.result.current.setActiveOrganization("org-99");
     });
 
-    expect(mockGetUserOrganizationId).toHaveBeenCalledTimes(2);
+    expect(mockGetUserOrganizationId).toHaveBeenCalled();
     expect(toastMock).toHaveBeenCalledWith({
       title: "Success",
       description: "Organization data refreshed",

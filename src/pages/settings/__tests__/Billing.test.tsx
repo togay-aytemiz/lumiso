@@ -34,6 +34,15 @@ jest.mock("react-i18next", () => ({
   }),
 }));
 
+jest.mock("@/contexts/SettingsContext", () => ({
+  useSettingsContext: () => ({
+    categoryChanges: {},
+    registerSectionHandler: jest.fn(),
+    unregisterSectionHandler: jest.fn(),
+    setSectionDirty: jest.fn(),
+  }),
+}));
+
 describe("Billing settings page", () => {
   it("renders billing copy", () => {
     render(<Billing />);

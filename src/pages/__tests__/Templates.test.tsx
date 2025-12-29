@@ -4,6 +4,21 @@ import Templates from "../Templates";
 import { useTemplateOperations } from "@/hooks/useTemplateOperations";
 import { Template } from "@/types/template";
 
+jest.mock("@/hooks/useTemplateVariables", () => ({
+  useTemplateVariables: jest.fn(() => ({
+    variables: [],
+  })),
+}));
+
+jest.mock("@/hooks/usePageVideoPrompt", () => ({
+  usePageVideoPrompt: jest.fn(() => ({
+    isOpen: false,
+    close: jest.fn(),
+    markCompleted: jest.fn(),
+    snooze: jest.fn(),
+  })),
+}));
+
 jest.mock("@/components/template-builder/TemplateErrorBoundary", () => ({
   TemplateErrorBoundary: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="template-error-boundary">{children}</div>

@@ -1,4 +1,4 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { useSessionForm } from "../useSessionForm";
 
 const toastMock = jest.fn();
@@ -18,6 +18,11 @@ jest.mock("@/hooks/useSessionReminderScheduling", () => ({
   useSessionReminderScheduling: () => ({
     scheduleSessionReminders: scheduleSessionRemindersMock,
   }),
+}));
+
+const createSessionMock = jest.fn();
+jest.mock("@/features/session-planning/api/sessionCreation", () => ({
+  createSession: (...args: unknown[]) => createSessionMock(...args),
 }));
 
 let getUserOrganizationIdMock: jest.Mock;
@@ -80,8 +85,14 @@ beforeEach(() => {
   toastMock.mockClear();
   triggerSessionScheduledMock.mockReset();
   scheduleSessionRemindersMock.mockReset();
+  createSessionMock.mockReset();
   triggerSessionScheduledMock.mockResolvedValue({ ok: true });
   scheduleSessionRemindersMock.mockResolvedValue(undefined);
+  createSessionMock.mockResolvedValue({
+    sessionId: "session-123",
+    organizationId: "org-1",
+    userId: "user-1",
+  });
   getUserOrganizationIdMock = jest.fn().mockResolvedValue("org-1");
   supabaseMock.auth.getUser.mockResolvedValue({
     data: { user: { id: "user-1" } },
@@ -180,11 +191,11 @@ describe("useSessionForm", () => {
 
     expect(response).toBe(false);
     expect(toastMock).toHaveBeenCalledWith({
-      title: "Validation error",
+      title: "errors.validation",
       description: "Session name, date and time are required.",
       variant: "destructive",
     });
-    expect(supabaseMock.auth.getUser).not.toHaveBeenCalled();
+    expect(createSessionMock).not.toHaveBeenCalled();
   });
 
   it("creates session, updates lead, schedules reminders, and resets form", async () => {
@@ -195,32 +206,24 @@ describe("useSessionForm", () => {
 
     fillValidForm(result);
 
-    await waitFor(() => supabaseMock.from.mock.calls.length > 0);
-
     await act(async () => {
       const success = await result.current.submitForm();
       expect(success).toBe(true);
     });
 
-    expect(supabaseMock.auth.getUser).toHaveBeenCalled();
-    expect(getUserOrganizationIdMock).toHaveBeenCalled();
-    expect(leadsSelectMethod).toHaveBeenCalled();
-    expect(leadsUpdateMethod).toHaveBeenCalled();
-    expect(leadsUpdateEqMock).toHaveBeenCalledWith("id", "lead-1");
-
-    expect(sessionsInsertMethod).toHaveBeenCalledWith({
-      user_id: "user-1",
-      organization_id: "org-1",
-      lead_id: "lead-1",
-      session_name: "Engagement Session",
-      session_date: "2024-05-20",
-      session_time: "15:30",
-      notes: "Bring props",
-      location: "Studio",
-      project_id: null,
-      session_type_id: null,
-      status: "planned",
-    });
+    expect(createSessionMock).toHaveBeenCalledWith(
+      {
+        leadId: "lead-1",
+        leadName: "Alice",
+        sessionName: "Engagement Session",
+        sessionDate: "2024-05-20",
+        sessionTime: "15:30",
+        notes: " Bring props ",
+        location: " Studio ",
+        projectId: undefined,
+      },
+      { createActivity: true }
+    );
 
     expect(triggerSessionScheduledMock).toHaveBeenCalledWith(
       "session-123",
@@ -236,13 +239,6 @@ describe("useSessionForm", () => {
       })
     );
     expect(scheduleSessionRemindersMock).toHaveBeenCalledWith("session-123");
-    expect(activitiesInsertMock).toHaveBeenCalledWith({
-      user_id: "user-1",
-      organization_id: "org-1",
-      lead_id: "lead-1",
-      type: "note",
-      content: expect.stringContaining("Photo session scheduled for"),
-    });
     expect(toastMock).toHaveBeenCalledWith({
       title: "Success",
       description: "Session scheduled successfully.",
@@ -261,7 +257,6 @@ describe("useSessionForm", () => {
     );
 
     fillValidForm(result);
-    await waitFor(() => supabaseMock.from.mock.calls.length > 0);
 
     await act(async () => {
       const success = await result.current.submitForm();
@@ -276,22 +271,19 @@ describe("useSessionForm", () => {
       description: "Session created successfully, but notifications may not be sent.",
       variant: "default",
     });
+    expect(createSessionMock).toHaveBeenCalled();
     expect(triggerSessionScheduledMock).toHaveBeenCalled();
     expect(scheduleSessionRemindersMock).toHaveBeenCalled();
   });
 
   it("shows error toast when user is not authenticated", async () => {
-    supabaseMock.auth.getUser.mockResolvedValue({
-      data: { user: null },
-      error: null,
-    });
+    createSessionMock.mockRejectedValueOnce(new Error("User not authenticated"));
 
     const { result } = renderHook(() =>
       useSessionForm({ leadId: "lead-1", leadName: "Alice" })
     );
 
     fillValidForm(result);
-    await waitFor(() => supabaseMock.from.mock.calls.length > 0);
 
     let response: boolean | undefined;
     await act(async () => {
@@ -299,6 +291,7 @@ describe("useSessionForm", () => {
     });
 
     expect(response).toBe(false);
+    expect(createSessionMock).toHaveBeenCalled();
     const errorToast = toastMock.mock.calls.find(
       ([payload]) => (payload as { title: string }).title === "Error scheduling session"
     );

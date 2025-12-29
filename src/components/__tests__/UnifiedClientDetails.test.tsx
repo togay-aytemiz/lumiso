@@ -137,6 +137,22 @@ jest.mock("@/components/fields/inline-editors/InlineCheckboxEditor", () => ({
   InlineCheckboxEditor: () => <div data-testid="inline-checkbox-editor" />,
 }));
 
+jest.mock("@/components/ui/tooltip", () => ({
+  TooltipProvider: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  TooltipTrigger: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TooltipContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TooltipContentDark: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
 jest.mock("../EnhancedEditLeadDialog", () => ({
   EnhancedEditLeadDialog: () => <div data-testid="enhanced-edit-lead-dialog" />,
 }));
@@ -149,6 +165,12 @@ jest.mock("@/lib/leadFieldValidation", () => ({
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: () => ({
     t: (key: string) => key,
+  }),
+}));
+
+jest.mock("@/contexts/useOnboarding", () => ({
+  useOnboarding: () => ({
+    isOnboardingComplete: true,
   }),
 }));
 

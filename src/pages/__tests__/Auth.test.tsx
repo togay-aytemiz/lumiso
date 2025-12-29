@@ -26,6 +26,20 @@ jest.mock("@/lib/toastHelpers", () => ({
   useI18nToast: jest.fn(),
 }));
 
+jest.mock("@/lib/legalVersions", () => ({
+  getLegalVersions: jest.fn().mockResolvedValue({
+    terms: { version: "v1", last_updated: "2024-01-01" },
+    privacy: { version: "v1", last_updated: "2024-01-01" },
+    kvkk: { version: "v1", last_updated: "2024-01-01" },
+    dpa: { version: "v1", last_updated: "2024-01-01" },
+    "communication-consent": { version: "v1", last_updated: "2024-01-01" },
+  }),
+}));
+
+jest.mock("@supabase/supabase-js", () => ({
+  AuthApiError: class AuthApiError extends Error {},
+}));
+
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
@@ -35,6 +49,9 @@ jest.mock("@/integrations/supabase/client", () => ({
       resetPasswordForEmail: jest.fn(),
       updateUser: jest.fn(),
       getSession: jest.fn(),
+    },
+    functions: {
+      invoke: jest.fn().mockResolvedValue({ data: null, error: null }),
     },
   },
 }));
@@ -202,14 +219,33 @@ describe("Auth page", () => {
       target: { value: "NewSecure123!" },
     });
 
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /Hizmet Şartları/i })
+    );
+
     fireEvent.click(screen.getByRole("button", { name: "auth.sign_up.button" }));
 
     await waitFor(() => {
-      expect(authMock.signUp).toHaveBeenCalledWith({
-        email: "new@example.com",
-        password: "NewSecure123!",
-        options: { emailRedirectTo: "http://localhost/" },
-      });
+      expect(authMock.signUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: "new@example.com",
+          password: "NewSecure123!",
+          options: expect.objectContaining({
+            emailRedirectTo: "http://localhost/",
+            data: expect.objectContaining({
+              accepted_terms: true,
+              marketing_opt_in: false,
+              legal_consents: expect.objectContaining({
+                terms: expect.any(Object),
+                privacy: expect.any(Object),
+                kvkk: expect.any(Object),
+                dpa: expect.any(Object),
+                marketing: null,
+              }),
+            }),
+          }),
+        })
+      );
     });
 
     await waitFor(() => {
@@ -238,6 +274,10 @@ describe("Auth page", () => {
     fireEvent.change(screen.getByLabelText("labels.password"), {
       target: { value: "Confirmed123!" },
     });
+
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /Hizmet Şartları/i })
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "auth.sign_up.button" }));
 

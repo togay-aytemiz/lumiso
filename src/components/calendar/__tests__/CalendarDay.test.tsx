@@ -7,6 +7,12 @@ jest.mock("@/lib/utils", () => ({
   getUserLocale: jest.fn(() => "en-US"),
 }));
 
+jest.mock("@/hooks/useOrganizationTimezone", () => ({
+  useOrganizationTimezone: () => ({
+    formatTime: (value: string) => `formatted-${value}`,
+  }),
+}));
+
 describe("CalendarDay", () => {
   const baseDate = new Date("2024-05-15T00:00:00Z");
   const currentDate = new Date("2024-05-01T00:00:00Z");

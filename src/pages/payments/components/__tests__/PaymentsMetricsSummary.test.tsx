@@ -57,8 +57,8 @@ describe("PaymentsMetricsSummary", () => {
     expect(screen.getByText("TRY 8900")).toBeInTheDocument();
     expect(screen.getByText("TRY 7700")).toBeInTheDocument();
     expect(screen.getByText("TRY 345")).toBeInTheDocument();
-    expect(screen.getByText("payments.metrics.allTimeOutstanding")).toBeInTheDocument();
-    expect(screen.getByText("TRY 9999")).toBeInTheDocument();
+    expect(screen.getByText(/payments\.metrics\.allTimeOutstanding/)).toBeInTheDocument();
+    expect(screen.getByText(/TRY 9999/)).toBeInTheDocument();
     expect(screen.getByText("72%")).toBeInTheDocument();
 
     expect(progressModule.Progress).toHaveBeenCalledWith(

@@ -38,6 +38,7 @@ jest.mock("@/components/ui/tooltip", () => ({
   Tooltip: ({ children }: TooltipMockProps) => <div>{children}</div>,
   TooltipTrigger: ({ children }: TooltipMockProps) => <div>{children}</div>,
   TooltipContent: ({ children }: TooltipMockProps) => <div>{children}</div>,
+  TooltipContentDark: ({ children }: TooltipMockProps) => <div>{children}</div>,
 }));
 jest.mock("@/components/SessionSchedulingSheet", () => ({
   SessionSchedulingSheet: ({ isOpen, onOpenChange, onSessionScheduled }: SessionSchedulingSheetProps) => (

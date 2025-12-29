@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getEnvValue } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -132,7 +133,7 @@ export default function ProjectDetail() {
   const [showProjectCompletionModal, setShowProjectCompletionModal] = useState(false);
   const defaultProjectDetailsVideoUrl = "https://www.youtube.com/embed/sbHCYJ07_08";
   const projectDetailsVideoUrl =
-    (import.meta.env.VITE_PROJECT_DETAILS_TUTORIAL_VIDEO_URL as string | undefined) ||
+    getEnvValue("VITE_PROJECT_DETAILS_TUTORIAL_VIDEO_URL") ||
     defaultProjectDetailsVideoUrl;
   const hasProjectDetailsVideo = projectDetailsVideoUrl.length > 0;
   const onboardingFlag = searchParams.get("onboarding");

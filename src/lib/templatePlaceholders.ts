@@ -12,10 +12,15 @@ export function replacePlaceholders(
     input.replace(pattern, (match, key, fallback) => {
       const replacement = data[key];
       if (replacement !== undefined) {
-        return replacement;
+        if (replacement !== "" || !allowFallbacks || fallback === undefined) {
+          return replacement;
+        }
       }
       if (allowFallbacks && fallback !== undefined) {
         return fallback;
+      }
+      if (replacement !== undefined) {
+        return replacement;
       }
       return match;
     });

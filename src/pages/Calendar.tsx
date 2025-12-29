@@ -35,6 +35,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/hooks/use-toast";
 import { usePageVideoPrompt } from "@/hooks/usePageVideoPrompt";
+import { getEnvValue } from "@/lib/env";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -63,9 +64,7 @@ interface Activity {
 type CalendarProject = ReturnType<typeof useOptimizedCalendarData>["projects"][number];
 
 const CALENDAR_VIDEO_ID =
-  (typeof import.meta !== "undefined" &&
-    (import.meta as { env?: Record<string, string> }).env?.VITE_CALENDAR_VIDEO_ID) ||
-  "EBbAnm1qh_0";
+  getEnvValue("VITE_CALENDAR_VIDEO_ID") || "EBbAnm1qh_0";
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());

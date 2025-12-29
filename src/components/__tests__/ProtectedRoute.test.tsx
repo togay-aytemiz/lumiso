@@ -2,6 +2,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { render, screen } from "@testing-library/react";
 import ProtectedRoute from "../ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOnboarding } from "@/contexts/useOnboarding";
 
 jest.mock("@/contexts/AuthContext", () => ({
@@ -10,6 +11,22 @@ jest.mock("@/contexts/AuthContext", () => ({
 
 jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
+}));
+
+jest.mock("@/contexts/OrganizationContext", () => ({
+  useOrganization: jest.fn(),
+}));
+
+jest.mock("@lottiefiles/dotlottie-react", () => ({
+  __esModule: true,
+  DotLottieReact: () => <div data-testid="dotlottie" />,
+}));
+
+jest.mock("../AppLoadingScreen", () => ({
+  __esModule: true,
+  AppLoadingScreen: ({ message }: { message?: string }) => (
+    <div data-testid="app-loading">{message}</div>
+  ),
 }));
 
 jest.mock("react-i18next", () => ({
@@ -26,6 +43,9 @@ jest.mock("../Layout", () => ({
 }));
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
+const mockUseOrganization = useOrganization as jest.MockedFunction<
+  typeof useOrganization
+>;
 const mockUseOnboarding = useOnboarding as jest.MockedFunction<
   typeof useOnboarding
 >;
@@ -57,6 +77,13 @@ function renderWithRouter(initialEntry = "/projects") {
 }
 
 describe("ProtectedRoute", () => {
+  beforeEach(() => {
+    mockUseOrganization.mockReturnValue({
+      activeOrganization: null,
+      loading: false,
+    });
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });

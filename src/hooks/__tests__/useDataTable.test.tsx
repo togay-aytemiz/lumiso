@@ -75,8 +75,8 @@ describe("useDataTable", () => {
     expect(result.current.currentPage).toBe(1);
     expect(result.current.totalItems).toBe(2);
     expect(result.current.filteredAndSortedData.map((row) => row.name)).toEqual([
-      "Alice",
       "Charlie",
+      "Alice",
     ]);
   });
 

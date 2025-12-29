@@ -22,6 +22,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useConnectivity } from "@/contexts/useConnectivity";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useOnboarding } from "@/contexts/useOnboarding";
+import { getEnvValue } from "@/lib/env";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type LeadWithStatusRow = LeadRow & {
@@ -79,16 +80,10 @@ const getErrorMessage = (error: unknown): string => {
 };
 
 const paymentSchemaEnhancementsEnabled =
-  (typeof import.meta !== "undefined" &&
-    import.meta.env &&
-    import.meta.env.VITE_ENABLE_PAYMENT_SCHEMA_ENHANCEMENTS === "true") ||
-  false;
+  getEnvValue("VITE_ENABLE_PAYMENT_SCHEMA_ENHANCEMENTS") === "true";
 
 const DASHBOARD_VIDEO_ID =
-  (typeof import.meta !== "undefined" &&
-    import.meta.env &&
-    import.meta.env.VITE_DASHBOARD_VIDEO_ID) ||
-  "rMuFRkxW6so";
+  getEnvValue("VITE_DASHBOARD_VIDEO_ID") || "rMuFRkxW6so";
 
 const CrmDashboard = () => {
   const [leads, setLeads] = useState<LeadWithStatusRow[]>([]);

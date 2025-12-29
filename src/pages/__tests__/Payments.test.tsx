@@ -89,6 +89,15 @@ jest.mock("react-i18next", () => ({
   }),
 }));
 
+jest.mock("@/hooks/usePageVideoPrompt", () => ({
+  usePageVideoPrompt: () => ({
+    isOpen: false,
+    close: jest.fn(),
+    markCompleted: jest.fn(),
+    snooze: jest.fn(),
+  }),
+}));
+
 jest.mock("@/components/GlobalSearch", () => ({
   __esModule: true,
   default: () => <div data-testid="global-search" />,

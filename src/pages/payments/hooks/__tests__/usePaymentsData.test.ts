@@ -47,6 +47,7 @@ type QueryBuilder<T extends QueryResult> = PromiseLike<T> & {
   range: jest.Mock<QueryBuilder<T>, [number, number]>;
   eq: jest.Mock<QueryBuilder<T>, [string, unknown]>;
   limit: jest.Mock<QueryBuilder<T>, [number]>;
+  maybeSingle: jest.Mock<Promise<T>, []>;
   catch: (onRejected?: (reason: unknown) => unknown) => Promise<unknown>;
   [Symbol.toStringTag]: string;
 };
@@ -65,6 +66,7 @@ const createQueryBuilder = <T extends QueryResult>(result: T): QueryBuilder<T> =
     range: jest.fn(() => builder),
     eq: jest.fn(() => builder),
     limit: jest.fn(() => builder),
+    maybeSingle: jest.fn(() => Promise.resolve(result)),
     then: (onFulfilled?: (value: T) => unknown, onRejected?: (reason: unknown) => unknown) =>
       Promise.resolve(result).then(onFulfilled, onRejected),
     catch: (onRejected?: (reason: unknown) => unknown) =>
@@ -75,7 +77,10 @@ const createQueryBuilder = <T extends QueryResult>(result: T): QueryBuilder<T> =
   return builder;
 };
 
-type QueueMap = Record<"payments" | "projects" | "leads", QueryBuilder<QueryResult>[]>;
+type QueueMap = Record<
+  "payments" | "projects" | "leads" | "project_statuses",
+  QueryBuilder<QueryResult>[]
+>;
 
 describe("usePaymentsData", () => {
   const baseProps = {
@@ -92,6 +97,7 @@ describe("usePaymentsData", () => {
     organizationId: "org-123",
   };
 
+  const originalSchemaEnv = process.env.VITE_ENABLE_PAYMENT_SCHEMA_ENHANCEMENTS;
   let queues: QueueMap;
   let onError: jest.Mock;
 
@@ -106,6 +112,7 @@ describe("usePaymentsData", () => {
       payments: [],
       projects: [],
       leads: [],
+      project_statuses: [],
     };
     onError = jest.fn();
     supabaseFromMock.mockReset();
@@ -117,9 +124,19 @@ describe("usePaymentsData", () => {
       }
       return queue.shift()!;
     });
+    process.env.VITE_ENABLE_PAYMENT_SCHEMA_ENHANCEMENTS = "true";
+    enqueue(
+      "project_statuses",
+      createQueryBuilder({ data: null, error: null })
+    );
   });
 
   afterEach(() => {
+    if (originalSchemaEnv === undefined) {
+      delete process.env.VITE_ENABLE_PAYMENT_SCHEMA_ENHANCEMENTS;
+    } else {
+      process.env.VITE_ENABLE_PAYMENT_SCHEMA_ENHANCEMENTS = originalSchemaEnv;
+    }
     jest.clearAllMocks();
   });
 

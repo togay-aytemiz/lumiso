@@ -76,7 +76,7 @@ describe("SettingsHelpButton", () => {
   it("opens help modal and triggers footer actions on desktop", async () => {
     render(<SettingsHelpButton helpContent={helpContent} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Need Help?" }));
+    fireEvent.click(screen.getByRole("button", { name: "Need Help" }));
 
     expect(await screen.findByTestId("help-modal")).toBeInTheDocument();
     expect(screen.getByText("Settings Help")).toBeInTheDocument();
@@ -88,7 +88,7 @@ describe("SettingsHelpButton", () => {
       "_blank"
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Need Help?" }));
+    fireEvent.click(screen.getByRole("button", { name: "Need Help" }));
     expect(await screen.findByTestId("help-modal")).toBeInTheDocument();
 
     fireEvent.click(await screen.findByRole("button", { name: "Email Support" }));
@@ -103,6 +103,6 @@ describe("SettingsHelpButton", () => {
     render(<SettingsHelpButton helpContent={helpContent} />);
 
     expect(screen.getByRole("button")).toBeInTheDocument();
-    expect(screen.queryByText("Need Help?")).not.toBeInTheDocument();
+    expect(screen.queryByText("Need Help")).not.toBeInTheDocument();
   });
 });

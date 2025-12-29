@@ -162,9 +162,7 @@ describe("ProfileIntakeGate", () => {
     render(<ProfileIntakeGate />);
     const user = userEvent.setup();
 
-    const displayNameInput = await screen.findByPlaceholderText(
-      "pages:profileIntake.displayName.placeholder"
-    );
+    const displayNameInput = await screen.findByRole("textbox");
     await user.clear(displayNameInput);
     await user.type(displayNameInput, "Tayte");
     expect(displayNameInput).toHaveValue("Tayte");
@@ -174,9 +172,7 @@ describe("ProfileIntakeGate", () => {
       })
     );
 
-    const businessInput = await screen.findByPlaceholderText(
-      "pages:profileIntake.businessName.placeholder"
-    );
+    const businessInput = await screen.findByRole("textbox");
     await user.clear(businessInput);
     await user.type(businessInput, "Lumiso");
     expect(businessInput).toHaveValue("Lumiso");

@@ -98,8 +98,10 @@ export function ServicesTableCard({
               >
                 <td className="px-4 py-3 align-middle">
                   <div className="font-medium text-slate-900">{row.name}</div>
-                  {row.vendor ? (
-                    <div className="text-xs text-muted-foreground">{row.vendor}</div>
+                  {row.vendor || row.isCustom ? (
+                    <div className="text-xs text-muted-foreground">
+                      {row.vendor ? row.vendor : labels.customVendorFallback}
+                    </div>
                   ) : null}
                   {row.isCustom && labels.customTag ? (
                     <div className="text-xs text-muted-foreground">{labels.customTag}</div>

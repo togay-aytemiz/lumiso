@@ -27,6 +27,7 @@ import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";
 import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useOnboardingDeletionGuard } from "@/hooks/useOnboardingDeletionGuard";
+import { getEnvValue } from "@/lib/env";
 
 interface Project {
   id: string;
@@ -100,7 +101,7 @@ export function ProjectsSection({
     : [];
   const projectTutorialVideoUrl =
     tutorialVideoUrl ??
-    import.meta.env.VITE_PROJECT_TUTORIAL_VIDEO_URL ??
+    getEnvValue("VITE_PROJECT_TUTORIAL_VIDEO_URL") ??
     "https://www.youtube.com/embed/RouTuh9llXs";
   const hasTutorialVideo = Boolean(projectTutorialVideoUrl);
   const restrictionTitle = t("pages:leadDetail.restrictions.schedulingTitle");

@@ -179,7 +179,7 @@ describe("useTemplateBuilder", () => {
     ];
 
     const builderTemplate = {
-      id: "tpl-2",
+      id: "",
       name: "Template",
       category: "general",
       master_content: "",
@@ -264,7 +264,7 @@ describe("useTemplateBuilder", () => {
 
   it("publishes template and shows toast", async () => {
     const publishTemplateData = {
-      id: "tpl-3",
+      id: "",
       name: "Template",
       category: "general",
       master_content: "Content",
@@ -288,6 +288,7 @@ describe("useTemplateBuilder", () => {
     const publishInsertSingleMock = jest.fn().mockResolvedValue({
       data: {
         ...publishTemplateData,
+        id: "tpl-3",
         is_active: true,
         status: "published",
         updated_at: "2024-01-05T00:00:00.000Z",

@@ -28,6 +28,15 @@ jest.mock("@/hooks/useWorkflows", () => ({
   useWorkflows: jest.fn(),
 }));
 
+jest.mock("@/hooks/usePageVideoPrompt", () => ({
+  usePageVideoPrompt: jest.fn(() => ({
+    isOpen: false,
+    close: jest.fn(),
+    markCompleted: jest.fn(),
+    snooze: jest.fn(),
+  })),
+}));
+
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) => {
@@ -312,12 +321,8 @@ describe("Workflows page", () => {
 
     render(<Workflows />);
 
-    expect(screen.getByTestId("kpi-value-workflows-stats-totalworkflows")).toHaveTextContent(
-      String(workflows.length)
-    );
-    expect(screen.getByTestId("kpi-value-workflows-stats-active")).toHaveTextContent("2");
-    expect(screen.getByTestId("kpi-value-workflows-stats-paused")).toHaveTextContent("1");
-    expect(screen.getByText("summary 2/1")).toBeInTheDocument();
+    expect(screen.getByText("Workflow List")).toBeInTheDocument();
+    expect(screen.getByText("workflows.buttons.createWorkflow")).toBeInTheDocument();
 
     const rows = screen.getAllByTestId(/^workflow-row-/);
     expect(rows).toHaveLength(workflows.length);

@@ -17,6 +17,23 @@ jest.mock("react-i18next", () => ({
   }),
 }));
 
+jest.mock("@/hooks/usePageVideoPrompt", () => ({
+  usePageVideoPrompt: jest.fn(() => ({
+    isOpen: false,
+    close: jest.fn(),
+    markCompleted: jest.fn(),
+    snooze: jest.fn(),
+  })),
+}));
+
+jest.mock("@/components/AddAction", () => ({
+  AddAction: () => <div data-testid="add-action" />,
+}));
+
+jest.mock("@/components/UserMenu", () => ({
+  UserMenu: () => <div data-testid="user-menu" />,
+}));
+
 type SegmentedControlOption = {
   value: string;
   label: ReactNode;

@@ -20,6 +20,7 @@ import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErr
 import { useTranslation } from "react-i18next";
 import { TemplateVariablesProvider } from "@/contexts/TemplateVariablesContext";
 import { VariableTokenText } from "@/components/template-builder/VariableTokenText";
+import { getEnvValue } from "@/lib/env";
 import {
   Dialog,
   DialogContent,
@@ -77,9 +78,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const helpChannelUrl = "https://www.youtube.com/channel/UCH1JW6uO_ZIG8TsgtpFTjhA";
   const templatesVideoId =
-    (typeof import.meta !== "undefined" &&
-      (import.meta as { env?: Record<string, string> }).env?.VITE_TEMPLATES_VIDEO_ID) ||
-    "PDJvy9OFcVU";
+    getEnvValue("VITE_TEMPLATES_VIDEO_ID") || "PDJvy9OFcVU";
 
   // Template data from backend or defaults
   const templateName = template?.name || untitledName;

@@ -143,6 +143,29 @@ jest.mock("@/hooks/useProfile", () => ({
   useProfile: () => ({ profile: { id: "profile-1" } })
 }));
 
+jest.mock("@/contexts/useOnboarding", () => ({
+  useOnboarding: () => ({
+    stage: "completed",
+    currentStep: 0,
+    loading: false,
+    shouldShowWelcomeModal: false,
+    isInGuidedSetup: false,
+    isOnboardingComplete: true,
+    shouldLockNavigation: false,
+    currentStepInfo: null,
+    nextStepInfo: null,
+    completedSteps: [],
+    isAllStepsComplete: true,
+    totalSteps: 0,
+    startGuidedSetup: jest.fn(),
+    completeCurrentStep: jest.fn(),
+    completeMultipleSteps: jest.fn(),
+    completeOnboarding: jest.fn(),
+    skipOnboarding: jest.fn(),
+    resetOnboarding: jest.fn(),
+  })
+}));
+
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: jest.fn(),
@@ -156,6 +179,8 @@ interface LeadStatusQueryMock {
   _selectFields: string;
   select: jest.Mock<LeadStatusQueryMock, [string]>;
   eq: jest.Mock<LeadStatusQueryMock, [string, unknown]>;
+  order: jest.Mock<LeadStatusQueryMock, [string, { ascending?: boolean }?]>;
+  limit: jest.Mock<LeadStatusQueryMock, [number]>;
   maybeSingle: jest.Mock<Promise<{ data: { id?: string; name?: string } | null }>, []>;
 }
 
@@ -177,6 +202,8 @@ const createLeadStatusesQuery = (): LeadStatusQueryMock => {
       return query;
     }),
     eq: jest.fn(() => query),
+    order: jest.fn(() => query),
+    limit: jest.fn(() => query),
     maybeSingle: jest.fn(async () => {
       if (query._selectFields === "name") {
         return { data: { name: "New" } };

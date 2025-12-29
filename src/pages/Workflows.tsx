@@ -20,11 +20,10 @@ import { useTranslation } from "react-i18next";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageVideoModal } from "@/components/PageVideoModal";
 import { usePageVideoPrompt } from "@/hooks/usePageVideoPrompt";
+import { getEnvValue } from "@/lib/env";
 
 const WORKFLOWS_VIDEO_ID =
-  (typeof import.meta !== "undefined" &&
-    (import.meta as { env?: Record<string, string> }).env?.VITE_WORKFLOWS_VIDEO_ID) ||
-  "A8Zh1QQHzu0";
+  getEnvValue("VITE_WORKFLOWS_VIDEO_ID") || "A8Zh1QQHzu0";
 
 export default function Workflows() {
   const { t, i18n } = useTranslation("pages");

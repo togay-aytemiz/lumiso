@@ -52,7 +52,7 @@ export const useProjectSheetController = (
     async (leadId?: string | null) => {
       if (!leadId) return "Unknown Lead";
       const cachedName = resolveLeadName?.(leadId);
-      if (cachedName) {
+      if (cachedName && cachedName !== "Unknown Lead") {
         return cachedName;
       }
       const { data, error } = await supabase

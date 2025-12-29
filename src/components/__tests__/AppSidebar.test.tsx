@@ -50,6 +50,13 @@ jest.mock("@/components/ui/sidebar", () => ({
   SidebarFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SidebarMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SidebarProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SidebarSeparator: ({ children }: { children?: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  useSidebar: () => ({
+    state: "expanded",
+    toggleSidebar: jest.fn(),
+  }),
 }));
 
 jest.mock("@/components/sidebar/SidebarCategory", () => ({
@@ -62,6 +69,10 @@ jest.mock("@/components/sidebar/SidebarNavItem", () => ({
 
 jest.mock("@/components/sidebar/SidebarSubItem", () => ({
   SidebarSubItem: (props: SidebarSubItemProps) => sidebarSubItemMock(props),
+}));
+
+jest.mock("@/components/sidebar/TrialStatusIndicator", () => ({
+  TrialStatusIndicator: () => <div data-testid="trial-status-indicator" />,
 }));
 
 jest.mock("@/components/modals/HelpModal", () => ({

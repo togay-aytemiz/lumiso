@@ -1,7 +1,23 @@
 // Simple developer-only logging helpers for timing and grouping
 // Uses Vite's import.meta.env.DEV to avoid noise in production builds
+const resolveDev = (): boolean => {
+  try {
+    const meta = (0, eval)('import.meta') as { env?: { DEV?: boolean } } | undefined;
+    if (meta?.env && 'DEV' in meta.env) {
+      return Boolean(meta.env.DEV);
+    }
+  } catch {
+    // ignore, fall back to process.env below
+  }
 
-export const DEV: boolean = typeof import.meta !== 'undefined' && !!import.meta.env?.DEV;
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env.NODE_ENV !== 'production';
+  }
+
+  return false;
+};
+
+export const DEV = resolveDev();
 
 export type Timer = {
   end: (extra?: Record<string, unknown>) => number; // returns elapsed ms

@@ -174,9 +174,13 @@ jest.mock("@/hooks/useThrottledRefetchOnFocus", () => ({
   useThrottledRefetchOnFocus: jest.fn(),
 }));
 
-jest.mock("@/hooks/use-toast", () => ({
-  toast: jest.fn(),
-}));
+jest.mock("@/hooks/use-toast", () => {
+  const toast = jest.fn();
+  return {
+    toast,
+    useToast: jest.fn(() => ({ toast })),
+  };
+});
 
 jest.mock("@/lib/utils", () => ({
   formatDate: (value: string | null) => value ?? "",
@@ -208,6 +212,7 @@ jest.mock("react-i18next", () => ({
       }
       return key;
     },
+    i18n: { language: "en" },
   }),
 }));
 

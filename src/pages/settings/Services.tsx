@@ -11,8 +11,10 @@ import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
+import { getEnvValue } from "@/lib/env";
 
-const PACKAGES_TUTORIAL_VIDEO_ID = import.meta.env.VITE_PACKAGES_TUTORIAL_VIDEO_ID || "oaK_S4FLSg8";
+const PACKAGES_TUTORIAL_VIDEO_ID =
+  getEnvValue("VITE_PACKAGES_TUTORIAL_VIDEO_ID") || "oaK_S4FLSg8";
 const PACKAGES_TUTORIAL_VIDEO_URL = `https://www.youtube.com/embed/${PACKAGES_TUTORIAL_VIDEO_ID}?rel=0&modestbranding=1&playsinline=1`;
 
 const createPackagesSetupSteps = (t: TFunction<"pages">, videoUrl = PACKAGES_TUTORIAL_VIDEO_URL): TutorialStep[] => [

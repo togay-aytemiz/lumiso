@@ -46,6 +46,14 @@ jest.mock("@/hooks/useProjectSessionsSummary", () => ({
   useProjectSessionsSummary: jest.fn(),
 }));
 
+jest.mock("@/contexts/useOnboarding", () => ({
+  useOnboarding: () => ({
+    completeMultipleSteps: jest.fn(),
+    isInGuidedSetup: false,
+    currentStep: 1,
+  }),
+}));
+
 jest.mock("@/lib/projects/buildProjectSummaryItems", () => ({
   buildProjectSummaryItems: jest.fn(),
 }));
@@ -68,6 +76,12 @@ jest.mock("@/components/EntityHeader", () => ({
       {actions}
       {banner}
     </div>
+  ),
+}));
+
+jest.mock("@/components/ProjectStatusBadge", () => ({
+  ProjectStatusBadge: ({ currentStatusId }: { currentStatusId?: string }) => (
+    <div data-testid="stage-pipeline">{currentStatusId}</div>
   ),
 }));
 

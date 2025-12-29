@@ -1,6 +1,6 @@
-import React from "react";
 import { act, render } from "@testing-library/react";
 import { useOnboarding } from "@/contexts/useOnboarding";
+import { PerformanceMonitor } from "../PerformanceMonitor";
 
 jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
@@ -11,7 +11,6 @@ describe("PerformanceMonitor", () => {
   const originalEnv = process.env.NODE_ENV;
   let originalRAF: typeof window.requestAnimationFrame;
   let originalCancelRAF: typeof window.cancelAnimationFrame;
-  let PerformanceMonitor: React.ComponentType;
   type OnboardingMetrics = {
     getRenderCount: () => string | undefined;
     getPerformanceStats: () => Promise<{
@@ -26,16 +25,6 @@ describe("PerformanceMonitor", () => {
   };
   let onboardingMetrics: OnboardingMetrics | undefined;
 
-  beforeAll(async () => {
-    const previousEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "development";
-    jest.resetModules();
-    const module = await import("../PerformanceMonitor");
-    PerformanceMonitor = module.PerformanceMonitor;
-    onboardingMetrics = (window as WindowWithOnboardingMetrics).onboardingMetrics;
-    process.env.NODE_ENV = previousEnv;
-  });
-
   beforeEach(() => {
     mockUseOnboarding.mockReset();
     originalRAF = window.requestAnimationFrame;
@@ -46,6 +35,7 @@ describe("PerformanceMonitor", () => {
     window.requestAnimationFrame = originalRAF;
     window.cancelAnimationFrame = originalCancelRAF;
     process.env.NODE_ENV = originalEnv;
+    delete (window as WindowWithOnboardingMetrics).onboardingMetrics;
   });
 
   it("returns null outside development mode", () => {
@@ -96,6 +86,7 @@ describe("PerformanceMonitor", () => {
       })
     );
 
+    onboardingMetrics = (window as WindowWithOnboardingMetrics).onboardingMetrics;
     expect(onboardingMetrics).toBeDefined();
     await expect(onboardingMetrics?.getPerformanceStats()).resolves.toEqual({
       message: "V3 Onboarding System - Production Ready",

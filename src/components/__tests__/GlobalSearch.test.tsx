@@ -145,9 +145,23 @@ const setupSupabase = (overrides: Partial<SupabaseResponses> = {}) => {
   return responses;
 };
 
-const flushPromises = async (times: number = 5) => {
+const flushPromises = async (times: number = 12) => {
   for (let i = 0; i < times; i += 1) {
     await Promise.resolve();
+  }
+};
+
+const runDebouncedSearch = async () => {
+  for (let i = 0; i < 3; i += 1) {
+    await act(async () => {
+      await flushPromises(4);
+    });
+    await act(async () => {
+      jest.runAllTimers();
+    });
+    await act(async () => {
+      await flushPromises(20);
+    });
   }
 };
 
@@ -156,6 +170,7 @@ describe("GlobalSearch", () => {
     jest.useFakeTimers({ doNotFake: ["performance"] });
     jest.clearAllMocks();
     navigateMock.mockReset();
+    window.localStorage.clear();
     (getUserOrganizationId as jest.Mock).mockResolvedValue("org-123");
   });
 
@@ -185,21 +200,12 @@ describe("GlobalSearch", () => {
       ).toBe(true)
     );
 
-    const input = screen.getByPlaceholderText("search.placeholder");
-    fireEvent.focus(input);
-
-    await act(async () => {
-      await flushPromises();
-    });
-    await act(async () => {
-      jest.runOnlyPendingTimers();
-      await flushPromises();
-    });
+    await runDebouncedSearch();
 
     expect(supabaseFromMock.mock.calls.map((call) => call[0])).toContain(
       "lead_field_values"
     );
-    expect(screen.getByText("Jane Doe")).toBeInTheDocument();
+    expect(await screen.findByText("Jane Doe")).toBeInTheDocument();
     await waitFor(() => expect(leadStatusBadgeMock).toHaveBeenCalled());
 
     const leadBadgeProps = leadStatusBadgeMock.mock.calls[0][0];
@@ -238,21 +244,14 @@ describe("GlobalSearch", () => {
     );
 
     const input = screen.getByPlaceholderText("search.placeholder");
-    fireEvent.focus(input);
 
-    await act(async () => {
-      await flushPromises();
-    });
-    await act(async () => {
-      jest.runOnlyPendingTimers();
-      await flushPromises();
-    });
+    await runDebouncedSearch();
 
     expect(supabaseFromMock.mock.calls.map((call) => call[0])).toContain(
       "lead_field_values"
     );
-    expect(screen.getByText("Jane Doe")).toBeInTheDocument();
-    expect(screen.getByText("Project One")).toBeInTheDocument();
+    expect(await screen.findByText("Jane Doe")).toBeInTheDocument();
+    expect(await screen.findByText("Project One")).toBeInTheDocument();
 
     fireEvent.keyDown(input, { key: "ArrowDown" });
     fireEvent.keyDown(input, { key: "Enter" });

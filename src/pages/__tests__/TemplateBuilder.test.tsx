@@ -194,7 +194,7 @@ describe("TemplateBuilder page", () => {
     await renderTemplateBuilder();
 
     await act(async () => {
-      jest.advanceTimersByTime(900);
+      jest.advanceTimersByTime(3000);
     });
 
     await waitFor(() => {

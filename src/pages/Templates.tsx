@@ -22,11 +22,10 @@ import GlobalSearch from "@/components/GlobalSearch";
 import { VariableTokenText } from "@/components/template-builder/VariableTokenText";
 import { useTemplateVariables } from "@/hooks/useTemplateVariables";
 import { clearTemplateDraftLocalStorage } from "@/hooks/useTemplateBuilder";
+import { getEnvValue } from "@/lib/env";
 
 const TEMPLATES_VIDEO_ID =
-  (typeof import.meta !== "undefined" &&
-    (import.meta as { env?: Record<string, string> }).env?.VITE_TEMPLATES_VIDEO_ID) ||
-  "PDJvy9OFcVU";
+  getEnvValue("VITE_TEMPLATES_VIDEO_ID") || "PDJvy9OFcVU";
 
 // Optimized Templates component with memoization and error handling
 const OptimizedTemplatesContent = React.memo(() => {

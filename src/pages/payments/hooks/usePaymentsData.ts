@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getEnvValue } from "@/lib/env";
 import {
   PROJECT_SELECT_FIELDS,
   SEARCH_MIN_CHARS,
@@ -87,11 +88,6 @@ interface UsePaymentsDataResult {
 type EnrichedPayment = Payment & { projects: ProjectDetails | null };
 
 const LOG_TIMESTAMP_FIELD = "log_timestamp";
-const paymentSchemaEnhancementsEnabled =
-  (typeof import.meta !== "undefined" &&
-    import.meta.env &&
-    import.meta.env.VITE_ENABLE_PAYMENT_SCHEMA_ENHANCEMENTS === "true") ||
-  false;
 
 const isLogTimestampMissingError = (error: unknown): boolean => {
   if (!error || typeof error !== "object") {
@@ -222,6 +218,8 @@ export function usePaymentsData({
   organizationId,
   includeAllOrganizations = false,
 }: UsePaymentsDataOptions): UsePaymentsDataResult {
+  const paymentSchemaEnhancementsEnabled =
+    getEnvValue("VITE_ENABLE_PAYMENT_SCHEMA_ENHANCEMENTS") === "true";
   const [paginatedPayments, setPaginatedPayments] = useState<Payment[]>([]);
   const [metricsPayments, setMetricsPayments] = useState<Payment[]>([]);
   const [scheduledPayments, setScheduledPayments] = useState<Payment[]>([]);
@@ -299,7 +297,7 @@ export function usePaymentsData({
       logTimestampSupportPromiseRef.current = null;
     });
     return logTimestampSupportPromiseRef.current;
-  }, []);
+  }, [paymentSchemaEnhancementsEnabled]);
 
   const createSearchContext = useCallback(
     async (globalSearchTerm: string): Promise<SearchContext> => {

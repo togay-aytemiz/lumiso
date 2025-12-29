@@ -90,13 +90,19 @@ jest.mock("@/components/settings/SettingsSections", () => ({
 
 const mockUseToast = useToast as jest.Mock;
 const mockDeleteAllOrganizationData = deleteAllOrganizationData as jest.Mock;
-let reloadSpy: jest.SpyInstance;
+let originalReload: Location["reload"];
+let reloadSpy: jest.Mock;
 
 describe("DangerZone settings page", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockDeleteAllOrganizationData.mockResolvedValue(undefined);
-    reloadSpy = jest.spyOn(window.location, "reload").mockImplementation(() => {});
+    reloadSpy = jest.fn();
+    originalReload = window.location.reload;
+    Object.defineProperty(Object.getPrototypeOf(window.location), "reload", {
+      configurable: true,
+      value: reloadSpy,
+    });
   });
 
   it("keeps delete action disabled without a password", () => {
@@ -207,6 +213,9 @@ describe("DangerZone settings page", () => {
   });
 
   afterEach(() => {
-    reloadSpy.mockRestore();
+    Object.defineProperty(Object.getPrototypeOf(window.location), "reload", {
+      configurable: true,
+      value: originalReload,
+    });
   });
 });

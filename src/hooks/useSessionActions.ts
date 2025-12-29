@@ -104,12 +104,12 @@ export const useSessionActions = () => {
             console.log(`🚀 Triggering session_cancelled workflow for session: ${sessionId}`);
             await triggerSessionCancelled(sessionId, sessionData.organization_id, triggerData);
           }
-      } catch (workflowError) {
-        console.error('❌ Error triggering workflow for status change:', workflowError);
-        // Don't fail the status update if workflow fails
-        toast.warning(tMessages("session.statusUpdateWarning"));
+        } catch (workflowError) {
+          console.error('❌ Error triggering workflow for status change:', workflowError);
+          // Don't fail the status update if workflow fails
+          toast.warning(tMessages("session.statusUpdateWarning"));
+        }
       }
-    }
 
       toast.success(tMessages("success.updated"));
 

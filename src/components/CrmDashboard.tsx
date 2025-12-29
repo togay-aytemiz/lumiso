@@ -611,6 +611,7 @@ const CrmDashboard = () => {
           loading={loading}
           sessionWindowRange={sessionWindowRange || undefined}
           onWeekReferenceOutOfRange={(anchor) => fetchData(anchor)}
+          onSessionsChanged={() => fetchData()}
           userName={userName}
           inactiveLeadCount={inactiveLeadCount}
           sessionStats={sessionStats}

@@ -1153,7 +1153,7 @@ export default function AllGalleries() {
       </PageHeader>
 
       <div className="space-y-6 p-4 sm:p-6">
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[minmax(280px,1.35fr)_repeat(5,minmax(170px,1fr))]">
           <StorageWidget
             usedBytes={orgUsedBytes}
             totalBytes={orgLimitBytes}
@@ -1222,6 +1222,7 @@ export default function AllGalleries() {
               density="compact"
               icon={card.icon}
               title={card.label}
+              titleWrap="wrap"
               value={numberFormatter.format(card.value)}
               onClick={card.onClick}
               showClickArrow

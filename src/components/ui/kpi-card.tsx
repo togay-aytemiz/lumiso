@@ -140,6 +140,10 @@ export interface KpiCardProps
    */
   title: React.ReactNode;
   /**
+   * Controls title wrapping behavior. Defaults to truncating to a single line.
+   */
+  titleWrap?: "truncate" | "wrap";
+  /**
    * Heading level for the title.
    */
   headingLevel?: "h2" | "h3" | "h4" | "h5" | "h6";
@@ -211,6 +215,7 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
       iconSvgClassName,
       subtitle,
       title,
+      titleWrap = "truncate",
       headingLevel = "h3",
       value,
       action,
@@ -398,7 +403,14 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
                   className="text-sm font-medium text-muted-foreground"
                 >
                   <span className="flex items-center gap-2">
-                    <span className="truncate">{title}</span>
+                    <span
+                      className={cn(
+                        "min-w-0",
+                        titleWrap === "wrap" ? "whitespace-normal break-words leading-snug" : "truncate",
+                      )}
+                    >
+                      {title}
+                    </span>
                     {info && (
                       <TooltipProvider delayDuration={150}>
                         <Tooltip>

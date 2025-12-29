@@ -18,6 +18,21 @@ type GalleryAssetRow = {
 const BUCKET = "gallery-assets";
 const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
+type DebugPayload = {
+  step: string;
+  publicId?: string;
+  hasSupabaseUrl?: boolean;
+  hasServiceRoleKey?: boolean;
+  galleryId?: string | null;
+  galleryStatus?: string | null;
+  coverAssetId?: string | null;
+  coverStoragePath?: string | null;
+  fallbackStoragePath?: string | null;
+  selectedStoragePath?: string | null;
+  signedUrl?: string | null;
+  error?: string | null;
+};
+
 function readEnv(key: string): string {
   try {
     return Deno.env.get(key) ?? "";
@@ -67,6 +82,16 @@ function resolveAssetStoragePath(asset: GalleryAssetRow | null) {
       ? normalizeStoragePath((metadata as { thumbPath: string }).thumbPath)
       : "";
   return thumbPath;
+}
+
+function buildDebugResponse(payload: DebugPayload, status = 200) {
+  return new Response(JSON.stringify(payload, null, 2), {
+    status,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+    },
+  });
 }
 
 async function fetchGallery(args: {
@@ -181,28 +206,52 @@ async function createSignedUrl(args: {
 }
 
 export default async function galleryOgImage(request: Request, _context: Context) {
-  const { pathname, origin } = new URL(request.url);
+  const url = new URL(request.url);
+  const { pathname, origin, searchParams } = url;
+  const debug = searchParams.get("debug") === "1";
   const parts = pathname.split("/").filter(Boolean);
   const publicIdRaw = parts.length >= 3 && parts[0] === "og" && parts[1] === "g" ? parts[2] : "";
   const publicId = publicIdRaw.trim().toUpperCase();
 
   const fallbackUrl = new URL("/social.webp", origin).toString();
   if (!publicId) {
+    if (debug) {
+      return buildDebugResponse({ step: "missing-public-id" }, 400);
+    }
     return Response.redirect(fallbackUrl, 302);
   }
 
   const { supabaseUrl, serviceRoleKey } = getSupabaseConfig();
   if (!supabaseUrl || !serviceRoleKey) {
+    if (debug) {
+      return buildDebugResponse({
+        step: "missing-env",
+        publicId,
+        hasSupabaseUrl: Boolean(supabaseUrl),
+        hasServiceRoleKey: Boolean(serviceRoleKey),
+      });
+    }
     return Response.redirect(fallbackUrl, 302);
   }
 
   try {
     const gallery = await fetchGallery({ supabaseUrl, serviceRoleKey, publicId });
     if (!gallery?.id) {
+      if (debug) {
+        return buildDebugResponse({ step: "gallery-not-found", publicId });
+      }
       return Response.redirect(fallbackUrl, 302);
     }
 
     if (String(gallery.status ?? "").toLowerCase() === "archived") {
+      if (debug) {
+        return buildDebugResponse({
+          step: "gallery-archived",
+          publicId,
+          galleryId: gallery.id,
+          galleryStatus: gallery.status ?? null,
+        });
+      }
       return Response.redirect(fallbackUrl, 302);
     }
 
@@ -220,10 +269,33 @@ export default async function galleryOgImage(request: Request, _context: Context
     const storagePath = coverStoragePath || fallbackStoragePath;
 
     if (!storagePath) {
+      if (debug) {
+        return buildDebugResponse({
+          step: "asset-path-missing",
+          publicId,
+          galleryId: gallery.id,
+          galleryStatus: gallery.status ?? null,
+          coverAssetId: coverAssetId || null,
+          coverStoragePath: coverStoragePath || null,
+          fallbackStoragePath: fallbackStoragePath || null,
+        });
+      }
       return Response.redirect(fallbackUrl, 302);
     }
 
     if (storagePath.startsWith("http://") || storagePath.startsWith("https://")) {
+      if (debug) {
+        return buildDebugResponse({
+          step: "asset-path-external",
+          publicId,
+          galleryId: gallery.id,
+          galleryStatus: gallery.status ?? null,
+          coverAssetId: coverAssetId || null,
+          coverStoragePath: coverStoragePath || null,
+          fallbackStoragePath: fallbackStoragePath || null,
+          selectedStoragePath: storagePath,
+        });
+      }
       const response = Response.redirect(storagePath, 302);
       response.headers.set("cache-control", "public, max-age=0, s-maxage=3600");
       return response;
@@ -231,13 +303,49 @@ export default async function galleryOgImage(request: Request, _context: Context
 
     const signedUrl = await createSignedUrl({ supabaseUrl, serviceRoleKey, storagePath });
     if (!signedUrl) {
+      if (debug) {
+        return buildDebugResponse({
+          step: "signed-url-missing",
+          publicId,
+          galleryId: gallery.id,
+          galleryStatus: gallery.status ?? null,
+          coverAssetId: coverAssetId || null,
+          coverStoragePath: coverStoragePath || null,
+          fallbackStoragePath: fallbackStoragePath || null,
+          selectedStoragePath: storagePath,
+        });
+      }
       return Response.redirect(fallbackUrl, 302);
+    }
+
+    if (debug) {
+      return buildDebugResponse({
+        step: "signed-url-ready",
+        publicId,
+        galleryId: gallery.id,
+        galleryStatus: gallery.status ?? null,
+        coverAssetId: coverAssetId || null,
+        coverStoragePath: coverStoragePath || null,
+        fallbackStoragePath: fallbackStoragePath || null,
+        selectedStoragePath: storagePath,
+        signedUrl,
+      });
     }
 
     const response = Response.redirect(signedUrl, 302);
     response.headers.set("cache-control", "public, max-age=0, s-maxage=3600");
     return response;
-  } catch {
+  } catch (error: unknown) {
+    if (debug) {
+      return buildDebugResponse(
+        {
+          step: "unexpected-error",
+          publicId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        500
+      );
+    }
     return Response.redirect(fallbackUrl, 302);
   }
 }

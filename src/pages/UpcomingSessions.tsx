@@ -1394,6 +1394,7 @@ const AllSessions = () => {
             onViewFullDetails={handleViewFullSessionDetails}
             onNavigateToLead={handleNavigateToLead}
             onNavigateToProject={handleNavigateToProject}
+            onSessionUpdated={fetchSessions}
           />
         )}
 

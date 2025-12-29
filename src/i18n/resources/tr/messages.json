@@ -26,6 +26,7 @@
     "updatingProject": "Proje güncellenirken hata",
     "deletingProject": "Proje silinirken hata",
     "deletingSession": "Seans silinirken hata",
+    "updatingSessionStatus": "Seans durumu güncellenemedi.",
     "leadFetching": "Kişiler alınırken hata",
     "projectOpen": "Proje açılırken hata",
     "actionFailed": "İşlem başarısız",
@@ -125,6 +126,7 @@
   "session": {
     "validationRequired": "Seans adı, tarih ve saat gereklidir.",
     "notificationWarning": "Seans oluşturuldu ancak bildirimler gönderilemeyebilir.",
+    "statusUpdateWarning": "Durum güncellendi, ancak bildirimler gönderilmeyebilir.",
     "scheduled": "Seans başarıyla planlandı.",
     "scheduleError": "Seans planlanırken hata"
   },

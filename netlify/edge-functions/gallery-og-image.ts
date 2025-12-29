@@ -84,6 +84,22 @@ function resolveAssetStoragePath(asset: GalleryAssetRow | null) {
   return thumbPath;
 }
 
+function getAssetStorageCandidates(asset: GalleryAssetRow | null) {
+  if (!asset) return [];
+  const candidates = [
+    typeof asset.storage_path_web === "string" ? normalizeStoragePath(asset.storage_path_web) : "",
+    (() => {
+      const metadata = asset.metadata && typeof asset.metadata === "object" ? asset.metadata : {};
+      return typeof (metadata as { thumbPath?: unknown }).thumbPath === "string"
+        ? normalizeStoragePath((metadata as { thumbPath: string }).thumbPath)
+        : "";
+    })(),
+    typeof asset.storage_path_original === "string" ? normalizeStoragePath(asset.storage_path_original) : "",
+  ].filter(Boolean);
+
+  return Array.from(new Set(candidates));
+}
+
 function buildDebugResponse(payload: DebugPayload, status = 200) {
   return new Response(JSON.stringify(payload, null, 2), {
     status,
@@ -91,6 +107,38 @@ function buildDebugResponse(payload: DebugPayload, status = 200) {
       "content-type": "application/json; charset=utf-8",
       "cache-control": "no-store",
     },
+  });
+}
+
+async function fetchStorageObject(args: {
+  supabaseUrl: string;
+  serviceRoleKey: string;
+  storagePath: string;
+  method: "GET" | "HEAD";
+}): Promise<Response | null> {
+  const baseUrl = args.supabaseUrl.replace(/\/+$/, "");
+  const encodedPath = encodeStoragePath(args.storagePath);
+  const url = new URL(`${baseUrl}/storage/v1/object/${BUCKET}/${encodedPath}`);
+
+  const response = await fetch(url, {
+    method: args.method,
+    headers: {
+      ...createSupabaseHeaders(args.serviceRoleKey),
+      Accept: "application/octet-stream",
+    },
+  });
+
+  if (!response.ok) return null;
+  return response;
+}
+
+function buildStorageResponse(source: Response, method: "GET" | "HEAD") {
+  const headers = new Headers(source.headers);
+  headers.set("cache-control", "public, max-age=0, s-maxage=3600");
+  headers.delete("set-cookie");
+  return new Response(method === "HEAD" ? null : source.body, {
+    status: source.status,
+    headers,
   });
 }
 
@@ -209,6 +257,7 @@ export default async function galleryOgImage(request: Request, _context: Context
   const url = new URL(request.url);
   const { pathname, origin, searchParams } = url;
   const debug = searchParams.get("debug") === "1";
+  const method = request.method === "HEAD" ? "HEAD" : "GET";
   const parts = pathname.split("/").filter(Boolean);
   const publicIdRaw = parts.length >= 3 && parts[0] === "og" && parts[1] === "g" ? parts[2] : "";
   const publicId = publicIdRaw.trim().toUpperCase();
@@ -262,13 +311,38 @@ export default async function galleryOgImage(request: Request, _context: Context
       ? await fetchCoverAsset({ supabaseUrl, serviceRoleKey, galleryId: gallery.id, coverAssetId })
       : null;
     const coverStoragePath = resolveAssetStoragePath(coverAsset);
+    const coverCandidates = getAssetStorageCandidates(coverAsset);
     const fallbackAsset = !coverStoragePath
       ? await fetchFallbackAsset({ supabaseUrl, serviceRoleKey, galleryId: gallery.id })
       : null;
     const fallbackStoragePath = resolveAssetStoragePath(fallbackAsset);
-    const storagePath = coverStoragePath || fallbackStoragePath;
+    const fallbackCandidates = getAssetStorageCandidates(fallbackAsset);
+    const allCandidates = [...coverCandidates, ...fallbackCandidates];
+    let selectedStoragePath = "";
+    let storageResponse: Response | null = null;
 
-    if (!storagePath) {
+    for (const candidate of allCandidates) {
+      if (candidate.startsWith("http://") || candidate.startsWith("https://")) {
+        selectedStoragePath = candidate;
+        storageResponse = null;
+        break;
+      }
+
+      const response = await fetchStorageObject({
+        supabaseUrl,
+        serviceRoleKey,
+        storagePath: candidate,
+        method,
+      });
+
+      if (response) {
+        selectedStoragePath = candidate;
+        storageResponse = response;
+        break;
+      }
+    }
+
+    if (!selectedStoragePath) {
       if (debug) {
         return buildDebugResponse({
           step: "asset-path-missing",
@@ -280,10 +354,12 @@ export default async function galleryOgImage(request: Request, _context: Context
           fallbackStoragePath: fallbackStoragePath || null,
         });
       }
-      return Response.redirect(fallbackUrl, 302);
+      const response = Response.redirect(fallbackUrl, 302);
+      response.headers.set("cache-control", "no-store");
+      return response;
     }
 
-    if (storagePath.startsWith("http://") || storagePath.startsWith("https://")) {
+    if (selectedStoragePath.startsWith("http://") || selectedStoragePath.startsWith("https://")) {
       if (debug) {
         return buildDebugResponse({
           step: "asset-path-external",
@@ -293,48 +369,46 @@ export default async function galleryOgImage(request: Request, _context: Context
           coverAssetId: coverAssetId || null,
           coverStoragePath: coverStoragePath || null,
           fallbackStoragePath: fallbackStoragePath || null,
-          selectedStoragePath: storagePath,
+          selectedStoragePath,
         });
       }
-      const response = Response.redirect(storagePath, 302);
+      const response = Response.redirect(selectedStoragePath, 302);
       response.headers.set("cache-control", "public, max-age=0, s-maxage=3600");
       return response;
     }
 
-    const signedUrl = await createSignedUrl({ supabaseUrl, serviceRoleKey, storagePath });
-    if (!signedUrl) {
+    if (!storageResponse) {
       if (debug) {
         return buildDebugResponse({
-          step: "signed-url-missing",
+          step: "asset-fetch-missing",
           publicId,
           galleryId: gallery.id,
           galleryStatus: gallery.status ?? null,
           coverAssetId: coverAssetId || null,
           coverStoragePath: coverStoragePath || null,
           fallbackStoragePath: fallbackStoragePath || null,
-          selectedStoragePath: storagePath,
+          selectedStoragePath,
         });
       }
-      return Response.redirect(fallbackUrl, 302);
+      const response = Response.redirect(fallbackUrl, 302);
+      response.headers.set("cache-control", "no-store");
+      return response;
     }
 
     if (debug) {
       return buildDebugResponse({
-        step: "signed-url-ready",
+        step: "asset-ready",
         publicId,
         galleryId: gallery.id,
         galleryStatus: gallery.status ?? null,
         coverAssetId: coverAssetId || null,
         coverStoragePath: coverStoragePath || null,
         fallbackStoragePath: fallbackStoragePath || null,
-        selectedStoragePath: storagePath,
-        signedUrl,
+        selectedStoragePath,
       });
     }
 
-    const response = Response.redirect(signedUrl, 302);
-    response.headers.set("cache-control", "public, max-age=0, s-maxage=3600");
-    return response;
+    return buildStorageResponse(storageResponse, method);
   } catch (error: unknown) {
     if (debug) {
       return buildDebugResponse(

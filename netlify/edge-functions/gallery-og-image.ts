@@ -120,7 +120,10 @@ async function fetchFallbackAsset(args: {
   url.searchParams.set("select", "id,gallery_id,storage_path_web,storage_path_original,status");
   url.searchParams.append("gallery_id", `eq.${args.galleryId}`);
   url.searchParams.append("status", "eq.ready");
-  url.searchParams.append("storage_path_web", "not.is.null");
+  url.searchParams.append(
+    "or",
+    "(storage_path_web.not.is.null,storage_path_original.not.is.null)"
+  );
   url.searchParams.set("order", "order_index.asc,created_at.asc");
   url.searchParams.set("limit", "1");
 
@@ -212,6 +215,12 @@ export default async function galleryOgImage(request: Request, _context: Context
 
     if (!storagePath) {
       return Response.redirect(fallbackUrl, 302);
+    }
+
+    if (storagePath.startsWith("http://") || storagePath.startsWith("https://")) {
+      const response = Response.redirect(storagePath, 302);
+      response.headers.set("cache-control", "public, max-age=0, s-maxage=3600");
+      return response;
     }
 
     const signedUrl = await createSignedUrl({ supabaseUrl, serviceRoleKey, storagePath });

@@ -44,6 +44,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { supabase } from "@/integrations/supabase/client";
 import { settingsClasses, settingsTokens } from "@/theme/settingsTokens";
+import { AdminUserGallerySettingsTab } from "./AdminUserGallerySettingsTab";
 
 interface AdminUserDetailSheetProps {
   user: AdminUserAccount | null;
@@ -894,6 +895,7 @@ function AdminUserDetailSheetContent({
   const segmentedOptions = useMemo(
     () => [
       { value: "overview", label: t("admin.users.detail.tabs.overview") },
+      { value: "gallery", label: t("admin.users.detail.tabs.gallery") },
       { value: "kisiler", label: t("admin.users.detail.tabs.kisiler") },
       { value: "projects", label: t("admin.users.detail.tabs.projects") },
       { value: "sessions", label: t("admin.users.detail.tabs.sessions") },
@@ -1781,6 +1783,14 @@ function AdminUserDetailSheetContent({
                   ))}
                 </div>
               </OverviewSection>
+            </TabsContent>
+
+            <TabsContent value="gallery" className="pb-6">
+              <AdminUserGallerySettingsTab
+                organizationId={user.id}
+                limitBytes={user.galleryStorageLimitBytes}
+                onSaved={onUserUpdated}
+              />
             </TabsContent>
 
             <DetailTab

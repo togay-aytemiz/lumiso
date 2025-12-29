@@ -114,6 +114,7 @@ interface DashboardDailyFocusProps {
   loading: boolean;
   sessionWindowRange?: { startIso: string; endIso: string };
   onWeekReferenceOutOfRange?: (anchor: Date) => void;
+  onSessionsChanged?: () => void;
   userName?: string | null;
   inactiveLeadCount: number;
   sessionStats: SessionSummaryRow[];
@@ -263,6 +264,7 @@ const DashboardDailyFocus = ({
   loading,
   sessionWindowRange,
   onWeekReferenceOutOfRange,
+  onSessionsChanged,
   userName,
   inactiveLeadCount,
   sessionStats,
@@ -2623,6 +2625,7 @@ const DashboardDailyFocus = ({
             onViewFullDetails={handleViewFullSessionDetails}
             onNavigateToLead={handleNavigateToLead}
             onNavigateToProject={handleNavigateToProject}
+            onSessionUpdated={onSessionsChanged}
           />
         )
       }

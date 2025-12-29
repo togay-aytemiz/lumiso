@@ -110,7 +110,7 @@ interface ProgressConfig {
 }
 
 export interface KpiCardProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   /**
    * Lucide icon component rendered inside the pill.
    */
@@ -179,6 +179,10 @@ export interface KpiCardProps
    * Optional aria label when the surrounding context does not provide one.
    */
   ariaLabel?: string;
+  /**
+   * Show a subtle click arrow icon in the bottom-right.
+   */
+  showClickArrow?: boolean;
 }
 
 const trendToneStyles: Record<TrendTone, string> = {
@@ -217,6 +221,7 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
       info,
       density = "default",
       onClick,
+      showClickArrow,
       ariaLabel,
       tabIndex,
       onKeyDown: onKeyDownProp,
@@ -346,14 +351,14 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
         onKeyDown={
           onClick
             ? (event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onClick(event as unknown as React.MouseEvent<HTMLDivElement, MouseEvent>);
-                }
-                if (onKeyDownProp) {
-                  onKeyDownProp(event);
-                }
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick(event as unknown as React.MouseEvent<HTMLDivElement, MouseEvent>);
               }
+              if (onKeyDownProp) {
+                onKeyDownProp(event);
+              }
+            }
             : onKeyDownProp
         }
         {...rest}
@@ -498,6 +503,12 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
           {footer && (
             <div className="flex items-center justify-end gap-2">
               {footer}
+            </div>
+          )}
+
+          {showClickArrow && (
+            <div className="absolute bottom-3 right-3">
+              <ArrowUpRight className="h-4 w-4 text-muted-foreground/30" />
             </div>
           )}
         </div>

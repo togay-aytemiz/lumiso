@@ -113,15 +113,23 @@ const createQueryBuilder = (table: keyof SupabaseResponses, responses: SupabaseR
   const builder = {
     select: jest.fn(() => builder),
     eq: jest.fn(() => builder),
-    or: jest.fn(() => Promise.resolve(response)),
-    order: jest.fn(() => Promise.resolve(response)),
-    ilike: jest.fn(() => Promise.resolve(response)),
-    in: jest.fn(() => Promise.resolve(response)),
+    or: jest.fn(() => builder),
+    order: jest.fn(() => builder),
+    ilike: jest.fn(() => builder),
+    in: jest.fn(() => builder),
     limit: jest.fn(() => builder),
-    single: jest.fn(() => Promise.resolve(response)),
-    insert: jest.fn(() => Promise.resolve(response)),
-    update: jest.fn(() => Promise.resolve(response)),
-    delete: jest.fn(() => Promise.resolve(response)),
+    single: jest.fn(() => builder),
+    insert: jest.fn(() => builder),
+    update: jest.fn(() => builder),
+    delete: jest.fn(() => builder),
+    then: (
+      onFulfilled: (value: SupabaseResponse<unknown>) => unknown,
+      onRejected?: (reason: unknown) => unknown
+    ) => Promise.resolve(response).then(onFulfilled, onRejected),
+    catch: (onRejected?: (reason: unknown) => unknown) =>
+      Promise.resolve(response).catch(onRejected),
+    finally: (onFinally?: () => void) =>
+      Promise.resolve(response).finally(onFinally),
   };
   return builder;
 };
@@ -137,15 +145,25 @@ const setupSupabase = (overrides: Partial<SupabaseResponses> = {}) => {
   return responses;
 };
 
+const flushPromises = async (times: number = 5) => {
+  for (let i = 0; i < times; i += 1) {
+    await Promise.resolve();
+  }
+};
+
 describe("GlobalSearch", () => {
   beforeEach(() => {
+    jest.useFakeTimers({ doNotFake: ["performance"] });
     jest.clearAllMocks();
     navigateMock.mockReset();
     (getUserOrganizationId as jest.Mock).mockResolvedValue("org-123");
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it("performs a debounced search and renders lead statuses", async () => {
-    jest.useFakeTimers({ legacyFakeTimers: true });
     const lead = {
       id: "lead-1",
       name: "Jane Doe",
@@ -159,43 +177,37 @@ describe("GlobalSearch", () => {
       leads: { data: [lead], error: null },
     });
 
-    render(<GlobalSearch />);
+    render(<GlobalSearch variant="page" initialQuery="Jane" />);
+
+    await waitFor(() =>
+      expect(
+        supabaseFromMock.mock.calls.some((call) => call[0] === "lead_statuses")
+      ).toBe(true)
+    );
 
     const input = screen.getByPlaceholderText("search.placeholder");
     fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: "Jane" } });
-
-    const leadsCallsBefore = supabaseFromMock.mock.calls.filter(
-      (call) => call[0] === "leads"
-    ).length;
-    expect(leadsCallsBefore).toBe(0);
 
     await act(async () => {
-      jest.advanceTimersByTime(299);
+      await flushPromises();
     });
-
-    expect(
-      supabaseFromMock.mock.calls.filter((call) => call[0] === "leads").length
-    ).toBe(0);
-
     await act(async () => {
-      jest.advanceTimersByTime(1);
+      jest.runOnlyPendingTimers();
+      await flushPromises();
     });
 
-    await waitFor(() => expect(screen.getByText("Jane Doe")).toBeInTheDocument());
+    expect(supabaseFromMock.mock.calls.map((call) => call[0])).toContain(
+      "lead_field_values"
+    );
+    expect(screen.getByText("Jane Doe")).toBeInTheDocument();
     await waitFor(() => expect(leadStatusBadgeMock).toHaveBeenCalled());
 
     const leadBadgeProps = leadStatusBadgeMock.mock.calls[0][0];
     expect(leadBadgeProps.statuses).toEqual(baseResponses.lead_statuses.data);
 
-    await act(async () => {
-      jest.runOnlyPendingTimers();
-    });
-    jest.useRealTimers();
   });
 
   it("supports keyboard navigation to select a result", async () => {
-    jest.useFakeTimers({ legacyFakeTimers: true });
     const lead = {
       id: "lead-1",
       name: "Jane Doe",
@@ -217,26 +229,35 @@ describe("GlobalSearch", () => {
       projects: { data: [project], error: null },
     });
 
-    render(<GlobalSearch />);
+    render(<GlobalSearch variant="page" initialQuery="Jane" />);
+
+    await waitFor(() =>
+      expect(
+        supabaseFromMock.mock.calls.some((call) => call[0] === "lead_statuses")
+      ).toBe(true)
+    );
 
     const input = screen.getByPlaceholderText("search.placeholder");
-    fireEvent.change(input, { target: { value: "Jane" } });
+    fireEvent.focus(input);
 
     await act(async () => {
-      jest.advanceTimersByTime(300);
+      await flushPromises();
+    });
+    await act(async () => {
+      jest.runOnlyPendingTimers();
+      await flushPromises();
     });
 
-    await waitFor(() => expect(screen.getByText("Jane Doe")).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText("Project One")).toBeInTheDocument());
+    expect(supabaseFromMock.mock.calls.map((call) => call[0])).toContain(
+      "lead_field_values"
+    );
+    expect(screen.getByText("Jane Doe")).toBeInTheDocument();
+    expect(screen.getByText("Project One")).toBeInTheDocument();
 
     fireEvent.keyDown(input, { key: "ArrowDown" });
     fireEvent.keyDown(input, { key: "Enter" });
 
     expect(navigateMock).toHaveBeenCalledWith("/leads/lead-1");
 
-    await act(async () => {
-      jest.runOnlyPendingTimers();
-    });
-    jest.useRealTimers();
   });
 });

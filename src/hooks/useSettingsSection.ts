@@ -47,8 +47,15 @@ export function useSettingsSection<T extends Record<string, unknown>>({
   // Check if section has unsaved changes
   const isDirty = JSON.stringify(values) !== JSON.stringify(savedValues);
 
+  const initialValuesSerializedRef = useRef<string>(JSON.stringify(initialValues));
+
   // Update initial values when they change (e.g., from server)
   useEffect(() => {
+    const serialized = JSON.stringify(initialValues);
+    if (serialized === initialValuesSerializedRef.current) {
+      return;
+    }
+    initialValuesSerializedRef.current = serialized;
     setValues(initialValues);
     setSavedValues(initialValues);
   }, [initialValues]);

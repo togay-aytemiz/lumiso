@@ -103,6 +103,7 @@ beforeEach(() => {
 
   fromMock.mockReset();
   useAuthMock.mockReset();
+  localStorage.clear();
 });
 
 afterEach(() => {
@@ -149,6 +150,7 @@ describe("useUserPreferences", () => {
       onboarding_stage,
       current_onboarding_step,
       welcome_modal_shown,
+      page_videos,
       updated_at
     `);
     expect(selectCall.eq).toHaveBeenCalledWith("user_id", "user-1");
@@ -182,6 +184,7 @@ describe("useUserPreferences", () => {
       onboarding_stage: "not_started",
       current_onboarding_step: 1,
       welcome_modal_shown: false,
+      page_videos: {},
     });
 
     expect(result.current.data).toMatchObject({

@@ -12,7 +12,7 @@ import { syncProjectOutstandingPayment } from "@/lib/payments/outstanding";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslation } from "react-i18next";
 import { trackEvent } from "@/lib/telemetry";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -139,7 +139,7 @@ const ProjectCreationWizardSheetInner = ({
   const { toast } = useToast();
   const { t: tProject } = useTranslation("projectCreation");
   const { t: tCommon } = useTranslation("common");
-  const { currentStep, shouldLockNavigation, completeCurrentStep } = useOnboarding();
+  const { currentStep, shouldLockNavigation } = useOnboarding();
   const openedRef = useRef(false);
   const [showGuardDialog, setShowGuardDialog] = useState(false);
   const navigate = useNavigate();
@@ -646,7 +646,6 @@ const ProjectCreationWizardSheetInner = ({
       setIsCreating(false);
     }
   }, [
-    completeCurrentStep,
     currentStep,
     forceClose,
     onProjectCreated,

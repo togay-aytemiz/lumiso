@@ -1,9 +1,9 @@
 import { renderHook, act } from "@testing-library/react";
 import { useSessionActions } from "../useSessionActions";
+import { useI18nToast } from "@/lib/toastHelpers";
 
-const toastMock = jest.fn();
-jest.mock("@/hooks/use-toast", () => ({
-  useToast: () => ({ toast: toastMock }),
+jest.mock("@/lib/toastHelpers", () => ({
+  useI18nToast: jest.fn(),
 }));
 
 jest.mock("@/hooks/useOnboardingDeletionGuard", () => ({
@@ -37,9 +37,17 @@ jest.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
+const toastApi = {
+  success: jest.fn(),
+  error: jest.fn(),
+  warning: jest.fn(),
+  info: jest.fn(),
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
   supabaseFromMock.mockReset();
+  (useI18nToast as jest.Mock).mockReturnValue(toastApi);
 });
 
 describe("useSessionActions.deleteSession", () => {
@@ -54,13 +62,11 @@ describe("useSessionActions.deleteSession", () => {
         return {
           delete: () => ({
             eq: () => ({
-              select: () => ({
-                single: () =>
-                  Promise.resolve({
-                    data: { length: 0 },
-                    error: null,
-                  }),
-              }),
+              select: () =>
+                Promise.resolve({
+                  data: [],
+                  error: null,
+                }),
             }),
           }),
         };
@@ -74,11 +80,7 @@ describe("useSessionActions.deleteSession", () => {
       await result.current.deleteSession("session-1");
     });
 
-    expect(toastMock).toHaveBeenCalledWith({
-      title: "Error deleting session",
-      description: "Session could not be deleted. It may not exist or you may not have permission.",
-      variant: "destructive",
-    });
+    expect(toastApi.error).toHaveBeenCalledWith("Error deleting session");
   });
 });
 
@@ -127,10 +129,7 @@ describe("useSessionActions.updateSessionStatus", () => {
       "org-1",
       expect.objectContaining({ old_status: "planned", new_status: "completed" })
     );
-    expect(toastMock).toHaveBeenCalledWith({
-      title: "Success",
-      description: "Session status updated successfully.",
-    });
+    expect(toastApi.success).toHaveBeenCalledWith("Successfully updated");
   });
 
   it("shows warning toast if workflow trigger fails", async () => {
@@ -142,11 +141,9 @@ describe("useSessionActions.updateSessionStatus", () => {
       await result.current.updateSessionStatus("session-1", "completed");
     });
 
-    expect(toastMock).toHaveBeenCalledWith({
-      title: "Warning",
-      description: "Status updated successfully, but notifications may not be sent.",
-      variant: "default",
-    });
+    expect(toastApi.warning).toHaveBeenCalledWith(
+      "Status updated successfully, but notifications may not be sent."
+    );
   });
 
   it("returns false when fetch fails", async () => {
@@ -166,10 +163,6 @@ describe("useSessionActions.updateSessionStatus", () => {
     });
 
     expect(success).toBe(false);
-    expect(toastMock).toHaveBeenCalledWith({
-      title: "Error updating status",
-      description: "not found",
-      variant: "destructive",
-    });
+    expect(toastApi.error).toHaveBeenCalledWith("Unable to update session status.");
   });
 });

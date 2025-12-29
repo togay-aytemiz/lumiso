@@ -39,7 +39,10 @@ jest.mock("../previews/SMSPreview", () => ({
 }));
 
 jest.mock("@/contexts/AuthContext", () => ({
-  useAuth: jest.fn(() => ({ user: { email: "user@example.com" } })),
+  useAuth: jest.fn(() => ({
+    user: { email: "user@example.com" },
+    session: { access_token: "test-token" },
+  })),
 }));
 
 jest.mock("@/integrations/supabase/client", () => ({
@@ -51,11 +54,14 @@ jest.mock("@/integrations/supabase/client", () => ({
 }));
 
 jest.mock("@/contexts/OrganizationContext", () => ({
-  useOrganization: jest.fn(() => ({ activeOrganization: { id: "org-1" } })),
+  useOrganization: jest.fn(() => ({
+    activeOrganizationId: "org-1",
+    activeOrganization: { id: "org-1" },
+  })),
 }));
 
 jest.mock("@/hooks/useOrganizationSettings", () => ({
-  useOrganizationSettings: jest.fn(() => ({ settings: null })),
+  useOrganizationSettings: jest.fn(() => ({ settings: null, loading: false })),
 }));
 
 jest.mock("react-i18next", () => ({
@@ -165,7 +171,10 @@ describe("TemplatePreview", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    useAuthMock.mockReturnValue({ user: { email: "user@example.com" } });
+    useAuthMock.mockReturnValue({
+      user: { email: "user@example.com" },
+      session: { access_token: "test-token" },
+    });
   });
 
   it("renders the active channel and toggles devices for email", () => {
@@ -267,7 +276,10 @@ describe("TemplatePreview", () => {
   });
 
   it("shows an error toast when no user email is available", () => {
-    useAuthMock.mockReturnValue({ user: { email: null } });
+    useAuthMock.mockReturnValue({
+      user: { email: null },
+      session: { access_token: "test-token" },
+    });
 
     render(
       <TemplatePreview

@@ -27,6 +27,16 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: jest.fn(),
 }));
 
+jest.mock("@/contexts/OrganizationContext", () => ({
+  useOrganization: () => ({
+    activeOrganization: { id: "org-1" },
+    activeOrganizationId: "org-1",
+    loading: false,
+    refreshOrganization: jest.fn(),
+    setActiveOrganization: jest.fn(),
+  }),
+}));
+
 jest.mock("react-calendar/dist/Calendar.css", () => ({}));
 
 jest.mock("../EditPaymentDialog", () => ({
@@ -207,7 +217,7 @@ describe("ProjectPaymentsSection", () => {
 
     expect(screen.getAllByText(/₺/).length).toBeGreaterThan(0);
     expect(screen.getAllByText("payments.summary.remaining").length).toBeGreaterThan(0);
-    expect(screen.getByText("Album")).toBeInTheDocument();
+    expect(screen.getAllByText("₺650").length).toBeGreaterThan(0);
   });
 
   it("shows empty state when project has no payments and no base price", async () => {

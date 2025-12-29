@@ -4,7 +4,7 @@ import { SettingsToggleSection } from "@/components/settings/SettingsSectionVari
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Power, Clock, Zap } from "lucide-react";
+import { Loader2, Power, Clock, Zap, Images } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
@@ -50,6 +50,7 @@ export default function Notifications() {
         globalEnabled: enabled,
         dailySummaryEnabled: enabled,
         projectMilestoneEnabled: enabled,
+        gallerySelectionEnabled: enabled,
       });
       setAutoSaveStates(prev => ({ ...prev, globalEnabled: 'idle' }));
       
@@ -277,6 +278,21 @@ export default function Notifications() {
             aria-label={t('settings.notifications.immediate.projectMilestone')}
           />
         </div>
+      ),
+    },
+    {
+      id: "gallery-selection",
+      title: t('settings.notifications.immediate.gallerySelection'),
+      description: t('settings.notifications.immediate.gallerySelectionHelp'),
+      icon: Images,
+      control: (
+        <Switch
+          id="gallery-selection"
+          checked={settings.gallerySelectionEnabled}
+          onCheckedChange={(checked) => handleAutoSave('gallerySelectionEnabled', checked)}
+          disabled={autoSaveStates.gallerySelectionEnabled === 'saving'}
+          aria-label={t('settings.notifications.immediate.gallerySelection')}
+        />
       ),
     },
   ];

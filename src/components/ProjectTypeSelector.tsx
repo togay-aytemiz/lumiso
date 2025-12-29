@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,11 +81,16 @@ export function ProjectTypeSelector({
     [uniqueTypes]
   );
 
-  const isPreferredDefault = (type: ProjectType) =>
-    Boolean(preferredDefaultKey && normalizeTypeSlug(type) === preferredDefaultKey);
+  const isPreferredDefault = useCallback(
+    (type: ProjectType) =>
+      Boolean(preferredDefaultKey && normalizeTypeSlug(type) === preferredDefaultKey),
+    [preferredDefaultKey]
+  );
 
-  const isDefaultType = (type: ProjectType) =>
-    type.is_default || (!hasDatabaseDefault && isPreferredDefault(type));
+  const isDefaultType = useCallback(
+    (type: ProjectType) => type.is_default || (!hasDatabaseDefault && isPreferredDefault(type)),
+    [hasDatabaseDefault, isPreferredDefault]
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -165,7 +170,7 @@ export function ProjectTypeSelector({
 
       return a.name.localeCompare(b.name);
     });
-  }, [uniqueTypes, preferredDefaultKey, preferredSlugOrder]);
+  }, [uniqueTypes, preferredSlugOrder, isDefaultType]);
 
   useEffect(() => {
     if (!value && visibleTypes.length > 0) {
@@ -174,7 +179,7 @@ export function ProjectTypeSelector({
         onValueChange(defaultType.id, { isAutomatic: true });
       }
     }
-  }, [value, visibleTypes, onValueChange]);
+  }, [value, visibleTypes, onValueChange, isDefaultType]);
 
   const filteredTypes = useMemo(() => {
     if (preferredMatchKeySet.size > 0) {

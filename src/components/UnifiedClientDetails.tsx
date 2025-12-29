@@ -38,7 +38,7 @@ import { cn } from "@/lib/utils";
 import type { LeadFieldDefinition } from "@/types/leadFields";
 import { useOptionalOrganization } from "@/hooks/useOptionalOrganization";
 import { Tooltip, TooltipContentDark, TooltipTrigger } from "@/components/ui/tooltip";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 
 interface Lead {
   id: string;

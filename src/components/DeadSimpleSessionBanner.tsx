@@ -191,7 +191,11 @@ const DeadSimpleSessionBanner = ({
               className="px-3.5 shadow-sm"
               onClick={(event) => {
                 event.stopPropagation();
-                onViewDetails?.(session.id) ?? onClick(session.id);
+                if (onViewDetails) {
+                  onViewDetails(session.id);
+                } else {
+                  onClick(session.id);
+                }
               }}
             >
               {resolvedViewDetailsLabel}

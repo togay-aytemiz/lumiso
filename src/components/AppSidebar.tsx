@@ -7,6 +7,7 @@ import {
   Bell,
   BarChart3,
   FolderOpen,
+  Images,
   CreditCard,
   CalendarDays,
   CalendarRange,
@@ -20,7 +21,7 @@ import {
   Shield,
 } from "lucide-react";
 import logo from "@/assets/Logo.png";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import {
   Sidebar,
   SidebarContent,
@@ -355,6 +356,16 @@ export function AppSidebar() {
                 </SidebarMenu>
               </div>
             </SidebarNavItem>
+
+            <SidebarNavItem
+              title={t("menu.galleries")}
+              url="/galleries"
+              icon={Images}
+              isActive={isActive("/galleries")}
+              isLocked={isItemLocked("/galleries")}
+              onLockedClick={handleLockedItemClick}
+              onClick={handleNavClick}
+            />
           </SidebarCategory>
 
           <SidebarSeparator className="my-4 opacity-70 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-8" />

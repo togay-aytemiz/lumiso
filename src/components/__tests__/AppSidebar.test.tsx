@@ -83,7 +83,7 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
   useNavigationTranslation: jest.fn(),
 }));
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
 }));
 
@@ -99,7 +99,7 @@ jest.mock("@/assets/Logo.png", () => "logo-mock.png", { virtual: true });
 
 import { AppSidebar } from "../AppSidebar";
 import { useNavigationTranslation } from "@/hooks/useTypedTranslation";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useIsMobile } from "@/hooks/use-mobile";
 

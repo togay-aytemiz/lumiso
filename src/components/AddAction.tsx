@@ -13,7 +13,7 @@ import {
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import NewSessionDialog from "@/components/NewSessionDialog";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { toast } from "@/hooks/use-toast";
 
 import "./AddAction.css";

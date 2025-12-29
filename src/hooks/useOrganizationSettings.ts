@@ -109,7 +109,7 @@ export const useOrganizationSettings = () => {
     () =>
       activeOrganizationId
         ? getOrganizationSettingsFromCache(activeOrganizationId)
-        : null,
+        : undefined,
     [activeOrganizationId]
   );
 
@@ -131,10 +131,10 @@ export const useOrganizationSettings = () => {
     },
     enabled: !!activeOrganizationId,
     staleTime: ORGANIZATION_SETTINGS_CACHE_TTL,
-    initialData: cachedSnapshot ?? undefined,
-    refetchInterval: 90 * 1000,
+    initialData: cachedSnapshot === undefined ? undefined : cachedSnapshot,
+    refetchInterval: false,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
+    refetchOnReconnect: false,
   });
 
   const settings = useMemo(() => normalizeSettings(data), [data]);

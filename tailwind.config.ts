@@ -18,9 +18,10 @@ export default {
 				'2xl': '1400px'
 			}
 		},
-		extend: {
+			extend: {
 			fontFamily: {
 				sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+				playfair: ["Playfair Display", "ui-serif", "Georgia", "serif"],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -47,6 +48,19 @@ export default {
 				accent: {
 					DEFAULT: 'hsl(var(--accent))',
 					foreground: 'hsl(var(--accent-foreground))'
+				},
+				brand: {
+					50: 'hsl(var(--accent-50))',
+					100: 'hsl(var(--accent-100))',
+					200: 'hsl(var(--accent-200))',
+					300: 'hsl(var(--accent-300))',
+					400: 'hsl(var(--accent-400))',
+					500: 'hsl(var(--accent-500))',
+					600: 'hsl(var(--accent-600))',
+					700: 'hsl(var(--accent-700))',
+					800: 'hsl(var(--accent-800))',
+					900: 'hsl(var(--accent-900))',
+					DEFAULT: 'hsl(var(--accent-500))'
 				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',

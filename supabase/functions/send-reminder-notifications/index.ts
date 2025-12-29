@@ -1335,4 +1335,6 @@ export async function handleProjectMilestoneNotification(
   }
 }
 
-serve(handler);
+if (import.meta.main) {
+  serve(handler);
+}

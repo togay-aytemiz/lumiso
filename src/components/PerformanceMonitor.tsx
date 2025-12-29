@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 
 declare global {
   interface Window {

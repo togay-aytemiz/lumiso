@@ -34,6 +34,27 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAdvancedTableSearch } from "./useAdvancedTableSearch";
 import { AdvancedDataTablePaginationFooter } from "./AdvancedDataTablePagination";
 
+const ROW_CLICK_IGNORE_SELECTOR = [
+  "a",
+  "button",
+  "input",
+  "textarea",
+  "select",
+  "[role='button']",
+  "[role='link']",
+  "[role='checkbox']",
+  "[role='switch']",
+  "[role='menuitem']",
+  "[role='menuitemcheckbox']",
+  "[role='menuitemradio']",
+  "[data-row-click='ignore']",
+].join(",");
+
+function shouldIgnoreRowClick(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest(ROW_CLICK_IGNORE_SELECTOR));
+}
+
 export type SortDirection = "asc" | "desc";
 
 export interface AdvancedTableColumn<T> {
@@ -116,6 +137,7 @@ export interface AdvancedDataTableProps<T> {
   searchDelay?: number;
   searchMinChars?: number;
   searchLoading?: boolean;
+  searchPosition?: "start" | "end";
   className?: string;
   onLoadMore?: () => void;
   hasMore?: boolean;
@@ -166,6 +188,7 @@ export function AdvancedDataTable<T>({
   searchDelay = 300,
   searchMinChars = 0,
   searchLoading = false,
+  searchPosition = "start",
   className,
   onLoadMore,
   hasMore,
@@ -481,16 +504,34 @@ export function AdvancedDataTable<T>({
 
             {shouldRenderControls && (
               <div className="flex w-full sm:w-auto flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-end sm:flex-shrink-0">
-                {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
-                {(actions || (!isMobile && filters)) && (
-                  <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
-                    {!isMobile && filterTriggerButton}
-                    {actions && (
-                      <div className="flex w-full basis-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-                        {actions}
+                {searchPosition === "end" ? (
+                  <>
+                    {(actions || (!isMobile && filters)) && (
+                      <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
+                        {!isMobile && filterTriggerButton}
+                        {actions && (
+                          <div className="flex w-full basis-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                            {actions}
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
+                    {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
+                  </>
+                ) : (
+                  <>
+                    {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
+                    {(actions || (!isMobile && filters)) && (
+                      <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
+                        {!isMobile && filterTriggerButton}
+                        {actions && (
+                          <div className="flex w-full basis-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                            {actions}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -704,12 +745,16 @@ export function AdvancedDataTable<T>({
                                 className={cn(
                                   zebraClass,
                                   "border-b border-border/60 transition-colors",
-                                  onRowClick
+                                onRowClick
                                     ? "cursor-pointer hover:bg-muted/30 dark:hover:bg-muted/50"
                                     : "hover:bg-muted/20 dark:hover:bg-muted/40",
                                   userRowClass
                                 )}
-                                onClick={() => onRowClick?.(row)}
+                                onClick={(event) => {
+                                  if (!onRowClick || event.defaultPrevented) return;
+                                  if (shouldIgnoreRowClick(event.target)) return;
+                                  onRowClick(row);
+                                }}
                               >
                                 {columns.map((column) => (
                                   <TableCell

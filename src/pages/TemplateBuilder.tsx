@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Eye, Edit, MonitorSmartphone } from 'lucide-react';
+import { MonitorSmartphone, HelpCircle, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { OptimizedTemplateEditor } from '@/components/template-builder/OptimizedTemplateEditor';
 import { OptimizedTemplatePreview } from '@/components/template-builder/OptimizedTemplatePreview';
 import { TemplateBlock } from '@/types/templateBuilder';
@@ -21,8 +20,6 @@ import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErr
 import { useTranslation } from "react-i18next";
 import { TemplateVariablesProvider } from "@/contexts/TemplateVariablesContext";
 import { VariableTokenText } from "@/components/template-builder/VariableTokenText";
-import { Tooltip, TooltipContent, TooltipContentDark, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +28,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { TemplateBuilderHeader } from "@/components/template-builder/TemplateBuilderHeader";
 
 // Optimized TemplateBuilder component
 const OptimizedTemplateBuilderContent = React.memo(() => {
@@ -63,8 +61,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   // Local state for UI
   const [activeChannel, setActiveChannel] = useState<'email' | 'whatsapp' | 'sms'>('email');
   const [selectedPreviewData, setSelectedPreviewData] = useState(0);
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [editingName, setEditingName] = useState('');
   const [isEditingSubject, setIsEditingSubject] = useState(false);
   const [isEditingPreheader, setIsEditingPreheader] = useState(false);
   const [showNameDialog, setShowNameDialog] = useState(false);
@@ -78,7 +74,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     () => t("templateBuilder.preview.excitedMessage", { defaultValue: "We're excited to capture your special moments" }),
     [t]
   );
-  const [publishTooltipOpen, setPublishTooltipOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const helpChannelUrl = "https://www.youtube.com/channel/UCH1JW6uO_ZIG8TsgtpFTjhA";
   const templatesVideoId =
@@ -235,7 +230,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
         lastAutoSavedVersionRef.current = dirtyVersionRef.current;
       }
     }
-  }, [template, saveTemplate, templateName, subject, preheader, blocks, navigate]);
+  }, [template, saveTemplate, templateName, subject, preheader, blocks, navigate, isUntitledTemplate]);
 
   const handleAutoSave = useCallback(async () => {
     if (savingRef.current) return;
@@ -266,8 +261,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     blocks,
     isDraft,
     template?.category,
-    templateId,
-    navigate,
   ]);
 
   useEffect(() => {
@@ -336,7 +329,17 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
         navigate(`/template-builder?id=${publishedTemplate.id}`, { replace: true });
       }
     }
-  }, [templateName, subject, preheader, blocks, template?.category, publishTemplate, templateId, navigate]);
+  }, [
+    templateName,
+    subject,
+    preheader,
+    blocks,
+    template?.category,
+    publishTemplate,
+    templateId,
+    navigate,
+    isUntitledTemplate,
+  ]);
 
   const handleOpenHelp = useCallback(() => {
     setHelpModalOpen(true);
@@ -366,28 +369,12 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     setIsEditingPreheader(false);
   };
 
-  const handleNameEdit = () => {
-    setEditingName(templateName);
-    setIsEditingName(true);
-    setTimeout(() => setIsEditingSubject(false), 0);
-  };
-
-  const handleNameBlur = () => {
-    setIsEditingName(false);
-    if (editingName !== templateName) {
-      updateTemplate({ name: editingName });
-    }
-  };
-
-  const handleNameKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleNameBlur();
-    }
-  };
-
-
   const handleBlocksChange = useCallback((newBlocks: TemplateBlock[]) => {
     updateTemplate({ blocks: newBlocks });
+  }, [updateTemplate]);
+
+  const handleNameChange = useCallback((newName: string) => {
+    updateTemplate({ name: newName });
   }, [updateTemplate]);
 
   // Handle name dialog confirmation
@@ -502,271 +489,196 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   return (
     <TemplateVariablesProvider value={templateVariablesState}>
       <div className="h-screen flex flex-col">
-      {/* Header */}
-      <div className="border-b bg-background px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <TemplateBuilderHeader
+          name={templateName}
+          onNameChange={handleNameChange}
+          statusLabel={statusLabel}
+          isDraft={isDraft}
+          draftLabel={t("templateBuilder.badges.draft")}
+          publishedLabel={t("templateBuilder.badges.published")}
+          backLabel={backLabel}
+          publishLabel={t("templateBuilder.buttons.publish")}
+          doneLabel={t("templateBuilder.buttons.done", { defaultValue: "Done" })}
+          onBack={handleNavigateBack}
+          onPrimaryAction={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())}
+          primaryDisabled={publishDisabled}
+          publishTooltip={publishTooltip}
+          rightActions={
             <Button
-              type="button"
-              variant="tinted"
-              colorScheme="slate"
+              onClick={handleOpenHelp}
+              variant="ghost"
               size="icon"
-              onClick={handleNavigateBack}
-              className="h-10 w-10"
+              className="h-9 w-9 rounded-full border border-slate-200/80 bg-[#edf1f7] text-slate-700 shadow-none p-0 hover:bg-[#e4e9f2] hover:text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0"
+              aria-label={t("buttons.help", { defaultValue: "Yardım" })}
             >
-              <ArrowLeft className="h-4 w-4" strokeWidth={2.5} />
-              <span className="sr-only">{backLabel}</span>
+              <HelpCircle className="h-4 w-4" />
             </Button>
-            <div className="flex items-center gap-2">
-              {isEditingName ? (
-                <Input
-                  value={editingName}
-                  onChange={(e) => setEditingName(e.target.value)}
-                  onBlur={handleNameBlur}
-                  onKeyDown={handleNameKeyDown}
-                  className="font-semibold text-lg border bg-background px-2 py-1 h-auto focus-visible:ring-1"
-                  autoFocus
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-lg">{templateName}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleNameEdit}
-                    className="h-6 w-6 p-0"
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <Badge variant={isDraft ? "secondary" : "default"}>
-                    {isDraft ? t("templateBuilder.badges.draft") : t("templateBuilder.badges.published")}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {statusLabel}
-                  </span>
+          }
+        >
+          {activeChannel === "email" && (
+            <>
+              {/* Subject Line - Side by Side */}
+              <div className="space-y-1">
+                <div className="flex items-center gap-3 pl-1">
+                  <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
+                    {t("templateBuilder.email.subject")}
+                  </Label>
+                  <div className="flex-1 min-w-0">
+                    {isEditingSubject ? (
+                      <InlineSubjectEditor
+                        value={subject}
+                        onSave={handleSubjectSave}
+                        onCancel={() => setIsEditingSubject(false)}
+                        placeholder={subjectPlaceholder}
+                      />
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsEditingSubject(true)}
+                        className="flex h-auto w-full flex-1 items-center justify-between gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
+                      >
+                        <span className={`text-sm flex-1 ${!subject ? 'text-muted-foreground' : 'text-foreground'}`}>
+                          {subject ? (
+                            <VariableTokenText
+                              text={subject}
+                              placeholder={t("templateBuilder.email.addSubject")}
+                              variableLabels={variableLabels}
+                            />
+                          ) : (
+                            t("templateBuilder.email.addSubject")
+                          )}
+                        </span>
+                        <Edit className="h-3 w-3 opacity-70 group-hover:opacity-100" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-          )}
-        </div>
-      </div>
-
-      <Dialog open={helpModalOpen} onOpenChange={setHelpModalOpen}>
-        <DialogContent className="w-[min(640px,calc(100%-1.5rem))] max-w-3xl lg:w-[min(96vw,1120px)] lg:max-w-5xl p-0 gap-0 overflow-hidden rounded-xl sm:rounded-2xl border border-border/60">
-          <div className="flex flex-col gap-0">
-            <DialogHeader className="space-y-2 px-5 pt-5 pb-4 sm:px-8 sm:pt-8 sm:pb-4 text-left">
-              <DialogTitle className="text-2xl font-semibold leading-tight text-left">
-                {helpModalTitle}
-              </DialogTitle>
-              <DialogDescription className="text-base leading-relaxed text-muted-foreground text-left">
-                {helpModalDescription}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="px-5 sm:px-8 pb-5 sm:pb-8">
-              <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/30 shadow-sm">
-                <div className="aspect-video w-full bg-black">
-                  <iframe
-                    title={helpModalTitle}
-                    className="h-full w-full"
-                    src={`https://www.youtube.com/embed/${templatesVideoId}?rel=0&modestbranding=1&playsinline=1`}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                  />
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter className="px-5 py-4 sm:px-8 sm:py-6 flex-col sm:flex-row sm:justify-end sm:space-x-3 gap-3">
-              <Button
-                type="button"
-                variant="surface"
-                className="btn-surface-accent w-full sm:w-auto sm:min-w-[180px]"
-                onClick={handleOpenChannel}
-              >
-                {t("buttons.viewMoreVideos", { defaultValue: "Diğer videolar" })}
-              </Button>
-              <Button
-                type="button"
-                variant="surface"
-                onClick={handleCloseHelp}
-                className="w-full sm:w-auto sm:min-w-[140px]"
-              >
-                {tCommon("buttons.close")}
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-        <div className="flex items-center gap-2">
-          {publishDisabled ? (
-            <TooltipProvider delayDuration={0}>
-              <Tooltip
-                open={publishTooltipOpen}
-                onOpenChange={setPublishTooltipOpen}
-                disableHoverableContent
-              >
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button
-                      onClick={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())}
-                      disabled
-                      variant="surface"
-                      size="sm"
-                      className="btn-surface-accent"
-                    >
-                      <Eye className="h-4 w-4" />
-                      {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.done", { defaultValue: "Done" })}
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContentDark side="bottom" align="center">
-                  <span className="max-w-[240px] text-sm text-slate-50">
-                    {publishTooltip}
-                  </span>
-                </TooltipContentDark>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <Button
-              onClick={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())}
-              disabled={publishDisabled}
-              variant="surface"
-              size="sm"
-              className="btn-surface-accent"
-            >
-              <Eye className="h-4 w-4" />
-              {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.done", { defaultValue: "Done" })}
-            </Button>
-          )}
-          <Button
-            onClick={handleOpenHelp}
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full border border-slate-200/80 bg-[#edf1f7] text-slate-700 shadow-none p-0 hover:bg-[#e4e9f2] hover:text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0"
-            aria-label={t("buttons.help", { defaultValue: "Yardım" })}
-          >
-            <HelpCircle className="h-4 w-4" />
-          </Button>
-        </div>
-        </div>
-
-        {/* Compact Email Settings */}
-        {activeChannel === "email" && (
-          <div className="mt-3 pt-3 border-t space-y-3">
-            {/* Subject Line - Side by Side */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-3 pl-1">
-                <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
-                  {t("templateBuilder.email.subject")}
-                </Label>
-                <div className="flex-1 min-w-0">
-                  {isEditingSubject ? (
-                    <InlineSubjectEditor
-                      value={subject}
-                      onSave={handleSubjectSave}
-                      onCancel={() => setIsEditingSubject(false)}
-                      placeholder={subjectPlaceholder}
-                    />
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsEditingSubject(true)}
-                      className="flex h-auto w-full flex-1 items-center justify-between gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
-                    >
-                      <span className={`text-sm flex-1 ${!subject ? 'text-muted-foreground' : 'text-foreground'}`}>
-                        {subject ? (
-                          <VariableTokenText
-                            text={subject}
-                            placeholder={t("templateBuilder.email.addSubject")}
-                            variableLabels={variableLabels}
-                          />
-                        ) : (
-                          t("templateBuilder.email.addSubject")
-                        )}
-                      </span>
-                      <Edit className="h-3 w-3 opacity-70 group-hover:opacity-100" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-              
-              {/* Character count and spam warnings for subject */}
-              {!isEditingSubject && subject && (subjectCharCount > 60 || spamWords.length > 0) && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground ml-24">
-                  {subjectCharCount > 60 && (
-                    <div className="flex items-center gap-1">
-                      <span className="text-amber-600">⚠️</span>
-                      <span className="text-amber-600">
-                        {t("templateBuilder.warnings.tooLong", { count: subjectCharCount })}
-                      </span>
-                    </div>
-                  )}
-                  {spamWords.length > 0 && (
-                    <div className="flex items-center gap-1">
-                      <span className="text-amber-600">⚠️</span>
-                      <span>{t("templateBuilder.warnings.spamWords")}</span>
-                      <div className="flex gap-1">
-                        {spamWords.slice(0, 2).map(word => (
-                          <Badge key={word} variant="secondary" className="text-xs px-1 py-0">
-                            {word}
-                          </Badge>
-                        ))}
-                        {spamWords.length > 2 && (
-                          <span className="text-amber-600">
-                            {t("templateBuilder.warnings.moreSpamWords", { count: spamWords.length - 2 })}
-                          </span>
-                        )}
+                
+                {/* Character count and spam warnings for subject */}
+                {!isEditingSubject && subject && (subjectCharCount > 60 || spamWords.length > 0) && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground ml-24">
+                    {subjectCharCount > 60 && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-amber-600">⚠️</span>
+                        <span className="text-amber-600">
+                          {t("templateBuilder.warnings.tooLong", { count: subjectCharCount })}
+                        </span>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                    )}
+                    {spamWords.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-amber-600">⚠️</span>
+                        <span>{t("templateBuilder.warnings.spamWords")}</span>
+                        <div className="flex gap-1">
+                          {spamWords.slice(0, 2).map(word => (
+                            <Badge key={word} variant="secondary" className="text-xs px-1 py-0">
+                              {word}
+                            </Badge>
+                          ))}
+                          {spamWords.length > 2 && (
+                            <span className="text-amber-600">
+                              {t("templateBuilder.warnings.moreSpamWords", { count: spamWords.length - 2 })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
-            {/* Preheader - Side by Side */}
-            <div>
-              <div className="flex items-center gap-3 pl-1">
-                <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
-                  {t("templateBuilder.email.preheader")}
-                </Label>
-                <div className="flex-1 min-w-0">
-                  {isEditingPreheader ? (
-                    <InlinePreheaderEditor
-                      value={preheader}
-                      onSave={handlePreheaderSave}
-                      onCancel={() => setIsEditingPreheader(false)}
-                      placeholder={preheaderPlaceholder}
-                    />
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsEditingPreheader(true)}
-                      className="flex h-auto w-full flex-1 items-center justify-between gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
-                    >
-                      <span className={`text-sm flex-1 ${!preheader ? 'text-muted-foreground' : 'text-foreground'}`}>
-                        {preheader ? (
-                          <VariableTokenText
-                            text={preheader}
-                            placeholder={t("templateBuilder.email.addPreheader")}
-                            variableLabels={variableLabels}
-                          />
-                        ) : (
-                          t("templateBuilder.email.addPreheader")
-                        )}
-                      </span>
-                      <Edit className="h-3 w-3 opacity-70 group-hover:opacity-100" />
-                    </Button>
-                  )}
+              {/* Preheader - Side by Side */}
+              <div>
+                <div className="flex items-center gap-3 pl-1">
+                  <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
+                    {t("templateBuilder.email.preheader")}
+                  </Label>
+                  <div className="flex-1 min-w-0">
+                    {isEditingPreheader ? (
+                      <InlinePreheaderEditor
+                        value={preheader}
+                        onSave={handlePreheaderSave}
+                        onCancel={() => setIsEditingPreheader(false)}
+                        placeholder={preheaderPlaceholder}
+                      />
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsEditingPreheader(true)}
+                        className="flex h-auto w-full flex-1 items-center justify-between gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
+                      >
+                        <span className={`text-sm flex-1 ${!preheader ? 'text-muted-foreground' : 'text-foreground'}`}>
+                          {preheader ? (
+                            <VariableTokenText
+                              text={preheader}
+                              placeholder={t("templateBuilder.email.addPreheader")}
+                              variableLabels={variableLabels}
+                            />
+                          ) : (
+                            t("templateBuilder.email.addPreheader")
+                          )}
+                        </span>
+                        <Edit className="h-3 w-3 opacity-70 group-hover:opacity-100" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
+            </>
+          )}
+        </TemplateBuilderHeader>
+
+        <Dialog open={helpModalOpen} onOpenChange={setHelpModalOpen}>
+          <DialogContent className="w-[min(640px,calc(100%-1.5rem))] max-w-3xl lg:w-[min(96vw,1120px)] lg:max-w-5xl p-0 gap-0 overflow-hidden rounded-xl sm:rounded-2xl border border-border/60">
+            <div className="flex flex-col gap-0">
+              <DialogHeader className="space-y-2 px-5 pt-5 pb-4 sm:px-8 sm:pt-8 sm:pb-4 text-left">
+                <DialogTitle className="text-2xl font-semibold leading-tight text-left">
+                  {helpModalTitle}
+                </DialogTitle>
+                <DialogDescription className="text-base leading-relaxed text-muted-foreground text-left">
+                  {helpModalDescription}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="px-5 sm:px-8 pb-5 sm:pb-8">
+                <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/30 shadow-sm">
+                  <div className="aspect-video w-full bg-black">
+                    <iframe
+                      title={helpModalTitle}
+                      className="h-full w-full"
+                      src={`https://www.youtube.com/embed/${templatesVideoId}?rel=0&modestbranding=1&playsinline=1`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter className="px-5 py-4 sm:px-8 sm:py-6 flex-col sm:flex-row sm:justify-end sm:space-x-3 gap-3">
+                <Button
+                  type="button"
+                  variant="surface"
+                  className="btn-surface-accent w-full sm:w-auto sm:min-w-[180px]"
+                  onClick={handleOpenChannel}
+                >
+                  {t("buttons.viewMoreVideos", { defaultValue: "Diğer videolar" })}
+                </Button>
+                <Button
+                  type="button"
+                  variant="surface"
+                  onClick={handleCloseHelp}
+                  className="w-full sm:w-auto sm:min-w-[140px]"
+                >
+                  {tCommon("buttons.close")}
+                </Button>
+              </DialogFooter>
             </div>
-          </div>
-        )}
-      </div>
+          </DialogContent>
+        </Dialog>
 
       {/* Main Content */}
       <div className="flex-1 flex min-h-0">

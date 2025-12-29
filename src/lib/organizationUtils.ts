@@ -3,15 +3,95 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Cache for organization ID to reduce database calls
 let cachedOrganizationId: string | null = null;
+let cachedOrganizationUserId: string | null = null;
 let cacheExpiry: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const DEFAULT_TRIAL_DAYS = 14;
 let membershipTableUnavailable = false;
+const ORG_ID_STORAGE_PREFIX = "lumiso:organization_id:";
+const ORG_ID_STORAGE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+// Track the last time membership was verified to avoid repeated DB calls
+let lastMembershipVerified: number = 0;
+const MEMBERSHIP_VERIFY_INTERVAL = 10 * 60 * 1000; // 10 minutes
+
+// In-flight request deduplication
+let inflightRequest: Promise<string | null> | null = null;
 
 type MembershipUpdates = {
   status?: string;
   role?: string;
   system_role?: string;
+};
+
+type StoredOrganizationId = {
+  userId: string;
+  orgId: string;
+  cachedAt: number;
+};
+
+const getOrgStorageKey = (userId: string) =>
+  `${ORG_ID_STORAGE_PREFIX}${userId}`;
+
+const readOrgIdFromStorage = (
+  userId: string,
+  ttl: number = ORG_ID_STORAGE_TTL
+): string | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(getOrgStorageKey(userId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredOrganizationId;
+    if (!parsed || typeof parsed !== "object") return null;
+    if (parsed.userId !== userId) return null;
+    if (!parsed.orgId) return null;
+    if (Date.now() - parsed.cachedAt > ttl) return null;
+    return parsed.orgId;
+  } catch {
+    return null;
+  }
+};
+
+const writeOrgIdToStorage = (userId: string, orgId: string) => {
+  if (typeof window === "undefined") return;
+  try {
+    const payload: StoredOrganizationId = {
+      userId,
+      orgId,
+      cachedAt: Date.now(),
+    };
+    window.localStorage.setItem(
+      getOrgStorageKey(userId),
+      JSON.stringify(payload)
+    );
+  } catch {
+    // Best-effort only
+  }
+};
+
+const clearOrgIdStorage = (userId?: string) => {
+  if (typeof window === "undefined") return;
+  try {
+    if (userId) {
+      window.localStorage.removeItem(getOrgStorageKey(userId));
+      return;
+    }
+    for (let i = window.localStorage.length - 1; i >= 0; i -= 1) {
+      const key = window.localStorage.key(i);
+      if (key && key.startsWith(ORG_ID_STORAGE_PREFIX)) {
+        window.localStorage.removeItem(key);
+      }
+    }
+  } catch {
+    // Best-effort only
+  }
+};
+
+const resetOrganizationCache = () => {
+  cachedOrganizationId = null;
+  cachedOrganizationUserId = null;
+  cacheExpiry = 0;
+  lastMembershipVerified = 0;
 };
 
 const handleMembershipTableError = (error: unknown) => {
@@ -101,6 +181,22 @@ const ensureOwnerMembership = async (userId: string, organizationId: string) => 
 };
 
 export async function getUserOrganizationId(): Promise<string | null> {
+  // Return in-flight request if one exists (deduplication)
+  if (inflightRequest) {
+    return inflightRequest;
+  }
+
+  // Wrap the actual fetch logic in a promise for deduplication
+  inflightRequest = getUserOrganizationIdInternal();
+
+  try {
+    return await inflightRequest;
+  } finally {
+    inflightRequest = null;
+  }
+}
+
+async function getUserOrganizationIdInternal(): Promise<string | null> {
   try {
     const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError) {
@@ -115,10 +211,34 @@ export async function getUserOrganizationId(): Promise<string | null> {
       return null;
     }
 
-    // Check cache after we know the user, and ensure membership is in place
+    // Fast path: return cached value once we confirm the current user
     if (cachedOrganizationId && Date.now() < cacheExpiry) {
-      await ensureOwnerMembership(user.id, cachedOrganizationId);
-      return cachedOrganizationId;
+      if (cachedOrganizationUserId && cachedOrganizationUserId !== user.id) {
+        resetOrganizationCache();
+      } else {
+        cachedOrganizationUserId = user.id;
+        // Only verify membership periodically, not on every call
+        if (Date.now() - lastMembershipVerified > MEMBERSHIP_VERIFY_INTERVAL) {
+          // Fire and forget - don't block on this
+          ensureOwnerMembership(user.id, cachedOrganizationId).then(() => {
+            lastMembershipVerified = Date.now();
+          });
+        }
+        return cachedOrganizationId;
+      }
+    }
+
+    const storedOrgId = readOrgIdFromStorage(user.id);
+    if (storedOrgId) {
+      cachedOrganizationId = storedOrgId;
+      cachedOrganizationUserId = user.id;
+      cacheExpiry = Date.now() + CACHE_DURATION;
+      if (Date.now() - lastMembershipVerified > MEMBERSHIP_VERIFY_INTERVAL) {
+        ensureOwnerMembership(user.id, storedOrgId).then(() => {
+          lastMembershipVerified = Date.now();
+        });
+      }
+      return storedOrgId;
     }
 
     // For single photographer: find organization owned by this user
@@ -132,7 +252,9 @@ export async function getUserOrganizationId(): Promise<string | null> {
     if (!orgError && organization?.id) {
       await ensureOwnerMembership(user.id, organization.id);
       cachedOrganizationId = organization.id;
+      cachedOrganizationUserId = user.id;
       cacheExpiry = Date.now() + CACHE_DURATION;
+      writeOrgIdToStorage(user.id, organization.id);
       console.log('Found organization ID for single user:', cachedOrganizationId);
       return cachedOrganizationId;
     }
@@ -165,39 +287,39 @@ export async function getUserOrganizationId(): Promise<string | null> {
       if (newOrg?.id) {
         try {
           // Create organization settings
-          await supabase.rpc('ensure_organization_settings', { 
+          await supabase.rpc('ensure_organization_settings', {
             org_id: newOrg.id,
             detected_locale:
               typeof navigator !== "undefined" ? navigator.language : undefined,
           });
 
           // Create default lead field definitions
-          await supabase.rpc('ensure_default_lead_field_definitions', { 
-            org_id: newOrg.id, 
-            user_uuid: user.id 
+          await supabase.rpc('ensure_default_lead_field_definitions', {
+            org_id: newOrg.id,
+            user_uuid: user.id
           });
 
           // Create default lead statuses
-          await supabase.rpc('ensure_default_lead_statuses_for_org', { 
-            user_uuid: user.id, 
-            org_id: newOrg.id 
+          await supabase.rpc('ensure_default_lead_statuses_for_org', {
+            user_uuid: user.id,
+            org_id: newOrg.id
           });
 
           // Create default project statuses
-          await supabase.rpc('ensure_default_project_statuses_for_org', { 
-            user_uuid: user.id, 
-            org_id: newOrg.id 
+          await supabase.rpc('ensure_default_project_statuses_for_org', {
+            user_uuid: user.id,
+            org_id: newOrg.id
           });
 
           // Create default session statuses
-          await supabase.rpc('ensure_default_session_statuses', { 
+          await supabase.rpc('ensure_default_session_statuses', {
             user_uuid: user.id,
-            org_id: newOrg.id 
+            org_id: newOrg.id
           });
 
           // Create default project types
-          await supabase.rpc('ensure_default_project_types_for_org', { 
-            user_uuid: user.id, 
+          await supabase.rpc('ensure_default_project_types_for_org', {
+            user_uuid: user.id,
             org_id: newOrg.id,
             locale:
               typeof navigator !== "undefined" ? navigator.language : undefined
@@ -210,7 +332,9 @@ export async function getUserOrganizationId(): Promise<string | null> {
 
         await ensureOwnerMembership(user.id, newOrg.id);
         cachedOrganizationId = newOrg.id;
+        cachedOrganizationUserId = user.id;
         cacheExpiry = Date.now() + CACHE_DURATION;
+        writeOrgIdToStorage(user.id, newOrg.id);
         return newOrg.id;
       }
     }
@@ -224,7 +348,8 @@ export async function getUserOrganizationId(): Promise<string | null> {
 }
 
 export function clearOrganizationCache() {
-  cachedOrganizationId = null;
-  cacheExpiry = 0;
+  resetOrganizationCache();
   membershipTableUnavailable = false;
+  inflightRequest = null;
+  clearOrgIdStorage();
 }

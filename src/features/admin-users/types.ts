@@ -98,6 +98,7 @@ export interface AdminUserAccount {
   premiumActivatedAt?: string;
   premiumPlan?: string | null;
   premiumExpiresAt?: string | null;
+  galleryStorageLimitBytes?: number | null;
   trialEndsAt?: string;
   trialDaysRemaining?: number;
   trialExtendedByDays?: number;

@@ -89,7 +89,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     } finally {
       ongoingProfileFetch = null;
     }
-  }, [user?.id, toast, t]);
+  }, [reportNetworkError, reportRecovery, t, toast, user?.id]);
 
   const refreshProfile = useCallback(async () => {
     if (!user?.id) return;

@@ -47,4 +47,5 @@ export const isFeatureEnabled = (flag: string, defaultValue = false): boolean =>
 export const FEATURE_FLAGS = {
   sessionWizardV1: "session_wizard_v1",
   settingsModalOverlayV1: "settings_modal_overlay_v1",
+  galleryBulkDownload: "gallery_bulk_download",
 } as const;

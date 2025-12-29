@@ -15,7 +15,7 @@ import { Building, Upload, Settings } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { SocialChannel, useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { SocialChannelsSection } from "@/components/settings/SocialChannelsSection";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";

@@ -151,6 +151,11 @@ export default function SessionSheetView({
       fetchSession();
     }
   }, [fetchSession, isOpen, sessionId]);
+  useEffect(() => {
+    if (!isOpen && isDeleteDialogOpen) {
+      setIsDeleteDialogOpen(false);
+    }
+  }, [isDeleteDialogOpen, isOpen]);
   const handleEdit = () => {
     setEditStartStep(undefined);
     setIsEditDialogOpen(true);
@@ -378,7 +383,13 @@ export default function SessionSheetView({
         {
           id: "session-sheet-gallery",
           title: tPages("sessionDetail.gallery.title"),
-          content: <SessionGallery sessionId={session.id} />,
+          content: (
+            <SessionGallery
+              sessionId={session.id}
+              defaultEventDate={session.session_date ?? undefined}
+              sessionLeadName={session.leads?.name ?? undefined}
+            />
+          ),
         },
       ]
     : [];
@@ -405,7 +416,16 @@ export default function SessionSheetView({
   );
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <Sheet
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (!open && isDeleteDialogOpen) {
+            setIsDeleteDialogOpen(false);
+            return;
+          }
+          onOpenChange(open);
+        }}
+      >
         <SheetContent className="w-full h-[100vh] overflow-hidden p-0 sm:max-w-6xl lg:max-w-7xl">
           <div
             ref={scrollContainerRef}

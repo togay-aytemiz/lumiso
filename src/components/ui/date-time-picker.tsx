@@ -19,6 +19,7 @@ interface DateTimePickerProps {
   onChange: (value: string) => void;
   className?: string;
   buttonClassName?: string;
+  disabled?: boolean;
   placeholder?: string;
   timeLabel?: string;
   todayLabel?: string;
@@ -27,6 +28,7 @@ interface DateTimePickerProps {
   mode?: "datetime" | "date";
   popoverModal?: boolean;
   defaultTime?: string; // HH:mm used when no time is provided
+  fullWidth?: boolean;
 }
 
 type CalendarValue = Date | Date[] | null;
@@ -89,6 +91,7 @@ export function DateTimePicker({
   onChange,
   className,
   buttonClassName,
+  disabled = false,
   placeholder = "Pick date & time",
   timeLabel = "Time",
   todayLabel = "Today",
@@ -97,6 +100,7 @@ export function DateTimePicker({
   mode = "datetime",
   popoverModal = false,
   defaultTime = "09:00",
+  fullWidth = false,
 }: DateTimePickerProps) {
   const { date: initialDate, hours: initialHours, minutes: initialMinutes } = useMemo(
     () => parseIsoLocal(value, mode, defaultTime),
@@ -118,6 +122,12 @@ export function DateTimePicker({
     setMinutes(parsed.minutes);
   }, [value, mode, defaultTime]);
 
+  useEffect(() => {
+    if (disabled && open) {
+      setOpen(false);
+    }
+  }, [disabled, open]);
+
   const browserLocale = getUserLocale();
   const hourOptions = Array.from({ length: 24 }, (_, i) => i);
   const minuteOptions = [0, 5, 10, 15, 20, 30, 45];
@@ -129,13 +139,22 @@ export function DateTimePicker({
 
   return (
     <div className={className}>
-      <Popover open={open} onOpenChange={setOpen} modal={popoverModal}>
+      <Popover
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (disabled) return;
+          setOpen(nextOpen);
+        }}
+        modal={popoverModal}
+      >
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             type="button"
+            disabled={disabled}
             className={cn(
-              "justify-start text-left font-normal w-full md:w-[260px]",
+              "justify-start text-left font-normal",
+              fullWidth ? "w-full" : "w-full md:w-[260px]",
               !value && "text-muted-foreground",
               buttonClassName
             )}

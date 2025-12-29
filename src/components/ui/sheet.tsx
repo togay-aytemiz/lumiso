@@ -54,18 +54,52 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content
-      ref={ref}
-      className={cn(sheetVariants({ side }), className)}
-      {...props}
-    >
-      {children}
-    </SheetPrimitive.Content>
-  </SheetPortal>
-))
+>(({ side = "right", className, children, onPointerDownOutside, onInteractOutside, ...props }, ref) => {
+  const handlePointerDownOutside = React.useCallback(
+    (event: Parameters<NonNullable<typeof onPointerDownOutside>>[0]) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('[data-toast-root], [role="dialog"], [role="alertdialog"]')
+      ) {
+        event.preventDefault();
+        return;
+      }
+      onPointerDownOutside?.(event);
+    },
+    [onPointerDownOutside]
+  );
+
+  const handleInteractOutside = React.useCallback(
+    (event: Parameters<NonNullable<typeof onInteractOutside>>[0]) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('[data-toast-root], [role="dialog"], [role="alertdialog"]')
+      ) {
+        event.preventDefault();
+        return;
+      }
+      onInteractOutside?.(event);
+    },
+    [onInteractOutside]
+  );
+
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content
+        ref={ref}
+        className={cn(sheetVariants({ side }), className)}
+        onPointerDownOutside={handlePointerDownOutside}
+        onInteractOutside={handleInteractOutside}
+        {...props}
+      >
+        {children}
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  );
+})
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({

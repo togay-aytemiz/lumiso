@@ -14,6 +14,7 @@ import Auth from "./pages/Auth";
 import GettingStarted from "./pages/GettingStarted";
 import AllLeads from "./pages/AllLeads";
 import AllProjects from "./pages/AllProjects";
+import AllGalleries from "./pages/AllGalleries";
 import LeadDetail from "./pages/LeadDetail";
 import ProjectDetail from "./pages/ProjectDetail";
 import UpcomingSessions from "./pages/UpcomingSessions";
@@ -38,12 +39,16 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import Workflows from "./pages/Workflows";
 import Templates from "./pages/Templates";
 import TemplateBuilder from "./pages/TemplateBuilder";
+import GalleryDetail from "./pages/GalleryDetail";
+import GalleryClientPreview from "./pages/GalleryClientPreview";
+import GalleryPublic from "./pages/GalleryPublic";
 import SearchPage from "./pages/Search";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminLocalization from "./pages/admin/Localization";
 import AdminUsers from "./pages/admin/Users";
 import AdminSystem from "./pages/admin/System";
 import { FEATURE_FLAGS, isFeatureEnabled } from "./lib/featureFlags";
+import { useOrganizationSettings } from "./hooks/useOrganizationSettings";
 
 const renderSettingsRoutes = (enableOverlay: boolean) => (
   <Route path="settings" element={<SettingsLayout enableOverlay={enableOverlay} />}>
@@ -62,6 +67,7 @@ const renderSettingsRoutes = (enableOverlay: boolean) => (
 const AppRoutes = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { settings: organizationSettings } = useOrganizationSettings();
   const state = location.state as { backgroundLocation?: Location } | undefined;
   const settingsOverlayEnabled = isFeatureEnabled(
     FEATURE_FLAGS.settingsModalOverlayV1,
@@ -91,15 +97,35 @@ const AppRoutes = () => {
         <Route path="/auth/recovery" element={<Auth />} />
         <Route path="/auth/signup" element={<Auth />} />
         <Route path="/auth/sign-up" element={<Auth />} />
+        <Route path="/g/:publicId" element={<GalleryPublic />} />
+        <Route path="/" element={<ProtectedRoute disableLayout />}>
+          <Route
+            path="galleries/:id/preview"
+            element={
+              <GalleryClientPreview
+                branding={
+                  organizationSettings?.logo_url || organizationSettings?.photography_business_name
+                    ? {
+                        logoUrl: organizationSettings.logo_url ?? null,
+                        businessName: organizationSettings.photography_business_name ?? null,
+                      }
+                    : null
+                }
+              />
+            }
+          />
+        </Route>
         <Route path="/" element={<ProtectedRoute />}>
           <Route index element={<Index />} />
           <Route path="getting-started" element={<GettingStarted />} />
           <Route path="leads" element={<AllLeads />} />
           <Route path="projects" element={<AllProjects />} />
+          <Route path="galleries" element={<AllGalleries />} />
           <Route path="leads/:id" element={<LeadDetail />} />
           <Route path="projects/:id" element={<ProjectDetail />} />
           <Route path="sessions" element={<UpcomingSessions />} />
           <Route path="sessions/:id" element={<SessionDetail />} />
+          <Route path="galleries/:id" element={<GalleryDetail />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="reminders" element={<ReminderDetails />} />
           <Route path="analytics" element={<Analytics />} />

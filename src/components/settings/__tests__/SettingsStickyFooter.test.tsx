@@ -41,6 +41,6 @@ describe("SettingsStickyFooter", () => {
   it("shows success state when showSuccess is true", () => {
     render(<SettingsStickyFooter {...baseProps} showSuccess />);
 
-    expect(screen.getByRole("button", { name: "Saved" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Settings saved" })).toBeEnabled();
   });
 });

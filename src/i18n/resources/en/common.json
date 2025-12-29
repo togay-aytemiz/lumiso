@@ -217,6 +217,26 @@
   },
   "showMore": "Show more",
   "showLess": "Show less",
+  "storage": {
+    "widget": {
+      "kicker": "Storage",
+      "title": "Storage usage",
+      "capacity": "Total: {{total}}",
+      "used": "Used: {{used}}",
+      "percentFull": "{{percent}}%",
+      "blocked": "Uploads are blocked until you free up space.",
+      "aria": {
+        "progress": "Storage usage"
+      },
+      "status": {
+        "safe": "Status: Good",
+        "attention": "Status: Filling up",
+        "critical": "Status: Critical",
+        "nearLimit": "Status: Full",
+        "limitExceeded": "Status: Limit exceeded"
+      }
+    }
+  },
   "network": {
     "offlineTitle": "You're offline",
     "offlineDescription": "We couldn't reach your data. We'll keep showing the last results until you're back online.",

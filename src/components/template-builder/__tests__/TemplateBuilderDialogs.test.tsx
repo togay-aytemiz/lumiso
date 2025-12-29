@@ -27,10 +27,19 @@ jest.mock("@/hooks/useTemplateVariables", () => ({
 
 jest.mock("@/components/ui/sheet", () => {
   type MockProps = React.PropsWithChildren<Record<string, unknown>>;
+  interface SheetCloseProps extends React.PropsWithChildren {
+    asChild?: boolean;
+  }
 
   const DivWrapper: React.FC<MockProps> = ({ children }) => <div>{children}</div>;
   const HeadingWrapper: React.FC<MockProps> = ({ children }) => <h2>{children}</h2>;
   const ParagraphWrapper: React.FC<MockProps> = ({ children }) => <p>{children}</p>;
+  const SheetClose: React.FC<SheetCloseProps> = ({ children, asChild }) => {
+    if (asChild && React.isValidElement(children)) {
+      return children;
+    }
+    return <button type="button">{children}</button>;
+  };
 
   return {
     Sheet: DivWrapper,
@@ -38,6 +47,7 @@ jest.mock("@/components/ui/sheet", () => {
     SheetHeader: DivWrapper,
     SheetTitle: HeadingWrapper,
     SheetDescription: ParagraphWrapper,
+    SheetClose,
   };
 });
 
@@ -144,10 +154,11 @@ describe("AddBlockSheet", () => {
       <AddBlockSheet open onOpenChange={jest.fn()} onAddBlock={handleAdd} />
     );
 
-    const blockCards = screen.getAllByRole("heading", { level: 3 });
-    expect(blockCards).not.toHaveLength(0);
-
-    fireEvent.click(blockCards[0].closest("div")!);
+    const textBlockHeading = screen.getByRole("heading", {
+      level: 3,
+      name: "pages:templateBuilder.addBlockSheet.blocks.text.title",
+    });
+    fireEvent.click(textBlockHeading);
     expect(handleAdd).toHaveBeenCalledWith("text");
   });
 });
@@ -173,7 +184,9 @@ describe("VariablePicker", () => {
       </TemplateVariablesProvider>
     );
 
-    const variableButton = screen.getByRole("button", { name: /Variable/ });
+    const variableButton = screen.getByRole("button", {
+      name: "templateBuilder.variablePicker.tooltip",
+    });
     fireEvent.click(variableButton);
 
     const options = screen.getAllByRole("button", {
@@ -182,7 +195,7 @@ describe("VariablePicker", () => {
     expect(options).toHaveLength(2);
 
     fireEvent.click(options[0]);
-    expect(handleSelect).toHaveBeenCalledWith("{lead_name}");
+    expect(handleSelect).toHaveBeenCalledWith("{lead_name|Customer Name}");
   });
 });
 

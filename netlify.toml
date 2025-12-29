@@ -1,0 +1,8 @@
+[[edge_functions]]
+function = "gallery-og"
+path = "/g/*"
+
+[[edge_functions]]
+function = "gallery-og-image"
+path = "/og/g/*"
+

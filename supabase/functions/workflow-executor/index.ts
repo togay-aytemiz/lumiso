@@ -1565,7 +1565,9 @@ async function updateExecutionStatus(
 
 const handler = createWorkflowExecutor({ createClient });
 
-serve(handler);
+if (import.meta.main) {
+  serve(handler);
+}
 
 export {
   evaluateTriggerConditions,

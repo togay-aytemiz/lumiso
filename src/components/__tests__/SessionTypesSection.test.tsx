@@ -25,6 +25,24 @@ jest.mock("@/hooks/use-toast", () => ({
   useToast: jest.fn(),
 }));
 
+jest.mock("@/contexts/SettingsContext", () => ({
+  useSettingsContext: () => ({
+    dirtySections: new Set(),
+    addDirtySection: jest.fn(),
+    removeDirtySection: jest.fn(),
+    clearAllDirtySections: jest.fn(),
+    hasDirtySections: false,
+    categoryChanges: {},
+    registerSectionHandler: jest.fn(),
+    unregisterSectionHandler: jest.fn(),
+    setSectionDirty: jest.fn(),
+    getCategoryDirtySections: jest.fn(() => []),
+    hasCategoryChanges: jest.fn(() => false),
+    saveCategoryChanges: jest.fn(),
+    cancelCategoryChanges: jest.fn(),
+  }),
+}));
+
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: jest.fn(),
   useCommonTranslation: jest.fn(),

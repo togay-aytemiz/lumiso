@@ -6,6 +6,20 @@ Use this guide whenever we need to apply database migrations to the Lumiso produ
 - Confirm you have the Supabase CLI installed (`npx supabase --version`).
 - Make sure you are authenticated: `npx supabase login`.
 - Keep `.codex/rules.md` handy for any additional deployment expectations.
+- Ensure required Vault + Edge secrets are configured:
+  - Vault secret `gallery_pin_key` (used to encrypt/decrypt gallery PINs)
+  - Vault secret `gallery_download_processor_secret` (cron auth for the download processor)
+  - Edge function secret `GALLERY_DOWNLOAD_PROCESSOR_SECRET` must match the Vault value above.
+
+  Vault entries are added in Supabase Dashboard → Project Settings → Vault.
+  Example generation (terminal):
+  ```bash
+  openssl rand -base64 32
+  ```
+  Then set the Edge function secret:
+  ```bash
+  npx supabase secrets set GALLERY_DOWNLOAD_PROCESSOR_SECRET=<set-a-strong-secret>
+  ```
 
 ## Deployment Steps
 1. **Link the project**  
@@ -33,9 +47,17 @@ Use this guide whenever we need to apply database migrations to the Lumiso produ
    ```  
    This should again report that the remote database is up to date.
 
+5. **Deploy edge functions (if updated)**  
+   ```bash
+   npx supabase functions deploy gallery-download
+   npx supabase functions deploy gallery-download-processor
+   ```  
+   Repeat for any other Supabase Edge functions touched in the release.
+
 ## Post-Deployment Checks
 - Spot-check key tables in Supabase Studio if data changes are expected (e.g., new columns populated by backfill scripts).
 - Record the migration file names and timestamp in the deployment notes or ticket.
+- If new cron jobs were introduced (for example, gallery download processing), verify them in `cron.job` after the push.
 
 ## Troubleshooting
 - **Skipped migrations due to naming**  

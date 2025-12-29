@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { DEV, startTimer, logInfo } from "@/lib/debug";
 import type { LeadWithCustomFields } from "@/hooks/useLeadsWithCustomFields";
 import type { CustomFieldFilterValue } from "@/pages/leads/hooks/useLeadsFilters";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 type LeadStatusRow = Pick<
   Database["public"]["Tables"]["lead_statuses"]["Row"],
@@ -222,6 +222,7 @@ export function useLeadsData({
   statusIds,
   customFieldFilters,
 }: UseLeadsDataOptions): UseLeadsDataResult {
+  const { activeOrganizationId } = useOrganization();
   const [pageLeads, setPageLeads] = useState<LeadWithCustomFields[]>([]);
   const [metricsLeads, setMetricsLeads] = useState<
     Pick<LeadWithCustomFields, "id" | "created_at" | "updated_at" | "status" | "lead_statuses">[]
@@ -529,7 +530,7 @@ export function useLeadsData({
       to: number;
       includeCount?: boolean;
     }) => {
-      const organizationId = await getUserOrganizationId();
+      const organizationId = activeOrganizationId;
       if (!organizationId) {
         throw new Error("No active organization found");
       }
@@ -719,6 +720,7 @@ export function useLeadsData({
       }
     },
     [
+      activeOrganizationId,
       customFieldFilters,
       resolveLeadIdsForCustomFilters,
       sortDirection,
@@ -754,12 +756,22 @@ export function useLeadsData({
     const loadTimer = startTimer("Leads.pageLoad", { page, pageSize });
 
     try {
+      if (!activeOrganizationId) {
+        setTableLoading(false);
+        if (first) {
+          setInitialLoading(false);
+          firstLoadRef.current = false;
+        }
+        loadTimer.end({ reason: "no-organization" });
+        return;
+      }
+
       if (first) {
         setInitialLoading(true);
       }
       setTableLoading(true);
 
-      const organizationId = await getUserOrganizationId();
+      const organizationId = activeOrganizationId;
       if (!organizationId) {
         throw new Error("No active organization found");
       }
@@ -841,7 +853,7 @@ export function useLeadsData({
         leads: fetchedLeads.length,
       });
     }
-  }, [fetchLeadsData, mergeLeads, page, pageSize, statusIds]);
+  }, [activeOrganizationId, fetchLeadsData, mergeLeads, page, pageSize, statusIds]);
 
   useEffect(() => {
     fetchLeads();

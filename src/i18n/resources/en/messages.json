@@ -26,6 +26,7 @@
     "updatingProject": "Error updating project",
     "deletingProject": "Error deleting project",
     "deletingSession": "Error deleting session",
+    "updatingSessionStatus": "Unable to update session status.",
     "leadFetching": "Error fetching leads",
     "projectOpen": "Unable to open project",
     "actionFailed": "Action failed",
@@ -125,6 +126,7 @@
   "session": {
     "validationRequired": "Session name, date and time are required.",
     "notificationWarning": "Session created successfully, but notifications may not be sent.",
+    "statusUpdateWarning": "Status updated successfully, but notifications may not be sent.",
     "scheduled": "Session scheduled successfully.",
     "scheduleError": "Error scheduling session"
   },

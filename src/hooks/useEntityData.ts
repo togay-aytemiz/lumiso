@@ -51,7 +51,7 @@ export function useEntityData<T>({
     } finally {
       setLoading(false);
     }
-  }, [fetchFn, onError]);
+  }, [fetchFn, onError, t]);
 
   const refresh = useCallback(() => {
     fetchData();
@@ -59,7 +59,7 @@ export function useEntityData<T>({
 
   useEffect(() => {
     fetchData();
-  }, [fetchData, dependencies]);
+  }, [fetchData, ...dependencies]);
 
   return {
     data,

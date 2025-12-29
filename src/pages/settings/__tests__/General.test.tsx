@@ -87,7 +87,7 @@ jest.mock("@/contexts/SettingsContext", () => ({
 
 jest.mock("@/hooks/useOrganizationSettings");
 jest.mock("@/hooks/useSettingsCategorySection");
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(() => ({
     completeCurrentStep: mockCompleteStep,
   })),

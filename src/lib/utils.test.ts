@@ -6,6 +6,7 @@ import {
   formatTime,
   formatDateTime,
   formatLongDate,
+  formatBytes,
   getStartOfWeek,
   getEndOfWeek,
   getWeekRange,
@@ -134,5 +135,24 @@ describe("week boundary helpers", () => {
     expect(start.getDay()).toBe(0);
     expect(end.getDay()).toBe(6);
     expect(end.getTime()).toBeGreaterThan(start.getTime());
+  });
+});
+
+describe("formatBytes", () => {
+  it("returns a placeholder for invalid numbers", () => {
+    expect(formatBytes(null)).toBe("—");
+    expect(formatBytes(undefined)).toBe("—");
+    expect(formatBytes(Number.NaN)).toBe("—");
+  });
+
+  it("formats bytes using binary units", () => {
+    expect(formatBytes(0, "en-US")).toBe("0 B");
+    expect(formatBytes(1024, "en-US")).toBe("1 KB");
+    expect(formatBytes(1536, "en-US")).toBe("1.5 KB");
+    expect(formatBytes(3 * 1024 ** 3, "en-US")).toBe("3 GB");
+  });
+
+  it("respects locale separators", () => {
+    expect(formatBytes(1536, "tr-TR")).toBe("1,5 KB");
   });
 });

@@ -55,6 +55,8 @@ const STORAGE_PREFIX = "lumiso:organization_settings:";
 
 const memoryCache = new Map<string, CacheEntry>();
 const inflightRequests = new Map<string, Promise<CachedOrganizationSettings | null>>();
+const lastSettingsFetchAt = new Map<string, number>();
+const MIN_SETTINGS_FORCE_INTERVAL_MS = 60 * 1000;
 
 const now = () => Date.now();
 
@@ -88,7 +90,7 @@ const writeToStorage = (organizationId: string, entry: CacheEntry) => {
 export const getOrganizationSettingsFromCache = (
   organizationId: string,
   ttl: number = CACHE_TTL_MS
-): CachedOrganizationSettings | null => {
+): CachedOrganizationSettings | null | undefined => {
   const existing = memoryCache.get(organizationId);
   const expiresAt = now() - ttl;
 
@@ -102,7 +104,7 @@ export const getOrganizationSettingsFromCache = (
     return stored.data;
   }
 
-  return null;
+  return undefined;
 };
 
 export const setOrganizationSettingsCache = (
@@ -206,10 +208,21 @@ export const fetchOrganizationSettingsWithCache = async (
   options: FetchOptions = {}
 ): Promise<CachedOrganizationSettings | null> => {
   const ttl = options.ttl ?? CACHE_TTL_MS;
+  const nowTs = now();
+
+  if (options.force) {
+    const lastFetchAt = lastSettingsFetchAt.get(organizationId);
+    if (lastFetchAt && nowTs - lastFetchAt < MIN_SETTINGS_FORCE_INTERVAL_MS) {
+      const cached = getOrganizationSettingsFromCache(organizationId, ttl);
+      if (cached !== undefined) {
+        return cached;
+      }
+    }
+  }
 
   if (!options.force) {
     const cached = getOrganizationSettingsFromCache(organizationId, ttl);
-    if (cached !== null) {
+    if (cached !== undefined) {
       return cached;
     }
   }
@@ -217,6 +230,8 @@ export const fetchOrganizationSettingsWithCache = async (
   if (inflightRequests.has(organizationId)) {
     return inflightRequests.get(organizationId)!;
   }
+
+  lastSettingsFetchAt.set(organizationId, nowTs);
 
   const requestPromise = fetchOrganizationSettingsFromSupabase(
     organizationId,

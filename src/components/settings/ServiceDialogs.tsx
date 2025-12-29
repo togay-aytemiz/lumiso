@@ -17,6 +17,13 @@ import { cn } from "@/lib/utils";
 import { useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 import { DEFAULT_ORGANIZATION_TAX_PROFILE } from "@/lib/organizationSettingsCache";
 import { DEFAULT_CATEGORIES, DEFAULT_CATEGORY_DEFINITIONS, ServiceType } from "@/constants/serviceCategories";
+import { SelectionTemplateSection } from "@/components/SelectionTemplateSection";
+import {
+  createRuleId,
+  deserializeSelectionTemplate,
+  normalizeSelectionTemplate,
+  type SelectionTemplateRuleForm,
+} from "@/lib/selectionTemplate";
 
 interface ServiceFormState {
   name: string;
@@ -31,6 +38,8 @@ interface ServiceFormState {
   service_type: ServiceType;
   vendor_name: string;
   is_active: boolean;
+  selection_rules: SelectionTemplateRuleForm[];
+  selection_enabled: boolean;
 }
 
 interface ServiceVatDefaults {
@@ -53,6 +62,7 @@ interface ServiceRecord {
   vendor_name?: string | null;
   is_active?: boolean | null;
   is_people_based?: boolean | null;
+  selection_template?: unknown;
 }
 const formatVatRate = (value?: number | null) => {
   if (value == null || Number.isNaN(value)) return "";
@@ -76,6 +86,8 @@ const createFormState = (
   service_type: serviceType,
   vendor_name: "",
   is_active: true,
+  selection_rules: [],
+  selection_enabled: false,
   ...overrides,
 });
 
@@ -331,6 +343,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
     ],
     [t]
   );
+  const isDeliverable = (selectedType ?? formData.service_type) === "deliverable";
 
   const handleServiceTypeSelect = useCallback((type: ServiceType) => {
     setSelectedType(type);
@@ -338,9 +351,32 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       ...prev,
       service_type: type,
       category: "",
+      selection_rules: type === "deliverable" ? prev.selection_rules : [],
+      selection_enabled: type === "deliverable" ? prev.selection_enabled : false,
     }));
     setShowNewCategoryInput(false);
     setNewCategoryName("");
+  }, []);
+
+  const applySelectionEnabled = useCallback((enabled: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      selection_enabled: enabled,
+      selection_rules:
+        enabled && prev.selection_rules.length === 0
+          ? [
+              {
+                id: createRuleId(),
+                part: "",
+                min: "",
+                max: "",
+                required: true,
+              },
+            ]
+          : enabled
+            ? prev.selection_rules
+            : [],
+    }));
   }, []);
 
   const defaultCategoryValues = useMemo(
@@ -368,6 +404,13 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
     (!Number.isNaN(vatRateNumeric) && vatRateNumeric >= 0 && vatRateNumeric <= 99.99);
   const isSaveDisabled =
     loading || !hasSelectedCategory || !formData.name.trim() || !vatRateValid;
+  const selectionTemplateHasContent = useMemo(
+    () =>
+      formData.selection_rules.some(
+        (rule) => rule.part.trim() || rule.min.trim() || rule.max.trim()
+      ),
+    [formData.selection_rules]
+  );
 
   const typeCardBase = "group flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
 
@@ -400,6 +443,10 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       : formData.vat_rate.trim() === ""
           ? vatDefaults.vatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate
           : parseFloat(formData.vat_rate.replace(",", "."));
+    const normalizedSelectionTemplate =
+      selectedType === "deliverable" && formData.selection_enabled
+        ? normalizeSelectionTemplate(formData.selection_rules)
+        : null;
 
     if (
       !vatExempt &&
@@ -443,6 +490,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
         default_unit: null,
         vat_rate: parsedVatRate,
         price_includes_vat: priceIncludesVat,
+        selection_template: isCoverage ? null : normalizedSelectionTemplate,
       });
 
       if (error) throw error;
@@ -485,9 +533,40 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       formData.extra !== baseState.extra ||
       formData.service_type !== baseState.service_type ||
       formData.vendor_name.trim() !== baseState.vendor_name.trim() ||
-      formData.is_active !== baseState.is_active
+      formData.is_active !== baseState.is_active ||
+      formData.selection_enabled !== baseState.selection_enabled ||
+      JSON.stringify(normalizeSelectionTemplate(formData.selection_rules) ?? []) !==
+        JSON.stringify(normalizeSelectionTemplate(baseState.selection_rules) ?? [])
     );
   }, [formData, initialType, vatDefaults]);
+
+  const [selectionToggleGuardOpen, setSelectionToggleGuardOpen] = useState(false);
+  const [pendingSelectionEnabled, setPendingSelectionEnabled] = useState<boolean | null>(null);
+
+  const handleSelectionToggleRequest = useCallback(
+    (enabled: boolean) => {
+      if (formData.selection_enabled && !enabled && selectionTemplateHasContent) {
+        setPendingSelectionEnabled(enabled);
+        setSelectionToggleGuardOpen(true);
+        return;
+      }
+      applySelectionEnabled(enabled);
+    },
+    [applySelectionEnabled, formData.selection_enabled, selectionTemplateHasContent]
+  );
+
+  const handleSelectionToggleConfirm = useCallback(() => {
+    if (pendingSelectionEnabled !== null) {
+      applySelectionEnabled(pendingSelectionEnabled);
+    }
+    setSelectionToggleGuardOpen(false);
+    setPendingSelectionEnabled(null);
+  }, [applySelectionEnabled, pendingSelectionEnabled]);
+
+  const handleSelectionToggleStay = useCallback(() => {
+    setSelectionToggleGuardOpen(false);
+    setPendingSelectionEnabled(null);
+  }, []);
 
   const navigation = useModalNavigation({
     isDirty,
@@ -532,7 +611,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       title={t("service.add_title")}
       isOpen={open}
       onOpenChange={onOpenChange}
-      size="content"
+      size="md"
       dirty={isDirty}
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}
@@ -738,8 +817,19 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
               }
               vatRateValid={vatRateValid}
               priceIncludesVat={formData.price_includes_vat}
-              onPriceIncludesVatChange={(value) =>
-                setFormData((prev) => ({ ...prev, price_includes_vat: value }))
+                onPriceIncludesVatChange={(value) =>
+                  setFormData((prev) => ({ ...prev, price_includes_vat: value }))
+                }
+              />
+          )}
+
+          {isDeliverable && (
+            <SelectionTemplateSection
+              enabled={formData.selection_enabled}
+              onToggleRequest={handleSelectionToggleRequest}
+              rules={formData.selection_rules}
+              onRulesChange={(rules) =>
+                setFormData((prev) => ({ ...prev, selection_rules: rules }))
               }
             />
           )}
@@ -773,6 +863,12 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
         )}
       </div>
 
+      <NavigationGuardDialog
+        open={selectionToggleGuardOpen}
+        onDiscard={handleSelectionToggleConfirm}
+        onStay={handleSelectionToggleStay}
+        message={t("service.selection_template.disable_guard_message")}
+      />
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
@@ -824,6 +920,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
 
     if (service && initializedForId.current !== service.id) {
       const resolvedType = (service.service_type ?? "deliverable") as ServiceType;
+      const selectionRules = deserializeSelectionTemplate(service.selection_template);
       setFormData(
         createFormState(
           resolvedType,
@@ -847,6 +944,8 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
             service_type: resolvedType,
             vendor_name: service.vendor_name || "",
             is_active: service.is_active ?? true,
+            selection_rules: selectionRules,
+            selection_enabled: selectionRules.length > 0,
           },
           vatDefaults
         )
@@ -882,12 +981,36 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       ...prev,
       service_type: type,
       category: "",
+      selection_rules: type === "deliverable" ? prev.selection_rules : [],
+      selection_enabled: type === "deliverable" ? prev.selection_enabled : false,
     }));
     setShowNewCategoryInput(false);
     setNewCategoryName("");
   }, []);
 
+  const applySelectionEnabled = useCallback((enabled: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      selection_enabled: enabled,
+      selection_rules:
+        enabled && prev.selection_rules.length === 0
+          ? [
+              {
+                id: createRuleId(),
+                part: "",
+                min: "",
+                max: "",
+                required: true,
+              },
+            ]
+          : enabled
+            ? prev.selection_rules
+            : [],
+    }));
+  }, []);
+
   const activeType: ServiceType = (selectedType ?? formData.service_type ?? "deliverable") as ServiceType;
+  const isDeliverable = activeType === "deliverable";
   const defaultCategoryValues = useMemo(() => DEFAULT_CATEGORIES[activeType], [activeType]);
   const defaultCategoryDefinitions = useMemo(() => DEFAULT_CATEGORY_DEFINITIONS[activeType], [activeType]);
   const customCategories = useMemo(
@@ -904,6 +1027,13 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
     (!Number.isNaN(editVatRateNumeric) && editVatRateNumeric >= 0 && editVatRateNumeric <= 99.99);
   const isSaveDisabled =
     loading || !hasSelectedType || !hasSelectedCategory || !formData.name.trim() || !editVatRateValid;
+  const selectionTemplateHasContent = useMemo(
+    () =>
+      formData.selection_rules.some(
+        (rule) => rule.part.trim() || rule.min.trim() || rule.max.trim()
+      ),
+    [formData.selection_rules]
+  );
 
   const typeCardBase = "group flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
 
@@ -946,6 +1076,10 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       : formData.vat_rate.trim() === ""
           ? vatDefaults.vatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate
           : parseFloat(formData.vat_rate.replace(",", "."));
+    const normalizedSelectionTemplate =
+      selectedType === "deliverable" && formData.selection_enabled
+        ? normalizeSelectionTemplate(formData.selection_rules)
+        : null;
 
     if (
       !vatExempt &&
@@ -978,6 +1112,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           is_active: formData.is_active,
           vat_rate: parsedVatRate,
           price_includes_vat: priceIncludesVat,
+          selection_template: selectedType === "coverage" ? null : normalizedSelectionTemplate,
         })
         .eq("id", service?.id);
 
@@ -1005,6 +1140,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
 
   const isDirty = useMemo(() => {
     if (!service) return false;
+    const baseSelectionRules = deserializeSelectionTemplate(service.selection_template);
     const baseState = createFormState(
       (service.service_type ?? "deliverable") as ServiceType,
       {
@@ -1028,6 +1164,8 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
         service_type: (service.service_type ?? "deliverable") as ServiceType,
         vendor_name: service.vendor_name || "",
         is_active: service.is_active ?? true,
+        selection_rules: baseSelectionRules,
+        selection_enabled: baseSelectionRules.length > 0,
       },
       vatDefaults
     );
@@ -1044,9 +1182,40 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       formData.extra !== baseState.extra ||
       formData.service_type !== baseState.service_type ||
       formData.vendor_name.trim() !== baseState.vendor_name?.trim() ||
-      formData.is_active !== baseState.is_active
+      formData.is_active !== baseState.is_active ||
+      formData.selection_enabled !== baseState.selection_enabled ||
+      JSON.stringify(normalizeSelectionTemplate(formData.selection_rules) ?? []) !==
+        JSON.stringify(normalizeSelectionTemplate(baseState.selection_rules) ?? [])
     );
   }, [formData, service, vatDefaults, vatExempt]);
+
+  const [selectionToggleGuardOpen, setSelectionToggleGuardOpen] = useState(false);
+  const [pendingSelectionEnabled, setPendingSelectionEnabled] = useState<boolean | null>(null);
+
+  const handleSelectionToggleRequest = useCallback(
+    (enabled: boolean) => {
+      if (formData.selection_enabled && !enabled && selectionTemplateHasContent) {
+        setPendingSelectionEnabled(enabled);
+        setSelectionToggleGuardOpen(true);
+        return;
+      }
+      applySelectionEnabled(enabled);
+    },
+    [applySelectionEnabled, formData.selection_enabled, selectionTemplateHasContent]
+  );
+
+  const handleSelectionToggleConfirm = useCallback(() => {
+    if (pendingSelectionEnabled !== null) {
+      applySelectionEnabled(pendingSelectionEnabled);
+    }
+    setSelectionToggleGuardOpen(false);
+    setPendingSelectionEnabled(null);
+  }, [applySelectionEnabled, pendingSelectionEnabled]);
+
+  const handleSelectionToggleStay = useCallback(() => {
+    setSelectionToggleGuardOpen(false);
+    setPendingSelectionEnabled(null);
+  }, []);
 
   const navigation = useModalNavigation({
     isDirty,
@@ -1056,6 +1225,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
         return;
       }
       const resolvedType = (service.service_type ?? "deliverable") as ServiceType;
+      const selectionRules = deserializeSelectionTemplate(service.selection_template);
       setFormData(
         createFormState(
           resolvedType,
@@ -1080,6 +1250,8 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
             service_type: resolvedType,
             vendor_name: service.vendor_name || "",
             is_active: service.is_active ?? true,
+            selection_rules: selectionRules,
+            selection_enabled: selectionRules.length > 0,
           },
           vatDefaults
         )
@@ -1096,6 +1268,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
     const canClose = navigation.handleModalClose();
     if (canClose && service) {
       const resolvedType = (service.service_type ?? "deliverable") as ServiceType;
+      const selectionRules = deserializeSelectionTemplate(service.selection_template);
       setFormData(
         createFormState(
           resolvedType,
@@ -1113,6 +1286,8 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
             service_type: resolvedType,
             vendor_name: service.vendor_name || "",
             is_active: service.is_active ?? true,
+            selection_rules: selectionRules,
+            selection_enabled: selectionRules.length > 0,
           },
           vatDefaults
         )
@@ -1144,7 +1319,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       title={t("service.edit_title")}
       isOpen={open}
       onOpenChange={onOpenChange}
-      size="content"
+      size="md"
       dirty={isDirty}
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}
@@ -1350,8 +1525,19 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
               }
               vatRateValid={editVatRateValid}
               priceIncludesVat={formData.price_includes_vat}
-              onPriceIncludesVatChange={(value) =>
-                setFormData((prev) => ({ ...prev, price_includes_vat: value }))
+                onPriceIncludesVatChange={(value) =>
+                  setFormData((prev) => ({ ...prev, price_includes_vat: value }))
+                }
+              />
+          )}
+
+          {isDeliverable && (
+            <SelectionTemplateSection
+              enabled={formData.selection_enabled}
+              onToggleRequest={handleSelectionToggleRequest}
+              rules={formData.selection_rules}
+              onRulesChange={(rules) =>
+                setFormData((prev) => ({ ...prev, selection_rules: rules }))
               }
             />
           )}
@@ -1385,6 +1571,12 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
         )}
       </div>
 
+      <NavigationGuardDialog
+        open={selectionToggleGuardOpen}
+        onDiscard={handleSelectionToggleConfirm}
+        onStay={handleSelectionToggleStay}
+        message={t("service.selection_template.disable_guard_message")}
+      />
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}

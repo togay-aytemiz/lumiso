@@ -74,6 +74,9 @@
       "next": "Sonraki özellik"
     }
   },
+  "buttons": {
+    "cancel": "İptal"
+  },
   "profileIntake": {
     "badge": "Başlamadan önce",
     "title": "Stüdyonu tanıtalım",
@@ -536,14 +539,671 @@
     "unknownClient": "Bilinmeyen Kişi",
     "gallery": {
       "title": "Seans Galerisi",
+      "helper": "",
+      "actions": {
+        "create": "Galeri oluştur",
+        "share": "Paylaş",
+        "manage": "Yönet",
+        "preview": "Önizle",
+        "archive": "Galeriyi Arşivle",
+        "restore": "Galeriyi Arşivden Çıkar",
+        "delete": "Galeriyi Sil",
+        "more": "Diğer işlemler"
+      },
+      "delete": {
+        "title": "Galeriyi sil",
+        "description": "Bu işlem geri alınamaz. Galeri ve tüm medya kalıcı olarak silinecek.",
+        "confirmLabel": "Silmek için galeri adını yazın",
+        "confirmHint": "Galeri adı: {{name}}",
+        "confirmButton": "Galeriyi sil",
+        "deleting": "Siliniyor..."
+      },
+      "archivedBanner": {
+        "title": "Bu galeri arşivlendi",
+        "description": "Düzenlemeyi yeniden etkinleştirmek için Diğer işlemler → Galeriyi Arşivden Çıkar'ı kullanın."
+      },
       "emptyState": {
         "title": "Henüz görsel yok",
-        "description": "Bu seansın fotoğraflarını yükleyerek müşteriniz için güzel bir galeri oluşturun.",
-        "button": "Görselleri Yükle",
+        "description": "Bu seansın fotoğraflarını yükleyin.\nMüşteriniz için güzel bir galeri oluşturun.",
+        "button": "Galeri oluştur",
         "comingSoon": "Çok yakında"
       },
-      "imageAlt": "Seans görseli {{index}}",
-      "addImageAriaLabel": "Yeni seans görseli ekle"
+      "emptySetTitle": "Henüz fotoğraf yok",
+      "emptySetDesc": "Yüklemek için fotoğrafları sürükleyip bırakın veya aşağıdan ekleyebilirsiniz.",
+      "types": {
+        "proof": "Seçim",
+        "retouch": "Rötuş",
+        "final": "Final",
+        "other": "Özel Tür",
+        "proofHint": "Müşterinin seçim yapacağı prova galerisi",
+        "finalHint": "Teslim için onaylanmış final seti"
+      },
+      "statuses": {
+        "draft": "Taslak",
+        "published": "Müşteri Bekleniyor",
+        "approved": "Onaylandı",
+        "archived": "Arşivlendi"
+      },
+      "labels": {
+        "updated": "Güncellendi",
+        "published": "Yayında",
+        "shareSoon": "Paylaşım linki yakında",
+        "settings": "Ayarlar",
+        "media": "Fotoğraflar",
+        "uploadTitle": "Fotoğraf yükle",
+        "uploadDesc": "Bu galeriye eklemek için fotoğrafları sürükleyip bırak.",
+        "uploadHint": "Proof yüklemeleri daha hızlı açılması için sıkıştırılmış WebP'e dönüştürülür. Orijinaller saklanmaz.",
+        "addMedia": "Fotoğraf ekle",
+        "coverSelected": "Kapak fotoğrafı",
+        "coverMissing": "Kapak fotoğrafı seç",
+        "coverEmpty": "Henüz kapak fotoğrafı yok",
+        "coverHint": "Galeriyi öne çıkarmak için bir fotoğraf seç.",
+        "coverActionHint": "Kapak için galeri içinden bir fotoğrafı işaretleyin.",
+        "chooseCover": "Kapak seç",
+        "coverAfterUpload": "Yüklenen herhangi bir fotoğrafı kapak olarak seçebilirsin.",
+        "coverEmptyHint": "Galeriye fotoğraf ekledikten sonra kapak fotoğrafını seçebilirsin."
+      },
+      "shareSheet": {
+        "title": "Galeriyi Paylaş",
+        "description": "Müşterinize erişim linkini gönderin.",
+        "previewLabel": "Galeri Önizlemesi",
+        "passwordBadge": "Şifreli",
+        "publicLinkLabel": "Galeri Bağlantısı",
+        "publicLinkDescription": "Müşteri erişimi için aktif link.",
+        "publicLinkCardTitle": "Paylaşım Linki",
+        "publicLinkPlaceholder": "—",
+        "publicLinkAria": "Galeri bağlantısı",
+        "generatingLink": "Link oluşturuluyor…",
+        "copyLink": "Kopyala",
+        "pinPlaceholder": "—",
+        "copied": "Kopyalandı",
+        "passwordSectionTitle": "Şifre Koruması Aktif",
+        "passwordSectionDescription": "Galeri erişimi için bu şifre gereklidir.",
+        "copyPinTitle": "Şifreyi Kopyala",
+        "pinHint": "Paylaşım mesajına şifre otomatik eklendi.",
+        "messageLabel": "Paylaşım Mesajı",
+        "resetMessage": "Varsayılan Mesaj",
+        "messagePlaceholder": "Link ile birlikte göndermek için bir mesaj yazın…",
+        "quickActionsLabel": "Nasıl Paylaşmak İstersiniz?",
+        "whatsapp": "WhatsApp",
+        "email": "E-Posta",
+        "emailSubject": "{{title}} - Fotoğraf Galerisi",
+        "footerPublicLabel": "Herkese Açık",
+        "openLink": "Test Et",
+        "messageTemplate": "Merhaba {{clientName}}, fotoğraflarınız seçim için hazır!\n\nGaleriniz: {{url}}\n\nGiriş Şifresi: {{pin}}",
+        "messageTemplateFinal": "Merhaba {{clientName}}, final fotoğraflarınız hazır!\n\nGaleriniz: {{url}}\n\nGiriş Şifresi: {{pin}}",
+        "errors": {
+          "missingGalleryId": "Galeri kimliği bulunamadı.",
+          "generateFailed": "Paylaşım linki oluşturulamadı."
+        }
+      },
+      "settings": {
+        "header": {
+          "eyebrow": "Galeri Ayarları"
+        },
+        "rail": {
+          "sectionLabel": "Galeri Yönetimi",
+          "general": "Genel",
+          "watermark": "Filigran",
+          "privacy": "Gizlilik"
+        },
+        "general": {
+          "header": {
+            "title": "Genel Ayarlar",
+            "description": "Galerinin temel bilgilerini yönetin."
+          },
+          "basics": {
+            "title": "Galeri Bilgileri",
+            "description": "Başlık, tarih ve durum ayarları."
+          }
+        },
+        "watermark": {
+          "header": {
+            "title": "Filigran Ayarları",
+            "description": "Fotoğraf güvenliği ve marka bilinirliği."
+          },
+          "preview": {
+            "title": "Canlı Önizleme",
+            "description": "Filigran görünümünü hızlıca kontrol edin.",
+            "disabled": "Filigran kapalı",
+            "backgroundAlt": "Önizleme arka planı"
+          },
+          "toggle": {
+            "title": "Filigran Kullanımı",
+            "description": "Bu galerideki fotoğraflara filigran uygula."
+          },
+          "appearance": {
+            "title": "Görünüm",
+            "description": "Metin veya logo ile filigranı özelleştirin."
+          },
+          "type": {
+            "label": "Filigran Tipi",
+            "text": "Metin",
+            "logo": "Logo"
+          },
+          "text": {
+            "label": "Metin İçeriği",
+            "placeholder": "Örn: Stüdyo Adı",
+            "fallback": "Stüdyo Adı"
+          },
+          "logo": {
+            "alt": "Filigran logosu",
+            "missingInline": "Logo yok",
+            "detectedTitle": "Marka Logosu",
+            "detectedDescription": "Hesap ayarlarından otomatik alındı.",
+            "manage": "Hesap ayarlarına git",
+            "missingTitle": "Logo bulunamadı",
+            "missingDescription": "Logo yüklemek için hesap ayarlarından marka logonuzu ekleyin."
+          },
+          "layout": {
+            "title": "Yerleşim ve Stil",
+            "description": "Konum, opaklık ve boyutu ayarlayın."
+          },
+          "placement": {
+            "label": "Yerleşim",
+            "grid": "Döşeme",
+            "center": "Orta",
+            "corner": "Köşe"
+          },
+          "opacity": {
+            "label": "Opaklık",
+            "faint": "Silik",
+            "strong": "Belirgin"
+          },
+          "size": {
+            "label": "Boyut",
+            "small": "Küçük",
+            "large": "Büyük"
+          }
+        },
+        "privacy": {
+          "header": {
+            "title": "Gizlilik Ayarları",
+            "description": "Galeri erişimini kontrol edin."
+          },
+          "access": {
+            "title": "Erişim Koruması",
+            "description": "Gerektiğinde şifreyle erişimi sınırlandırın."
+          },
+          "password": {
+            "toggleTitle": "Galeri Şifresi",
+            "toggleDescription": "Ziyaretçiler galeriyi görüntülemek için şifre girer.",
+            "formTitle": "Şifre",
+            "formDescription": "Paylaşmadan önce galeriniz için bir şifre belirleyin.",
+            "label": "Şifre",
+            "placeholder": "Şifre belirleyin",
+            "generate": "Oluştur",
+            "alwaysEnabledTitle": "Galeri Şifre Korumalı",
+            "alwaysEnabledDescription": "Bu galeriye erişim standart olarak şifre ile korunmaktadır. Ziyaretçileriniz giriş yapmak için aşağıdaki şifreyi kullanmalıdır.",
+            "pinLabel": "Giriş Şifresi",
+            "copy": "Şifreyi Kopyala",
+            "copied": "Kopyalandı",
+            "missing": "—"
+          }
+        }
+      },
+      "toast": {
+        "createdTitle": "Galeri oluşturuldu",
+        "createdDesc": "Yükleme ve paylaşmaya başlayabilirsin.",
+        "errorTitle": "Galeri oluşturulamadı",
+        "errorDesc": "Bir sorun oluştu. Lütfen tekrar dene.",
+        "starUpdateFailedTitle": "Öneri kaydedilemedi",
+        "starUpdateFailedDesc": "Lütfen tekrar deneyin.",
+        "unsupportedFilesTitle": "Bazı dosyalar atlandı",
+        "unsupportedFilesDesc_one": "Sadece görseller destekleniyor. 1 dosya eklenmedi.",
+        "unsupportedFilesDesc_other": "Sadece görseller destekleniyor. {{count}} dosya eklenmedi.",
+        "storageLimitTitle": "Depolama limiti doldu",
+        "storageLimitDesc": "Kuruluş başına en fazla {{limit}} yükleme yapılabilir. Devam etmek için eski galerileri silerek alan açın.",
+        "storageLimitSkippedDesc_one": "1 dosya, {{limit}} depolama limitini aşacağı için eklenmedi.",
+        "storageLimitSkippedDesc_other": "{{count}} dosya, {{limit}} depolama limitini aşacağı için eklenmedi.",
+        "updatedTitle": "Galeri kaydedildi",
+        "updatedDesc": "Değişiklikler uygulandı.",
+        "saveCta": "Kaydet"
+      },
+      "form": {
+        "title": "Galeri oluştur",
+        "titleLabel": "Başlık",
+        "titlePlaceholder": "ör. {{leadName}}",
+        "leadNamePlaceholder": "lead adı",
+        "typeLabel": "Tür",
+        "customTypeLabel": "Özel tür",
+        "customTypePlaceholder": "Örn. Albüm seçimi",
+        "statusLabel": "Durum",
+        "eventDateLabel": "Etkinlik tarihi",
+        "submit": "Oluştur ve galeriye git",
+        "saving": "Oluşturuluyor…",
+        "cancel": "İptal",
+        "errors": {
+          "titleRequired": "Başlık zorunlu",
+          "customTypeRequired": "Özel tür gerekli",
+          "typeRequired": "Tür seçmeniz gerekiyor"
+        }
+      },
+      "optimizationNotice": {
+        "title": "Yüklemeler seçim için optimize edilir",
+        "description": "Seçim galerileri hızlı ve verimli olsun diye yüklemeleri dönüştürüp sıkıştırıyoruz. Orijinaller saklanmaz; ancak optimize edilmiş sürüm görüntüleme, seçim ve sosyal medyada paylaşım için fazlasıyla iyi görünür."
+      },
+      "originalsNotice": {
+        "title": "Final teslimde orijinaller saklanır",
+        "description": "Final galerilerde orijinal dosyaları saklıyoruz; görüntülemede optimize edilmiş fotoğraflar kullanılır. Müşteri orijinali sadece indirirken alır."
+      },
+      "selectionTemplate": {
+        "loading": "Seçim kuralları yükleniyor...",
+        "serviceSource": "Kaynak hizmet: {{service}}",
+        "noProject": "Seans projeye bağlı değil. Seçim kurallarını burada oluşturabilirsin.",
+        "noServices": "Projeye hizmet eklenmemiş. Seçim kurallarını elle ekleyebilirsin.",
+        "noTemplate": "Bu seansın bağlı hizmetlerinde seçim kuralı bulunamadı. Kuralları burada tanımlayabilirsin.",
+        "customLabel": "Özel seçim kuralları",
+        "billingIncluded": "Paket hizmeti",
+        "billingExtra": "Ekstra hizmet",
+        "addSource": "Kaynak ekle",
+        "manualGroupTitle": "İlave kurallar",
+        "manualPill": "Hizmetten bağımsız",
+        "addGeneralRule": "İlave kural ekle",
+        "manualPartDefault": "Genel",
+        "manualAddPrompt": "İlave kural eklemek için tıklayın.",
+        "disableSelections": "Seçime kapat",
+        "enableSelections": "Seçime aç",
+        "disabledHint": "Bu hizmet için seçimler kapalı."
+      },
+      "sets": {
+        "add": "Set ekle",
+        "empty": "Henüz set yok. Yüklemeler varsayılan sete gider.",
+        "defaultName": "Öne çıkanlar",
+        "createTitle": "Foto seti oluştur",
+        "editTitle": "Foto setini düzenle",
+        "saveChanges": "Değişiklikleri kaydet",
+        "name": "Set adı",
+        "namePlaceholder": "örn. Dış çekim, Düğün, After party",
+        "description": "Açıklama",
+        "descriptionPlaceholder": "Opsiyonel",
+        "reorder": "Seti yeniden sırala",
+        "editPrompt": "Set adını düzenle",
+        "createSubmit": "Oluştur",
+        "toast": {
+          "createdTitle": "Set oluşturuldu",
+          "createdDesc": "Bu sete yükleme yapabilirsin."
+        },
+        "errors": {
+          "nameRequired": "Ad zorunlu",
+          "cannotDeleteLast": "En az bir set gerekli."
+        },
+        "learnMore": "Set nasıl çalışır?",
+        "info": {
+          "title": "Set nasıl çalışır?",
+          "description": "Setleri aynı çekimdeki bölümleri ayırmak için kullan; her bölüm net kalsın.",
+          "sections": [
+            {
+              "title": "Günü akışa göre böl",
+              "description": "Dış mekan, düğün anı ve after party için ayrı setler ekle; aynı tür fotoğraflar bile karışmasın."
+            },
+            {
+              "title": "Aynı çekimde konulara ayır",
+              "description": "Yenidoğan çekimi için bir \"yenidoğan\" seti, aile kareleri için ikinci bir set aç; hepsi aynı seansa ait kalsın."
+            },
+            {
+              "title": "Müşteriye net rota ver",
+              "description": "Müşteriler doğru sete girip favori bırakabilir, seçim limitlerini tamamlayabilir; nereden başlayacaklarını tahmin etmeleri gerekmez."
+            }
+          ]
+        }
+      },
+      "selection": {
+        "title": "Seçim ayarları",
+        "description": "Bu galeri için müşteri seçimlerini yönet.",
+        "open": "Seçim ayarları",
+        "enableLabel": "Seçimlere izin ver",
+        "enableHint": "Müşteriler bu galeride favori işaretleyebilir.",
+        "limitLabel": "Seçim limiti",
+        "limitPlaceholder": "Limit yok",
+        "deadlineLabel": "Seçim son tarihi",
+        "favoritesLabel": "Favorilere izin ver",
+        "favoritesHint": "Müşteriler fotoğrafları favori olarak işaretleyebilir.",
+        "summary": {
+          "selected": "Seçildi",
+          "favorites": "Favoriler",
+          "limit": "Limit"
+        },
+        "filters": {
+          "all": "Hepsi",
+          "selected": "Seçilenler",
+          "favorites": "Favoriler"
+        },
+        "filterSelected": "Seçilenler filtreleniyor",
+        "filterFavorites": "Favoriler filtreleniyor",
+        "filterAll": "Tüm öğeler gösteriliyor"
+      },
+      "publicAccess": {
+        "title": "Galeri Şifre Korumalı",
+        "description": "Bu galeriye erişmek için fotoğrafçınızın paylaştığı şifreyi girin.",
+        "pinLabel": "Giriş Şifresi",
+        "pinPlaceholder": "Şifrenizi buraya yazın",
+        "pinHint": "Şifre büyük/küçük harf duyarlı değildir.",
+        "submit": "Devam et",
+        "submitting": "Kontrol ediliyor…",
+        "brandingLogoAlt": "İşletme logosu",
+        "errors": {
+          "invalidPin": "Şifre hatalı",
+          "notFound": "Galeri bulunamadı",
+          "generic": "Bir sorun oluştu. Lütfen tekrar deneyin.",
+          "authFailedTitle": "Giriş başlatılamadı"
+        }
+      },
+      "clientPreview": {
+        "lockedBanner": {
+          "title": "Seçimleriniz iletildi!",
+          "subtitle": "Fotoğrafçıya bildirim gönderildi.",
+          "body": "Seçimlerinizi başarıyla tamamladınız. Galeri şu an kilitli moddadır, yani üzerinde değişiklik yapılamaz.\nFotoğrafçınız seçimlerinizi inceledikten sonra sizinle iletişime geçecektir.",
+          "noteLabel": "NOTUNUZ"
+        },
+        "reopenedBanner": {
+          "title": "Seçim yeniden açıldı",
+          "subtitle": "Fotoğrafçınız güncelleme istedi.",
+          "body": "Seçimlerinizi güncelleyip hazır olduğunuzda tekrar gönderebilirsiniz.",
+          "noteLabel": "SON NOTUNUZ"
+        },
+        "hero": {
+          "kicker": "Özel Koleksiyon",
+          "scrollCta": "Galeriyi Görüntüle",
+          "coverAlt": "Kapak fotoğrafı",
+          "untitled": "Başlıksız galeri",
+          "badge": {
+            "selection": {
+              "title": "SEÇİM AŞAMASI",
+              "description": "Seçimlerinizi tamamlamanız bekleniyor"
+            },
+            "delivery": {
+              "title": "FİNAL KOLEKSİYON",
+              "description": "Tüm anılarınız hazır"
+            }
+          }
+        },
+        "actions": {
+          "close": "Kapat",
+          "inspect": "İncele",
+          "closeMenu": "Menüyü kapat",
+          "closeViewer": "Fotoğrafı kapat",
+          "downloadAll": "Hepsini indir",
+          "addToFavorites": "Favorilere Ekle",
+          "removeFromFavorites": "Favorilerden Çıkar",
+          "completeSelection": "Seçimi Tamamla",
+          "resendSelection": "Seçimleri Tekrar Gönder",
+          "gridLarge": "Büyük grid",
+          "gridMedium": "Orta grid",
+          "gridSmall": "Küçük grid"
+        },
+        "bulkDownload": {
+          "confirmTitle": "Tüm fotoğrafları indir",
+          "confirmDescription": "{{count}} fotoğraf tek bir .zip dosyası olarak hazırlanacak. Biraz sürebilir. Devam edilsin mi?",
+          "confirmAction": "İndirmeyi hazırla",
+          "preparingTitle": "İndirme hazırlanıyor",
+          "preparingDescription": "Bu işlem birkaç dakika sürebilir. Hazır olunca indirme otomatik başlayacak.",
+          "preparingProgress": "{{completed}} / {{total}} fotoğraf hazırlanıyor...",
+          "readyTitle": "İndirme başlıyor",
+          "readyDescription": "İndirme otomatik başlamazsa aşağıdan tekrar deneyebilirsin. Bu pencereyi kapatabilirsin.",
+          "downloadNow": "İndirmeyi başlat",
+          "failedTitle": "İndirme hazırlanamadı",
+          "failedDescription": "İndirme hazırlanamadı. Lütfen tekrar dene.",
+          "filePrefixFinal": "Final",
+          "filePrefixSelection": "Secim"
+        },
+        "filters": {
+          "label": "Görünüm:",
+          "all": "Tümü",
+          "starred": "Fotoğrafçı Önerisi",
+          "starredShort": "Öneri",
+          "favorites": "Favoriler",
+          "unselected": "Seçilmeyenler",
+          "selected": "Seçilenler"
+        },
+        "bottomNav": {
+          "ariaLabel": "Galeri sekmeleri",
+          "gallery": "Galeri",
+          "selections": "Seçimlerim",
+          "starred": "Önerilen"
+        },
+        "selections": {
+          "title": "Seçimlerim",
+          "subtitle": "Seçimlerinizi görüntülemek için ilgili göreve dokunun.",
+          "allPhotos": "Tüm Fotoğraflar",
+          "tasksLabel": "GÖREVLER",
+          "empty": "Henüz seçim listeniz yok.",
+          "sentTitle": "Seçimler Gönderildi!",
+          "sentDesc": "Fotoğrafçı bilgilendirildi. Seçimlerinizi görüntüleyebilirsiniz ancak artık değişiklik yapamazsınız."
+        },
+        "confirmation": {
+          "title": "Seçimleri Tamamla",
+          "bannerTitle": "Son bir kontrol",
+          "bannerDesc": "Onayladığınızda seçimleriniz fotoğrafçıya iletilecek ve kilitlenecek. Sonrasında değişiklik yapamayacaksınız.",
+          "noteLabel": "Not bırak (isteğe bağlı)",
+          "notePlaceholder": "Yorum veya özel istek ekleyin...",
+          "cancel": "Vazgeç",
+          "confirm": "Seçimleri Gönder"
+        },
+        "banner": {
+          "lockedMessage": "Seçimler onaylandı ve fotoğrafçıya gönderildi"
+        },
+        "status": {
+          "confirmed": "Onaylandı"
+        },
+        "tasks": {
+          "selectedCount": "{{count}} seçildi",
+          "missingCount": "{{count}} eksik"
+        },
+        "sections": {
+          "empty": "Bu sette gösterilecek fotoğraf yok."
+        },
+        "labels": {
+          "add": "Ekle",
+          "selected": "Seçildi",
+          "addToLists": "Listelere ekle",
+          "limitFull": "Limit dolu",
+          "limitReached": "Limit doldu",
+          "mandatory": "Zorunlu",
+          "optional": "Opsiyonel",
+          "validSelection": "Seçim uygun",
+          "missing": "Eksik",
+          "added": "Eklendi"
+        },
+        "floatingSelections": {
+          "kicker": "Bu galeride",
+          "title": "Fotoğraf seçildi"
+        },
+        "toast": {
+          "favoritesAdded": "Favorilere eklendi",
+          "favoritesRemoved": "Favorilerden çıkarıldı",
+          "bulkDownloadSoon": "Toplu indirme yakında.",
+          "bulkDownloadFailed": "Toplu indirme başlatılamadı. Lütfen tekrar deneyin.",
+          "selectionsLocked": "Seçimler kesinleştirildi, artık değiştirilemez."
+        },
+        "empty": {
+          "noPhotos": {
+            "title": "Gösterilecek fotoğraf yok",
+            "description": "Filtreleri temizlemeyi deneyin veya daha sonra tekrar kontrol edin.",
+            "action": "Filtreleri Temizle"
+          },
+          "favorites": {
+            "title": "Henüz Favoriniz Yok",
+            "description": "Beğendiğiniz fotoğrafların üzerindeki kalp ikonuna tıklayarak favorilerinizi oluşturabilirsiniz.",
+            "action": "Tüm Fotoğrafları Gör"
+          },
+          "starred": {
+            "title": "Fotoğrafçı Önerisi Yok",
+            "description": "Fotoğrafçınız bu galeri için özel bir öneri listesi oluşturmamış.",
+            "action": "Tüm Fotoğrafları İncele"
+          },
+          "unselected": {
+            "title": "Harika! Hepsi Düzenlendi",
+            "description": "Bu galerideki tüm fotoğrafları bir kategoriye veya listeye atadınız.",
+            "action": "Tüm Galeriyi Gör"
+          },
+          "selected": {
+            "title": "Henüz seçilen fotoğraf yok",
+            "description": "Fotoğrafları bir listeye ekleyerek burada görebilirsiniz.",
+            "action": "Tüm Fotoğrafları Gör"
+          },
+          "rule": {
+            "title": "{{rule}} İçin Seçim Yok",
+            "description": "Henüz \"{{rule}}\" kategorisine fotoğraf eklemediniz.",
+            "action": "Fotoğraflara Dön"
+          }
+        },
+        "footer": {
+          "brand": "Lumiso Select",
+          "copyright": "© 2025 Tüm Hakları Saklıdır"
+        }
+      },
+      "selectionLock": {
+        "banner": {
+          "title": "Müşteri Seçimlerini Tamamladı",
+          "description": "Bu galeri onaylandı ve kilitlendi."
+        },
+        "status": {
+          "draft": {
+            "title": "Taslak galeri",
+            "description": "Bu galeri henüz paylaşılmadı. Paylaştığınızda müşteri fotoğraf seçmeye başlayabilir."
+          },
+          "waiting": {
+            "title": "Müşterinin seçimleri bekleniyor",
+            "description": "Müşteri hâlâ fotoğraf seçebilir ve seçimlerini gönderebilir."
+          },
+          "locked": {
+            "title": "Müşteri seçimleri gönderdi",
+            "description": "Seçimler kilitlendi. İnceleyebilir veya dışa aktarabilirsiniz."
+          },
+          "reopened": {
+            "title": "Güncellenmiş seçimler bekleniyor",
+            "description": "Seçimleri müşteri için yeniden açtınız. Galerinin tekrar kilitlenmesi için seçimlerini yeniden göndermesi gerekir."
+          },
+          "unlockedForMe": {
+            "title": "Sizin için kilit açıldı",
+            "description": "Müşteri galeriyi hâlâ kilitli görürken siz seçimleri düzenleyebilirsiniz."
+          }
+        },
+        "actions": {
+          "export": "Seçimleri Dışa Aktar",
+          "unlock": "Kilidi Aç",
+          "lockAgain": "Tekrar Kilitle"
+        },
+        "unlockConfirm": {
+          "title": "Kilidi açmak istiyor musunuz?",
+          "description": "Seçimleri kimin düzenleyebileceğini seçin.",
+          "cancel": "Vazgeç",
+          "unlockForMe": "Sadece Benim İçin Aç",
+          "unlockForClient": "Müşteri İçin Aç"
+        },
+        "noteLabel": "MÜŞTERİ NOTU",
+        "toast": {
+          "exportComingSoon": "Dışa aktarma yakında.",
+          "unlocked": "Kilit açıldı. Artık değişiklik yapabilirsiniz.",
+          "locked": "Seçimler kilitlendi."
+        }
+      },
+      "exportSheet": {
+        "title": "Dosya İsimlerini Al",
+        "description": "İşletim sisteminize göre filtreleme kodu oluşturun.",
+        "tabs": {
+          "windows": "Windows",
+          "mac": "Mac",
+          "list": "Liste"
+        },
+        "favoritesTitle": "Favoriler",
+        "fileCount_one": "{{count}} dosya",
+        "fileCount_other": "{{count}} dosya",
+        "copyQuery": "Sorguyu Kopyala",
+        "downloadTxt": ".TXT İndir",
+        "emptyState": "Henüz dışa aktarılacak öğe yok.",
+        "downloadFileNames": {
+          "master": "master_secim_listesi"
+        },
+        "queryLabels": {
+          "windows": "Windows Arama Sorgusu",
+          "mac": "Mac Finder Sorgusu",
+          "list": "Lightroom/Capture One Filtresi"
+        },
+        "listTipInline": "Bu metni Lightroom Library > Text Filter alanına yapıştırın.",
+        "masterCard": {
+          "title": "Genel Toplu İşlem",
+          "description": "Sadece onaylı seçimleri içerir (Favoriler hariç).",
+          "emptyBreakdown": "Henüz seçim yapılmadı",
+          "totalFiles": "Toplam Dosya"
+        },
+        "categories": {
+          "title": "Kategori Bazlı Listeler",
+          "subtitle": "Tekil dışa aktarım",
+          "empty": "Listelenecek grup yok."
+        },
+        "tips": {
+          "windows": "İpucu: Windows Gezgini'nde klasörünüzü açın, Ctrl + F ile arama kutusuna gidin ve metni yapıştırın. Dosyalar otomatik filtrelenecektir.",
+          "mac": "İpucu: Finder'da klasörünüzü açın, Cmd + F yapın. Arama kapsamının \"Bu Mac\" değil \"Şu anki klasör\" olduğundan emin olun ve metni yapıştırın.",
+          "list": "İpucu: Lightroom Library modülünde Text > Contains filtresine yapıştırmak için optimize edilmiştir (boşlukla ayrılmış)."
+        }
+      },
+      "lightbox": {
+        "close": "Kapat",
+        "previous": "Önceki",
+        "next": "Sonraki",
+        "noPreview": "Önizleme yok",
+        "limitFull": "Limit dolu",
+        "actions": {
+          "download": "İndir",
+          "downloadOriginal": "Orijinali indir",
+          "downloadPreparing": "Hazırlanıyor..."
+        },
+        "quickAdd": {
+          "add": "{{rule}}'e Ekle",
+          "added": "{{rule}}'e Eklendi"
+        },
+        "showSelections": "Seçimler",
+        "showSelectionsTitle": "Listeleri göster",
+        "showDetails": "Detaylar",
+        "showDetailsTitle": "Detayları göster",
+        "collapse": "Daralt",
+        "collapseTitle": "Paneli daralt",
+        "mobileActions": {
+          "favorite": "Favori",
+          "add": "Ekle",
+          "share": "Paylaş"
+        },
+        "mobileHint": {
+          "longPressToShare": "Paylaşmak ya da kaydetmek için fotoğrafa basılı tutun."
+        },
+        "toast": {
+          "downloadFailed": "Fotoğraf indirilemedi. Lütfen tekrar deneyin."
+        },
+        "sidebar": {
+          "client": {
+            "title": "Seçimler",
+            "description": "Fotoğrafı listelerinize ekleyin",
+            "finalTitle": "Fotoğraf",
+            "finalDescription": "Fotoğrafı favorile veya paylaş"
+          },
+          "admin": {
+            "title": "Seçim Detayları",
+            "description": "Detaylı seçim yönetimi"
+          }
+        },
+        "client": {
+          "favoriteAdded": "Favorilendi",
+          "favoriteAdd": "Favorilere Ekle",
+          "photographerPickTitle": "Fotoğrafçı Önerisi",
+          "photographerPickTitleShort": "Öneri",
+          "photographerPickDescription": "Sizin için bu kareyi öneriyoruz"
+        },
+        "admin": {
+          "photoStatusTitle": "Fotoğraf Durumu",
+          "starLabel": "Fotoğrafçı Önerisi",
+          "starSelected": "Seçildi",
+          "clientFavoriteLabel": "Müşteri Favorisi",
+          "clientFavoriteYes": "Beğendi",
+          "clientFavoriteNo": "Henüz yok"
+        },
+        "lists": {
+          "clientTitle": "Listelere Ekle",
+          "adminTitle": "Mevcut Listeler",
+          "generalService": "Genel"
+        }
+      }
     },
     "dangerZone": {
       "title": "Tehlikeli Alan",
@@ -892,6 +1552,7 @@
         "subtitle": "Deneme durumu, kullanım, ödemeler ve aksiyonları incele.",
         "tabs": {
           "overview": "Genel",
+          "gallery": "Galeri",
           "kisiler": "Kişiler",
           "projects": "Projeler",
           "sessions": "Seanslar",
@@ -900,6 +1561,55 @@
           "services": "Servisler",
           "packages": "Paketler",
           "sessionTypes": "Seans tipleri"
+        },
+        "gallery": {
+          "title": "Galeri depolama",
+          "description": "Bu hesap için izin verilen maksimum galeri depolama alanını ayarlayın.",
+          "limitLabel": "İzin verilen depolama",
+          "unitLabel": "Birim",
+          "unit": {
+            "mb": "MB",
+            "gb": "GB"
+          },
+          "limitHint": "Varsayılan: {{default}}",
+          "currentLimit": "Mevcut limit",
+          "actions": {
+            "reset": "Varsayılana sıfırla",
+            "save": "Kaydet",
+            "saving": "Kaydediliyor..."
+          },
+          "toasts": {
+            "invalidLimit": "0'dan büyük geçerli bir limit girin.",
+            "saveSuccess": "Galeri depolama limiti güncellendi.",
+            "saveError": "Galeri depolama limiti güncellenemedi."
+          },
+          "galleries": {
+            "title": "Galeriler",
+            "description": "Galeri bazında durum ve depolama kullanımı.",
+            "empty": "Bu hesap için galeri bulunamadı.",
+            "error": "Bu hesap için galeriler yüklenemedi.",
+            "columns": {
+              "title": "Galeri",
+              "status": "Durum",
+              "lead": "Kişi",
+              "size": "Kullanım",
+              "actions": "İşlemler"
+            },
+            "toasts": {
+              "archiveSuccess": "Galeri arşivlendi.",
+              "restoreSuccess": "Galeri arşivden çıkarıldı.",
+              "actionError": "Galeri güncellenemedi.",
+              "previewError": "Önizleme açılamadı.",
+              "deleteSuccess": "Galeri silindi.",
+              "deleteError": "Galeri silinemedi."
+            },
+            "archiveConfirm": {
+              "title": "Galeriyi arşivle?",
+              "description": "Bu galeri arşive taşınacak ve düzenleme kapatılacak. Daha sonra arşivden çıkarabilirsiniz.",
+              "confirm": "Galeriyi arşivle",
+              "confirmLoading": "Arşivleniyor..."
+            }
+          }
         },
         "membership": {
           "title": "Üyelik durumu",
@@ -2103,7 +2813,9 @@
         "title": "Anında Bildirimler",
         "description": "Olaylar gerçekleştiğinde gönderilen uyarılar",
         "projectMilestone": "Proje Kilometre Taşı",
-        "projectMilestoneHelp": "Bir proje Tamamlandı veya İptal Edildi durumuna geçtiğinde bildir"
+        "projectMilestoneHelp": "Bir proje Tamamlandı veya İptal Edildi durumuna geçtiğinde bildir",
+        "gallerySelection": "Galeri Seçimleri Gönderildi",
+        "gallerySelectionHelp": "Müşteri galeri seçimlerini gönderdiğinde bildir"
       },
       "sendTest": "Test gönder",
       "sendEmptyTest": "Boş test gönder",
@@ -3351,6 +4063,116 @@
       "dragDrop": "Projeleri aşamalar arasında sürükleyip bırakın",
       "tableView": "Detaylı tabloyu sıralayıp filtreleyin",
       "archivedProjects": "Tamamlanan projeleri arşivleyin"
+    }
+  },
+  "galleries": {
+    "title": "Müşteri galerileri",
+    "description": "Seçim ilerlemesini, onayları ve bağlı kayıtları tek yerden takip edin.",
+    "actions": {
+      "create": "Yeni galeri"
+    },
+    "tableTitle": "Galeri Kayıtları",
+    "stats": {
+      "waitingForClient": "Müşteri Bekleniyor",
+      "actionNeeded": "Aksiyon Bekleyen",
+      "selectionType": "Fotoğraf Seçimi",
+      "finalType": "Final Teslimat",
+      "archived": "Arşiv"
+    },
+    "filters": {
+      "type": {
+        "all": "Tüm Galeriler",
+        "selection": "Fotoğraf Seçimi",
+        "final": "Final Teslimat"
+      },
+      "statusLabel": "Durum:"
+    },
+    "segments": {
+      "active": "Aktif",
+      "pending": "Bekleyen",
+      "approved": "Onaylanan",
+      "archived": "Arşiv"
+    },
+    "confirmations": {
+      "archive": {
+        "title": "Galeriyi arşivle?",
+        "description": "Bu işlem galeriyi arşive taşır ve düzenlemeyi kapatır. Daha sonra geri alabilirsiniz.",
+        "confirm": "Galeriyi arşivle",
+        "confirming": "Arşivleniyor..."
+      }
+    },
+    "toast": {
+      "archiveSuccess": "Galeri arşivlendi.",
+      "archiveError": "Galeri arşivlenemedi. Lütfen tekrar deneyin.",
+      "unarchiveSuccess": "Galeri arşivden çıkarıldı.",
+      "unarchiveError": "Galeri arşivden çıkarılamadı. Lütfen tekrar deneyin.",
+      "deleteSuccess": "Galeri silindi.",
+      "deleteError": "Galeri silinemedi. Lütfen tekrar deneyin."
+    },
+    "search": "Galerilerde ara",
+    "emptyState": {
+      "none": {
+        "title": "Henüz galeri yok",
+        "description": "Bir galeriyi müşteriyle paylaştığınızda burada görünecek."
+      },
+      "search": {
+        "title": "Aramana uygun galeri bulunamadı",
+        "description": "Farklı bir kelime deneyin veya aramayı temizleyin."
+      },
+      "segments": {
+        "active": {
+          "title": "Aktif galeri yok",
+          "description": "Müşteriyle paylaşılan aktif galeriler burada listelenir."
+        },
+        "pending": {
+          "title": "Bekleyen seçim yok",
+          "description": "Müşteri seçimi bekleyen galeriler burada görünür."
+        },
+        "approved": {
+          "title": "Onaylanan galeri yok",
+          "description": "Kilitlediğiniz veya onayladığınız galeriler burada görünür."
+        },
+        "archived": {
+          "title": "Arşivlenmiş galeri yok",
+          "description": "Arşive aldığınız galeriler burada görünür."
+        }
+      }
+    },
+    "empty": "Bu görünümde galeri yok.",
+    "table": {
+      "gallery": "Galeri",
+      "client": "Kişi",
+      "links": "Hızlı erişim",
+      "quickAccess": "Git",
+      "linkTypes": {
+        "session": "Seans",
+        "project": "Proje"
+      },
+      "noSession": "Seans yok",
+      "noProject": "Proje yok",
+      "openGallery": "Galeriyi aç",
+      "status": "Durum",
+      "customerNotes": "Müşteri Notları",
+      "progress": "Seçim ilerlemesi",
+      "selected": "{{count}} seçildi",
+      "required": "{{count}} zorunlu",
+      "approval": "Son onay",
+      "size": "Boyut",
+      "sizeAndTime": "Boyut & Kalan Süre",
+      "summaryColumn": "Özet",
+      "lastAction": "Son işlem",
+      "timeRemainingPlaceholder": "Kalan süre yakında",
+      "timeRemaining": "{{value}} kaldı",
+      "photoCountHeader": "Fotoğraf Sayısı",
+      "photoCount": "{{count}} Fotoğraf",
+      "noApproval": "Henüz onay yok",
+      "actions": "İşlemler",
+      "export": "Seçimleri dışa aktar",
+      "view": "Detayı aç",
+      "downloadedStatus": "İndirildi",
+      "summary": "{{count}} galeri",
+      "noEvent": "Etkinlik tarihi yok",
+      "noClient": "Kişi bilgisi yok"
     }
   }
 }

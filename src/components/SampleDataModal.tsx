@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Sparkles, CircleOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useNavigate } from "react-router-dom";

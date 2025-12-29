@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useOptionalOnboarding } from "@/contexts/OnboardingContext";
+import { useOptionalOnboarding } from "@/contexts/useOnboarding";
 import { useToast } from "@/hooks/use-toast";
 
 export function useOnboardingDeletionGuard() {

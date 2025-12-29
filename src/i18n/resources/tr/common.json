@@ -217,6 +217,26 @@
   },
   "showMore": "Daha fazla",
   "showLess": "Daha az",
+  "storage": {
+    "widget": {
+      "kicker": "Depolama",
+      "title": "Alan kullanımı",
+      "capacity": "Toplam: {{total}}",
+      "used": "Kullanılan: {{used}}",
+      "percentFull": "%{{percent}}",
+      "blocked": "Alan açana kadar yükleme yapılamaz.",
+      "aria": {
+        "progress": "Depolama kullanımı"
+      },
+      "status": {
+        "safe": "Durum: İyi",
+        "attention": "Durum: Doluyor",
+        "critical": "Durum: Kritik",
+        "nearLimit": "Durum: Dolu",
+        "limitExceeded": "Durum: Limit aşıldı"
+      }
+    }
+  },
   "network": {
     "offlineTitle": "Çevrimdışısınız",
     "offlineDescription": "Verilerinize ulaşılamadı. Çevrimiçi olana kadar son sonuçları göstermeye devam edeceğiz.",

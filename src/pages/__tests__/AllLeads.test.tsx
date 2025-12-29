@@ -7,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { useLeadTableColumns } from "@/hooks/useLeadTableColumns";
 import { useLeadsFilters } from "@/pages/leads/hooks/useLeadsFilters";
 import { useLeadsData } from "@/pages/leads/hooks/useLeadsData";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 
@@ -165,7 +165,7 @@ jest.mock("@/pages/leads/hooks/useLeadsData", () => ({
   useLeadsData: jest.fn(),
 }));
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
 }));
 

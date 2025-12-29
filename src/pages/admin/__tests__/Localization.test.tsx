@@ -9,17 +9,20 @@ jest.mock("@/integrations/supabase/client", () => ({
   supabase: mockSupabaseClient,
 }));
 
+const tMock = (key: string, options?: { returnObjects?: boolean }) =>
+  options?.returnObjects ? [] : key;
+const tCommonMock = (key: string) => key;
+
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, options?: { returnObjects?: boolean }) =>
-      options?.returnObjects ? [] : key,
+    t: tMock,
     i18n: { language: "en" },
   }),
 }));
 
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useCommonTranslation: () => ({
-    t: (key: string) => key,
+    t: tCommonMock,
   }),
 }));
 

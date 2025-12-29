@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -33,6 +33,7 @@ interface Organization {
   premium_plan: string | null;
   premium_activated_at: string | null;
   premium_expires_at: string | null;
+  gallery_storage_limit_bytes?: number | null;
   created_at: string | null;
   computed_trial_started_at: string | null;
   computed_trial_ends_at: string | null;
@@ -57,6 +58,124 @@ export function useOrganization() {
   return context;
 }
 
+const ORG_DETAILS_CACHE_TTL_MS = 5 * 60 * 1000;
+const ORG_DETAILS_MIN_FETCH_INTERVAL_MS = 60 * 1000;
+const ORG_DETAILS_STORAGE_PREFIX = "lumiso:organization_details:";
+
+type OrgDetailsCacheEntry = {
+  data: Organization | null;
+  cachedAt: number;
+};
+
+const getOrgDetailsStorageKey = (orgId: string) =>
+  `${ORG_DETAILS_STORAGE_PREFIX}${orgId}`;
+
+const readOrgDetailsFromStorage = (
+  orgId: string,
+  ttl: number = ORG_DETAILS_CACHE_TTL_MS
+): OrgDetailsCacheEntry | undefined => {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = window.localStorage.getItem(getOrgDetailsStorageKey(orgId));
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw) as OrgDetailsCacheEntry;
+    if (!parsed || typeof parsed !== "object") return undefined;
+    if (typeof parsed.cachedAt !== "number") return undefined;
+    if (Date.now() - parsed.cachedAt > ttl) return undefined;
+    return parsed;
+  } catch {
+    return undefined;
+  }
+};
+
+const writeOrgDetailsToStorage = (orgId: string, data: Organization | null) => {
+  if (typeof window === "undefined") return;
+  if (!data) return;
+  try {
+    window.localStorage.setItem(
+      getOrgDetailsStorageKey(orgId),
+      JSON.stringify({ data, cachedAt: Date.now() } satisfies OrgDetailsCacheEntry)
+    );
+  } catch {
+    // Best-effort only
+  }
+};
+
+const clearOrgDetailsStorage = (orgId?: string | null) => {
+  if (typeof window === "undefined") return;
+  try {
+    if (orgId) {
+      window.localStorage.removeItem(getOrgDetailsStorageKey(orgId));
+      return;
+    }
+    for (let i = window.localStorage.length - 1; i >= 0; i -= 1) {
+      const key = window.localStorage.key(i);
+      if (key && key.startsWith(ORG_DETAILS_STORAGE_PREFIX)) {
+        window.localStorage.removeItem(key);
+      }
+    }
+  } catch {
+    // Best-effort only
+  }
+};
+
+const orgDetailsCache = new Map<string, OrgDetailsCacheEntry>();
+const orgDetailsInflight = new Map<string, Promise<Organization | null>>();
+
+const getOrgDetailsFromCache = (
+  orgId: string,
+  ttl: number = ORG_DETAILS_CACHE_TTL_MS
+): Organization | null | undefined => {
+  const entry = orgDetailsCache.get(orgId);
+  if (entry && Date.now() - entry.cachedAt < ttl) {
+    return entry.data;
+  }
+  const stored = readOrgDetailsFromStorage(orgId, ttl);
+  if (stored !== undefined) {
+    orgDetailsCache.set(orgId, stored);
+    return stored.data;
+  }
+  return undefined;
+};
+
+const setOrgDetailsCache = (orgId: string, data: Organization | null) => {
+  orgDetailsCache.set(orgId, { data, cachedAt: Date.now() });
+  writeOrgDetailsToStorage(orgId, data);
+};
+
+const clearOrgDetailsCache = (orgId?: string | null) => {
+  if (!orgId) {
+    orgDetailsCache.clear();
+    orgDetailsInflight.clear();
+    clearOrgDetailsStorage();
+    return;
+  }
+  orgDetailsCache.delete(orgId);
+  orgDetailsInflight.delete(orgId);
+  clearOrgDetailsStorage(orgId);
+};
+
+const resolveOrganization = (org: Organization) => {
+  const normalized: Organization = {
+    ...org,
+    membership_status: (org.membership_status as MembershipStatus | null) ?? null,
+    computed_trial_started_at: null,
+    computed_trial_ends_at: null,
+    membership_access_blocked: false,
+  };
+  const resolution = resolveMembershipStatus(normalized);
+  return {
+    normalized: {
+      ...normalized,
+      membership_status: resolution.status,
+      computed_trial_started_at: resolution.trialStartedAt,
+      computed_trial_ends_at: resolution.trialEndsAt,
+      membership_access_blocked: resolution.shouldBlockAccess,
+    },
+    resolution,
+  };
+};
+
 interface OrganizationProviderProps {
   children: ReactNode;
 }
@@ -65,113 +184,167 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null);
   const [activeOrganization, setActiveOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
+  const activeOrganizationIdRef = useRef<string | null>(null);
+  const activeOrganizationRef = useRef<Organization | null>(null);
+  const lastOrgFetchAtRef = useRef(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation(["messages", "common"]);
   const { reportNetworkError, reportRecovery } = useConnectivity();
 
-  const fetchActiveOrganization = useCallback(async (options?: { silent?: boolean }) => {
-    const skipLoadingState = options?.silent ?? false;
-    try {
-      if (!skipLoadingState) {
-        setLoading(true);
+  useEffect(() => {
+    activeOrganizationIdRef.current = activeOrganizationId;
+  }, [activeOrganizationId]);
+
+  useEffect(() => {
+    activeOrganizationRef.current = activeOrganization;
+  }, [activeOrganization]);
+
+  const fetchActiveOrganization = useCallback(
+    async (options?: { silent?: boolean; force?: boolean }) => {
+      const skipLoadingState = options?.silent ?? false;
+      const forceFetch = options?.force ?? false;
+      try {
+        if (!skipLoadingState) {
+          setLoading(true);
+        }
+
+      const nowTs = Date.now();
+      if (!forceFetch && nowTs - lastOrgFetchAtRef.current < ORG_DETAILS_MIN_FETCH_INTERVAL_MS) {
+        if (activeOrganizationRef.current?.id) {
+          return;
+        }
       }
 
-      // Use the organization utils function
-      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
-      const orgId = await getUserOrganizationId();
+      const cachedOrgId = activeOrganizationIdRef.current;
+      let orgId = cachedOrgId;
+      if (!orgId) {
+        const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+        orgId = await getUserOrganizationId();
+      }
 
       if (!orgId) {
         setActiveOrganizationId(null);
         setActiveOrganization(null);
-        return;
-      }
-
-      // Fetch organization details
-      const { data: org, error: orgDetailsError } = await supabase
-        .from('organizations')
-        .select(
-          [
-            'id',
-            'created_at',
-            'name',
-            'owner_id',
-            'membership_status',
-            'manual_flag',
-            'manual_flag_reason',
-            'trial_started_at',
-            'trial_expires_at',
-            'trial_extended_by_days',
-            'trial_extension_reason',
-            'premium_plan',
-            'premium_activated_at',
-            'premium_expires_at',
-          ].join(', ')
-        )
-        .eq('id', orgId)
-        .single();
-
-      if (orgDetailsError) {
-        console.error('Error getting organization details:', orgDetailsError);
-        if (isNetworkError(orgDetailsError)) {
-          reportNetworkError(orgDetailsError, 'service');
+        clearOrgDetailsCache();
+          return;
         }
-        return;
-      }
 
-      if (!org) {
-        setActiveOrganizationId(null);
-        setActiveOrganization(null);
-        return;
-      }
+        if (!forceFetch) {
+          const cachedOrg = getOrgDetailsFromCache(orgId);
+          if (cachedOrg !== undefined) {
+            if (!cachedOrg) {
+              setActiveOrganizationId(null);
+              setActiveOrganization(null);
+              return;
+            }
+            setActiveOrganizationId(orgId);
+            setActiveOrganization(cachedOrg);
+            reportRecovery();
+            return;
+          }
+        }
 
-      let normalizedOrg: Organization = {
-        ...org,
-        membership_status: (org.membership_status as MembershipStatus | null) ?? null,
-        computed_trial_started_at: null,
-        computed_trial_ends_at: null,
-        membership_access_blocked: false,
-      };
-      const resolution = resolveMembershipStatus(normalizedOrg);
+        lastOrgFetchAtRef.current = Date.now();
 
-      if (shouldPersistMembershipStatus(normalizedOrg, resolution)) {
-        const { error: statusUpdateError } = await supabase
-          .from('organizations')
-          .update({ membership_status: resolution.status })
-          .eq('id', org.id);
+        const inflightRequest = orgDetailsInflight.get(orgId);
+        if (inflightRequest) {
+          const cachedOrg = await inflightRequest;
+          if (!cachedOrg) {
+            setActiveOrganizationId(null);
+            setActiveOrganization(null);
+            return;
+          }
+          setActiveOrganizationId(orgId);
+          setActiveOrganization(cachedOrg);
+          reportRecovery();
+          return;
+        }
 
-        if (statusUpdateError) {
-          console.error('Failed to persist membership status:', statusUpdateError);
-        } else {
-          normalizedOrg = { ...normalizedOrg, membership_status: resolution.status };
+        const requestPromise = (async () => {
+          const { data: org, error: orgDetailsError } = await supabase
+            .from('organizations')
+            .select(
+              [
+                'id',
+                'created_at',
+                'name',
+                'owner_id',
+                'membership_status',
+                'manual_flag',
+                'manual_flag_reason',
+                'trial_started_at',
+                'trial_expires_at',
+                'trial_extended_by_days',
+                'trial_extension_reason',
+                'premium_plan',
+                'premium_activated_at',
+                'premium_expires_at',
+                'gallery_storage_limit_bytes',
+              ].join(', ')
+            )
+            .eq('id', orgId)
+            .single();
+
+          if (orgDetailsError) {
+            throw orgDetailsError;
+          }
+
+          if (!org) {
+            return null;
+          }
+
+          const { normalized: normalizedOrg, resolution } = resolveOrganization(org as Organization);
+
+          if (shouldPersistMembershipStatus(org as Organization, resolution)) {
+            const { error: statusUpdateError } = await supabase
+              .from('organizations')
+              .update({ membership_status: resolution.status })
+              .eq('id', org.id);
+
+            if (statusUpdateError) {
+              console.error('Failed to persist membership status:', statusUpdateError);
+            }
+          }
+
+          return normalizedOrg;
+        })()
+          .then((resolvedOrg) => {
+            setOrgDetailsCache(orgId, resolvedOrg);
+            return resolvedOrg;
+          })
+          .finally(() => {
+            orgDetailsInflight.delete(orgId);
+          });
+
+        orgDetailsInflight.set(orgId, requestPromise);
+
+        const resolvedOrg = await requestPromise;
+        if (!resolvedOrg) {
+          setActiveOrganizationId(null);
+          setActiveOrganization(null);
+          return;
+        }
+
+        setActiveOrganizationId(orgId);
+        setActiveOrganization(resolvedOrg);
+        reportRecovery();
+      } catch (error) {
+        console.error('Error in fetchActiveOrganization:', error);
+        if (isNetworkError(error)) {
+          reportNetworkError(error, 'service');
+        }
+      } finally {
+        if (!skipLoadingState) {
+          setLoading(false);
         }
       }
-
-      normalizedOrg = {
-        ...normalizedOrg,
-        membership_status: resolution.status,
-        computed_trial_started_at: resolution.trialStartedAt,
-        computed_trial_ends_at: resolution.trialEndsAt,
-        membership_access_blocked: resolution.shouldBlockAccess,
-      };
-
-      setActiveOrganizationId(orgId);
-      setActiveOrganization(normalizedOrg);
-      reportRecovery();
-    } catch (error) {
-      console.error('Error in fetchActiveOrganization:', error);
-      if (isNetworkError(error)) {
-        reportNetworkError(error, 'service');
-      }
-    } finally {
-      if (!skipLoadingState) {
-        setLoading(false);
-      }
-    }
-  }, []);
+    },
+    [reportNetworkError, reportRecovery]
+  );
 
   const refreshOrganization = async () => {
-    await fetchActiveOrganization();
+    await fetchActiveOrganization({ force: true });
   };
 
   const setActiveOrganizationHandler = async (orgId: string) => {
@@ -230,6 +403,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
       } else {
         setActiveOrganizationId(null);
         setActiveOrganization(null);
+        clearOrgDetailsCache();
         setLoading(false);
       }
     };
@@ -244,6 +418,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         } else if (event === 'SIGNED_OUT') {
           setActiveOrganizationId(null);
           setActiveOrganization(null);
+          clearOrgDetailsCache();
           setLoading(false);
         }
       }
@@ -453,6 +628,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
             'trial_extended_by_days',
             'premium_activated_at',
             'premium_expires_at',
+            'gallery_storage_limit_bytes',
           ] as const;
 
           const hasRelevantChange = relevantFields.some((field) => {
@@ -460,7 +636,12 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
           });
 
           if (hasRelevantChange) {
-            void fetchActiveOrganization({ silent: true });
+            if (!payload.new) return;
+            const { normalized } = resolveOrganization(payload.new as Organization);
+            setOrgDetailsCache(normalized.id, normalized);
+            setActiveOrganizationId(normalized.id);
+            setActiveOrganization(normalized);
+            reportRecovery();
           }
         }
       )
@@ -469,7 +650,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeOrganizationId, fetchActiveOrganization]);
+  }, [activeOrganizationId, reportRecovery]);
 
   return (
     <OrganizationContext.Provider

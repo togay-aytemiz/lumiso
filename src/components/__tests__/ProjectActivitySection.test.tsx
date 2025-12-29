@@ -118,6 +118,9 @@ const translations: Record<string, string> = {
   "activity.task_incomplete": "Task incomplete",
   "activity.task_status_updated": "Task status updated",
   "activity.error_updating_task": "Error updating task",
+  "reminders.markCompleteSuccessTitle": "Reminder marked as completed",
+  "reminders.markIncompleteSuccessTitle": "Reminder marked as not completed",
+  "reminders.statusUpdateDescription": "Reminder status updated successfully.",
   "error.generic": "Something went wrong",
   "activitiesHistory.historyMessages.notSet": "Not set",
   "activitiesHistory.historyMessages.changeTemplate": "{{label}} {{oldValue}} → {{newValue}}",
@@ -363,8 +366,8 @@ describe("ProjectActivitySection", () => {
     await waitFor(() => {
       expect(updateSpy).toHaveBeenCalledWith({ completed: true });
       expect(toastSpy).toHaveBeenCalledWith({
-        title: "Task completed",
-        description: "Task status updated"
+        title: "Reminder marked as completed",
+        description: "Reminder status updated successfully."
       });
     });
 

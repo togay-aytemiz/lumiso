@@ -39,7 +39,7 @@ import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";
 import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { TutorialFloatingCard } from "@/components/shared/TutorialFloatingCard";
 import { TutorialMobileBanner } from "@/components/shared/TutorialMobileBanner";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useOnboardingDeletionGuard } from "@/hooks/useOnboardingDeletionGuard";
 
 const getErrorMessage = (error: unknown): string =>
@@ -95,7 +95,7 @@ export default function ProjectDetail() {
   const { t: tPages } = useTranslation("pages");
   const isMobile = useIsMobile();
   const [searchParams] = useSearchParams();
-  const { completeCurrentStep, completeMultipleSteps, isInGuidedSetup, currentStep } = useOnboarding();
+  const { completeMultipleSteps, isInGuidedSetup, currentStep } = useOnboarding();
 
   const [project, setProject] = useState<Project | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
@@ -721,7 +721,7 @@ export default function ProjectDetail() {
     } finally {
       setShowProjectCompletionModal(false);
     }
-  }, [completeCurrentStep, completeMultipleSteps, currentStep, isInGuidedSetup, navigate]);
+  }, [completeMultipleSteps, currentStep, isInGuidedSetup, navigate]);
 
   const openEditWizard = useCallback((step: ProjectCreationStepId) => {
     setEditWizardStartStep(step);

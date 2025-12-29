@@ -32,7 +32,7 @@ import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
 import { OnboardingChecklistItem } from "@/components/shared/OnboardingChecklistItem";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { DetailPageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useMessagesTranslation, useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";

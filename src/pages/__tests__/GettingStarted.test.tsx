@@ -1,9 +1,14 @@
 import userEvent from "@testing-library/user-event";
-import { render, screen, waitFor } from "@/utils/testUtils";
+import { render, screen, waitFor, within } from "@/utils/testUtils";
 import GettingStarted from "../GettingStarted";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import { useNavigate } from "react-router-dom";
+import { useProfile } from "@/hooks/useProfile";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useOrganizationTrialStatus } from "@/hooks/useOrganizationTrialStatus";
+import { useToast } from "@/hooks/use-toast";
 
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
@@ -14,8 +19,28 @@ jest.mock("@/contexts/AuthContext", () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock("@/contexts/OnboardingContext", () => ({
+jest.mock("@/contexts/useOnboarding", () => ({
   useOnboarding: jest.fn(),
+}));
+
+jest.mock("@/hooks/useProfile", () => ({
+  useProfile: jest.fn(),
+}));
+
+jest.mock("@/contexts/OrganizationContext", () => ({
+  useOrganization: jest.fn(),
+}));
+
+jest.mock("@/hooks/useOrganizationSettings", () => ({
+  useOrganizationSettings: jest.fn(),
+}));
+
+jest.mock("@/hooks/useOrganizationTrialStatus", () => ({
+  useOrganizationTrialStatus: jest.fn(),
+}));
+
+jest.mock("@/hooks/use-toast", () => ({
+  useToast: jest.fn(),
 }));
 
 jest.mock("@/components/SampleDataModal", () => ({
@@ -50,6 +75,11 @@ jest.mock("react-i18next", () => ({
 const mockUseAuth = useAuth as jest.Mock;
 const mockUseOnboarding = useOnboarding as jest.Mock;
 const mockUseNavigate = useNavigate as jest.Mock;
+const mockUseProfile = useProfile as jest.Mock;
+const mockUseOrganization = useOrganization as jest.Mock;
+const mockUseOrganizationSettings = useOrganizationSettings as jest.Mock;
+const mockUseOrganizationTrialStatus = useOrganizationTrialStatus as jest.Mock;
+const mockUseToast = useToast as jest.Mock;
 
 const buildOnboardingState = (overrides: Partial<ReturnType<typeof mockUseOnboarding>> = {}) => ({
   loading: false,
@@ -72,6 +102,21 @@ describe("GettingStarted page", () => {
     jest.clearAllMocks();
     mockUseAuth.mockReturnValue({ user: { id: "user-1" } });
     mockUseNavigate.mockReturnValue(navigate);
+    mockUseProfile.mockReturnValue({ profile: { full_name: "Test User" } });
+    mockUseOrganization.mockReturnValue({
+      activeOrganizationId: "org-1",
+      activeOrganization: { id: "org-1" },
+      loading: false,
+      refreshOrganization: jest.fn(),
+      setActiveOrganization: jest.fn(),
+    });
+    mockUseOrganizationSettings.mockReturnValue({
+      settings: { preferred_locale: "en" },
+      updateSettings: jest.fn().mockResolvedValue({ success: true }),
+      refreshSettings: jest.fn(),
+    });
+    mockUseOrganizationTrialStatus.mockReturnValue({ isTrial: false, daysLeft: null });
+    mockUseToast.mockReturnValue({ toast: jest.fn() });
   });
 
   it("shows loading state while onboarding data is fetching", () => {
@@ -91,17 +136,23 @@ describe("GettingStarted page", () => {
     ).toBeInTheDocument();
   });
 
-  it("redirects to dashboard when onboarding already complete", () => {
+  it("shows completion CTA when onboarding already complete", () => {
     const completeState = buildOnboardingState({
       loading: false,
       isInGuidedSetup: false,
       isOnboardingComplete: true,
+      isAllStepsComplete: true,
     });
     mockUseOnboarding.mockReturnValue(completeState);
 
     render(<GettingStarted />);
 
-    expect(navigate).toHaveBeenCalledWith("/", { replace: true });
+    expect(
+      screen.getByRole("button", {
+        name: "onboarding.getting_started.go_to_dashboard",
+      })
+    ).toBeInTheDocument();
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it("renders current step info and allows navigation to tutorial routes", async () => {
@@ -175,6 +226,18 @@ describe("GettingStarted page", () => {
     });
 
     await user.click(finishButton);
+
+    const modal = await screen.findByRole("dialog");
+    await user.click(
+      within(modal).getByRole("button", {
+        name: /onboarding\.sample_data\.options\.sample\.title/,
+      })
+    );
+    await user.click(
+      within(modal).getByRole("button", {
+        name: "onboarding.getting_started.go_to_dashboard",
+      })
+    );
 
     await waitFor(() => expect(completeOnboarding).toHaveBeenCalledTimes(1));
     expect(navigate).toHaveBeenCalledWith("/", { replace: true });

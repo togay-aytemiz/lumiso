@@ -233,6 +233,30 @@ All colors MUST be HSL.
   }
 }
 
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.7);
+    border-radius: 9999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
 @layer components {
   [data-toast-root] {
     --toast-padding-inline-start: theme("spacing.6");
@@ -333,6 +357,27 @@ All colors MUST be HSL.
 
 .float-slow {
   animation: float-slow 10s ease-in-out infinite;
+}
+
+@keyframes hero-scroll-indicator-arrow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+.hero-scroll-indicator-arrow {
+  animation: hero-scroll-indicator-arrow 2.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-scroll-indicator-arrow {
+    animation: none;
+  }
 }
 
 @keyframes fade-in-up {
@@ -783,4 +828,18 @@ All colors MUST be HSL.
     opacity: 0;
     transform: translate3d(var(--confetti-drift, 0px), 110vh, 0) rotate(720deg);
   }
+}
+
+@keyframes gallery-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+.gallery-indeterminate-bar {
+  animation: gallery-indeterminate 1.05s ease-in-out infinite;
+  will-change: transform;
 }

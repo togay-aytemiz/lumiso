@@ -1,11 +1,13 @@
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useI18nToast } from '@/lib/toastHelpers';
 import { useSessionReminderScheduling } from '@/hooks/useSessionReminderScheduling';
 import { useWorkflowTriggers } from './useWorkflowTriggers';
 import { useOnboardingDeletionGuard } from './useOnboardingDeletionGuard';
+import { useMessagesTranslation } from './useTypedTranslation';
 
 export const useSessionActions = () => {
-  const { toast } = useToast();
+  const toast = useI18nToast();
+  const { t: tMessages } = useMessagesTranslation();
   const { cancelSessionReminders } = useSessionReminderScheduling();
   const { triggerSessionCompleted, triggerSessionCancelled } = useWorkflowTriggers();
   const { ensureCanDelete } = useOnboardingDeletionGuard();
@@ -36,24 +38,16 @@ export const useSessionActions = () => {
 
       if (deleteError) throw deleteError;
       if (!deletedRows || deletedRows.length === 0) {
-        throw new Error('Session could not be deleted. It may not exist or you may not have permission.');
+        toast.error(tMessages("error.deletingSession"));
+        return false;
       }
 
-      toast({
-        title: "Session deleted",
-        description: "Session has been removed from your calendar.",
-      });
+      toast.success(tMessages("success.sessionDeleted"));
 
       return true;
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Unknown error";
       console.error('Failed to delete session:', { sessionId, error });
-      toast({
-        title: "Error deleting session",
-        description: message,
-        variant: "destructive",
-      });
+      toast.error(tMessages("error.deletingSession"));
       return false;
     }
   };
@@ -113,28 +107,16 @@ export const useSessionActions = () => {
         } catch (workflowError) {
           console.error('❌ Error triggering workflow for status change:', workflowError);
           // Don't fail the status update if workflow fails
-          toast({
-            title: "Warning",
-            description: "Status updated successfully, but notifications may not be sent.",
-            variant: "default"
-          });
+          toast.warning(tMessages("session.statusUpdateWarning"));
         }
       }
 
-      toast({
-        title: "Success",
-        description: "Session status updated successfully."
-      });
+      toast.success(tMessages("success.updated"));
 
       return true;
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Unable to update session status";
-      toast({
-        title: "Error updating status",
-        description: message,
-        variant: "destructive"
-      });
+      console.error('Failed to update session status:', { sessionId, error });
+      toast.error(tMessages("error.updatingSessionStatus"));
       return false;
     }
   };

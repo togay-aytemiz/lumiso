@@ -74,6 +74,9 @@
       "next": "Next feature"
     }
   },
+  "buttons": {
+    "cancel": "Cancel"
+  },
   "profileIntake": {
     "badge": "Before you start",
     "title": "Tell us about your studio",
@@ -521,14 +524,670 @@
     "unknownClient": "Unknown Client",
     "gallery": {
       "title": "Session Gallery",
+      "helper": "",
+      "actions": {
+        "create": "Create gallery",
+        "share": "Share",
+        "manage": "Manage",
+        "preview": "Preview",
+        "archive": "Archive gallery",
+        "restore": "Restore gallery",
+        "delete": "Delete gallery",
+        "more": "More actions"
+      },
+      "delete": {
+        "title": "Delete gallery",
+        "description": "This action cannot be undone. The gallery and all media will be permanently deleted.",
+        "confirmLabel": "Type the gallery name to delete",
+        "confirmHint": "Gallery name: {{name}}",
+        "confirmButton": "Delete gallery",
+        "deleting": "Deleting..."
+      },
+      "archivedBanner": {
+        "title": "This gallery is archived",
+        "description": "Use More actions → Restore gallery to enable editing again."
+      },
       "emptyState": {
         "title": "No images yet",
-        "description": "Upload photos from this session to create a beautiful gallery for your client.",
-        "button": "Upload Images",
+        "description": "Upload this session’s photos.\nCreate a beautiful gallery for your client.",
+        "button": "Create gallery",
         "comingSoon": "Coming soon"
       },
-      "imageAlt": "Session image {{index}}",
-      "addImageAriaLabel": "Add new session image"
+      "emptySetTitle": "No photos yet",
+      "emptySetDesc": "Drag & drop photos to upload, or add them below.",
+      "types": {
+        "proof": "Selections",
+        "retouch": "Retouch",
+        "final": "Final",
+        "other": "Custom type",
+        "proofHint": "Proof gallery for client selections",
+        "finalHint": "Approved set ready for delivery"
+      },
+      "statuses": {
+        "draft": "Draft",
+        "published": "Shared",
+        "approved": "Approved",
+        "archived": "Archived"
+      },
+      "labels": {
+        "updated": "Updated",
+        "published": "Published",
+        "shareSoon": "Share link coming soon",
+        "settings": "Settings",
+        "media": "Photos",
+        "uploadTitle": "Upload photos",
+        "uploadDesc": "Drag & drop photos here to add to this gallery.",
+        "uploadHint": "Proof uploads are converted to compressed WebP for faster loading. Originals are not stored.",
+        "addMedia": "Add photo",
+        "coverSelected": "Cover photo",
+        "coverMissing": "Select a cover photo",
+        "coverEmpty": "No photos yet",
+        "coverHint": "Choose a photo to highlight your gallery.",
+        "coverActionHint": "Mark a photo as cover inside the gallery view.",
+        "chooseCover": "Choose cover",
+        "coverAfterUpload": "Pick any uploaded photo as your cover.",
+        "coverEmptyHint": "Add photos to this gallery, then pick your cover."
+      },
+      "shareSheet": {
+        "title": "Share gallery",
+        "description": "Send the access link to your client.",
+        "previewLabel": "Gallery preview",
+        "passwordBadge": "Locked",
+        "publicLinkLabel": "Gallery link",
+        "publicLinkDescription": "Active link for client access.",
+        "publicLinkCardTitle": "Share link",
+        "publicLinkPlaceholder": "—",
+        "publicLinkAria": "Gallery link",
+        "generatingLink": "Generating link…",
+        "copyLink": "Copy",
+        "pinPlaceholder": "—",
+        "copied": "Copied",
+        "passwordSectionTitle": "Password protection active",
+        "passwordSectionDescription": "This password is required to access the gallery.",
+        "copyPinTitle": "Copy password",
+        "pinHint": "Password was automatically added to the share message.",
+        "messageLabel": "Share message",
+        "resetMessage": "Default message",
+        "messagePlaceholder": "Write a message to send with the link…",
+        "quickActionsLabel": "How would you like to share?",
+        "whatsapp": "WhatsApp",
+        "email": "Email",
+        "emailSubject": "{{title}} - Photo gallery",
+        "footerPublicLabel": "Public",
+        "openLink": "Test",
+        "messageTemplate": "Hi {{clientName}}, your photos are ready for selection!\n\nYour gallery: {{url}}\n\nAccess password: {{pin}}",
+        "messageTemplateFinal": "Hi {{clientName}}, your final photos are ready!\n\nYour gallery: {{url}}\n\nAccess password: {{pin}}",
+        "errors": {
+          "missingGalleryId": "Gallery id is missing.",
+          "generateFailed": "Could not generate a public link."
+        }
+      },
+      "settings": {
+        "header": {
+          "eyebrow": "Gallery Settings"
+        },
+        "rail": {
+          "sectionLabel": "Gallery Management",
+          "general": "General",
+          "watermark": "Watermark",
+          "privacy": "Privacy"
+        },
+        "general": {
+          "header": {
+            "title": "General settings",
+            "description": "Manage the gallery’s basic info."
+          },
+          "basics": {
+            "title": "Gallery info",
+            "description": "Title, date, and status."
+          }
+        },
+        "watermark": {
+          "header": {
+            "title": "Watermark settings",
+            "description": "Protect proofs and reinforce your brand."
+          },
+          "preview": {
+            "title": "Live preview",
+            "description": "Quickly check how it will look.",
+            "disabled": "Watermark off",
+            "backgroundAlt": "Preview background"
+          },
+          "toggle": {
+            "title": "Watermark",
+            "description": "Apply a watermark to photos in this gallery."
+          },
+          "appearance": {
+            "title": "Appearance",
+            "description": "Use text or your logo."
+          },
+          "type": {
+            "label": "Watermark type",
+            "text": "Text",
+            "logo": "Logo"
+          },
+          "text": {
+            "label": "Text",
+            "placeholder": "e.g., Studio Name",
+            "fallback": "Studio name"
+          },
+          "logo": {
+            "alt": "Watermark logo",
+            "missingInline": "No logo",
+            "detectedTitle": "Brand logo",
+            "detectedDescription": "Pulled from your account settings.",
+            "manage": "Open account settings",
+            "missingTitle": "Logo not found",
+            "missingDescription": "Add a logo in account settings to use it as a watermark."
+          },
+          "layout": {
+            "title": "Placement & style",
+            "description": "Adjust placement, opacity, and size."
+          },
+          "placement": {
+            "label": "Placement",
+            "grid": "Tiled",
+            "center": "Center",
+            "corner": "Corner"
+          },
+          "opacity": {
+            "label": "Opacity",
+            "faint": "Faint",
+            "strong": "Strong"
+          },
+          "size": {
+            "label": "Size",
+            "small": "Small",
+            "large": "Large"
+          }
+        },
+        "privacy": {
+          "header": {
+            "title": "Privacy settings",
+            "description": "Control access to this gallery."
+          },
+          "access": {
+            "title": "Access protection",
+            "description": "Limit access with a password when needed."
+          },
+          "password": {
+            "toggleTitle": "Gallery password",
+            "toggleDescription": "Visitors must enter a password to view the gallery.",
+            "formTitle": "Password",
+            "formDescription": "Set a password for this gallery before sharing.",
+            "label": "Password",
+            "placeholder": "Enter a password",
+            "generate": "Generate",
+            "alwaysEnabledTitle": "Password protected gallery",
+            "alwaysEnabledDescription": "This gallery is protected by a password by default. Visitors must use the password below to access it.",
+            "pinLabel": "Access password",
+            "copy": "Copy password",
+            "copied": "Copied",
+            "missing": "—"
+          }
+        }
+      },
+      "toast": {
+        "createdTitle": "Gallery created",
+        "createdDesc": "You can start uploading and sharing.",
+        "errorTitle": "Could not create gallery",
+        "errorDesc": "Something went wrong. Try again.",
+        "starUpdateFailedTitle": "Couldn't save recommendation",
+        "starUpdateFailedDesc": "Please try again.",
+        "unsupportedFilesTitle": "Some files were skipped",
+        "unsupportedFilesDesc_one": "1 file wasn't added because only images are supported right now.",
+        "unsupportedFilesDesc_other": "{{count}} files weren't added because only images are supported right now.",
+        "storageLimitTitle": "Storage limit reached",
+        "storageLimitDesc": "Uploads are limited to {{limit}} per organization. Delete old galleries to free up space.",
+        "storageLimitSkippedDesc_one": "1 file wasn't added because it would exceed your {{limit}} storage limit.",
+        "storageLimitSkippedDesc_other": "{{count}} files weren't added because it would exceed your {{limit}} storage limit.",
+        "updatedTitle": "Gallery saved",
+        "updatedDesc": "Changes applied.",
+        "saveCta": "Save"
+      },
+      "form": {
+        "title": "Create gallery",
+        "titleLabel": "Title",
+        "titlePlaceholder": "e.g., {{leadName}}",
+        "leadNamePlaceholder": "lead name",
+        "typeLabel": "Type",
+        "customTypeLabel": "Custom type",
+        "customTypePlaceholder": "e.g., Album selection",
+        "statusLabel": "Status",
+        "eventDateLabel": "Event date",
+        "submit": "Create and open gallery",
+        "saving": "Creating…",
+        "cancel": "Cancel",
+        "errors": {
+          "titleRequired": "Title is required",
+          "customTypeRequired": "Custom type is required",
+          "typeRequired": "Please choose a type"
+        }
+      },
+      "optimizationNotice": {
+        "title": "Uploads are optimized for selection",
+        "description": "To keep selection galleries fast and lightweight, we convert and compress uploads. Originals aren’t stored—but the optimized version still looks great for viewing, selecting, and sharing on social media."
+      },
+      "originalsNotice": {
+        "title": "Originals are kept for final delivery",
+        "description": "Final galleries keep the original files, but use an optimized images for viewing. Clients download the originals only when they choose to download."
+      },
+      "selectionTemplate": {
+        "loading": "Loading selection rules...",
+        "serviceSource": "Loaded from service: {{service}}",
+        "noProject": "Session is not linked to a project. Add your selection rules here.",
+        "noServices": "No services on this project yet. You can create custom selection rules.",
+        "noTemplate": "No selection rules found for this session’s services. Define them here.",
+        "customLabel": "Custom selection rules",
+        "billingIncluded": "Included service",
+        "billingExtra": "Extra service",
+        "addSource": "Add source",
+        "manualGroupTitle": "Additional rules",
+        "manualPill": "Service-agnostic",
+        "addGeneralRule": "Add extra rule",
+        "manualPartDefault": "General",
+        "manualAddPrompt": "Click to add an extra rule.",
+        "disableSelections": "Turn off selections",
+        "enableSelections": "Turn on selections",
+        "disabledHint": "Selections are disabled for this service."
+      },
+      "sets": {
+        "add": "Add set",
+        "empty": "No sets yet. All uploads go to the default set.",
+        "defaultName": "Highlights",
+        "createTitle": "Create photo set",
+        "editTitle": "Edit photo set",
+        "saveChanges": "Save changes",
+        "name": "Set name",
+        "namePlaceholder": "e.g., Ceremony, Reception, Getting ready",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional",
+        "reorder": "Reorder set",
+        "editPrompt": "Edit set name",
+        "createSubmit": "Create",
+        "toast": {
+          "createdTitle": "Set created",
+          "createdDesc": "You can upload into this set."
+        },
+        "errors": {
+          "nameRequired": "Name is required",
+          "cannotDeleteLast": "At least one set is required."
+        },
+        "learnMore": "How sets keep one shoot tidy",
+        "info": {
+          "title": "Organize one shoot with clear sets",
+          "description": "Split a gallery into moments from the same day—outdoor portraits, ceremony, after party—so clients aren't scrolling one giant list.",
+          "sections": [
+            {
+              "title": "Follow the day's flow",
+              "description": "Add sets like outdoor portraits, the ceremony, and the after party so each part of the shoot is easy to find."
+            },
+            {
+              "title": "Separate by subject in the same session",
+              "description": "For newborn work, keep a 'newborn' set and a 'family' set instead of mixing them together."
+            },
+            {
+              "title": "Give clients a clear path",
+              "description": "Clients can jump into the right set, leave favorites, and finish selection limits without guessing where to start."
+            }
+          ]
+        }
+      },
+      "selection": {
+        "title": "Selection settings",
+        "description": "Manage client selections for this gallery.",
+        "open": "Selection settings",
+        "enableLabel": "Allow selections",
+        "enableHint": "Clients can pick favorites for this gallery.",
+        "limitLabel": "Selection limit",
+        "limitPlaceholder": "No limit",
+        "deadlineLabel": "Selection deadline",
+        "favoritesLabel": "Allow favorites",
+        "favoritesHint": "Clients can mark photos as favorites.",
+        "summary": {
+          "selected": "Selected",
+          "favorites": "Favorites",
+          "limit": "Limit"
+        },
+        "filters": {
+          "all": "All",
+          "selected": "Selected",
+          "favorites": "Favorites"
+        },
+        "filterSelected": "Filtering selected items",
+        "filterFavorites": "Filtering favorites",
+        "filterAll": "Showing all items"
+      },
+      "publicAccess": {
+        "title": "Password protected gallery",
+        "description": "Enter the password your photographer shared to access this gallery.",
+        "pinLabel": "Access password",
+        "pinPlaceholder": "Enter your password",
+        "pinHint": "Password is not case sensitive.",
+        "submit": "Continue",
+        "submitting": "Checking…",
+        "brandingLogoAlt": "Business logo",
+        "errors": {
+          "invalidPin": "Incorrect password",
+          "notFound": "Gallery not found",
+          "generic": "Something went wrong. Please try again.",
+          "authFailedTitle": "Could not start session"
+        }
+      },
+      "clientPreview": {
+        "lockedBanner": {
+          "title": "Selections sent!",
+          "subtitle": "We notified the photographer.",
+          "body": "You successfully completed your selections. The gallery is currently locked, so no changes can be made.\nYour photographer will reach out after reviewing your selections.",
+          "noteLabel": "YOUR NOTE"
+        },
+        "reopenedBanner": {
+          "title": "Selection reopened",
+          "subtitle": "Your photographer asked for an update.",
+          "body": "You can make changes and send your selections again when you're ready.",
+          "noteLabel": "YOUR LAST NOTE"
+        },
+        "hero": {
+          "kicker": "Private collection",
+          "scrollCta": "View gallery",
+          "coverAlt": "Cover photo",
+          "untitled": "Untitled gallery",
+          "badge": {
+            "selection": {
+              "title": "SELECTION STAGE",
+              "description": "Please complete your selections"
+            },
+            "delivery": {
+              "title": "FINAL COLLECTION",
+              "description": "All your memories are ready"
+            }
+          }
+        },
+        "actions": {
+          "close": "Close",
+          "inspect": "Inspect",
+          "closeMenu": "Close menu",
+          "closeViewer": "Close photo",
+          "downloadAll": "Download all",
+          "addToFavorites": "Add to favorites",
+          "removeFromFavorites": "Remove from favorites",
+          "gridLarge": "Large grid",
+          "gridMedium": "Medium grid",
+          "gridSmall": "Small grid",
+          "completeSelection": "Complete Selection",
+          "resendSelection": "Resend Selections"
+        },
+        "bulkDownload": {
+          "confirmTitle": "Download all photos",
+          "confirmDescription": "We'll prepare a single .zip file with {{count}} photos. This can take a few minutes. Continue?",
+          "confirmAction": "Prepare download",
+          "preparingTitle": "Preparing your download",
+          "preparingDescription": "This can take a few minutes. We'll start the download automatically when it's ready. You can close this window.",
+          "preparingProgress": "Preparing {{completed}} / {{total}} photos...",
+          "readyTitle": "Download is starting",
+          "readyDescription": "If the download doesn't start automatically, click below to try again. You can close this window.",
+          "downloadNow": "Start download",
+          "failedTitle": "Download failed",
+          "failedDescription": "We couldn't prepare your download. Please try again.",
+          "filePrefixFinal": "Final",
+          "filePrefixSelection": "Secim"
+        },
+        "filters": {
+          "label": "View:",
+          "all": "All",
+          "starred": "Photographer's choice",
+          "starredShort": "Pick",
+          "favorites": "Favorites",
+          "unselected": "Unselected",
+          "selected": "Selected"
+        },
+        "bottomNav": {
+          "ariaLabel": "Gallery navigation",
+          "gallery": "Gallery",
+          "selections": "Selections",
+          "starred": "Recommended"
+        },
+        "selections": {
+          "title": "Selections",
+          "subtitle": "Tap a task to view your selections.",
+          "allPhotos": "All photos",
+          "tasksLabel": "TASKS",
+          "empty": "No selection lists configured yet.",
+          "sentTitle": "Selections Sent!",
+          "sentDesc": "We've notified the photographer. You can view your selections but changes are now locked."
+        },
+        "confirmation": {
+          "title": "Complete Selections",
+          "bannerTitle": "One last check",
+          "bannerDesc": "Once confirmed, your selections will be sent to the photographer and locked. You won't be able to change them afterwards.",
+          "noteLabel": "Leave a note (optional)",
+          "notePlaceholder": "Add any comments or special requests...",
+          "cancel": "Cancel",
+          "confirm": "Send Selections"
+        },
+        "banner": {
+          "lockedMessage": "Selections are confirmed and sent to the photographer"
+        },
+        "status": {
+          "confirmed": "Confirmed"
+        },
+        "tasks": {
+          "selectedCount": "{{count}} selected",
+          "missingCount": "{{count}} missing"
+        },
+        "sections": {
+          "empty": "No photos to show in this set."
+        },
+        "labels": {
+          "add": "Add",
+          "selected": "Selected",
+          "addToLists": "Add to lists",
+          "limitFull": "Limit full",
+          "limitReached": "Limit reached",
+          "mandatory": "Required",
+          "optional": "Optional",
+          "validSelection": "Valid selection",
+          "added": "Added"
+        },
+        "floatingSelections": {
+          "kicker": "In this gallery",
+          "title": "Selected photos"
+        },
+        "toast": {
+          "favoritesAdded": "Added to favorites",
+          "favoritesRemoved": "Removed from favorites",
+          "bulkDownloadSoon": "Bulk download is coming soon.",
+          "bulkDownloadFailed": "Couldn't start bulk download. Please try again.",
+          "selectionsLocked": "Selections are finalized and cannot be changed."
+        },
+        "empty": {
+          "noPhotos": {
+            "title": "No photos to show",
+            "description": "Try clearing filters or checking back later.",
+            "action": "Clear filters"
+          },
+          "favorites": {
+            "title": "No favorites yet",
+            "description": "You can favorite photos by tapping the heart icon.",
+            "action": "View all photos"
+          },
+          "starred": {
+            "title": "No photographer picks",
+            "description": "Your photographer hasn't highlighted any photos in this gallery.",
+            "action": "Browse all photos"
+          },
+          "unselected": {
+            "title": "Great! All sorted",
+            "description": "You've assigned every photo in this gallery to a list.",
+            "action": "View full gallery"
+          },
+          "selected": {
+            "title": "No selected photos yet",
+            "description": "Add photos to a list to see them here.",
+            "action": "View all photos"
+          },
+          "rule": {
+            "title": "No selections for {{rule}}",
+            "description": "You haven't added any photos to \"{{rule}}\" yet.",
+            "action": "Back to photos"
+          }
+        },
+        "footer": {
+          "brand": "Lumiso Select",
+          "copyright": "© 2025 All Rights Reserved"
+        }
+      },
+      "selectionLock": {
+        "banner": {
+          "title": "Client completed selections",
+          "description": "This gallery is approved and locked."
+        },
+        "status": {
+          "draft": {
+            "title": "Draft gallery",
+            "description": "This gallery hasn't been shared yet. Share it to let the client start selecting photos."
+          },
+          "waiting": {
+            "title": "Waiting for client selections",
+            "description": "The client can still select photos and send their final picks."
+          },
+          "locked": {
+            "title": "Client sent selections",
+            "description": "Selections are locked. You can review or export them."
+          },
+          "reopened": {
+            "title": "Waiting for updated selections",
+            "description": "You reopened selections for the client. They will need to send again to lock the gallery."
+          },
+          "unlockedForMe": {
+            "title": "Unlocked for you",
+            "description": "You can edit selections while the client still sees the gallery as locked."
+          }
+        },
+        "actions": {
+          "export": "Export selections",
+          "unlock": "Unlock",
+          "lockAgain": "Lock again"
+        },
+        "unlockConfirm": {
+          "title": "Unlock selections?",
+          "description": "Choose who should be able to edit selections.",
+          "cancel": "Cancel",
+          "unlockForMe": "Unlock just for me",
+          "unlockForClient": "Unlock for client"
+        },
+        "noteLabel": "CLIENT NOTE",
+        "toast": {
+          "exportComingSoon": "Export is coming soon.",
+          "unlocked": "Selections unlocked. You can make changes now.",
+          "locked": "Selections are now locked."
+        }
+      },
+      "exportSheet": {
+        "title": "Get filenames",
+        "description": "Generate filtering code based on your OS.",
+        "tabs": {
+          "windows": "Windows",
+          "mac": "Mac",
+          "list": "List"
+        },
+        "favoritesTitle": "Favorites",
+        "fileCount_one": "{{count}} file",
+        "fileCount_other": "{{count}} files",
+        "copyQuery": "Copy query",
+        "downloadTxt": "Download .txt",
+        "emptyState": "No exported items available yet.",
+        "downloadFileNames": {
+          "master": "master_selection_list"
+        },
+        "queryLabels": {
+          "windows": "Windows Explorer query",
+          "mac": "Mac Finder query",
+          "list": "Lightroom/Capture One filter"
+        },
+        "listTipInline": "Paste this into Lightroom Library > Text Filter.",
+        "masterCard": {
+          "title": "Master batch",
+          "description": "Includes only approved selections (excludes favorites).",
+          "emptyBreakdown": "No selections yet",
+          "totalFiles": "Total files"
+        },
+        "categories": {
+          "title": "Category lists",
+          "subtitle": "Single exports",
+          "empty": "No groups to list."
+        },
+        "tips": {
+          "windows": "Tip: Open your folder in File Explorer, press Ctrl + F, then paste the text into search. Files will filter automatically.",
+          "mac": "Tip: In Finder, press Cmd + F, ensure the scope is \"Current folder\", then paste the text.",
+          "list": "Tip: Optimized for Lightroom Library > Text > Contains (space-separated)."
+        }
+      },
+      "lightbox": {
+        "close": "Close",
+        "previous": "Previous",
+        "next": "Next",
+        "noPreview": "No preview available",
+        "limitFull": "Limit full",
+        "actions": {
+          "download": "Download",
+          "downloadOriginal": "Download original",
+          "downloadPreparing": "Preparing..."
+        },
+        "quickAdd": {
+          "add": "Add to {{rule}}",
+          "added": "Added to {{rule}}"
+        },
+        "showSelections": "Selections",
+        "showSelectionsTitle": "Show selections",
+        "showDetails": "Details",
+        "showDetailsTitle": "Show details",
+        "collapse": "Collapse",
+        "collapseTitle": "Collapse panel",
+        "mobileActions": {
+          "favorite": "Favorite",
+          "add": "Add",
+          "share": "Share"
+        },
+        "mobileHint": {
+          "longPressToShare": "Press and hold the photo to share or save."
+        },
+        "toast": {
+          "downloadFailed": "Couldn't download photo. Please try again."
+        },
+        "sidebar": {
+          "client": {
+            "title": "Selections",
+            "description": "Add this photo to your lists",
+            "finalTitle": "Photo",
+            "finalDescription": "Favorite or share this photo"
+          },
+          "admin": {
+            "title": "Selection details",
+            "description": "Manage detailed selections"
+          }
+        },
+        "client": {
+          "favoriteAdded": "Favorited",
+          "favoriteAdd": "Add to favorites",
+          "photographerPickTitle": "Photographer's choice",
+          "photographerPickTitleShort": "Pick",
+          "photographerPickDescription": "We recommend this shot for you"
+        },
+        "admin": {
+          "photoStatusTitle": "Photo status",
+          "starLabel": "Photographer's choice",
+          "starSelected": "Selected",
+          "clientFavoriteLabel": "Client favorite",
+          "clientFavoriteYes": "Liked",
+          "clientFavoriteNo": "Not yet"
+        },
+        "lists": {
+          "clientTitle": "Add to lists",
+          "adminTitle": "Existing lists",
+          "generalService": "General"
+        }
+      }
     },
     "dangerZone": {
       "title": "Danger Zone",
@@ -877,6 +1536,7 @@
         "subtitle": "Drill into trial status, usage, payments, and admin actions.",
         "tabs": {
           "overview": "Overview",
+          "gallery": "Gallery",
           "kisiler": "Kişiler",
           "projects": "Projects",
           "sessions": "Sessions",
@@ -885,6 +1545,55 @@
           "services": "Services",
           "packages": "Packages",
           "sessionTypes": "Session types"
+        },
+        "gallery": {
+          "title": "Gallery storage",
+          "description": "Configure the maximum gallery storage allowed for this account.",
+          "limitLabel": "Allowed storage",
+          "unitLabel": "Unit",
+          "unit": {
+            "mb": "MB",
+            "gb": "GB"
+          },
+          "limitHint": "Default: {{default}}",
+          "currentLimit": "Current limit",
+          "actions": {
+            "reset": "Reset to default",
+            "save": "Save",
+            "saving": "Saving..."
+          },
+          "toasts": {
+            "invalidLimit": "Enter a valid limit greater than 0.",
+            "saveSuccess": "Gallery storage limit updated.",
+            "saveError": "Could not update the gallery storage limit."
+          },
+          "galleries": {
+            "title": "Galleries",
+            "description": "Status and storage usage per gallery.",
+            "empty": "No galleries found for this account.",
+            "error": "Could not load galleries for this account.",
+            "columns": {
+              "title": "Gallery",
+              "status": "Status",
+              "lead": "Lead",
+              "size": "Usage",
+              "actions": "Actions"
+            },
+            "toasts": {
+              "archiveSuccess": "Gallery archived.",
+              "restoreSuccess": "Gallery restored.",
+              "actionError": "Could not update the gallery.",
+              "previewError": "Could not open preview.",
+              "deleteSuccess": "Gallery deleted.",
+              "deleteError": "Could not delete the gallery."
+            },
+            "archiveConfirm": {
+              "title": "Archive gallery?",
+              "description": "This will move the gallery to archived and disable editing. You can restore it later.",
+              "confirm": "Archive gallery",
+              "confirmLoading": "Archiving..."
+            }
+          }
         },
         "membership": {
           "title": "Membership status",
@@ -2088,7 +2797,9 @@
         "title": "Immediate Notifications",
         "description": "Real-time alerts sent when events occur",
         "projectMilestone": "Project Milestone Reached",
-        "projectMilestoneHelp": "Notify when a project transitions to Completed or Cancelled lifecycle"
+        "projectMilestoneHelp": "Notify when a project transitions to Completed or Cancelled lifecycle",
+        "gallerySelection": "Gallery Selections Submitted",
+        "gallerySelectionHelp": "Notify when a client submits their gallery selections"
       },
       "sendTest": "Send test",
       "sendEmptyTest": "Send empty test",
@@ -3336,6 +4047,110 @@
       "dragDrop": "Drag & drop projects between stages",
       "tableView": "Sort and filter the detailed table view",
       "archivedProjects": "Archive completed projects"
+    }
+  },
+  "galleries": {
+    "title": "Client galleries",
+    "description": "Track selection progress, approvals, and quick access to linked work.",
+    "actions": {
+      "create": "New gallery"
+    },
+    "tableTitle": "Gallery records",
+    "stats": {
+      "actionNeeded": "Action needed",
+      "approved": "Approved",
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "filters": {
+      "type": {
+        "all": "All galleries",
+        "selection": "Photo selection",
+        "final": "Final delivery"
+      },
+      "statusLabel": "Status:"
+    },
+    "segments": {
+      "active": "Active",
+      "pending": "Pending",
+      "approved": "Approved",
+      "archived": "Archived"
+    },
+    "confirmations": {
+      "archive": {
+        "title": "Archive gallery?",
+        "description": "This will move the gallery to archived and disable editing. You can restore it later.",
+        "confirm": "Archive gallery",
+        "confirming": "Archiving..."
+      }
+    },
+    "toast": {
+      "archiveSuccess": "Gallery archived.",
+      "archiveError": "Couldn't archive the gallery. Please try again.",
+      "deleteSuccess": "Gallery deleted.",
+      "deleteError": "Couldn't delete the gallery. Please try again."
+    },
+    "search": "Search galleries",
+    "emptyState": {
+      "none": {
+        "title": "No galleries yet",
+        "description": "When you share a gallery with a client, it will show up here."
+      },
+      "search": {
+        "title": "No galleries match your search",
+        "description": "Try a different keyword or clear the search."
+      },
+      "segments": {
+        "active": {
+          "title": "No active galleries",
+          "description": "Active galleries appear here once they're shared with clients."
+        },
+        "pending": {
+          "title": "No pending selections",
+          "description": "Galleries waiting for client selections will appear here."
+        },
+        "approved": {
+          "title": "No approved galleries",
+          "description": "Locked or approved galleries will appear here."
+        },
+        "archived": {
+          "title": "No archived galleries",
+          "description": "Archived galleries will appear here."
+        }
+      }
+    },
+    "empty": "No galleries found for this view.",
+    "table": {
+      "gallery": "Gallery",
+      "client": "Client",
+      "links": "Quick access",
+      "quickAccess": "Open",
+      "linkTypes": {
+        "session": "Session",
+        "project": "Project"
+      },
+      "noSession": "No session",
+      "noProject": "No project",
+      "openGallery": "Open gallery",
+      "status": "Status",
+      "progress": "Selection progress",
+      "selected": "{{count}} selected",
+      "required": "{{count}} required",
+      "approval": "Last approval",
+      "size": "Size",
+      "sizeAndTime": "Size & time remaining",
+      "summaryColumn": "Summary",
+      "lastAction": "Last action",
+      "timeRemainingPlaceholder": "Time remaining soon",
+      "timeRemaining": "{{value}} left",
+      "noApproval": "No approval yet",
+      "actions": "Actions",
+      "export": "Export selections",
+      "view": "View details",
+      "downloadedStatus": "Downloaded",
+      "summary": "{{count}} galleries",
+      "noEvent": "No event date",
+      "noClient": "No client"
     }
   }
 }

@@ -756,7 +756,6 @@ export function usePaymentsData({
       applyOrgScope,
       createSearchContext,
       hydratePayments,
-      includeAllOrganizations,
       organizationId,
       shouldScopeToOrg,
       searchTerm,

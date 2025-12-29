@@ -694,7 +694,7 @@ export async function processDailySummary(
     : t('dailySummary.subject.defaultEmpty');
 
   const emailResponse = await resendClient.emails.send({
-    from: `Lumiso <daily-summary@lumiso.app>`,
+    from: `Lumiso <hello@updates.lumiso.app>`,
     to: [userData.user.email!],
     subject,
     html: emailHtml,
@@ -1203,4 +1203,6 @@ export async function checkNotificationEnabled(
   }
 }
 
-serve(handler);
+if (import.meta.main) {
+  serve(handler);
+}

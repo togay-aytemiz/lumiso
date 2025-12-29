@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { ONBOARDING_STEPS, TOTAL_STEPS, OnboardingStage } from "@/constants/onboarding";
+import { OnboardingContext, type OnboardingContextValue } from "@/contexts/onboardingContextValue";
 
 const normalizeOnboardingStep = (step?: number | null) => {
   if (typeof step !== "number" || Number.isNaN(step)) return 1;
@@ -8,36 +9,6 @@ const normalizeOnboardingStep = (step?: number | null) => {
   const minimum = Math.max(1, rounded);
   return Math.min(minimum, TOTAL_STEPS + 1);
 };
-
-export interface OnboardingContextValue {
-  // State
-  stage: OnboardingStage;
-  currentStep: number;
-  loading: boolean;
-  
-  // Computed values (memoized for performance)
-  shouldShowWelcomeModal: boolean;
-  isInGuidedSetup: boolean;
-  isOnboardingComplete: boolean;
-  shouldLockNavigation: boolean;
-  
-  // Step information
-  currentStepInfo: (typeof ONBOARDING_STEPS)[number] | null;
-  nextStepInfo: (typeof ONBOARDING_STEPS)[number] | null;
-  completedSteps: (typeof ONBOARDING_STEPS)[number][];
-  isAllStepsComplete: boolean;
-  totalSteps: number;
-  
-  // Actions
-  startGuidedSetup: () => Promise<void>;
-  completeCurrentStep: () => Promise<void>;
-  completeMultipleSteps: (numberOfSteps: number) => Promise<void>;
-  completeOnboarding: () => Promise<void>;
-  skipOnboarding: () => Promise<void>;
-  resetOnboarding: () => Promise<void>;
-}
-
-const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { data: preferences, isLoading, updatePreferences } = useUserPreferences();
@@ -237,16 +208,4 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       {children}
     </OnboardingContext.Provider>
   );
-}
-
-export function useOptionalOnboarding(): OnboardingContextValue | null {
-  return useContext(OnboardingContext);
-}
-
-export function useOnboarding(): OnboardingContextValue {
-  const context = useContext(OnboardingContext);
-  if (!context) {
-    throw new Error("useOnboarding must be used within an OnboardingProvider");
-  }
-  return context;
 }

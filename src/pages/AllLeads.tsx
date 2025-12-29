@@ -9,7 +9,7 @@ import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { ADD_ACTION_EVENTS } from "@/constants/addActionEvents";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { OnboardingVideo } from "@/components/shared/OnboardingVideo";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/useOnboarding";
 import {
   Calendar,
   MessageSquare,

@@ -30,6 +30,7 @@ const SUPABASE_CHAINABLE_METHODS = [
   'overlaps',
   'textSearch',
   'throwOnError',
+  'is',
 ] as const;
 
 type ChainableMethod = typeof SUPABASE_CHAINABLE_METHODS[number];
@@ -88,6 +89,7 @@ const createStorageBucket = () => ({
   remove: jest.fn().mockResolvedValue(createQueryResult()),
   list: jest.fn().mockResolvedValue(createQueryResult({ data: [] })),
   download: jest.fn().mockResolvedValue(createQueryResult()),
+  createSignedUrl: jest.fn().mockResolvedValue(createQueryResult({ data: { signedUrl: 'https://example.com/signed-url' } })),
 });
 
 const createSupabaseMock = () => {
@@ -95,7 +97,9 @@ const createSupabaseMock = () => {
     from: jest.fn(() => createQueryBuilder()),
     auth: {
       getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
       signIn: jest.fn(),
+      signInAnonymously: jest.fn().mockResolvedValue({ data: { user: { id: "anon-user" } }, error: null }),
       signOut: jest.fn(),
       onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
     },
@@ -142,12 +146,24 @@ Object.defineProperty(window, 'performance', {
   }
 });
 
+Object.defineProperty(window, 'scrollTo', {
+  writable: true,
+  value: jest.fn(),
+});
+
 // Mock IntersectionObserver
 global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   disconnect: jest.fn(),
   observe: jest.fn(),
   unobserve: jest.fn(),
 }));
+
+// Mock ResizeObserver (used by Radix primitives)
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
 
 // Mock matchMedia for components relying on it (e.g., ThemeProvider)
 Object.defineProperty(window, 'matchMedia', {

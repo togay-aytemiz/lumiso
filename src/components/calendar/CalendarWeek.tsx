@@ -474,7 +474,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
       acc.set(dayKey, { sessions: sessionLayouts, activities: activityLayouts });
       return acc;
     }, new Map<string, { sessions: Array<PositionedLayout<Session>>; activities: Array<PositionedLayout<Activity>> }>());
-  }, [effectiveSlotHeight, getEventsForDate, leadsMap, projectsMap, rangeEndMinutes, rangeStartMinutes, timeSlots.length, weekDays]);
+  }, [effectiveSlotHeight, getEventsForDate, leadsMap, rangeEndMinutes, rangeStartMinutes, timeSlots.length, weekDays]);
 
   // loading skeleton that uses the same grid template to avoid layout jump
   if (timezoneLoading) {

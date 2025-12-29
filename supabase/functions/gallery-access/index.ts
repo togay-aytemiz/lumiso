@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { compareSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { getErrorMessage } from "../_shared/error-utils.ts";
 
 const corsHeaders = {
@@ -147,7 +147,15 @@ export const handler = async (
       );
     }
 
-    const verifyPin = deps.verifyPin ?? ((input, hash) => compare(input, hash));
+    const verifyPin =
+      deps.verifyPin ??
+      ((input: string, hash: string) => {
+        try {
+          return compareSync(input, hash);
+        } catch {
+          return false;
+        }
+      });
     const isValid = await verifyPin(pin, accessRow.pin_hash);
     if (!isValid) {
       return new Response(

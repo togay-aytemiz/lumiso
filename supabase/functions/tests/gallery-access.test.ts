@@ -1,4 +1,5 @@
 import { assertEquals } from "std/testing/asserts.ts";
+import { hashSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { handler as galleryAccessHandler } from "../gallery-access/index.ts";
 
 async function readJson(response: Response) {
@@ -170,4 +171,25 @@ Deno.test("gallery-access upserts a grant and returns galleryId when pin matches
   assertEquals(mockSupabase.__upserts[0]?.table, "gallery_access_grants");
   assertEquals(mockSupabase.__upserts[0]?.values.gallery_id, "gallery-1");
   assertEquals(mockSupabase.__upserts[0]?.values.viewer_id, "viewer-1");
+});
+
+Deno.test("gallery-access validates pin with default verifier", async () => {
+  const pin = "C1MRTN";
+  const mockSupabase = createMockSupabase({
+    galleryId: "gallery-1",
+    pinHash: hashSync(pin),
+    userId: "viewer-1",
+  });
+
+  const request = new Request("https://example.com", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", authorization: "Bearer token" },
+    body: JSON.stringify({ publicId: "pub-ok", pin: "c1mrtn" }),
+  });
+
+  const response = await galleryAccessHandler(request, {
+    createClient: () => mockSupabase,
+  });
+
+  assertEquals(response.status, 200);
 });

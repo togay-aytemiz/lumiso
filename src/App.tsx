@@ -117,6 +117,7 @@ const AppRoutes = () => {
         </Route>
         <Route path="/" element={<ProtectedRoute />}>
           <Route index element={<Index />} />
+          <Route path="dashboard" element={<Index />} />
           <Route path="getting-started" element={<GettingStarted />} />
           <Route path="leads" element={<AllLeads />} />
           <Route path="projects" element={<AllProjects />} />

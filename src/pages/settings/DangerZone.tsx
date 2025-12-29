@@ -5,15 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { AlertTriangle, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertTriangle, Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { deleteAllOrganizationData } from "@/services/organizationDataDeletion";
+import { trackEvent } from "@/lib/telemetry";
 
 export default function DangerZone() {
   const [password, setPassword] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation('pages');
+  const navigate = useNavigate();
 
   const handleDeleteAllData = async () => {
     if (!password) {
@@ -26,10 +31,12 @@ export default function DangerZone() {
     }
 
     setIsDeleting(true);
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      trackEvent("danger_zone_delete_all_start");
+      await deleteAllOrganizationData(password);
+      trackEvent("danger_zone_delete_all_complete");
+
       toast({
         title: t('settings.dangerZone.deleteData.deleteComplete'),
         description: t('settings.dangerZone.deleteData.deleteCompleteDesc'),
@@ -37,7 +44,13 @@ export default function DangerZone() {
       });
       
       setPassword("");
+      window.setTimeout(() => {
+        navigate("/dashboard", { replace: true, state: undefined });
+        window.location.reload();
+      }, 300);
     } catch (error) {
+      console.error("Failed to delete organization data:", error);
+      trackEvent("danger_zone_delete_all_failed");
       toast({
         title: t('settings.dangerZone.deleteData.deleteFailed'),
         description: t('settings.dangerZone.deleteData.deleteFailedDesc'),
@@ -92,9 +105,9 @@ export default function DangerZone() {
                             <li>{t('settings.dangerZone.deleteData.leads')}</li>
                             <li>{t('settings.dangerZone.deleteData.projects')}</li>
                             <li>{t('settings.dangerZone.deleteData.sessions')}</li>
+                            <li>{t('settings.dangerZone.deleteData.galleries')}</li>
                             <li>{t('settings.dangerZone.deleteData.reminders')}</li>
                             <li>{t('settings.dangerZone.deleteData.payments')}</li>
-                            <li>{t('settings.dangerZone.deleteData.settings')}</li>
                           </ul>
                           <p className="text-destructive font-medium text-sm">
                             {t('settings.dangerZone.deleteData.passwordPrompt')}
@@ -103,10 +116,20 @@ export default function DangerZone() {
                       </AlertDialogHeader>
                       
                       <div className="space-y-2">
+                        <input
+                          type="text"
+                          name="username"
+                          autoComplete="username"
+                          tabIndex={-1}
+                          aria-hidden="true"
+                          className="sr-only"
+                        />
                         <Label htmlFor="confirm-password" className="text-sm">{t('settings.dangerZone.deleteData.passwordLabel')}</Label>
                         <Input
                           id="confirm-password"
                           type="password"
+                          name="current-password"
+                          autoComplete="current-password"
                           placeholder={t('settings.dangerZone.deleteData.passwordPlaceholder')}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
@@ -147,6 +170,27 @@ export default function DangerZone() {
           </div>
         </SettingsSingleColumnSection>
       </div>
+      <Dialog open={isDeleting} onOpenChange={() => {}}>
+        <DialogContent
+          hideClose
+          onEscapeKeyDown={(event) => event.preventDefault()}
+          onPointerDownOutside={(event) => event.preventDefault()}
+          className="sm:max-w-md"
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              {t('settings.dangerZone.deleteData.progressTitle')}
+            </DialogTitle>
+            <DialogDescription>
+              {t('settings.dangerZone.deleteData.progressDesc')}
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {t('settings.dangerZone.deleteData.progressHint')}
+          </p>
+        </DialogContent>
+      </Dialog>
     </SettingsPageWrapper>
   );
 }

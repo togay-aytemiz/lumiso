@@ -1,7 +1,8 @@
 import React from "react";
-import { act, fireEvent, render, screen } from "@/utils/testUtils";
+import { act, fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import DangerZone from "../DangerZone";
 import { useToast } from "@/hooks/use-toast";
+import { deleteAllOrganizationData } from "@/services/organizationDataDeletion";
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -11,6 +12,10 @@ jest.mock("react-i18next", () => ({
 
 jest.mock("@/hooks/use-toast", () => ({
   useToast: jest.fn(),
+}));
+
+jest.mock("@/services/organizationDataDeletion", () => ({
+  deleteAllOrganizationData: jest.fn(),
 }));
 
 jest.mock("@/components/ui/alert-dialog", () => ({
@@ -76,15 +81,22 @@ jest.mock("@/components/settings/SettingsHeader", () => ({
   default: () => <div data-testid="settings-header" />, 
 }));
 
+jest.mock("@/components/settings/SettingsSections", () => ({
+  __esModule: true,
+  SettingsSingleColumnSection: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="settings-single-column-section">{children}</div>
+  ),
+}));
+
 const mockUseToast = useToast as jest.Mock;
+const mockDeleteAllOrganizationData = deleteAllOrganizationData as jest.Mock;
+let reloadSpy: jest.SpyInstance;
 
 describe("DangerZone settings page", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
+    mockDeleteAllOrganizationData.mockResolvedValue(undefined);
+    reloadSpy = jest.spyOn(window.location, "reload").mockImplementation(() => {});
   });
 
   it("keeps delete action disabled without a password", () => {
@@ -104,7 +116,6 @@ describe("DangerZone settings page", () => {
   });
 
   it("deletes successfully when a password is provided", async () => {
-    jest.useFakeTimers({ doNotFake: ["performance"] });
     const toastSpy = jest.fn();
     mockUseToast.mockReturnValue({ toast: toastSpy });
 
@@ -127,22 +138,18 @@ describe("DangerZone settings page", () => {
 
     expect(confirmButton).toBeDisabled();
 
-    await act(async () => {
-      jest.advanceTimersByTime(2000);
+    await waitFor(() => {
+      expect(toastSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "settings.dangerZone.deleteData.deleteComplete",
+          description: "settings.dangerZone.deleteData.deleteCompleteDesc",
+          variant: "destructive",
+        })
+      );
     });
 
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    expect(toastSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "settings.dangerZone.deleteData.deleteComplete",
-        description: "settings.dangerZone.deleteData.deleteCompleteDesc",
-        variant: "destructive",
-      })
-    );
     expect(passwordInput).toHaveValue("");
+    expect(mockDeleteAllOrganizationData).toHaveBeenCalledWith("super-secret");
   });
 
   it("clears the password field when cancelling the dialog", () => {
@@ -164,5 +171,42 @@ describe("DangerZone settings page", () => {
 
     expect(passwordInput).toHaveValue("");
     expect(toastSpy).not.toHaveBeenCalled();
+  });
+
+  it("shows an error toast when deletion fails", async () => {
+    const toastSpy = jest.fn();
+    mockUseToast.mockReturnValue({ toast: toastSpy });
+    mockDeleteAllOrganizationData.mockRejectedValueOnce(new Error("delete failed"));
+
+    render(<DangerZone />);
+
+    const passwordInput = screen.getByLabelText(
+      "settings.dangerZone.deleteData.passwordLabel"
+    );
+    fireEvent.change(passwordInput, { target: { value: "fail-case" } });
+
+    const [triggerButton, confirmButton] = screen.getAllByRole("button", {
+      name: "settings.dangerZone.deleteData.button",
+    });
+
+    fireEvent.click(triggerButton);
+
+    await act(async () => {
+      fireEvent.click(confirmButton);
+    });
+
+    await waitFor(() => {
+      expect(toastSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "settings.dangerZone.deleteData.deleteFailed",
+          description: "settings.dangerZone.deleteData.deleteFailedDesc",
+          variant: "destructive",
+        })
+      );
+    });
+  });
+
+  afterEach(() => {
+    reloadSpy.mockRestore();
   });
 });
